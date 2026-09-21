@@ -1,0 +1,99 @@
+# Skema Database (rencana) — Web Tes Premium
+
+Ditulis sebagai referensi kolom, bukan SQL/Drizzle final. Saat implementasi,
+buat file Drizzle di `src/server/db/schema/` per grup di bawah ini, lalu
+generate migrasi — jangan tulis ulang dokumen ini kecuali skema berubah.
+
+## Grup: Users & Auth
+
+**users**
+- id (pk), name, email (unique), password_hash, role (`student`|`admin`),
+  created_at
+
+**user_ai_settings**
+- id (pk), user_id (fk users), gemini_api_key_encrypted, gemini_key_masked
+  (mis. `AIza...ab12`, untuk ditampilkan di UI), updated_at
+
+## Grup: Konten
+
+**categories** — `id, name` (mis. "Akademik", "CPNS")
+
+**topics**
+- id, category_id (fk), name, slug, order
+
+**subtopics**
+- id, topic_id (fk), name, slug, order
+
+**questions**
+- id, subtopic_id (fk), type (`single_choice` fase 1; `tkp_weighted` untuk
+  TKP), question_text, image_url (nullable), difficulty
+  (`easy`|`medium`|`hard`), status (`draft`|`pending_review`|`published`),
+  generated_by (`manual`|`ai`|`import`), source_user_id (nullable, siapa
+  yang generate/import), created_by, reviewed_by (nullable), reviewed_at
+  (nullable), created_at
+
+**question_options**
+- id, question_id (fk), label (A/B/C/D/E), option_text, is_correct
+  (untuk single_choice), score_weight (1–5, untuk tkp_weighted; null untuk
+  single_choice), order
+
+**question_explanations**
+- id, question_id (fk, 1:1), explanation_text
+
+## Grup: Paket Tes
+
+**test_packages**
+- id, title, description, category_id (fk), duration_minutes,
+  scoring_mode (`standard`|`twk_tiu`|`tkp`), is_premium (bool),
+  status (`draft`|`published`), created_by, created_at
+
+**test_package_questions**
+- id, test_package_id (fk), question_id (fk), order, points_override
+  (nullable, override skor default kalau perlu)
+
+*(Kalau nanti butuh "acak N soal dari subtopik X" otomatis saat attempt
+dimulai, tambahkan tabel `test_package_rules` — belum perlu di fase 1
+kalau susunan soal dipilih manual oleh admin.)*
+
+## Grup: Akses / Entitlement (tanpa payment dulu)
+
+**entitlements**
+- id, user_id (fk), test_package_id (fk), granted_by (`admin_manual` di
+  fase ini; nanti bisa `purchase`), granted_at
+
+> Fase 1: baris ini diisi manual oleh admin lewat panel admin sederhana.
+> Struktur ini sengaja sudah menyerupai "hasil dari pembelian" supaya nanti
+> saat payment gateway masuk, tinggal insert ke tabel yang sama.
+
+## Grup: Attempt (pengerjaan)
+
+**attempts**
+- id, user_id (fk), test_package_id (fk), started_at, ends_at,
+  submitted_at (nullable), status (`in_progress`|`submitted`|`expired`),
+  total_score (nullable, diisi saat finalize)
+
+**attempt_answers**
+- id, attempt_id (fk), question_id (fk), selected_option_id (nullable),
+  is_flagged (bool, "ragu-ragu"), answered_at
+- unique constraint: (attempt_id, question_id)
+
+**attempt_subtopic_scores** (tabel ringkasan, diisi saat finalize)
+- id, attempt_id (fk), subtopic_id (fk), correct_count, total_count,
+  score, percentage
+
+## Enum penting
+
+- `scoring_mode`: `standard` (benar=+1 atau bobot custom, salah=0),
+  `twk_tiu` (benar=+5, salah=0, kosong=0), `tkp` (skor per opsi 1–5,
+  tanpa "benar/salah").
+- `question.status`: `draft` → `pending_review` (khusus asal AI) →
+  `published`. Soal manual boleh langsung `published` kalau admin yakin.
+
+## Index yang wajib ada sejak awal
+
+- `questions(subtopic_id)`
+- `attempt_answers(attempt_id)`
+- `attempt_answers(attempt_id, question_id)` unique
+- `attempt_subtopic_scores(attempt_id)`
+- `test_package_questions(test_package_id)`
+- `entitlements(user_id, test_package_id)` unique

@@ -14,6 +14,16 @@ Alternatif yang ditolak: ...
 
 ---
 
+## 2026-09-21 — Scaffold pakai Next.js 16, bukan 15
+Keputusan: Scaffold proyek dengan `create-next-app@latest` yang meng-install
+Next.js 16.3.5 (React 19.2, Tailwind v4), bukan Next.js 15 seperti yang
+tertulis di draft awal `docs/ARCHITECTURE.md`.
+Alasan: Next 16 adalah rilis stabil terbaru saat scaffold dilakukan; tidak
+ada kebutuhan fitur yang mengharuskan Next 15. `docs/ARCHITECTURE.md`
+sudah diupdate mengikuti versi aktual.
+Alternatif yang ditolak: downgrade manual ke Next 15 supaya persis sama
+dengan draft dokumen awal — dilewati karena tidak ada manfaat konkret.
+
 ## 2026-09-21 — Stack awal & scope fase 1
 Keputusan: Next.js + TypeScript + Tailwind/shadcn + MySQL/Drizzle,
 deploy ke Hostinger Node.js hosting dari GitHub. Payment gateway di-skip

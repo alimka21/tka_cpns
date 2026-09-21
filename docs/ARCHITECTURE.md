@@ -4,7 +4,7 @@
 
 | Lapisan | Pilihan |
 |---|---|
-| Framework | Next.js 15 (App Router), TypeScript |
+| Framework | Next.js 16 (App Router), TypeScript |
 | Styling | Tailwind CSS + shadcn/ui |
 | Database | MySQL (Hostinger) |
 | ORM | Drizzle ORM + Drizzle Kit (migrasi) |

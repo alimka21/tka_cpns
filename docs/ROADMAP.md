@@ -2,16 +2,18 @@
 
 ## Status saat ini
 
-**Fase 0 — Setup.** Belum ada kode, baru dokumen (SRS, arsitektur, skema,
-alur kerja). Belum di-scaffold jadi proyek Next.js.
+**Fase 0 — Setup.** Proyek sudah di-scaffold (Next.js 16 + TypeScript +
+Tailwind + shadcn/ui + Drizzle ORM/Kit + Zod + Better Auth), struktur
+folder `src/` sudah dibuat sesuai `docs/ARCHITECTURE.md` §2. Belum ada
+koneksi database aktif & belum push ke GitHub.
 
 _Update baris ini setiap sesi kerja selesai, supaya sesi Claude Code
 berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 
 ## Fase 0 — Setup proyek (sekarang)
 
-- [ ] `npx create-next-app` (TypeScript, App Router, Tailwind, ESLint)
-- [ ] Install shadcn/ui, Drizzle ORM + Drizzle Kit, Zod, Better Auth
+- [x] `npx create-next-app` (TypeScript, App Router, Tailwind, ESLint)
+- [x] Install shadcn/ui, Drizzle ORM + Drizzle Kit, Zod, Better Auth
 - [ ] Koneksi ke MySQL Hostinger (env `DATABASE_URL`) — bisa pakai
       database lokal/dev dulu sebelum ada hosting aktif
 - [ ] Setup Git + repo GitHub, hubungkan ke VS Code

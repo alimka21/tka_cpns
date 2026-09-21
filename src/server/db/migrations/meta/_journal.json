@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "mysql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "5",
+      "when": 1789980860362,
+      "tag": "0000_glorious_aaron_stack",
+      "breakpoints": true
+    }
+  ]
+}

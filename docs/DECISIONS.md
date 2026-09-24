@@ -14,6 +14,19 @@ Alternatif yang ditolak: ...
 
 ---
 
+## 2026-09-24 — Fase 1 dikerjakan dari lapisan non-DB dulu
+Keputusan: Logika skor/analitik dibuat sebagai fungsi murni yang menerima
+data (bukan query DB), UI ujian menerima server action lewat props
+(`saveAnswer`, `submitAttempt`). Tipe client (`src/lib/exam.ts`) sengaja
+tanpa `isCorrect`/`scoreWeight`. Unit test pakai Vitest 4 (Vitest 5
+bentrok peer `@types/node@20`).
+Alasan: database belum tersambung; dengan pola ini, begitu tabel siap
+tinggal tulis server action yang memanggil fungsi yang sudah teruji.
+Catatan skor: mode TKP menganggap "benar" (`correct_count`) = memilih opsi
+berbobot tertinggi; `points_override` hanya berlaku di mode `standard`
+(TWK/TIU selalu +5 sesuai aturan resmi).
+Alternatif yang ditolak: menunggu DB siap dulu — memblokir semua progres.
+
 ## 2026-09-21 — Scaffold pakai Next.js 16, bukan 15
 Keputusan: Scaffold proyek dengan `create-next-app@latest` yang meng-install
 Next.js 16.3.5 (React 19.2, Tailwind v4), bukan Next.js 15 seperti yang

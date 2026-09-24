@@ -2,10 +2,15 @@
 
 ## Status saat ini
 
-**Fase 0 — Setup.** Proyek sudah di-scaffold (Next.js 16 + TypeScript +
-Tailwind + shadcn/ui + Drizzle ORM/Kit + Zod + Better Auth), struktur
-folder `src/` sudah dibuat sesuai `docs/ARCHITECTURE.md` §2. Belum ada
-koneksi database aktif & belum push ke GitHub.
+**Fase 1 — MVP, bagian non-database selesai.** Logika skor 3 mode
+(`src/server/services/scoring.ts`), agregasi subtopik/topik
+(`analytics.ts`), skema Zod (`src/lib/validation/`), parser & template
+Excel import (`question-import.ts`), dan komponen UI ujian
+(`src/components/tes/`: timer server-side, navigasi, ragu-ragu, autosave,
+KaTeX) sudah jadi + unit test (`npm test`, Vitest). Pratinjau UI ujian di
+`/tes/demo` (data contoh, hapus setelah attempt pakai DB).
+**Tertunda (butuh DB):** koneksi MySQL, auth, semua CRUD admin, attempt
+asli, halaman hasil. Git remote/deploy juga belum.
 
 _Update baris ini setiap sesi kerja selesai, supaya sesi Claude Code
 berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
@@ -26,15 +31,21 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
       question_options, question_explanations
 - [ ] Admin: CRUD kategori/topik/subtopik
 - [ ] Admin: CRUD soal manual (dengan KaTeX preview)
+      — ✅ skema Zod `questionInput` & komponen `MathText` siap
 - [ ] Admin: import soal via Excel (template + validasi + preview)
+      — ✅ template + parser + validasi per baris siap; sisa: halaman
+      upload/preview, cocokkan topik/subtopik ke DB, insert draft
 - [ ] Admin: susun paket tes (pilih soal, atur durasi & scoring_mode)
+      — ✅ skema Zod `testPackageInput` siap
 - [ ] Admin: entitlement manual (kasih akses paket premium ke user)
 - [ ] Student: lihat daftar paket tes (gratis/premium, lock kalau belum
       punya entitlement)
 - [ ] Student: kerjakan tes — timer server-side, autosave jawaban,
-      navigasi soal, submit
+      navigasi soal, submit — ✅ UI `ExamShell` siap (lihat `/tes/demo`);
+      sisa: server action start/save/finalize ke tabel attempts
 - [ ] Finalize attempt: hitung skor (3 mode scoring), simpan ringkasan
-      subtopik
+      subtopik — ✅ `scoreAttempt` + `summarizeBySubtopic` teruji;
+      sisa: sambungkan ke DB
 - [ ] Student: halaman hasil — skor total + grafik per subtopik + riwayat
 
 ## Fase 2 — AI generate soal

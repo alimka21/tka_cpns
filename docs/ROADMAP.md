@@ -11,6 +11,11 @@ Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
 `sitemap.xml` (butuh env `SITE_URL`), halaman akun/admin `noindex`,
 header keamanan di `next.config.ts`, font Geist diperbaiki.
 
+**Rencana 2026-09-24:** Fase 1.5 (PG + PGK MCMA + PGK Kategori + soal
+grup stimulus) masuk roadmap. Skema 1.5a harus dikerjakan sebelum tabel
+attempt dibuat; ada 4 keputusan penskoran/batas yang perlu ditetapkan
+dulu (lihat bagian Fase 1.5).
+
 **Kerangka asesmen 2026-09-24:** `asesmen/*.json` jadi sumber hierarki
 konten (lihat `asesmen/README.md`). Migrasi `0002`/`0003` (tabel
 `subjects`, kolom `code`, `cognitive_level`) + seed
@@ -69,19 +74,102 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [ ] Student: kerjakan tes — timer server-side, autosave jawaban,
       navigasi soal, submit — ✅ UI `ExamShell` siap (lihat `/tes/demo`);
       sisa: server action start/save/finalize ke tabel attempts
+      (**setelah** skema Fase 1.5a — format `attempt_answers.response`)
 - [ ] Finalize attempt: hitung skor, simpan ringkasan
       subtopik — ✅ `scoreAttempt` + `summarizeBySubtopic` teruji;
       sisa: sambungkan ke DB
 - [ ] Student: halaman hasil — skor total + grafik per subtopik + riwayat
       — ✅ UI siap (`/hasil/demo`, data contoh); sisa: baca dari DB
 
+## Fase 1.5 — Bentuk soal TKA lengkap & soal grup stimulus
+
+Kerangka asesmen (`asesmen/*.json` → `bentuk_soal`, `jenis_soal`) memakai
+3 bentuk soal + soal grup; sistem saat ini baru PG tunggal.
+**Urutan penting:** kerjakan 1.5a (skema) *sebelum* tabel `attempts`/
+`attempt_answers` dibuat di Fase 1, supaya format jawaban tidak perlu
+dimigrasi ulang. Sisanya (1.5b–e) berjalan paralel dengan Fase 1.
+
+**Keputusan yang perlu diambil dulu** (catat di `docs/DECISIONS.md`):
+- Penskoran PGK — kerangka menyerahkan ke pengelola. Usulan: *benar
+  penuh atau 0* (MCMA: himpunan pilihan persis sama dengan kunci;
+  Kategori: semua pernyataan sesuai kunci). Alternatif: skor parsial
+  proporsional.
+- Batas MCMA — usulan: 4–5 opsi, kunci minimal 1 dan maksimal
+  (jumlah opsi − 1), ada petunjuk "pilih lebih dari satu".
+- Batas Kategori — usulan: 3–5 pernyataan, pasangan kategori
+  Benar/Salah atau Sesuai/Tidak Sesuai (dari kerangka).
+- Stimulus lintas subdomain — usulan: boleh; tiap soal di grup tetap
+  punya subdomain sendiri (analisis kelemahan tetap per subdomain).
+
+### 1.5a Skema & validasi (fondasi)
+- [ ] `questions.type` → enum `pg` | `pgk_mcma` | `pgk_kategori`
+      (ganti `single_choice`, migrasi data `single_choice` → `pg`)
+- [ ] `questions.category_labels` (JSON, nullable) — pasangan kategori
+      untuk PGK Kategori, mis. `["Benar","Salah"]`
+- [ ] `question_options.correct_category` (nullable) — kunci per
+      pernyataan untuk PGK Kategori; `is_correct` tetap untuk PG & MCMA
+- [ ] Tabel `stimuli`: id, code (unique), title, content (teks/KaTeX),
+      image_url, status, created_by, created_at
+- [ ] `questions.stimulus_id` (fk nullable) + `questions.stimulus_order`
+      — `jenis_soal` = grup bila `stimulus_id` terisi
+- [ ] `attempt_answers.response` (JSON) menggantikan
+      `selected_option_id`: `{optionId}` | `{optionIds[]}` |
+      `{byOption: {optionId: kategori}}`
+- [ ] Zod: `questionInput` jadi discriminated union per bentuk (aturan
+      jumlah opsi/kunci di atas) + `stimulusInput` + `answerResponse`
+- [ ] Update `docs/DATABASE.md` (skema + aturan skor per bentuk)
+
+### 1.5b Penskoran & analitik
+- [ ] `scoring.ts`: `scoreQuestion` per bentuk; opsi/pernyataan yang
+      bukan milik soal tetap diabaikan (anti manipulasi payload)
+- [ ] Definisi "terjawab": PG 1 opsi; MCMA ≥1 opsi; Kategori semua
+      pernyataan terisi (sebagian terisi = belum lengkap, skor 0)
+- [ ] `analytics.ts` tidak berubah (tetap per subdomain) — tambah test
+      untuk soal grup yang subdomainnya berbeda-beda
+- [ ] Unit test tiap bentuk: benar penuh, sebagian, salah, kosong,
+      payload manipulasi
+
+### 1.5c UI pengerjaan tes
+- [ ] `ExamQuestion` & `ExamAnswerState` membawa `type`,
+      `categoryLabels`, `stimulus` — tetap **tanpa** kunci jawaban
+- [ ] `QuestionView` per bentuk: radio (PG), checkbox + petunjuk
+      "pilih lebih dari satu" (MCMA), tabel pernyataan × kategori
+      dengan radio per baris (Kategori; di HP jadi kartu per pernyataan)
+- [ ] Panel stimulus: desktop split (stimulus kiri, scroll sendiri;
+      soal kanan), HP bagian "Baca stimulus" yang bisa dilipat
+- [ ] Navigator menandai soal satu grup (label stimulus) dan status
+      "belum lengkap" untuk Kategori yang baru sebagian terisi
+- [ ] Autosave & `saveAnswer` memakai payload `response` baru
+- [ ] `/tes/demo`: contoh 1 soal tiap bentuk + 1 grup stimulus 2 soal
+- [ ] Halaman hasil/pembahasan: tampilkan kunci per bentuk (setelah
+      attempt selesai saja)
+
+### 1.5d Admin & import
+- [ ] Form soal manual: pilih bentuk → field menyesuaikan (kunci tunggal
+      / kunci ganda / kategori per pernyataan), pilih stimulus opsional
+- [ ] Kelola stimulus: daftar, buat/edit, lihat soal yang memakainya
+- [ ] Bank soal: badge bentuk & penanda grup stimulus, filter per bentuk
+- [ ] Susun paket tes: soal grup masuk utuh & berurutan (tidak bisa
+      diambil sebagian)
+- [ ] Import Excel: kolom `bentuk_soal` (pg/pgk_mcma/pgk_kategori),
+      `kunci` multi (`A,C` untuk MCMA; `B,S,B` untuk Kategori),
+      `kategori` (`Benar/Salah` | `Sesuai/Tidak Sesuai`),
+      `kode_stimulus` + sheet "Stimulus" (kode, judul, teks)
+- [ ] Template & petunjuk import diperbarui + test parser per bentuk
+
+### 1.5e AI (menyambung Fase 2)
+- [ ] `buildGenerationContext` menerima bentuk soal & mode grup
+      (1 stimulus + N soal), dengan format output JSON per bentuk
+- [ ] Skema Zod output AI per bentuk (validasi sebelum masuk antrian
+      review)
+
 ## Fase 2 — AI generate soal
 
 - [ ] Halaman pengaturan: simpan Gemini API key user (terenkripsi)
 - [ ] Server action generate soal by subdomain/jumlah/kesulitan/level
       — ✅ konteks prompt dari kerangka (`buildGenerationContext`) siap
-- [ ] Bentuk soal PGK MCMA & PGK Kategori (kerangka mendukung 3 bentuk;
-      sistem baru PG) + soal grup berbasis stimulus
+- [ ] Generate AI untuk semua bentuk soal (PG, PGK MCMA, PGK Kategori)
+      dan soal grup berbasis stimulus — butuh Fase 1.5 selesai
 - [ ] Validasi output AI dengan Zod, retry sekali kalau gagal parse
 - [ ] Admin: antrian review soal AI (approve/edit/reject)
 

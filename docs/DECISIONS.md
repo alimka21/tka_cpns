@@ -14,6 +14,19 @@ Alternatif yang ditolak: ...
 
 ---
 
+## 2026-09-24 — Fokus TKA sekolah saja, CPNS dihapus
+Keputusan: Scope produk hanya TKA siswa SD/SMP/SMA. Semua bagian CPNS
+dihapus: mode skor `twk_tiu`/`tkp`, tipe soal `tkp_weighted`, kolom
+`question_options.score_weight`, dan field `scoring_mode` di paket tes.
+Skor tinggal satu aturan: benar +1 (atau `points_override`), salah/kosong
+0. `is_correct` jadi NOT NULL default false. Hierarki konten dipakai
+sebagai Jenjang → Mata pelajaran → Materi (tabel tetap `categories` →
+`topics` → `subtopics`).
+Alasan: permintaan pemilik produk — fokus ke satu pasar.
+Catatan: menggantikan "Catatan skor" TKP/TWK di entri sebelumnya. Kolom
+`questions.type` tetap ada supaya tipe soal TKA lain (mis. pilihan ganda
+kompleks) bisa ditambah tanpa ubah struktur.
+
 ## 2026-09-24 — Fase 1 dikerjakan dari lapisan non-DB dulu
 Keputusan: Logika skor/analitik dibuat sebagai fungsi murni yang menerima
 data (bukan query DB), UI ujian menerima server action lewat props

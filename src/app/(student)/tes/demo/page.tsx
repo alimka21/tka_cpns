@@ -35,26 +35,24 @@ const questions: ExamQuestion[] = [
   },
   {
     id: 3,
-    text: "Semua peserta tes membawa pensil. Sebagian peserta tes membawa penghapus. Kesimpulan yang tepat adalah ...",
+    text: "Ibu membeli $\\frac{3}{4}$ kg gula, lalu memakai $\\frac{1}{2}$ kg untuk membuat kue. Sisa gula Ibu adalah ...",
     imageUrl: null,
     options: [
-      { id: 31, label: "A", text: "Semua peserta tes membawa penghapus." },
-      { id: 32, label: "B", text: "Sebagian peserta tes membawa pensil dan penghapus." },
-      { id: 33, label: "C", text: "Semua yang membawa penghapus bukan peserta tes." },
-      { id: 34, label: "D", text: "Tidak ada peserta tes yang membawa penghapus." },
-      { id: 35, label: "E", text: "Sebagian peserta tes tidak membawa pensil." },
+      { id: 31, label: "A", text: "$\\frac{1}{8}$ kg" },
+      { id: 32, label: "B", text: "$\\frac{1}{4}$ kg" },
+      { id: 33, label: "C", text: "$\\frac{1}{2}$ kg" },
+      { id: 34, label: "D", text: "$\\frac{2}{3}$ kg" },
     ],
   },
   {
     id: 4,
-    text: "Rekan kerja Anda meminta bantuan menyelesaikan tugasnya, padahal pekerjaan Anda sendiri belum selesai. Sikap Anda ...",
+    text: "Kata baku yang tepat untuk melengkapi kalimat berikut adalah ...\nPetugas perpustakaan sedang menyusun ... buku baru.",
     imageUrl: null,
     options: [
-      { id: 41, label: "A", text: "Menolak karena pekerjaan sendiri lebih penting." },
-      { id: 42, label: "B", text: "Menyelesaikan pekerjaan sendiri dulu, lalu membantu." },
-      { id: 43, label: "C", text: "Membantu sambil mengabaikan pekerjaan sendiri." },
-      { id: 44, label: "D", text: "Menyarankan ia meminta bantuan orang lain." },
-      { id: 45, label: "E", text: "Mengatur waktu agar keduanya selesai tepat waktu." },
+      { id: 41, label: "A", text: "katalogus" },
+      { id: 42, label: "B", text: "katalog" },
+      { id: 43, label: "C", text: "katalok" },
+      { id: 44, label: "D", text: "kataloq" },
     ],
   },
 ];
@@ -64,7 +62,7 @@ export default function DemoTesPage() {
   const endsAt = new Date(now.getTime() + DEMO_DURATION_MINUTES * 60_000);
   return (
     <ExamShell
-      title="Demo Tes — Pratinjau Tampilan"
+      title="Demo TKA — Pratinjau Tampilan"
       questions={questions}
       initialAnswers={{}}
       endsAt={endsAt.toISOString()}

@@ -12,17 +12,17 @@ const fitur = [
   {
     judul: "Analisis Per Subtopik",
     deskripsi:
-      "Bukan cuma skor akhir — lihat subtopik mana yang paling lemah (mis. Aritmatika, Silogisme) supaya belajar lebih terarah.",
+      "Bukan cuma skor akhir — lihat subtopik mana yang paling lemah (mis. Pecahan, Teks Eksplanasi) supaya belajar lebih terarah.",
   },
   {
     judul: "Bank Soal Terorganisir",
     deskripsi:
-      "Soal tersusun rapi per Kategori → Topik → Subtopik, lengkap dengan rumus (KaTeX) dan pembahasan.",
+      "Soal tersusun rapi per Jenjang → Mata Pelajaran → Subtopik, lengkap dengan rumus (KaTeX) dan pembahasan.",
   },
   {
-    judul: "Simulasi Tes CPNS (SKD)",
+    judul: "Simulasi TKA SD, SMP, dan SMA",
     deskripsi:
-      "Mode skor TWK/TIU dan TKP mengikuti aturan resmi, dengan timer server-side yang tidak bisa dicurangi.",
+      "Latihan paket TKA per jenjang dengan timer server-side yang tidak bisa dicurangi dan jawaban tersimpan otomatis.",
   },
   {
     judul: "Generate Soal via AI",
@@ -51,7 +51,7 @@ export default function LandingPage() {
       <main className="flex-1">
         <section className="mx-auto flex w-full max-w-5xl flex-col items-center gap-6 px-6 py-24 text-center">
           <h1 className="max-w-2xl text-4xl font-bold tracking-tight sm:text-5xl">
-            Latihan Tes Akademik & CPNS, dengan Analisis Kelemahan yang Jelas
+            Latihan Tes Kemampuan Akademik (TKA), dengan Analisis Kelemahan yang Jelas
           </h1>
           <p className="max-w-xl text-lg text-muted-foreground">
             Kerjakan paket tes, dan langsung tahu subtopik mana yang perlu

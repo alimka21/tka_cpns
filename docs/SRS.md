@@ -6,9 +6,9 @@ dibaca ulang oleh AI maupun manusia. Detail implementasi ada di
 
 ## 1. Tujuan
 
-Platform tes online untuk dua kebutuhan:
-- **Tes Kemampuan Akademik Siswa** (mis. UTBK, tes sekolah)
-- **Tes CPNS** (SKD: TWK, TIU, TKP)
+Platform latihan **Tes Kemampuan Akademik (TKA)** khusus siswa sekolah
+(SD, SMP, SMA/SMK). Tes CPNS **tidak** termasuk scope (dihapus
+2026-09-24, lihat DECISIONS).
 
 Nilai jual utama: analisis kelemahan **per subtopik**, bukan cuma skor akhir.
 
@@ -21,11 +21,11 @@ Nilai jual utama: analisis kelemahan **per subtopik**, bukan cuma skor akhir.
 ## 3. Struktur konten (inti produk)
 
 ```
-Kategori (Akademik / CPNS)
- └─ Topik (mis. "Matematika Dasar", "TIU - Logika")
-     └─ Subtopik (mis. "Aritmatika", "Silogisme")
+Kategori = Jenjang (SD / SMP / SMA)
+ └─ Topik = Mata pelajaran (mis. "Matematika", "Bahasa Indonesia")
+     └─ Subtopik = Materi (mis. "Pecahan", "Teks Eksplanasi")
          └─ Soal (pilihan ganda, bisa ada gambar/rumus)
-Paket Tes (kumpulan soal dari berbagai topik/subtopik, dengan aturan skor & waktu)
+Paket Tes (kumpulan soal dari berbagai topik/subtopik, dengan durasi & poin per soal)
  └─ Percobaan/Attempt (satu kali pengerjaan oleh satu user)
      └─ Jawaban per soal
 ```
@@ -39,10 +39,8 @@ Paket Tes (kumpulan soal dari berbagai topik/subtopik, dengan aturan skor & wakt
 3. **Import soal** (admin): unggah file Excel/CSV dengan template baku →
    validasi → preview → simpan sebagai draft → admin approve.
 4. **Paket Tes** (admin): pilih soal (manual atau by subtopik+jumlah acak),
-   atur durasi, atur mode skor:
-   - Mode standar: benar +1 (atau bobot custom), salah 0.
-   - Mode TWK/TIU: benar +5, salah 0, kosong 0.
-   - Mode TKP: skor per opsi (1–5), tanpa kunci "benar/salah" tunggal.
+   atur durasi. Skor: benar +1 (atau poin custom per soal di paket),
+   salah/kosong 0.
 5. **Pengerjaan tes** (peserta):
    - Timer server-side, auto-submit saat waktu habis.
    - Autosave jawaban tiap kali user memilih opsi.

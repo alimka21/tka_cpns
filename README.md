@@ -1,6 +1,6 @@
 # Web Tes Premium
 
-Platform tes online untuk **Tes Kemampuan Akademik Siswa** dan **Tes CPNS**,
+Platform latihan **Tes Kemampuan Akademik (TKA)** untuk siswa SD, SMP, dan SMA,
 dengan bank soal per topik/subtopik, analisis kelemahan akademik, dan
 generate soal otomatis lewat Gemini API (API key milik masing-masing user).
 

@@ -77,7 +77,6 @@ export const importRowSchema = z
         label: OPTION_LABELS[i],
         optionText,
         isCorrect: OPTION_LABELS[i] === r.kunci,
-        scoreWeight: null,
       })),
     };
   });

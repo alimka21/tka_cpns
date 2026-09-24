@@ -1,5 +1,5 @@
 // Tipe & helper yang aman dikirim ke client selama ujian.
-// SENGAJA tidak ada isCorrect / scoreWeight — kunci jawaban tetap di server.
+// SENGAJA tidak ada isCorrect — kunci jawaban tetap di server.
 
 export type ExamOption = { id: number; label: string; text: string };
 

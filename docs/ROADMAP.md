@@ -2,7 +2,11 @@
 
 ## Status saat ini
 
-**Fase 1 — MVP, bagian non-database selesai.** Logika skor 3 mode
+**Scope: TKA sekolah saja (SD/SMP/SMA), CPNS dihapus 2026-09-24.**
+Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
+**belum dijalankan** ke database.
+
+**Fase 1 — MVP, bagian non-database selesai.** Logika skor
 (`src/server/services/scoring.ts`), agregasi subtopik/topik
 (`analytics.ts`), skema Zod (`src/lib/validation/`), parser & template
 Excel import (`question-import.ts`), dan komponen UI ujian
@@ -35,7 +39,7 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [ ] Admin: import soal via Excel (template + validasi + preview)
       — ✅ template + parser + validasi per baris siap; sisa: halaman
       upload/preview, cocokkan topik/subtopik ke DB, insert draft
-- [ ] Admin: susun paket tes (pilih soal, atur durasi & scoring_mode)
+- [ ] Admin: susun paket tes (pilih soal, atur durasi & poin per soal)
       — ✅ skema Zod `testPackageInput` siap
 - [ ] Admin: entitlement manual (kasih akses paket premium ke user)
 - [ ] Student: lihat daftar paket tes (gratis/premium, lock kalau belum
@@ -43,7 +47,7 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [ ] Student: kerjakan tes — timer server-side, autosave jawaban,
       navigasi soal, submit — ✅ UI `ExamShell` siap (lihat `/tes/demo`);
       sisa: server action start/save/finalize ke tabel attempts
-- [ ] Finalize attempt: hitung skor (3 mode scoring), simpan ringkasan
+- [ ] Finalize attempt: hitung skor, simpan ringkasan
       subtopik — ✅ `scoreAttempt` + `summarizeBySubtopic` teruji;
       sisa: sambungkan ke DB
 - [ ] Student: halaman hasil — skor total + grafik per subtopik + riwayat

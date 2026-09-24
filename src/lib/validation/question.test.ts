@@ -27,15 +27,4 @@ describe("questionInput", () => {
     const q = { ...base, options: [...base.options.slice(0, 3), { ...base.options[3], label: "E" }] };
     expect(questionInput.safeParse(q).success).toBe(false);
   });
-
-  it("soal TKP wajib bobot di semua opsi", () => {
-    const tkp = {
-      ...base,
-      type: "tkp_weighted",
-      options: base.options.map((o, i) => ({ ...o, isCorrect: null, scoreWeight: i + 1 })),
-    };
-    expect(questionInput.safeParse(tkp).success).toBe(true);
-    tkp.options[0].scoreWeight = null as unknown as number;
-    expect(questionInput.safeParse(tkp).success).toBe(false);
-  });
 });

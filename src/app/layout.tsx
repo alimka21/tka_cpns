@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Web Tes Premium",
   description:
-    "Platform tes online untuk Tes Kemampuan Akademik Siswa dan Tes CPNS, dengan analisis kelemahan per subtopik.",
+    "Platform latihan Tes Kemampuan Akademik (TKA) untuk siswa SD, SMP, dan SMA, dengan analisis kelemahan per subtopik.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

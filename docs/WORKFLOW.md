@@ -74,3 +74,32 @@ Sebelum domain & hosting aktif, Anda bisa develop dengan MySQL lokal
 (XAMPP/Laragon) atau database dev gratis (PlanetScale/Railway/Aiven) lalu
 pindahkan `DATABASE_URL` ke database MySQL Hostinger saat siap deploy.
 Skema Drizzle sama persis, tinggal jalankan migrasi ke database baru.
+
+## 7. Menjalankan migrasi ke MySQL Hostinger
+
+Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
+
+**A. `npm run db:migrate` (disarankan, kalau bisa)**
+- Aktifkan **Remote MySQL** di hPanel Hostinger (Databases → Remote MySQL),
+  whitelist IP Anda, lalu arahkan `DATABASE_URL` lokal ke database
+  Hostinger dan jalankan `npm run db:migrate` dari komputer Anda.
+- Kelebihan: Drizzle otomatis mencatat migrasi mana yang sudah jalan di
+  tabel `__drizzle_migrations`, jadi migrasi berikutnya tidak bentrok.
+
+**B. Copy-paste manual ke phpMyAdmin (kalau Remote MySQL tidak tersedia)**
+- File di `src/server/db/migrations/000x_*.sql` mengandung penanda
+  `--> statement-breakpoint` di antara statement — ini bukan SQL valid,
+  cuma dipakai oleh `drizzle-kit migrate` untuk memecah file jadi
+  beberapa statement. Kalau dipaste apa adanya ke phpMyAdmin, akan error
+  `#1064 ... near '--> statement-breakpoint'`.
+- Hapus dulu semua baris `--> statement-breakpoint` sebelum paste ke tab
+  SQL phpMyAdmin, misalnya:
+  ```bash
+  sed 's/-->[[:space:]]*statement-breakpoint//g' src/server/db/migrations/0000_xxx.sql
+  ```
+- **Penting**: karena dijalankan manual, tabel `__drizzle_migrations`
+  tidak otomatis terisi. Kalau nanti `npm run db:migrate` dijalankan ke
+  database yang sama, dia akan mencoba `CREATE TABLE` yang sudah ada lagi
+  dan gagal. Kalau sudah mulai pakai cara manual, tetap pakai cara manual
+  untuk migrasi selanjutnya juga (generate SQL-nya, bersihkan penanda,
+  paste ke phpMyAdmin).

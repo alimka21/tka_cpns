@@ -39,7 +39,7 @@ export const questions = mysqlTable("questions", {
   subtopicId: int("subtopic_id")
     .notNull()
     .references(() => subtopics.id),
-  type: mysqlEnum("type", ["single_choice", "tkp_weighted"])
+  type: mysqlEnum("type", ["single_choice"])
     .notNull()
     .default("single_choice"),
   questionText: text("question_text").notNull(),
@@ -67,8 +67,7 @@ export const questionOptions = mysqlTable("question_options", {
     .references(() => questions.id),
   label: mysqlEnum("label", ["A", "B", "C", "D", "E"]).notNull(),
   optionText: text("option_text").notNull(),
-  isCorrect: boolean("is_correct"),
-  scoreWeight: int("score_weight"),
+  isCorrect: boolean("is_correct").notNull().default(false),
   order: int("order").notNull().default(0),
 });
 

@@ -42,7 +42,7 @@ src/
       index.ts
     actions/                 # Server Actions, dikelompokkan per domain
     services/
-      scoring.ts             # logika skor (standar, TWK/TIU, TKP)
+      scoring.ts             # logika skor (benar +1 / poin custom)
       analytics.ts           # agregasi skor per topik/subtopik
       ai-generate.ts         # panggil Gemini, parse & validasi output (Zod)
       crypto.ts              # enkripsi/dekripsi API key user

@@ -16,7 +16,7 @@ generate migrasi — jangan tulis ulang dokumen ini kecuali skema berubah.
 
 ## Grup: Konten
 
-**categories** — `id, name` (mis. "Akademik", "CPNS")
+**categories** — `id, name` = jenjang (mis. "SD", "SMP", "SMA")
 
 **topics**
 - id, category_id (fk), name, slug, order
@@ -25,8 +25,8 @@ generate migrasi — jangan tulis ulang dokumen ini kecuali skema berubah.
 - id, topic_id (fk), name, slug, order
 
 **questions**
-- id, subtopic_id (fk), type (`single_choice` fase 1; `tkp_weighted` untuk
-  TKP), question_text, image_url (nullable), difficulty
+- id, subtopic_id (fk), type (`single_choice`; tipe lain menyusul kalau
+  perlu), question_text, image_url (nullable), difficulty
   (`easy`|`medium`|`hard`), status (`draft`|`pending_review`|`published`),
   generated_by (`manual`|`ai`|`import`), source_user_id (nullable, siapa
   yang generate/import), created_by, reviewed_by (nullable), reviewed_at
@@ -34,8 +34,7 @@ generate migrasi — jangan tulis ulang dokumen ini kecuali skema berubah.
 
 **question_options**
 - id, question_id (fk), label (A/B/C/D/E), option_text, is_correct
-  (untuk single_choice), score_weight (1–5, untuk tkp_weighted; null untuk
-  single_choice), order
+  (bool, default false), order
 
 **question_explanations**
 - id, question_id (fk, 1:1), explanation_text
@@ -44,7 +43,7 @@ generate migrasi — jangan tulis ulang dokumen ini kecuali skema berubah.
 
 **test_packages**
 - id, title, description, category_id (fk), duration_minutes,
-  scoring_mode (`standard`|`twk_tiu`|`tkp`), is_premium (bool),
+  is_premium (bool),
   status (`draft`|`published`), created_by, created_at
 
 **test_package_questions**
@@ -83,9 +82,8 @@ kalau susunan soal dipilih manual oleh admin.)*
 
 ## Enum penting
 
-- `scoring_mode`: `standard` (benar=+1 atau bobot custom, salah=0),
-  `twk_tiu` (benar=+5, salah=0, kosong=0), `tkp` (skor per opsi 1–5,
-  tanpa "benar/salah").
+- Aturan skor (satu-satunya): benar = +1 atau `points_override`,
+  salah/kosong = 0.
 - `question.status`: `draft` → `pending_review` (khusus asal AI) →
   `published`. Soal manual boleh langsung `published` kalau admin yakin.
 

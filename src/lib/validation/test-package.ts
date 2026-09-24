@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { PACKAGE_STATUSES, SCORING_MODES } from "./enums";
+import { PACKAGE_STATUSES } from "./enums";
 
 export const testPackageQuestionInput = z.object({
   questionId: z.number().int().positive(),
@@ -17,7 +17,6 @@ export const testPackageInput = z
       .int()
       .min(1, "Durasi minimal 1 menit")
       .max(600, "Durasi maksimal 600 menit"),
-    scoringMode: z.enum(SCORING_MODES),
     isPremium: z.boolean().default(false),
     status: z.enum(PACKAGE_STATUSES).default("draft"),
     questions: z.array(testPackageQuestionInput),

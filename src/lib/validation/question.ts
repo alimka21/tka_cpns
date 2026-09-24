@@ -4,8 +4,7 @@ import { DIFFICULTIES, OPTION_LABELS, QUESTION_STATUSES, QUESTION_TYPES } from "
 export const questionOptionInput = z.object({
   label: z.enum(OPTION_LABELS),
   optionText: z.string().trim().min(1, "Teks opsi wajib diisi"),
-  isCorrect: z.boolean().nullable().default(null),
-  scoreWeight: z.number().int().min(1).max(5).nullable().default(null),
+  isCorrect: z.boolean().default(false),
 });
 
 export const questionInput = z
@@ -31,33 +30,12 @@ export const questionInput = z
       }
     });
 
-    if (q.type === "single_choice") {
-      const correct = q.options.filter((o) => o.isCorrect === true).length;
-      if (correct !== 1) {
-        ctx.addIssue({
-          code: "custom",
-          path: ["options"],
-          message: "Soal pilihan ganda harus punya tepat 1 kunci jawaban",
-        });
-      }
-      q.options.forEach((o, i) => {
-        if (o.scoreWeight !== null) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["options", i, "scoreWeight"],
-            message: "Bobot skor hanya untuk soal TKP",
-          });
-        }
-      });
-    } else {
-      q.options.forEach((o, i) => {
-        if (o.scoreWeight === null) {
-          ctx.addIssue({
-            code: "custom",
-            path: ["options", i, "scoreWeight"],
-            message: "Soal TKP wajib punya bobot 1–5 di setiap opsi",
-          });
-        }
+    const correct = q.options.filter((o) => o.isCorrect).length;
+    if (correct !== 1) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["options"],
+        message: "Soal harus punya tepat 1 kunci jawaban",
       });
     }
   });

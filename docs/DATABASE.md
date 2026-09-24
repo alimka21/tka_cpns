@@ -16,18 +16,31 @@ generate migrasi — jangan tulis ulang dokumen ini kecuali skema berubah.
 
 ## Grup: Konten
 
-**categories** — `id, name` = jenjang (mis. "SD", "SMP", "SMA")
+Hierarki = kerangka asesmen TKA resmi (`asesmen/tka-*.json`, loader di
+`src/server/asesmen/`). Diisi lewat `npm run db:seed:asesmen` (upsert by
+`code`, idempoten), **bukan** input manual. Cakupan/batasan/level kognitif
+tidak disalin ke DB — dibaca dari file kerangka berdasarkan `code`.
 
-**topics**
-- id, category_id (fk), name, slug, order
+**categories** (jenjang) — `id, code` (`SD`|`SMP`|`SMA`, unique)`, name`
 
-**subtopics**
-- id, topic_id (fk), name, slug, order
+**subjects** (mata uji)
+- id, category_id (fk), code (unique, mis. `SMP-MTK`), name, full_name,
+  type (`wajib`|`pilihan`), structure (`kompetensi_subkompetensi`|
+  `elemen_subelemen`), order
+
+**topics** (= domain / kompetensi / elemen)
+- id, subject_id (fk), code (unique, mis. `SMP-MTK-D1`), name,
+  description (nullable), order
+
+**subtopics** (= subdomain — **unit analisis kelemahan**)
+- id, topic_id (fk), code (unique, mis. `SMP-MTK-D1-S1`), name
+  (varchar 512 — nama terpanjang di regulasi 284 karakter), order
 
 **questions**
 - id, subtopic_id (fk), type (`single_choice`; tipe lain menyusul kalau
   perlu), question_text, image_url (nullable), difficulty
-  (`easy`|`medium`|`hard`), status (`draft`|`pending_review`|`published`),
+  (`easy`|`medium`|`hard`), cognitive_level (nullable, `L1`–`L3` sesuai
+  mata uji; null untuk mata uji bahasa), status (`draft`|`pending_review`|`published`),
   generated_by (`manual`|`ai`|`import`), source_user_id (nullable, siapa
   yang generate/import), created_by, reviewed_by (nullable), reviewed_at
   (nullable), created_at

@@ -33,6 +33,8 @@ tugas saat ini. Urutan baca yang disarankan:
 | `docs/ROADMAP.md` | Fase MVP, urutan pengerjaan | Saat menentukan "kerjakan apa selanjutnya" |
 | `docs/WORKFLOW.md` | Alur Git, cara deploy ke Hostinger, cara testing | Saat setup, deploy, atau troubleshooting env |
 | `docs/DECISIONS.md` | Log keputusan (ADR ringkas), ditambah seiring waktu | Saat butuh alasan kenapa sesuatu dibuat begitu |
+| `docs/UI_UX.md` | Design tokens, komponen, peta layar Stitch → kode | Sebelum membuat/mengubah UI |
+| `asesmen/README.md` | Kerangka asesmen TKA (JSON) = sumber hierarki konten & kode subdomain | Saat kerja soal, import, AI generate, analisis |
 
 Kalau salah satu file di atas belum ada, itu berarti belum dibuat —
 buat baru mengikuti gaya file lain, ringkas dan dalam poin-poin.

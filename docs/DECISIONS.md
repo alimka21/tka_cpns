@@ -12,6 +12,23 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-24 — Kerangka asesmen TKA jadi sumber hierarki konten
+Keputusan: `asesmen/tka-{sd,smp,sma}.json` (transkripsi kerangka BSKAP)
+menjadi sumber kebenaran. Loader `src/server/asesmen/` memvalidasi &
+menormalkan (4 varian bentuk level kognitif, preset SMA). Skema DB jadi 4
+tingkat: categories(jenjang) → subjects(mata uji, baru) → topics(=domain)
+→ subtopics(=subdomain), semua dengan `code` unik; `questions` dapat
+`cognitive_level`. Import Excel pakai `kode_subdomain` (bukan nama
+topik/subtopik). Isi JSON tidak diubah — transkripsi regulasi.
+Alasan: kode baku membuat import, analisis, dan prompt AI presisi tanpa
+salah ketik nama; kerangka sendiri mewajibkan soal tertaut ke subdomain.
+Nama tabel topics/subtopics dipertahankan + migrasi dua langkah (0002
+tambah, 0003 hapus kolom lama) supaya drizzle-kit tidak meminta konfirmasi
+rename interaktif dan migrasi lama yang mungkin sudah jalan tidak disentuh.
+Alternatif yang ditolak: menyalin cakupan/batasan ke kolom DB (duplikasi
+data, rawan tidak sinkron); rename tabel ke domains/subdomains (butuh
+rename interaktif + ubah semua kode analitik tanpa manfaat fungsional).
+
 ## 2026-09-24 — UI mengikuti Stitch "Web Tes Premium", konten disesuaikan TKA
 Keputusan: 10 layar proyek Stitch "Web Tes Premium Landing Page"
 diimplementasikan ke kode (peta di `docs/UI_UX.md` §8). Token: Plus

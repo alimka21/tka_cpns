@@ -11,6 +11,14 @@ Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
 `sitemap.xml` (butuh env `SITE_URL`), halaman akun/admin `noindex`,
 header keamanan di `next.config.ts`, font Geist diperbaiki.
 
+**Kerangka asesmen 2026-09-24:** `asesmen/*.json` jadi sumber hierarki
+konten (lihat `asesmen/README.md`). Migrasi `0002`/`0003` (tabel
+`subjects`, kolom `code`, `cognitive_level`) + seed
+`npm run db:seed:asesmen` sudah dibuat, **belum dijalankan** ke DB
+(jalankan `db:migrate` lalu seed; asumsi tabel konten masih kosong).
+Import Excel kini pakai `kode_subdomain`; konteks prompt AI siap di
+`src/server/asesmen/generation-context.ts`.
+
 **UI 2026-09-24:** semua halaman dibangun ulang sesuai layar Stitch
 "Web Tes Premium" (peta layar → file di `docs/UI_UX.md` §8): landing,
 masuk/daftar (validasi Zod, belum ada sesi), dashboard siswa, pengerjaan
@@ -46,7 +54,8 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [ ] Auth: register/login, role student/admin
 - [ ] Skema Drizzle: users, categories, topics, subtopics, questions,
       question_options, question_explanations
-- [ ] Admin: CRUD kategori/topik/subtopik
+- [x] Admin: kategori/topik/subtopik — diganti seed dari kerangka asesmen
+      (`npm run db:seed:asesmen`) + penjelajah read-only `/admin/topik`
 - [ ] Admin: CRUD soal manual (dengan KaTeX preview)
       — ✅ skema Zod `questionInput` & komponen `MathText` siap
 - [ ] Admin: import soal via Excel (template + validasi + preview)
@@ -69,7 +78,10 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 ## Fase 2 — AI generate soal
 
 - [ ] Halaman pengaturan: simpan Gemini API key user (terenkripsi)
-- [ ] Server action generate soal by topik/subtopik/jumlah/kesulitan
+- [ ] Server action generate soal by subdomain/jumlah/kesulitan/level
+      — ✅ konteks prompt dari kerangka (`buildGenerationContext`) siap
+- [ ] Bentuk soal PGK MCMA & PGK Kategori (kerangka mendukung 3 bentuk;
+      sistem baru PG) + soal grup berbasis stimulus
 - [ ] Validasi output AI dengan Zod, retry sekali kalau gagal parse
 - [ ] Admin: antrian review soal AI (approve/edit/reject)
 

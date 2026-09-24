@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Topik & Subtopik — Admin" };
+
 export default function AdminTopikPage() {
   return (
     <div>

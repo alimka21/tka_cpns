@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import { ExamShell } from "@/components/tes/exam-shell";
-import type { ExamQuestion } from "@/lib/exam";
+import { toExamQuestion, type RawExamQuestion } from "@/server/services/math-render";
 import { demoSaveAnswer, demoSubmitAttempt } from "./actions";
+
+export const metadata: Metadata = { title: "Demo TKA" };
 
 // Halaman pratinjau UI pengerjaan tes dengan data contoh (tanpa database).
 // Hapus setelah /tes/[packageId] terhubung ke tabel attempts.
@@ -9,7 +12,7 @@ export const dynamic = "force-dynamic";
 
 const DEMO_DURATION_MINUTES = 15;
 
-const questions: ExamQuestion[] = [
+const questions: RawExamQuestion[] = [
   {
     id: 1,
     text: "Hasil dari $12 \\times 15$ adalah ...",
@@ -63,7 +66,7 @@ export default function DemoTesPage() {
   return (
     <ExamShell
       title="Demo TKA — Pratinjau Tampilan"
-      questions={questions}
+      questions={questions.map(toExamQuestion)}
       initialAnswers={{}}
       endsAt={endsAt.toISOString()}
       serverNow={now.toISOString()}

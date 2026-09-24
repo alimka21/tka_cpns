@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Soal — Admin" };
+
 export default function AdminSoalPage() {
   return (
     <div>

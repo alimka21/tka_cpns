@@ -6,6 +6,11 @@
 Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
 **belum dijalankan** ke database.
 
+**Optimasi 2026-09-24:** rumus KaTeX dirender di server
+(`math-render.ts` → `ExamQuestion.html`), metadata SEO + `robots.txt`/
+`sitemap.xml` (butuh env `SITE_URL`), halaman akun/admin `noindex`,
+header keamanan di `next.config.ts`, font Geist diperbaiki.
+
 **Fase 1 — MVP, bagian non-database selesai.** Logika skor
 (`src/server/services/scoring.ts`), agregasi subtopik/topik
 (`analytics.ts`), skema Zod (`src/lib/validation/`), parser & template

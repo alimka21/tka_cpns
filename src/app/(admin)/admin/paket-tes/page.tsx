@@ -1,3 +1,7 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = { title: "Paket Tes — Admin" };
+
 export default function AdminPaketTesPage() {
   return (
     <div>

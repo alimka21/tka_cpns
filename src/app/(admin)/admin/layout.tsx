@@ -1,4 +1,8 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+// Halaman akun & admin tidak perlu diindeks mesin pencari.
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 const navItems = [
   { href: "/admin/topik", label: "Topik & Subtopik" },

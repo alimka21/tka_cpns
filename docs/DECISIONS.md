@@ -14,6 +14,17 @@ Alternatif yang ditolak: ...
 
 ---
 
+## 2026-09-24 — Rumus KaTeX dirender di server
+Keputusan: Teks soal/opsi diubah jadi HTML di server (`renderMathToHtml`,
+teks biasa di-escape) dan dikirim ke client sebagai `html`. Komponen
+client `RichHtml` hanya menampilkan HTML + memuat CSS KaTeX.
+Alasan: library KaTeX ±270 KB (chunk JS terbesar) tidak lagi dikirim ke
+browser peserta; CSS KaTeX hanya dimuat di halaman yang memakainya.
+Catatan: preview rumus live di form admin nanti boleh pakai KaTeX di
+client — itu halaman admin, bukan halaman ujian.
+Alternatif yang ditolak: render KaTeX di client (lebih lambat di HP
+murah milik siswa).
+
 ## 2026-09-24 — Fokus TKA sekolah saja, CPNS dihapus
 Keputusan: Scope produk hanya TKA siswa SD/SMP/SMA. Semua bagian CPNS
 dihapus: mode skor `twk_tiu`/`tkp`, tipe soal `tkp_weighted`, kolom

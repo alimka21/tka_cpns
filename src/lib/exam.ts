@@ -1,11 +1,12 @@
 // Tipe & helper yang aman dikirim ke client selama ujian.
 // SENGAJA tidak ada isCorrect — kunci jawaban tetap di server.
 
-export type ExamOption = { id: number; label: string; text: string };
+/** `html` = hasil `renderMathToHtml` di server (teks sudah di-escape). */
+export type ExamOption = { id: number; label: string; html: string };
 
 export type ExamQuestion = {
   id: number;
-  text: string;
+  html: string;
   imageUrl: string | null;
   options: ExamOption[];
 };

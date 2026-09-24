@@ -2,7 +2,7 @@
 
 import type { ExamAnswerState, ExamQuestion } from "@/lib/exam";
 import { cn } from "@/lib/utils";
-import { MathText } from "./math-text";
+import { RichHtml } from "./rich-html";
 
 type Props = {
   number: number;
@@ -18,10 +18,15 @@ export function QuestionView({ number, question, answer, disabled, onSelectOptio
     <div className="flex flex-col gap-6">
       <div className="text-base leading-relaxed">
         <div className="mb-2 text-sm font-medium text-muted-foreground">Soal {number}</div>
-        <MathText text={question.text} />
+        <RichHtml html={question.html} />
         {question.imageUrl && (
           // eslint-disable-next-line @next/next/no-img-element -- URL gambar bebas dari admin
-          <img src={question.imageUrl} alt={`Gambar soal ${number}`} className="mt-4 max-h-80 rounded-md border" />
+          <img
+            src={question.imageUrl}
+            alt={`Gambar soal ${number}`}
+            decoding="async"
+            className="mt-4 max-h-80 rounded-md border"
+          />
         )}
       </div>
 
@@ -50,7 +55,7 @@ export function QuestionView({ number, question, answer, disabled, onSelectOptio
               >
                 {option.label}
               </span>
-              <MathText text={option.text} className="pt-0.5" />
+              <RichHtml html={option.html} className="pt-0.5" />
             </button>
           );
         })}

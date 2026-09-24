@@ -1,8 +1,9 @@
 "use server";
 
 // Pratinjau import Excel: parse + validasi per baris, belum menyimpan apa pun.
+// Kode subdomain & level kognitif sudah dicocokkan ke kerangka asesmen.
 // TODO: tambahkan cek sesi admin (Better Auth) dan action konfirmasi yang
-// mencocokkan topik/subtopik ke DB lalu insert sebagai draft.
+// memetakan kode subdomain → subtopics.id lalu insert sebagai draft.
 
 import {
   IMPORT_MAX_BYTES,
@@ -13,8 +14,12 @@ import type { Difficulty, OptionLabel } from "@/lib/validation/enums";
 
 export type ImportPreviewRow = {
   rowNumber: number;
-  topicName: string;
-  subtopicName: string;
+  subdomainCode: string;
+  jenjang: string;
+  subjectName: string;
+  domainName: string;
+  subdomainName: string;
+  cognitiveLevel: string | null;
   questionText: string;
   difficulty: Difficulty;
   answer: OptionLabel;
@@ -44,8 +49,12 @@ export async function previewQuestionImport(formData: FormData): Promise<ImportP
       errors: result.errors,
       valid: result.valid.map((row) => ({
         rowNumber: row.rowNumber,
-        topicName: row.topicName,
-        subtopicName: row.subtopicName,
+        subdomainCode: row.subdomainCode,
+        jenjang: row.jenjang,
+        subjectName: row.subjectName,
+        domainName: row.domainName,
+        subdomainName: row.subdomainName,
+        cognitiveLevel: row.cognitiveLevel,
         questionText: row.questionText,
         difficulty: row.difficulty,
         answer: row.options.find((o) => o.isCorrect)!.label,

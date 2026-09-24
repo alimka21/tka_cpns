@@ -1,0 +1,1899 @@
+{
+  "meta": {
+    "kode_jenjang": "SMA",
+    "nama_jenjang": "SMA/MA/sederajat dan SMK/MAK",
+    "nama_asesmen": "Tes Kemampuan Akademik (TKA)",
+    "versi_file": "1.0.0",
+    "tanggal_disusun": "2026-09-24",
+    "bahasa": "id-ID",
+    "catatan_penggunaan": "File ini adalah sumber kebenaran (source of truth) kerangka asesmen TKA jenjang SMA/MA/sederajat dan SMK/MAK. Seluruh soal dalam bank soal WAJIB tertaut ke salah satu subdomain di file ini. Field 'batasan' dan 'cakupan' adalah pagar ruang lingkup: soal (termasuk soal hasil generate AI) tidak boleh keluar dari batasan tersebut."
+  },
+
+  "referensi_regulasi": {
+    "nomor": "045/H/AN/2025",
+    "tentang": "Kerangka Asesmen Tes Kemampuan Akademik Jenjang SMA/MA/Sederajat dan SMK/MAK",
+    "penerbit": "Kepala Badan Standar, Kurikulum, dan Asesmen Pendidikan, Kementerian Pendidikan Dasar dan Menengah Republik Indonesia",
+    "ditetapkan_di": "Jakarta",
+    "tanggal_ditetapkan": "2025-07-14",
+    "dasar_hukum_terkait": [
+      "Peraturan Menteri Pendidikan Dasar dan Menengah RI Nomor 9 Tahun 2025 tentang Tes Kemampuan Akademik",
+      "Keputusan Menteri Pendidikan Dasar dan Menengah Nomor 95/M/2025 tentang Pedoman Penyelenggaraan Tes Kemampuan Akademik"
+    ],
+    "acuan_kurikulum": ["Kurikulum 2013", "Kurikulum Merdeka"]
+  },
+
+  "aturan_pemilihan_mata_uji": {
+    "deskripsi": "TKA jenjang SMA/MA/sederajat dan SMK/MAK mencakup mata uji wajib dan mata uji pilihan.",
+    "mata_uji_wajib": {
+      "jumlah": 3,
+      "keterangan": "Peserta mengerjakan SEMUA mata uji wajib.",
+      "daftar_kode": ["SMA-BIND", "SMA-MTK", "SMA-BING"]
+    },
+    "mata_uji_pilihan": {
+      "jumlah_dipilih": 2,
+      "keterangan": "Peserta memilih dua mata uji pilihan yang sesuai dengan program studi tujuan di perguruan tinggi atau pilihan karir murid."
+    },
+    "catatan_smk": "Mata uji 'Produk/Projek Kreatif dan Kewirausahaan' hanya tersedia untuk SMK/MAK."
+  },
+
+  "tujuan_tka": [
+    "Menyediakan pelaporan capaian akademik individu murid dari penilaian yang terstandar.",
+    "Menyediakan skor yang relatif lebih dapat dibandingkan lintas satuan pendidikan untuk keperluan seleksi akademik.",
+    "Menjadi bagian dari upaya pengendalian dan penjaminan mutu pendidikan.",
+    "Menjadi pengakuan hasil belajar bagi murid dari jalur pendidikan nonformal dan informal."
+  ],
+
+  "catatan_penting": [
+    "TKA BUKAN evaluasi untuk menentukan kelulusan murid dari satuan pendidikan.",
+    "Tidak semua mata pelajaran dalam kurikulum menjadi mata uji TKA.",
+    "Pada mata pelajaran yang diujikan pun, tidak seluruh muatan kurikulum diukur."
+  ],
+
+  "jenis_soal": [
+    {
+      "kode": "tunggal",
+      "nama": "Soal Tunggal",
+      "deskripsi": "Soal yang berdiri sendiri, tidak terkait dengan soal-soal lain."
+    },
+    {
+      "kode": "grup",
+      "nama": "Soal Grup",
+      "deskripsi": "Sekumpulan soal yang mengacu pada sebuah stimulus yang sama."
+    }
+  ],
+
+  "bentuk_soal": [
+    {
+      "kode": "pg",
+      "nama": "Pilihan Ganda Sederhana",
+      "singkatan": "PG",
+      "deskripsi": "Hanya terdapat satu pilihan jawaban yang benar. Peserta diminta memilih satu jawaban dari pilihan yang tersedia.",
+      "aturan_penskoran": "Benar jika opsi yang dipilih sama dengan kunci jawaban tunggal.",
+      "struktur_jawaban": "single_correct"
+    },
+    {
+      "kode": "pgk_mcma",
+      "nama": "Pilihan Ganda Kompleks model Multiple Choice Multiple Answers",
+      "singkatan": "PGK MCMA",
+      "deskripsi": "Terdapat kemungkinan lebih dari satu pilihan jawaban benar. Peserta diminta memilih lebih dari satu pilihan yang dianggap benar.",
+      "aturan_penskoran": "Ditentukan oleh pengelola (disarankan: benar penuh jika seluruh opsi benar terpilih dan tidak ada opsi salah terpilih).",
+      "struktur_jawaban": "multiple_correct"
+    },
+    {
+      "kode": "pgk_kategori",
+      "nama": "Pilihan Ganda Kompleks model Kategori",
+      "singkatan": "PGK Kategori",
+      "deskripsi": "Terdapat beberapa pernyataan yang semuanya perlu direspon, misalnya dengan pilihan 'benar' atau 'salah' dan 'sesuai' atau 'tidak sesuai'. Peserta diminta memberi respon untuk masing-masing pernyataan.",
+      "aturan_penskoran": "Ditentukan oleh pengelola (disarankan: benar penuh jika seluruh pernyataan direspon sesuai kunci).",
+      "struktur_jawaban": "categorical_per_statement",
+      "pasangan_kategori_umum": [
+        ["Benar", "Salah"],
+        ["Sesuai", "Tidak Sesuai"]
+      ]
+    }
+  ],
+
+  "level_kognitif_preset": {
+    "catatan": "Beberapa mata uji memakai skema level kognitif yang sama persis. Preset ini dirujuk oleh field 'level_kognitif_ref' pada mata uji terkait.",
+    "PRESET-MTK-SMA": {
+      "nama": "Skema level kognitif matematika SMA (wajib dan tingkat lanjut)",
+      "level": [
+        {
+          "level": 1,
+          "kode": "L1",
+          "nama": "Pengetahuan dan Pemahaman",
+          "nama_en": "Knowing and Understanding",
+          "proses_berpikir": [
+            { "nama": "Menghitung", "deskripsi": "Melakukan perhitungan berdasarkan prosedur yang mencakup operasi hitung aritmatika (+, -, ×, ÷, atau kombinasinya), operasi aljabar, atau operasi matematika lainnya." },
+            { "nama": "Memahami informasi", "deskripsi": "Memahami informasi dari grafik fungsi, tabel, diagram, infografis, atau bentuk visual lainnya." },
+            { "nama": "Mengelompokkan", "deskripsi": "Mengelompokkan objek berdasarkan fakta, konsep, dan prinsip matematika dalam cakupan sub-elemen." },
+            { "nama": "Mengidentifikasi", "deskripsi": "Melakukan identifikasi terhadap objek menggunakan konsep, fakta, dan prinsip matematika dalam cakupan sub-elemen." }
+          ]
+        },
+        {
+          "level": 2,
+          "kode": "L2",
+          "nama": "Aplikasi",
+          "nama_en": "Applying",
+          "proses_berpikir": [
+            { "nama": "Memodelkan", "deskripsi": "Memodelkan permasalahan kontekstual terkait cakupan sub-elemen ke dalam pernyataan matematika." },
+            { "nama": "Menerapkan", "deskripsi": "Menerapkan strategi dan operasi matematika (berupa operasi hitung, operasi aljabar, atau bentuk operasi lainnya) untuk menyelesaikan permasalahan yang melibatkan konsep dan prosedur matematis yang familiar dan rutin." },
+            { "nama": "Menginterpretasikan", "deskripsi": "Memahami dan menjelaskan makna dari berbagai situasi, kejadian, pernyataan, representasi, atau masalah matematika." }
+          ]
+        },
+        {
+          "level": 3,
+          "kode": "L3",
+          "nama": "Penalaran",
+          "nama_en": "Reasoning",
+          "proses_berpikir": [
+            { "nama": "Menganalisis", "deskripsi": "Menentukan, menjelaskan, dan menggunakan hubungan beberapa konsep, fakta, prinsip, atau prosedur matematika dalam cakupan sub-elemen." },
+            { "nama": "Memecahkan masalah", "deskripsi": "Mengaitkan beberapa konsep, fakta, prinsip, prosedur, dan representasi matematika dalam cakupan sub-elemen, untuk menyelesaikan permasalahan dalam situasi baru atau konteks yang tidak rutin." },
+            { "nama": "Mengevaluasi", "deskripsi": "Mengevaluasi alternatif strategi dan solusi dari suatu pemecahan masalah." },
+            { "nama": "Menyimpulkan", "deskripsi": "Menarik kesimpulan yang valid dari informasi, data, atau bukti yang diberikan menggunakan konsep, fakta, prinsip, dan prosedur matematika dalam cakupan sub-elemen." },
+            { "nama": "Melakukan generalisasi", "deskripsi": "Menyusun pernyataan matematis yang menggambarkan hubungan yang lebih umum terkait konsep, fakta, prinsip, dan prosedur dalam cakupan sub-elemen." },
+            { "nama": "Menjustifikasi", "deskripsi": "Memberikan argumen matematis atau langkah/prosedur operasi matematika secara logis untuk mendukung strategi atau solusi dari suatu permasalahan." }
+          ]
+        }
+      ]
+    },
+    "PRESET-KNOW-APPLY-REASON": {
+      "nama": "Skema tiga level kognitif umum (Pemahaman–Penerapan–Penalaran)",
+      "level": [
+        { "level": 1, "kode": "L1", "nama": "Pemahaman", "nama_en": "Knowing" },
+        { "level": 2, "kode": "L2", "nama": "Penerapan", "nama_en": "Applying" },
+        { "level": 3, "kode": "L3", "nama": "Penalaran", "nama_en": "Reasoning" }
+      ]
+    },
+    "PRESET-BAHASA-ASING": {
+      "nama": "Skema kompetensi membaca bahasa asing (Literal–Reorganisasi–Inferensial)",
+      "catatan": "Dipakai oleh mata uji Bahasa Prancis, Jerman, Jepang, Mandarin, Korea, dan Arab. Ini adalah struktur kompetensi, bukan level kognitif."
+    }
+  },
+
+  "mata_uji": [
+    {
+      "kode": "SMA-BIND",
+      "nama": "Bahasa Indonesia",
+      "nama_lengkap": "Bahasa Indonesia SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "wajib",
+      "urutan": 1,
+      "fokus_keterampilan": "Membaca",
+      "deskripsi": "TKA Bahasa Indonesia difokuskan pada salah satu keterampilan berbahasa, yakni membaca. Membaca dipilih sebagai fokus karena merupakan keterampilan yang menjadi fondasi untuk terus belajar dan bekerja pada era teknologi yang berubah dan berkembang sangat cepat.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "jenis_teks": [
+          { "kode": "teks_informasi", "nama": "Teks Informasi", "deskripsi": "Dapat berbentuk tunggal maupun jamak, berisi fakta, konsep, prosedur, dan metakognisi dari berbagai bidang atau topik, genre, dan konteks pada skala lokal, nasional, dan global." },
+          { "kode": "teks_fiksi", "nama": "Teks Fiksi", "deskripsi": "Dapat berupa realisme atau absurd, dengan latar cerita konkret atau abstrak, tokoh dengan karakter bulat, konflik tunggal atau jamak dengan penyelesaian terbuka, alur campuran, dan sudut pandang campuran." }
+        ],
+        "karakteristik_teks": {
+          "kosakata": "Kata khusus dan kata umum, kata berimbuhan kompleks, kata abstrak, makna denotatif, istilah teknis, konotatif konteks luas.",
+          "kalimat": "8–12 kata per kalimat, dengan kalimat kompleks berbagai pola dan kalimat inversi.",
+          "wacana": "Konjungsi antarparagraf makna 'pertentangan' dan 'sebab akibat', dan tanda baca untuk mendukung ungkapan dan makna.",
+          "panjang_teks_kata": { "min": 250, "max": 300, "pengecualian": "Kecuali teks puisi." }
+        }
+      },
+      "aspek_keterampilan_membaca": [
+        "Mengidentifikasi informasi tersurat dalam teks",
+        "Menyusun ulang, mengelompokkan, membuat ikhtisar, dan menyajikan kembali informasi tersurat dalam teks",
+        "Mengidentifikasi dan menyimpulkan informasi tersirat dalam teks",
+        "Menilai gagasan, fakta, atau opini dalam teks",
+        "Menanggapi isi teks, mengidentifikasi diri dengan tokoh atau kejadian, dan menanggapi bahasa penulis dalam teks"
+      ],
+      "domain": [
+        {
+          "kode": "SMA-BIND-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Tekstual",
+          "deskripsi": "Kemampuan untuk memahami informasi yang dikemukakan secara eksplisit, mengelompokkan, menyusun ulang, dan menyajikan kembali informasi secara eksplisit dari teks.",
+          "subdomain": [
+            { "kode": "SMA-BIND-D1-S1", "urutan": 1, "nama": "Mengidentifikasi penggunaan kata serapan dari bahasa daerah/asing dalam berbagai bidang." },
+            { "kode": "SMA-BIND-D1-S2", "urutan": 2, "nama": "Mengidentifikasi latar, karakter, dan/atau fenomena berdasarkan kosakata yang digunakan dalam teks fiksi atau nonfiksi." },
+            { "kode": "SMA-BIND-D1-S3", "urutan": 3, "nama": "Menyusun kerangka atau bagan berdasarkan bagian-bagian penting dalam teks." }
+          ]
+        },
+        {
+          "kode": "SMA-BIND-D2",
+          "urutan": 2,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Kemampuan untuk menarik kesimpulan berdasarkan informasi yang tersirat dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BIND-D2-S1", "urutan": 1, "nama": "Menyimpulkan ide pokok, gagasan pendukung, tokoh, peristiwa, latar, konflik, atau nilai-nilai dalam teks." },
+            { "kode": "SMA-BIND-D2-S2", "urutan": 2, "nama": "Menjelaskan hubungan makna antarkalimat dan/atau antarparagraf dalam teks." },
+            { "kode": "SMA-BIND-D2-S3", "urutan": 3, "nama": "Memprediksi lanjutan atau akhir uraian/cerita berdasarkan bagian tertentu dalam teks." }
+          ]
+        },
+        {
+          "kode": "SMA-BIND-D3",
+          "urutan": 3,
+          "nama": "Evaluasi dan Apresiasi",
+          "deskripsi": "Kemampuan untuk membuat penilaian terhadap ide, menanggapi teks secara emosional dan estetis dengan mempertimbangkan dampaknya terhadap perasaan, imajinasi, serta penggunaan bahasa oleh penulis.",
+          "subdomain": [
+            { "kode": "SMA-BIND-D3-S1", "urutan": 1, "nama": "Menilai relevansi peristiwa dalam teks dengan kehidupan sehari-hari." },
+            { "kode": "SMA-BIND-D3-S2", "urutan": 2, "nama": "Menilai keakuratan, kesesuaian, kecukupan, atau ketepatan informasi dalam teks." },
+            { "kode": "SMA-BIND-D3-S3", "urutan": 3, "nama": "Menilai ketepatan dan kesesuaian penggunaan bahasa dalam teks." },
+            { "kode": "SMA-BIND-D3-S4", "urutan": 4, "nama": "Menilai ketepatan bagian teks untuk menggambarkan karakter, peristiwa, atau latar dalam teks fiksi." },
+            { "kode": "SMA-BIND-D3-S5", "urutan": 5, "nama": "Menyimpulkan respons emosional terhadap unsur puisi, prosa, dan drama." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-MTK",
+      "nama": "Matematika",
+      "nama_lengkap": "Matematika SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "wajib",
+      "urutan": 2,
+      "deskripsi": "TKA Matematika mengukur kemampuan murid dalam memahami fakta, konsep, prinsip, dan prosedur matematika, serta kemampuan mereka dalam menerapkan pengetahuan matematika untuk menyelesaikan masalah (problem solving).",
+      "tipe_struktur": "elemen_subelemen",
+      "level_kognitif_ref": "PRESET-MTK-SMA",
+      "muatan": {
+        "catatan": "Merujuk pada elemen kurikulum atau materi matematika pada Kurikulum 2013 dan Kurikulum Merdeka. Penggunaan logika matematika diintegrasikan langsung dengan elemen matematika yang tertera dalam kurikulum.",
+        "konteks_pengukuran": [
+          "Konteks matematika",
+          "Konteks keseharian yang dapat meliputi kejadian atau situasi di lingkup personal, keluarga, atau lingkungan sekitar baik lokal maupun global"
+        ]
+      },
+      "kemampuan_matematis_yang_diukur": [
+        "Pengetahuan matematika",
+        "Representasi matematis",
+        "Penalaran dan pembuktian matematis",
+        "Pemecahan masalah matematis",
+        "Koneksi matematis"
+      ],
+      "kompetensi_umum": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+      "domain": [
+        {
+          "kode": "SMA-MTK-D1",
+          "urutan": 1,
+          "nama": "Bilangan",
+          "subdomain": [
+            {
+              "kode": "SMA-MTK-D1-S1",
+              "urutan": 1,
+              "nama": "Bilangan Real",
+              "cakupan": [
+                "Jenis dan sifat bilangan",
+                "Operasi bilangan (penjumlahan, pengurangan, perkalian, pembagian, dan gabungannya), beserta sifat-sifatnya antara lain komutatif, asosiatif, dan distributif"
+              ],
+              "batasan": "Bilangan meliputi bilangan real, termasuk bilangan asli berpangkat bilangan bulat atau berpangkat bilangan pecahan."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-MTK-D2",
+          "urutan": 2,
+          "nama": "Aljabar",
+          "subdomain": [
+            {
+              "kode": "SMA-MTK-D2-S1",
+              "urutan": 1,
+              "nama": "Persamaan dan Pertidaksamaan Linear",
+              "cakupan": [
+                "Sistem persamaan linear multivariabel",
+                "Sistem pertidaksamaan linear multivariabel",
+                "Program linear"
+              ],
+              "batasan": "Maksimum banyaknya variabel yang digunakan tiga."
+            },
+            {
+              "kode": "SMA-MTK-D2-S2",
+              "urutan": 2,
+              "nama": "Fungsi",
+              "cakupan": [
+                "Domain, kodomain, daerah hasil (range), dan representasi fungsi linear, kuadrat, dan rasional dalam berbagai bentuk",
+                "Invers fungsi dan representasinya",
+                "Fungsi komposisi dan representasinya"
+              ],
+              "batasan": "Identifikasi fungsi meliputi secara analitis dan grafis."
+            },
+            {
+              "kode": "SMA-MTK-D2-S3",
+              "urutan": 3,
+              "nama": "Barisan dan Deret",
+              "cakupan": [
+                "Barisan dan deret aritmetika",
+                "Barisan dan deret geometri"
+              ],
+              "batasan": "Penerapan barisan dan deret termasuk dalam masalah pertumbuhan, peluruhan, bunga tunggal, dan bunga majemuk."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-MTK-D3",
+          "urutan": 3,
+          "nama": "Geometri dan Pengukuran",
+          "subdomain": [
+            {
+              "kode": "SMA-MTK-D3-S1",
+              "urutan": 1,
+              "nama": "Objek Geometri",
+              "cakupan": [
+                "Hubungan dua sudut, dua garis, dan dua bidang",
+                "Hubungan objek geometri pada bangun datar dan bangun ruang",
+                "Kesebangunan atau kekongruenan bangun datar",
+                "Teorema Pythagoras"
+              ],
+              "batasan": "Bangun datar meliputi segitiga, segi empat, lingkaran, dan bangun datar yang merupakan gabungan dari segitiga dan lingkaran. Bangun ruang meliputi bangun ruang beraturan dengan sisi datar dan lengkung. Jarak dua objek geometri meliputi jarak dua titik, jarak dua garis, jarak dua bidang, jarak titik dan garis, dan jarak titik dan bidang."
+            },
+            {
+              "kode": "SMA-MTK-D3-S2",
+              "urutan": 2,
+              "nama": "Transformasi Geometri",
+              "cakupan": [
+                "Transformasi geometri (translasi, refleksi, rotasi, dan dilatasi, serta komposisinya) dari titik"
+              ],
+              "batasan": null
+            },
+            {
+              "kode": "SMA-MTK-D3-S3",
+              "urutan": 3,
+              "nama": "Pengukuran",
+              "cakupan": [
+                "Keliling dan luas bangun datar",
+                "Volume dan luas permukaan bangun ruang",
+                "Jarak dua objek geometri"
+              ],
+              "batasan": null
+            }
+          ]
+        },
+        {
+          "kode": "SMA-MTK-D4",
+          "urutan": 4,
+          "nama": "Trigonometri",
+          "subdomain": [
+            {
+              "kode": "SMA-MTK-D4-S1",
+              "urutan": 1,
+              "nama": "Perbandingan Trigonometri",
+              "cakupan": [
+                "Perbandingan trigonometri (sinus, kosinus, tangen, kotangen, sekan, kosekan)"
+              ],
+              "batasan": null
+            }
+          ]
+        },
+        {
+          "kode": "SMA-MTK-D5",
+          "urutan": 5,
+          "nama": "Data dan Peluang",
+          "subdomain": [
+            {
+              "kode": "SMA-MTK-D5-S1",
+              "urutan": 1,
+              "nama": "Data",
+              "cakupan": [
+                "Penyajian data dalam bentuk diagram batang, diagram garis, diagram lingkaran, grafik, tabel, dan bentuk visual",
+                "Ukuran pemusatan dan penyebaran data tunggal dan data kelompok",
+                "Aturan pencacahan (aturan penjumlahan, aturan perkalian, permutasi, dan kombinasi)"
+              ],
+              "batasan": null
+            },
+            {
+              "kode": "SMA-MTK-D5-S2",
+              "urutan": 2,
+              "nama": "Peluang",
+              "cakupan": [
+                "Peluang suatu kejadian tunggal",
+                "Peluang suatu kejadian majemuk"
+              ],
+              "batasan": null
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BING",
+      "nama": "Bahasa Inggris",
+      "nama_lengkap": "Bahasa Inggris SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "wajib",
+      "urutan": 3,
+      "fokus_keterampilan": "Membaca",
+      "deskripsi": "TKA Bahasa Inggris mengukur keterampilan membaca beragam jenis teks berbahasa Inggris dalam berbagai situasi komunikasi sehari-hari, vokasional, dan akademik.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "jenis_teks": ["descriptive", "recount", "narrative", "procedure", "analytical exposition"],
+        "konteks_komunikasi": ["Komunikasi sehari-hari", "Tempat kerja", "Akademik"],
+        "catatan_topik": "Gabungan topik-topik pada Kurikulum 2013 dan Kurikulum Merdeka, namun menghindari kosakata teknis yang terlampau jarang digunakan dalam komunikasi.",
+        "tingkat_kompleksitas": [
+          {
+            "level_cefr": "B1",
+            "keterangan": "Tingkat kemahiran yang ditargetkan kedua kurikulum (intermediate).",
+            "panjang_teks_kata": { "min": 250, "max": 350 },
+            "kosakata": "Kosakata berfrekuensi tinggi hingga 3000 kata",
+            "struktur_kalimat": "Struktur kalimat sederhana serta kompleks",
+            "konteks": "Konteks sehari-hari, vokasional, dan akademik dasar yang berkaitan dengan minat, pengalaman, dan kebutuhan informasi umum dengan tingkat pemahaman yang baik."
+          },
+          {
+            "level_cefr": "A2",
+            "keterangan": "Disediakan karena sebagian peserta tes memiliki tingkat kemampuan di bawah B1.",
+            "panjang_teks_kata": { "min": 200, "max": 300 },
+            "kosakata": "Kosakata berfrekuensi tinggi hingga 2000 kata",
+            "struktur_kalimat": "Struktur kalimat sederhana dan beberapa bentuk majemuk dasar",
+            "konteks": "Konteks kehidupan sehari-hari dan vokasional yang berkaitan dengan hal-hal konkret dan dikenal dengan tingkat pemahaman yang memadai."
+          }
+        ]
+      },
+      "domain": [
+        {
+          "kode": "SMA-BING-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Tekstual",
+          "deskripsi": "Mampu memahami informasi yang eksplisit, mengelompokkan, menyusun ulang, dan menyajikan kembali informasi eksplisit dari teks.",
+          "subdomain": [
+            { "kode": "SMA-BING-D1-S1", "urutan": 1, "nama": "Menemukan/mengidentifikasi informasi", "deskripsi": "Mampu menemukan atau mengidentifikasi informasi penting yang disebutkan secara eksplisit dalam teks." },
+            { "kode": "SMA-BING-D1-S2", "urutan": 2, "nama": "Mengklasifikasi", "deskripsi": "Mampu mengelompokkan orang, benda, tempat, atau peristiwa dalam teks berdasarkan kategori tertentu." },
+            { "kode": "SMA-BING-D1-S3", "urutan": 3, "nama": "Membuat kerangka", "deskripsi": "Mampu menyusun poin-poin utama dari teks dalam bentuk kerangka atau daftar." },
+            { "kode": "SMA-BING-D1-S4", "urutan": 4, "nama": "Meringkas", "deskripsi": "Mampu menyajikan kembali isi teks secara ringkas dengan mengutip bagian penting." },
+            { "kode": "SMA-BING-D1-S5", "urutan": 5, "nama": "Mensintesis", "deskripsi": "Mampu menggabungkan informasi dari sumber lain untuk mendapatkan pemahaman yang lebih komprehensif tentang suatu isu atau topik." }
+          ]
+        },
+        {
+          "kode": "SMA-BING-D2",
+          "urutan": 2,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Mampu menarik kesimpulan berdasarkan informasi tersirat dalam teks, pengalaman pribadi, serta intuisi untuk memahami isi teks.",
+          "subdomain": [
+            { "kode": "SMA-BING-D2-S1", "urutan": 1, "nama": "Menyimpulkan detail pendukung", "deskripsi": "Mampu menentukan fakta tambahan yang membuat teks lebih informatif, menarik, atau persuasif." },
+            { "kode": "SMA-BING-D2-S2", "urutan": 2, "nama": "Menyimpulkan topik, ide pokok/gagasan utama, makna, target pembaca, tujuan penulisan teks, atau pesan moral yang tidak secara eksplisit dinyatakan dalam teks." },
+            { "kode": "SMA-BING-D2-S3", "urutan": 3, "nama": "Menyimpulkan urutan kejadian", "deskripsi": "Mampu memperkirakan isi selanjutnya dari teks." },
+            { "kode": "SMA-BING-D2-S4", "urutan": 4, "nama": "Menyimpulkan perbandingan", "deskripsi": "Mampu menyimpulkan persamaan atau perbedaan antara tokoh, waktu, tempat, benda, atau gagasan dalam teks." },
+            { "kode": "SMA-BING-D2-S5", "urutan": 5, "nama": "Menyimpulkan hubungan sebab-akibat", "deskripsi": "Mampu menafsirkan hubungan/kaitan antara gagasan/tindakan satu dan lainnya yang dinyatakan dalam teks." },
+            { "kode": "SMA-BING-D2-S6", "urutan": 6, "nama": "Menyimpulkan karakter tokoh", "deskripsi": "Mampu menyimpulkan sifat atau kepribadian tokoh berdasarkan petunjuk eksplisit dalam teks." },
+            { "kode": "SMA-BING-D2-S7", "urutan": 7, "nama": "Memprediksi hasil cerita", "deskripsi": "Mampu memprediksi akhir cerita setelah membaca bagian awal." }
+          ]
+        },
+        {
+          "kode": "SMA-BING-D3",
+          "urutan": 3,
+          "nama": "Evaluasi dan Apresiasi",
+          "deskripsi": "Mampu membuat penilaian terhadap ide, menanggapi teks secara emosional dan estetis dengan mempertimbangkan dampaknya terhadap perasaan, imajinasi, serta penggunaan bahasa oleh penulis.",
+          "subdomain": [
+            { "kode": "SMA-BING-D3-S1", "urutan": 1, "nama": "Menilai realitas atau fantasi", "deskripsi": "Mampu menganalisis peristiwa dalam teks dapat terjadi dalam kehidupan nyata berdasarkan pengalaman dan pengetahuan pribadi." },
+            { "kode": "SMA-BING-D3-S2", "urutan": 2, "nama": "Menilai fakta atau opini", "deskripsi": "Mampu menilai fakta/opini yang diberikan penulis untuk mendukung pendapatnya berdasarkan bukti atau sekadar berusaha mempengaruhi pembaca." },
+            { "kode": "SMA-BING-D3-S3", "urutan": 3, "nama": "Menilai kecukupan dan validitas informasi", "deskripsi": "Menilai kesesuaian, kelengkapan, keakuratan informasi dalam teks (dengan membandingkannya dengan sumber lain)." },
+            { "kode": "SMA-BING-D3-S4", "urutan": 4, "nama": "Menilai kesesuaian", "deskripsi": "Mampu menentukan bagian teks yang paling sesuai untuk menggambarkan karakter utama atau aspek lain dari bacaan." },
+            { "kode": "SMA-BING-D3-S5", "urutan": 5, "nama": "Menanggapi isi teks", "deskripsi": "Mampu mengungkapkan perasaan/kesan/pendapat terhadap bacaan, seperti ketertarikan, kebosanan, kegembiraan, ketakutan, kebencian, atau kesenangan." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BIND-L",
+      "nama": "Bahasa Indonesia Tingkat Lanjut",
+      "nama_lengkap": "Bahasa Indonesia Tingkat Lanjut SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 4,
+      "fokus_keterampilan": "Membaca",
+      "deskripsi": "Sebagaimana TKA Bahasa Indonesia wajib, TKA Bahasa Indonesia Tingkat Lanjut juga difokuskan pada keterampilan membaca.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "jenis_teks": [
+          { "kode": "teks_informasi", "nama": "Teks Informasi", "deskripsi": "Teks informasi tunggal maupun jamak berisi fakta, konsep, prosedur, dan metakognisi dari berbagai bidang atau topik, berbagai genre, berbagai konteks, dalam skala lokal, nasional, dan global." },
+          { "kode": "teks_fiksi", "nama": "Teks Fiksi", "deskripsi": "Teks fiksi realisme atau absurd dengan latar cerita konkret, metaforis, atau abstrak, tokoh dengan karakter bulat, konflik tunggal atau jamak dengan penyelesaian terbuka, alur campuran, dan sudut pandang campuran." }
+        ],
+        "karakteristik_teks": {
+          "kosakata": "Kata khusus dan kata umum, kata berimbuhan kompleks, kata abstrak, makna denotatif, istilah teknis, konotatif konteks luas, nuansa makna.",
+          "kalimat": "Kalimat kompleks berbagai pola, kalimat efektif, kalimat logis.",
+          "wacana": "Wacana yang kohesif dan koheren, konjungsi antarparagraf, penggunaan ejaan.",
+          "panjang_teks_kata": { "min": 300, "max": 350, "pengecualian": "Kecuali teks puisi." }
+        }
+      },
+      "domain": [
+        {
+          "kode": "SMA-BIND-L-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Tekstual",
+          "deskripsi": "Kemampuan untuk memahami informasi yang dikemukakan secara eksplisit, mengelompokkan, menyusun ulang, dan menyajikan kembali informasi secara eksplisit dari teks.",
+          "subdomain": [
+            { "kode": "SMA-BIND-L-D1-S1", "urutan": 1, "nama": "Mengidentifikasi informasi dalam teks akademik." },
+            { "kode": "SMA-BIND-L-D1-S2", "urutan": 2, "nama": "Mengidentifikasi kalimat yang tepat untuk menyampaikan tanggapan, respons, dan kritik sesuai norma sosial dan budaya." },
+            { "kode": "SMA-BIND-L-D1-S3", "urutan": 3, "nama": "Mengidentifikasi kalimat yang tepat dalam pengajuan usulan, perumusan masalah, dan pemecahan masalah pada teks dalam bidang akademik dan/atau dunia kerja." },
+            { "kode": "SMA-BIND-L-D1-S4", "urutan": 4, "nama": "Mengidentifikasi karakter, peristiwa, latar pada sastra Indonesia atau terjemahan." }
+          ]
+        },
+        {
+          "kode": "SMA-BIND-L-D2",
+          "urutan": 2,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Kemampuan untuk menarik kesimpulan berdasarkan informasi yang tersirat dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BIND-L-D2-S1", "urutan": 1, "nama": "Membandingkan nilai-nilai (budaya, sosial, moral, religius, dan/atau pendidikan) dalam karya sastra Indonesia dan/atau terjemahan." },
+            { "kode": "SMA-BIND-L-D2-S2", "urutan": 2, "nama": "Mengungkapkan kembali isi sastra Melayu Klasik." },
+            { "kode": "SMA-BIND-L-D2-S3", "urutan": 3, "nama": "Mengubah informasi dari tabel/grafik menjadi uraian atau uraian menjadi tabel/grafik dalam bidang akademik dan/atau dunia kerja." },
+            { "kode": "SMA-BIND-L-D2-S4", "urutan": 4, "nama": "Menjelaskan ketepatan penggunaan bahasa, kiasan, dan/atau citraan dalam teks." },
+            { "kode": "SMA-BIND-L-D2-S5", "urutan": 5, "nama": "Menjelaskan ketepatan penggunaan afiks, konstruksi frasa, konstruksi klausa, dan/atau kalimat dalam teks." },
+            { "kode": "SMA-BIND-L-D2-S6", "urutan": 6, "nama": "Menjelaskan kohesi dan koherensi dalam teks ilmiah." }
+          ]
+        },
+        {
+          "kode": "SMA-BIND-L-D3",
+          "urutan": 3,
+          "nama": "Evaluasi dan Apresiasi",
+          "deskripsi": "Kemampuan untuk membuat penilaian terhadap ide, menanggapi teks secara emosional dan estetis.",
+          "subdomain": [
+            { "kode": "SMA-BIND-L-D3-S1", "urutan": 1, "nama": "Menilai gagasan dan pandangan dalam berbagai teks (digital atau cetak) berdasarkan kaidah logika berpikir." },
+            { "kode": "SMA-BIND-L-D3-S2", "urutan": 2, "nama": "Menilai ketepatan dan kesesuaian isi antarteks (digital atau cetak) dalam bidang sosial, akademik, dan dunia kerja." },
+            { "kode": "SMA-BIND-L-D3-S3", "urutan": 3, "nama": "Menilai gagasan atau tindakan tokoh berdasarkan norma atau nilai individu dan sosial." },
+            { "kode": "SMA-BIND-L-D3-S4", "urutan": 4, "nama": "Mengalihwahanakan puisi (Indonesia dan/atau terjemahan) dalam bentuk prosa." },
+            { "kode": "SMA-BIND-L-D3-S5", "urutan": 5, "nama": "Menyimpulkan respons emosional terhadap unsur puisi, prosa, dan drama Indonesia atau terjemahan." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-MTK-L",
+      "nama": "Matematika Tingkat Lanjut",
+      "nama_lengkap": "Matematika Tingkat Lanjut SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 5,
+      "deskripsi": "Sebagaimana TKA Matematika wajib, TKA Matematika Tingkat Lanjut juga mengukur kemampuan murid dalam memahami fakta, konsep, prinsip, dan prosedur matematika, serta kemampuan mereka dalam menerapkan pengetahuan matematika untuk menyelesaikan masalah (problem solving).",
+      "tipe_struktur": "elemen_subelemen",
+      "level_kognitif_ref": "PRESET-MTK-SMA",
+      "muatan": {
+        "catatan": "Merujuk pada elemen atau materi kurikulum yang ada pada Kurikulum 2013 dan Kurikulum Merdeka. Penggunaan logika matematika diintegrasikan langsung dengan elemen matematika yang tertera dalam kurikulum.",
+        "konteks_pengukuran": [
+          "Konteks matematika",
+          "Konteks keseharian yang dapat meliputi kejadian atau situasi di lingkup personal, keluarga, atau lingkungan sekitar baik lokal maupun global"
+        ]
+      },
+      "kemampuan_matematis_yang_diukur": [
+        "Pengetahuan matematika",
+        "Representasi matematis",
+        "Penalaran dan pembuktian matematis",
+        "Pemecahan masalah matematis",
+        "Koneksi matematis"
+      ],
+      "kompetensi_umum": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+      "domain": [
+        {
+          "kode": "SMA-MTK-L-D1",
+          "urutan": 1,
+          "nama": "Aljabar",
+          "subdomain": [
+            {
+              "kode": "SMA-MTK-L-D1-S1",
+              "urutan": 1,
+              "nama": "Matriks",
+              "cakupan": ["Determinan matriks", "Invers matriks", "Operasi matriks"],
+              "batasan": "Elemen matriks merupakan bilangan real. Determinan dan invers matriks berukuran 2 x 2 atau 3 x 3."
+            },
+            {
+              "kode": "SMA-MTK-L-D1-S2",
+              "urutan": 2,
+              "nama": "Polinomial",
+              "cakupan": ["Operasi polinomial", "Pemfaktoran polinomial", "Suku sisa"],
+              "batasan": "Orde dari polinomial maksimum 4 dan semua koefisien polinomial berupa bilangan real."
+            },
+            {
+              "kode": "SMA-MTK-L-D1-S3",
+              "urutan": 3,
+              "nama": "Fungsi",
+              "cakupan": ["Domain, kodomain, daerah hasil (range), dan grafik fungsi polinom, rasional, akar, eksponensial, logaritma, mutlak, trigonometri"],
+              "batasan": "Fungsi polinom maksimum berorde 4. Bilangan pokok fungsi eksponensial berupa bilangan asli."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-MTK-L-D2",
+          "urutan": 2,
+          "nama": "Geometri dan Pengukuran",
+          "subdomain": [
+            {
+              "kode": "SMA-MTK-L-D2-S1",
+              "urutan": 1,
+              "nama": "Vektor",
+              "cakupan": ["Vektor pada bidang dan ruang", "Panjang vektor", "Operasi vektor"],
+              "batasan": "Komponen vektor maksimum tiga."
+            },
+            {
+              "kode": "SMA-MTK-L-D2-S2",
+              "urutan": 2,
+              "nama": "Lingkaran",
+              "cakupan": [
+                "Persamaan lingkaran dan persamaan garis singgung lingkaran",
+                "Luas dan keliling daerah lingkaran atau bagian daerah lingkaran"
+              ],
+              "batasan": null
+            },
+            {
+              "kode": "SMA-MTK-L-D2-S3",
+              "urutan": 3,
+              "nama": "Transformasi Geometri",
+              "cakupan": ["Transformasi geometri (translasi, refleksi, rotasi, dilatasi, serta komposisinya) dari bentuk geometris dan matriks transformasinya"],
+              "batasan": "Bentuk geometris yang ditransformasi meliputi titik, garis, dan bangun datar."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-MTK-L-D3",
+          "urutan": 3,
+          "nama": "Kalkulus",
+          "subdomain": [
+            {
+              "kode": "SMA-MTK-L-D3-S1",
+              "urutan": 1,
+              "nama": "Limit",
+              "cakupan": ["Limit fungsi aljabar", "Limit fungsi trigonometri"],
+              "batasan": "Limit yang dapat diselesaikan tanpa menggunakan Teorema L'Hopital."
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BING-L",
+      "nama": "Bahasa Inggris Tingkat Lanjut",
+      "nama_lengkap": "Bahasa Inggris Tingkat Lanjut SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 6,
+      "fokus_keterampilan": "Membaca",
+      "deskripsi": "Sebagaimana TKA Bahasa Inggris wajib, TKA Bahasa Inggris Tingkat Lanjut berfokus pada keterampilan membaca teks berbahasa Inggris dalam berbagai situasi komunikasi sehari-hari, vokasional, dan akademik.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "jenis_teks": ["exposition", "discussion"],
+        "konteks_komunikasi": ["Sehari-hari", "Vokasi", "Akademik"],
+        "catatan_topik": "Teks tentang teknologi dan isu-isu faktual.",
+        "tingkat_kompleksitas": [
+          {
+            "level_cefr": "B2",
+            "keterangan": "Level kemahiran upper-intermediate yang ditargetkan kedua kurikulum.",
+            "panjang_teks_kata": { "min": 300, "max": 400 },
+            "kosakata": "Kosakata berfrekuensi tinggi hingga 4000 kata",
+            "struktur_kalimat": "Struktur kalimat kompleks",
+            "konteks": "Konteks vokasional dan akademik yang berkaitan dengan minat, pengalaman, dan kebutuhan informasi umum maupun spesifik dengan tingkat pemahaman yang baik."
+          },
+          {
+            "level_cefr": "B1",
+            "keterangan": "Disediakan karena kemampuan bahasa Inggris sebagian murid berada di bawah tingkat B2.",
+            "panjang_teks_kata": { "min": 250, "max": 350 },
+            "kosakata": "Kosakata berfrekuensi tinggi hingga 3000 kata",
+            "struktur_kalimat": "Struktur kalimat sederhana serta kompleks",
+            "konteks": "Konteks vokasional dan akademik dasar yang berkaitan dengan minat, pengalaman, dan kebutuhan informasi umum dengan tingkat pemahaman yang baik."
+          }
+        ]
+      },
+      "domain": [
+        {
+          "kode": "SMA-BING-L-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Tekstual",
+          "deskripsi": "Mampu memahami informasi yang secara eksplisit disebutkan dalam teks, mengelompokkan, menyusun ulang, dan menyajikan kembali informasi secara sistematis.",
+          "subdomain": [
+            { "kode": "SMA-BING-L-D1-S1", "urutan": 1, "nama": "Menemukan/mengidentifikasi informasi", "deskripsi": "Mampu menemukan atau mengidentifikasi gagasan utama serta informasi penting yang secara eksplisit disebutkan dalam teks." },
+            { "kode": "SMA-BING-L-D1-S2", "urutan": 2, "nama": "Mengklasifikasi", "deskripsi": "Mampu mengelompokkan argumen, fakta, dan pendapat dalam teks berdasarkan kategori atau pola penyajian tertentu." },
+            { "kode": "SMA-BING-L-D1-S3", "urutan": 3, "nama": "Membuat kerangka", "deskripsi": "Mampu menyusun poin-poin utama dalam teks ke dalam bentuk peta konsep/diagram/diagram alir atau daftar untuk memahami struktur penyajian informasi." },
+            { "kode": "SMA-BING-L-D1-S4", "urutan": 4, "nama": "Meringkas", "deskripsi": "Mampu menyajikan kembali isi teks secara ringkas dengan tetap mempertahankan gagasan utama dan argumen kunci." },
+            { "kode": "SMA-BING-L-D1-S5", "urutan": 5, "nama": "Mensintesis", "deskripsi": "Mampu menggabungkan informasi dari sumber lain untuk mendapatkan pemahaman yang lebih komprehensif tentang suatu isu atau topik." }
+          ]
+        },
+        {
+          "kode": "SMA-BING-L-D2",
+          "urutan": 2,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Mampu mengidentifikasi/menyimpulkan informasi tersirat dalam teks, serta menghubungkannya dengan pengetahuan dan pengalaman yang relevan.",
+          "subdomain": [
+            { "kode": "SMA-BING-L-D2-S1", "urutan": 1, "nama": "Menyimpulkan detail pendukung", "deskripsi": "Mampu memperkirakan fakta tambahan yang mungkin dapat memperkuat atau memperjelas argumen dalam teks." },
+            { "kode": "SMA-BING-L-D2-S2", "urutan": 2, "nama": "Menyimpulkan topik, ide pokok/gagasan utama, makna, target pembaca, tujuan penulisan teks, atau pesan moral yang tidak secara eksplisit dinyatakan dalam teks." },
+            { "kode": "SMA-BING-L-D2-S3", "urutan": 3, "nama": "Menyimpulkan hubungan antar-ide", "deskripsi": "Mampu menghubungkan berbagai argumen, alasan, dan bukti dalam teks untuk memahami logika penyajian informasi." },
+            { "kode": "SMA-BING-L-D2-S4", "urutan": 4, "nama": "Menyimpulkan hubungan sebab-akibat", "deskripsi": "Mampu menyimpulkan suatu peristiwa/kebijakan/fenomena dalam teks memengaruhi atau dipengaruhi oleh faktor lain." },
+            { "kode": "SMA-BING-L-D2-S5", "urutan": 5, "nama": "Menyimpulkan sudut pandang penulis", "deskripsi": "Mampu mengenali posisi atau sikap penulis terhadap suatu isu berdasarkan bahasa dan pilihan argumen yang digunakan." },
+            { "kode": "SMA-BING-L-D2-S6", "urutan": 6, "nama": "Memprediksi implikasi atau konsekuensi", "deskripsi": "Mampu memperkirakan dampak dari suatu gagasan atau argumen yang disampaikan dalam teks." }
+          ]
+        },
+        {
+          "kode": "SMA-BING-L-D3",
+          "urutan": 3,
+          "nama": "Evaluasi dan Apresiasi",
+          "deskripsi": "Mampu menilai kualitas argumen, keakuratan informasi, serta menanggapi teks secara kritis berdasarkan sudut pandang logis dan objektif.",
+          "subdomain": [
+            { "kode": "SMA-BING-L-D3-S1", "urutan": 1, "nama": "Menilai fakta atau opini", "deskripsi": "Mampu mengevaluasi fakta atau opini dalam teks berdasarkan bukti-bukti pendukung yang disajikan penulis." },
+            { "kode": "SMA-BING-L-D3-S2", "urutan": 2, "nama": "Menilai keakuratan dan kecukupan informasi", "deskripsi": "Mampu menilai kredibilitas informasi dan cakupan perspektif dalam teks." },
+            { "kode": "SMA-BING-L-D3-S3", "urutan": 3, "nama": "Menilai kecukupan dan validitas informasi", "deskripsi": "Menilai kesesuaian, kelengkapan, keakuratan informasi dalam teks (dengan membandingkannya dengan sumber lain)." },
+            { "kode": "SMA-BING-L-D3-S4", "urutan": 4, "nama": "Menilai kekuatan argumen", "deskripsi": "Mampu mengevaluasi seberapa logis dan meyakinkan argumen yang disajikan dalam teks." },
+            { "kode": "SMA-BING-L-D3-S5", "urutan": 5, "nama": "Menanggapi isi teks secara kritis", "deskripsi": "Mampu memberikan opini atau refleksi mengenai isi teks dari sudut pandang yang berbeda." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-FIS",
+      "nama": "Fisika",
+      "nama_lengkap": "Fisika SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 7,
+      "deskripsi": "TKA Fisika mengukur pemahaman konseptual, kemampuan berpikir kritis, dan penerapan prinsip-prinsip fisika dalam berbagai konteks kehidupan sehari-hari, serta keterampilan proses sains secara terpadu dengan area konsep fisika tertentu.",
+      "tipe_struktur": "elemen_subelemen",
+      "muatan": {
+        "konteks_pengukuran": [
+          { "nama": "Fenomena fisika yang terjadi dan dapat diamati di lingkungan", "deskripsi": "Memuat hubungan sebab dan akibat suatu peristiwa, serta terdapat keterkaitan dengan konsep fisika pada peristiwa tersebut." },
+          { "nama": "Makhluk hidup", "deskripsi": "Menyoroti bagaimana prinsip fisika berperan dalam sistem biologis makhluk hidup, termasuk manusia." },
+          { "nama": "Teknologi", "deskripsi": "Mencakup penerapan konsep fisika dalam berbagai teknologi yang digunakan manusia untuk meningkatkan efisiensi, kenyamanan, dan inovasi dalam kehidupan." },
+          { "nama": "Percobaan/penyelidikan", "deskripsi": "Berfokus pada aktivitas penerapan metode ilmiah yang meliputi variabel, langkah penyelidikan, hubungan antara bahan/alat, serta data." }
+        ]
+      },
+      "kompetensi_yang_diukur": [
+        { "nama": "Pemahaman konseptual", "deskripsi": "Pemahaman tentang prinsip, hukum, dan konsep dasar fisika." },
+        { "nama": "Penerapan prinsip fisika", "deskripsi": "Kemampuan menggunakan konsep dan hukum fisika untuk menyelesaikan masalah kontekstual dalam kehidupan sehari-hari." },
+        { "nama": "Analisis dan evaluasi fenomena", "deskripsi": "Kemampuan menganalisis hubungan antar besaran fisika, serta mengevaluasi keakuratan dan penerapan prinsip fisika dalam suatu sistem." },
+        { "nama": "Keterampilan proses sains", "deskripsi": "Keterampilan menerapkan keterampilan observasi, eksperimen, analisis data, serta mengomunikasikan temuan secara sistematis dalam konteks penyelidikan ilmiah." }
+      ],
+      "level_kognitif": [
+        { "level": 1, "kode": "L1", "nama": "Pemahaman", "definisi": "Menggunakan pemahaman tentang konsep, hukum, prinsip, dan keterkaitan antar besaran untuk menjelaskan fenomena.", "proses_berpikir": "Mengingat informasi, mengklasifikasikan konsep, atau menjelaskan hubungan dasar tanpa perlu melakukan perhitungan atau analisis mendalam." },
+        { "level": 2, "kode": "L2", "nama": "Penerapan", "definisi": "Tidak hanya memahami konsep, tetapi juga mampu menggunakannya dalam menyelesaikan masalah kontekstual.", "proses_berpikir": "Mengidentifikasi konsep yang sesuai dan menggunakannya untuk melakukan perhitungan sederhana hingga kompleks." },
+        { "level": 3, "kode": "L3", "nama": "Analisis dan Evaluasi", "definisi": "Menelaah dan mengevaluasi hubungan antar besaran fisika.", "proses_berpikir": "Mencari tahu faktor-faktor yang mempengaruhi suatu kejadian fisika; membangun argumen/alasan suatu konsep fisika yang digunakan dalam suatu kejadian." }
+      ],
+      "keterampilan_proses_sains": [
+        { "nama": "Mengamati", "deskripsi": "Mengidentifikasi karakteristik, pola, atau perubahan dalam suatu fenomena." },
+        { "nama": "Mempertanyakan dan memprediksi", "deskripsi": "Menentukan pertanyaan ilmiah dan memperkirakan hasil berdasarkan pemahaman konsep, dan menghubungkan konsep fisika dengan situasi nyata." },
+        { "nama": "Merencanakan dan melakukan penyelidikan", "deskripsi": "Menentukan variabel, alat, dan prosedur dalam percobaan untuk menguji suatu hipotesis." },
+        { "nama": "Menganalisis dan mengomunikasikan data", "deskripsi": "Mengorganisasi dan mengubah data eksperimen ke dalam bentuk tabel, grafik, atau model matematis; menginterpretasikan data untuk menarik kesimpulan atau menemukan hubungan antar variabel." }
+      ],
+      "domain": [
+        {
+          "kode": "SMA-FIS-D1",
+          "urutan": 1,
+          "nama": "Kinematika",
+          "deskripsi": "Fenomena tentang gerak benda tanpa mempertimbangkan penyebabnya.",
+          "subdomain": [
+            { "kode": "SMA-FIS-D1-S1", "urutan": 1, "nama": "Pengukuran", "kompetensi": "Menelaah hasil pengukuran suatu besaran dengan alat ukur yang sesuai serta menyatakan hasil pengukuran sesuai aturan angka penting.", "batasan": "Alat ukur dapat meliputi jangka sorong, mikrometer sekrup, neraca tiga lengan. Pelaporan hasil pengukuran mengikuti kaidah angka penting." },
+            { "kode": "SMA-FIS-D1-S2", "urutan": 2, "nama": "Gerak Lurus", "kompetensi": "Menganalisis keterkaitan beberapa besaran pada gerak lurus berdasarkan data yang ada untuk menyelesaikan masalah yang relevan.", "batasan": "Gerak lurus meliputi konsep gerak (jarak, perpindahan, kecepatan dengan memperhatikan besar dan arahnya), GLB, dan GLBB." },
+            { "kode": "SMA-FIS-D1-S3", "urutan": 3, "nama": "Gerak Lengkung", "kompetensi": "Mengaitkan hubungan antar variabel dalam gerak parabola dan gerak melingkar beraturan pada peristiwa dalam kehidupan sehari-hari.", "batasan": "Gerak parabola dibatasi pada gerak parabola dengan referensi bidang horizontal. Gerak melingkar dibatasi pada gerak melingkar beraturan." }
+          ]
+        },
+        {
+          "kode": "SMA-FIS-D2",
+          "urutan": 2,
+          "nama": "Dinamika",
+          "deskripsi": "Hubungan antara gaya dan gerak berdasarkan hukum Newton serta konsep momentum dan impuls.",
+          "subdomain": [
+            { "kode": "SMA-FIS-D2-S1", "urutan": 1, "nama": "Hubungan Gaya dan Gerak (Hukum Newton)", "kompetensi": "Mengaitkan hubungan antara gaya dan gerak pada peristiwa yang terjadi dalam kehidupan sehari-hari.", "batasan": "Hukum Newton 1, 2, dan 3, jenis-jenis gaya (dengan memperhatikan besar dan arahnya)." },
+            { "kode": "SMA-FIS-D2-S2", "urutan": 2, "nama": "Momentum dan Impuls", "kompetensi": "Menerapkan konsep momentum dan impuls bagi penyelesaian masalah sehari-hari.", "batasan": "Konsep momentum & impuls, hukum kekekalan momentum." },
+            { "kode": "SMA-FIS-D2-S3", "urutan": 3, "nama": "Dinamika Rotasi (Momen Gaya dan Momen Inersia)", "kompetensi": "Menerapkan konsep momen gaya dan momen inersia yang dimanfaatkan dalam kehidupan sehari-hari.", "batasan": "Momen gaya, momen inersia, Hukum Newton tentang rotasi." }
+          ]
+        },
+        {
+          "kode": "SMA-FIS-D3",
+          "urutan": 3,
+          "nama": "Fluida",
+          "deskripsi": "Sifat dan perilaku fluida dalam kondisi statis maupun dinamis.",
+          "subdomain": [
+            { "kode": "SMA-FIS-D3-S1", "urutan": 1, "nama": "Fluida Statis dan Dinamis", "kompetensi": "Menerapkan konsep yang berkaitan dengan fluida statis dan dinamis pada teknologi yang dimanfaatkan dalam kehidupan sehari-hari.", "batasan": "Tekanan fluida, Hukum Pascal, Hukum Archimedes, kontinuitas dan Hukum Bernoulli." }
+          ]
+        },
+        {
+          "kode": "SMA-FIS-D4",
+          "urutan": 4,
+          "nama": "Gelombang",
+          "deskripsi": "Karakteristik dan sifat gelombang, baik mekanik maupun elektromagnetik.",
+          "subdomain": [
+            { "kode": "SMA-FIS-D4-S1", "urutan": 1, "nama": "Bunyi", "kompetensi": "Menganalisis keterkaitan sifat bunyi dengan parameter gelombangnya berdasarkan peristiwa dalam kehidupan sehari-hari.", "batasan": "Karakteristik gelombang mekanik dalam gelombang bunyi, sumber dan intensitas bunyi." },
+            { "kode": "SMA-FIS-D4-S2", "urutan": 2, "nama": "Cahaya", "kompetensi": "Menganalisis keterkaitan sifat cahaya dengan peristiwa dalam kehidupan sehari-hari serta penerapannya dalam cermin, lensa, dan alat optik.", "batasan": "Karakteristik gelombang elektromagnetik, sifat cahaya serta penerapannya dalam cermin, lensa, dan alat optik." }
+          ]
+        },
+        {
+          "kode": "SMA-FIS-D5",
+          "urutan": 5,
+          "nama": "Kalor dan Termodinamika",
+          "deskripsi": "Pengaruh kalor terhadap perubahan suhu dan wujud zat, proses perpindahan kalor, serta prinsip gas ideal dan hukum termodinamika.",
+          "subdomain": [
+            { "kode": "SMA-FIS-D5-S1", "urutan": 1, "nama": "Kalor dan Perpindahannya", "kompetensi": "Menguraikan pengaruh kalor terhadap kenaikan suhu, perubahan wujud zat, serta faktor-faktor yang mempengaruhi perpindahan kalor dalam kehidupan sehari-hari.", "batasan": "Kalor untuk perubahan suhu, perubahan wujud, pemuaian, perpindahan kalor, serta peristiwa pencampuran zat." },
+            { "kode": "SMA-FIS-D5-S2", "urutan": 2, "nama": "Pemanasan Global", "kompetensi": "Menganalisis penyebab, proses, dan cara mengatasi permasalahan terkait dengan pemanasan global.", "batasan": "Efek rumah kaca: fokus pada proses, penyebab, cara mengatasinya." },
+            { "kode": "SMA-FIS-D5-S3", "urutan": 3, "nama": "Gas Ideal", "kompetensi": "Mengidentifikasi besaran tertentu pada perubahan suhu, tekanan, dan/atau volume gas ideal dalam ruang tertutup.", "batasan": "Hukum Boyle, Boyle-Gay Lussac, dan persamaan gas ideal." },
+            { "kode": "SMA-FIS-D5-S4", "urutan": 4, "nama": "Termodinamika", "kompetensi": "Menganalisis perubahan kalor, perubahan energi dalam, atau usaha dalam proses termodinamika.", "batasan": "Empat proses termodinamika, hukum Termodinamika, mesin kalor." }
+          ]
+        },
+        {
+          "kode": "SMA-FIS-D6",
+          "urutan": 6,
+          "nama": "Kelistrikan",
+          "deskripsi": "Konsep listrik statis dan arus listrik searah.",
+          "subdomain": [
+            { "kode": "SMA-FIS-D6-S1", "urutan": 1, "nama": "Listrik Statis", "kompetensi": "Menganalisis keterkaitan besaran listrik statis dalam peristiwa yang terjadi dalam kehidupan sehari-hari.", "batasan": "Gejala listrik statis, hukum Coulomb, medan listrik, potensial listrik, dan penerapannya." },
+            { "kode": "SMA-FIS-D6-S2", "urutan": 2, "nama": "Rangkaian Arus Searah", "kompetensi": "Menguraikan hubungan antara kuat arus, tegangan, dan hambatan dalam rangkaian listrik arus searah berdasarkan hukum-hukum kelistrikan.", "batasan": "Hukum Ohm dan Hukum Kirchoff dibatasi pada rangkaian listrik campuran (seri-paralel) dengan arus searah hingga perhitungan daya." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-KIM",
+      "nama": "Kimia",
+      "nama_lengkap": "Kimia SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 8,
+      "deskripsi": "TKA Kimia mengukur kemampuan murid dalam penguasaan konsep kimia, menerapkan konsep kimia dalam penyelesaian permasalahan kimia, serta melakukan analisis pada permasalahan kimia yang terkait dengan materi kimia dalam kehidupan sehari-hari.",
+      "tipe_struktur": "elemen_subelemen",
+      "muatan": {
+        "konteks_pengukuran": [
+          { "nama": "Penyelidikan Ilmiah (Scientific Inquiry)", "cakupan": ["Proses ilmiah", "Konsep dan teori kimia", "Interpretasi data ilmiah", "Evaluasi bukti ilmiah", "Perkembangan ilmu kimia"] },
+          { "nama": "Fenomena Kimia pada Kehidupan Sehari-hari (Everyday Chemical Phenomena)", "cakupan": ["Proses kimia di rumah tangga", "Kimia dalam makanan dan minuman", "Kimia dalam kesehatan dan kecantikan", "Material dan sifatnya", "Perubahan kimia dan fisika di lingkungan sekitar"] },
+          { "nama": "Aplikasi Kimia dalam Permasalahan Lingkungan", "cakupan": ["Polusi air, udara, dan tanah", "Efek rumah kaca dan perubahan iklim", "Hujan asam", "Penipisan lapisan ozon", "Pengelolaan limbah kimia", "Energi alternatif dan berkelanjutan"] },
+          { "nama": "Aplikasi Konsep Kimia dalam Proses Industri", "cakupan": ["Proses pembuatan bahan kimia dasar", "Industri petrokimia", "Industri makanan dan minuman", "Industri farmasi", "Prinsip-prinsip teknik kimia"] }
+        ]
+      },
+      "kompetensi_yang_diukur": ["Pemahaman konsep kimia", "Penerapan konsep kimia", "Penalaran dalam permasalahan kimia"],
+      "level_kognitif": [
+        {
+          "level": 1,
+          "kode": "L1",
+          "nama": "Pemahaman konsep kimia (Knowing)",
+          "deskripsi": "Kemampuan yang berkaitan dengan pengetahuan dan pemahaman dasar murid tentang konsep kimia.",
+          "proses_kognitif": [
+            { "nama": "Mengenali (Recognize)", "deskripsi": "Mengidentifikasi atau menyatakan fakta, hubungan, dan konsep; mengidentifikasi karakteristik fisika/kimia serta peran setiap komponen yang terdapat dalam sistem, materi, dan proses tertentu." },
+            { "nama": "Menjelaskan (Describe)", "deskripsi": "Memberikan informasi atau penjelasan secara rinci berdasarkan konsep kimia/mendeskripsikan sifat dan struktur suatu materi serta proses atau fenomena kimia." },
+            { "nama": "Memberikan contoh (Provide Example)", "deskripsi": "Menuliskan contoh yang berkaitan dengan suatu fenomena, kegunaan, maupun kerugian suatu materi/proses kimia yang relevan dalam kehidupan sehari-hari." }
+          ]
+        },
+        {
+          "level": 2,
+          "kode": "L2",
+          "nama": "Penerapan konsep kimia (Applying)",
+          "deskripsi": "Kemampuan murid dalam menerapkan konsep kimia pada permasalahan pada soal.",
+          "proses_kognitif": [
+            { "nama": "Membandingkan/mencari perbedaan/mengklasifikasikan (Compare/Contrast/Classify)", "deskripsi": "Menerapkan pengetahuan tentang fakta, hubungan, proses, konsep, dan metode ilmiah dalam menyelesaikan masalah; mengidentifikasi persamaan/perbedaan dari suatu zat/proses kimia; mengelompokkan berbagai zat/proses berdasarkan sifat-sifatnya." },
+            { "nama": "Menginterpretasikan suatu model (Interpret Model)", "deskripsi": "Menggunakan pengetahuan tentang konsep-konsep sains untuk menginterpretasikan proses, siklus, hubungan/sistem untuk menyelesaikan masalah kimia." },
+            { "nama": "Menginterpretasikan informasi (Interpret Information)", "deskripsi": "Menggunakan pengetahuan atau konsep untuk menjelaskan informasi tekstual, tabular, gambar, dan grafis yang relevan termasuk melakukan perhitungan kimia." }
+          ]
+        },
+        {
+          "level": 3,
+          "kode": "L3",
+          "nama": "Penalaran (Reasoning)",
+          "deskripsi": "Kemampuan murid dalam menganalisis suatu permasalahan terkait kimia dan menunjukkan penalaran terkait konsep kimia yang relevan dan terintegrasi dalam menyelesaikan masalah pada konteks tertentu.",
+          "proses_kognitif": [
+            { "nama": "Memprediksi (Predict)", "deskripsi": "Menganalisis hasil uraian atau perhitungan kimia untuk menarik kesimpulan ilmiah; memperkirakan hasil dari penjelasan teori, konsep, perhitungan, dan analisis; mengevaluasi hasil pemikiran berdasarkan teori dan analisis." },
+            { "nama": "Merancang (Design)", "deskripsi": "Membuat model/rancangan eksperimen dengan variabel bebas, tergantung, dan kontrol; menguji hipotesis; menghubungkan variabel; mengaplikasikan prinsip ilmiah." },
+            { "nama": "Mengevaluasi (Evaluate)", "deskripsi": "Mengevaluasi fenomena yang berhubungan dengan kimia dalam kehidupan sehari-hari melalui proses penerapan teori, konsep, dan perhitungan kimia sehingga bisa dicapai kondisi yang diinginkan." },
+            { "nama": "Menarik kesimpulan (Draw Conclusion)", "deskripsi": "Membuat kesimpulan berdasarkan penerapan teori, konsep, data, dan perhitungan kimia serta mampu menghubungkan antara penyebab dan akibat dalam suatu proses kimia." },
+            { "nama": "Menganalisis (Analyze)", "deskripsi": "Menggunakan informasi yang relevan, konsep, hubungan antar parameter, dan data untuk menjawab pertanyaan dan menyelesaikan masalah." },
+            { "nama": "Menggeneralisasi (Generalize)", "deskripsi": "Membuat kesimpulan dari suatu hasil penyelesaian masalah melalui pemahaman teori, konsep, perhitungan kimia, dan proses sintesis, serta menerapkan kesimpulan tersebut untuk kondisi yang baru." },
+            { "nama": "Memberikan penjelasan disertai bukti (Justify)", "deskripsi": "Menggunakan bukti dan pengetahuan sains untuk menjelaskan suatu fenomena untuk mendukung suatu penjelasan atau penyelesaian masalah dan kesimpulan dari suatu investigasi." }
+          ]
+        }
+      ],
+      "domain": [
+        {
+          "kode": "SMA-KIM-D1",
+          "urutan": 1,
+          "nama": "Kimia Dasar",
+          "deskripsi": "Struktur atom, teori model atom, sistem dan sifat periodik unsur, ikatan kimia, geometri molekul, interaksi antar molekul, hukum dasar kimia, stoikiometri dan persamaan reaksi kimia.",
+          "subdomain": [
+            {
+              "kode": "SMA-KIM-D1-S1",
+              "urutan": 1,
+              "nama": "Struktur Atom dan Ikatan Kimia",
+              "kompetensi": [
+                "Mengidentifikasi konfigurasi elektron, kulit atom, dan elektron valensi suatu atom golongan utama dan menerapkannya dalam penentuan kestabilan elektron.",
+                "Menganalisis jenis ikatan kimia serta kaitannya dengan sifat fisik zat.",
+                "Menganalisis bentuk dan kepolaran molekul berdasarkan teori Pasangan Elektron Kulit Valensi (VSEPR) dan Teori Domain elektron.",
+                "Menganalisis hubungan jenis interaksi yang terjadi antar molekul dengan sifat fisika suatu zat."
+              ],
+              "batasan": "Mencakup konsep konfigurasi elektron, kulit atom, dan elektron valensi suatu atom dari golongan utama, geometri molekul, ikatan ion, ikatan kovalen, ikatan kovalen koordinasi, ikatan logam dan gaya antar molekul."
+            },
+            {
+              "kode": "SMA-KIM-D1-S2",
+              "urutan": 2,
+              "nama": "Stoikiometri",
+              "kompetensi": ["Menerapkan perhitungan kimia untuk menyelesaikan masalah."],
+              "batasan": "Mencakup konsep mol, hukum perbandingan tetap (Hk. Proust), hukum perbandingan berganda, Hk. Avogadro, Hukum Gas, Hukum Kekekalan Massa, perhitungan kimia mencakup penentuan rumus kimia (empiris dan molekul), massa molar senyawa, penentuan kadar zat, penyetaraan, penentuan pereaksi pembatas, dan penentuan rendemen."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-KIM-D2",
+          "urutan": 2,
+          "nama": "Kimia Organik",
+          "deskripsi": "Struktur dan kereaktifan senyawa karbon.",
+          "subdomain": [
+            {
+              "kode": "SMA-KIM-D2-S1",
+              "urutan": 1,
+              "nama": "Struktur dan Sifat Hidrokarbon",
+              "kompetensi": ["Menganalisis sifat fisik dan kimia senyawa organik berdasarkan strukturnya serta mampu mendeskripsikan manfaatnya dalam kehidupan sehari-hari."],
+              "batasan": "Mencakup senyawa organik hidrokarbon (alkana, alkena, dan alkuna)."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-KIM-D3",
+          "urutan": 3,
+          "nama": "Kimia Analitik",
+          "deskripsi": "Larutan, kesetimbangan larutan, asam-basa, pH, dan koloid.",
+          "subdomain": [
+            {
+              "kode": "SMA-KIM-D3-S1",
+              "urutan": 1,
+              "nama": "Larutan dan sifatnya",
+              "kompetensi": [
+                "Menganalisis penerapan konsep konsentrasi dan daya hantar listrik larutan.",
+                "Menganalisis sifat larutan berdasarkan teori dan konsep asam basa.",
+                "Menganalisis parameter sifat koligatif larutan serta penerapannya dalam kehidupan sehari-hari."
+              ],
+              "batasan": "Mencakup hanya pada larutan dalam air dan konsentrasi larutan dalam satuan molar, normal, molal, fraksi mol, dan persen, kenaikan titik didih, penurunan titik beku, penurunan tekanan uap jenuh pelarut murni, dan tekanan osmosis pada larutan elektrolit dan non elektrolit."
+            },
+            {
+              "kode": "SMA-KIM-D3-S2",
+              "urutan": 2,
+              "nama": "Kesetimbangan dalam larutan berair",
+              "kompetensi": [
+                "Menganalisis pH larutan berdasarkan sifat asam dan basa.",
+                "Menganalisis konsep, sifat dan pH larutan penyangga serta penerapannya dalam kehidupan sehari-hari.",
+                "Menganalisis konsep hidrolisis dan pH larutan senyawa garam.",
+                "Menerapkan konsep titrasi asam basa untuk menyelesaikan masalah.",
+                "Menganalisis reaksi kesetimbangan senyawa yang sukar larut dalam air serta penerapannya dalam menyelesaikan masalah."
+              ],
+              "batasan": "Dalam konteks jika asam kuat, asam lemah, basa kuat, dan basa lemah dilarutkan dalam air, serta senyawa garam dan hidroksida sukar larut dalam air."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-KIM-D4",
+          "urutan": 4,
+          "nama": "Kimia Fisik",
+          "deskripsi": "Energetika dan dinamika reaksi.",
+          "subdomain": [
+            {
+              "kode": "SMA-KIM-D4-S1",
+              "urutan": 1,
+              "nama": "Elektrokimia",
+              "kompetensi": [
+                "Menganalisis komponen redoks dalam suatu reaksi kimia.",
+                "Menganalisis sel elektrokimia serta penerapannya dalam kehidupan sehari-hari."
+              ],
+              "batasan": "Mencakup konsep reduksi dan oksidasi serta penerapannya dalam sel elektrokimia."
+            },
+            {
+              "kode": "SMA-KIM-D4-S2",
+              "urutan": 2,
+              "nama": "Energetika",
+              "kompetensi": ["Menerapkan konsep energetika dalam suatu reaksi kimia untuk menyelesaikan masalah."],
+              "batasan": "Mencakup kalorimetri, hukum Hess, serta perhitungan yang melibatkan data entalpi reaksi standar dan energi disosiasi ikatan."
+            },
+            {
+              "kode": "SMA-KIM-D4-S3",
+              "urutan": 3,
+              "nama": "Dinamika",
+              "kompetensi": [
+                "Menganalisis konsep laju dalam suatu reaksi serta faktor-faktor yang dapat mempengaruhinya.",
+                "Menganalisis kesetimbangan dinamis serta berbagai faktor yang mempengaruhinya.",
+                "Menganalisis konsep/proses kimia yang berkaitan dengan reaksi kesetimbangan."
+              ],
+              "batasan": null
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BIO",
+      "nama": "Biologi",
+      "nama_lengkap": "Biologi SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 9,
+      "deskripsi": "TKA Biologi mengukur kemampuan berpikir terkait konsep-konsep biologi dan keterampilan proses/inkuiri. Penguasaan konsep biologi menjadi prasyarat untuk dapat melakukan proses berpikir dan keterampilan proses.",
+      "tipe_struktur": "elemen_subelemen",
+      "muatan": {
+        "catatan": "Pemahaman tentang konsep biologi disajikan dalam konteks kehidupan sehari-hari murid.",
+        "konteks_pengukuran": ["Kesehatan", "Lingkungan", "Pertanian", "Sosiokultural"]
+      },
+      "level_kognitif": [
+        { "level": 1, "kode": "L1", "nama": "Pemahaman", "deskripsi": "Menjelaskan konsep-konsep biologi berdasarkan informasi yang telah dipelajari atau disediakan." },
+        { "level": 2, "kode": "L2", "nama": "Penerapan", "deskripsi": "Menerapkan konsep dan pengetahuan biologi untuk memecahkan masalah biologi." },
+        { "level": 3, "kode": "L3", "nama": "Penalaran", "deskripsi": "Menganalisis, mengevaluasi, dan menarik kesimpulan dari informasi biologis yang kompleks atau baru, serta mengembangkan argumen berbasis bukti." }
+      ],
+      "domain": [
+        {
+          "kode": "SMA-BIO-D1",
+          "urutan": 1,
+          "nama": "Keanekaragaman Hayati",
+          "subdomain": [
+            { "kode": "SMA-BIO-D1-S1", "urutan": 1, "nama": "Klasifikasi dan keanekaragaman makhluk hidup", "kompetensi": "Menganalisis prinsip klasifikasi dan permasalahan keanekaragaman hayati.", "batasan": "Keanekaragaman hayati yang dimaksud adalah keanekaragaman hayati di Indonesia." },
+            { "kode": "SMA-BIO-D1-S2", "urutan": 2, "nama": "Bakteri", "kompetensi": "Menganalisis struktur bakteri dan peranannya terhadap manusia.", "cakupan": ["Struktur bakteri Gram positif dan negatif", "Peranan bakteri bagi manusia"], "batasan": "Struktur bakteri, resistensi bakteri, dan peranannya terhadap manusia." },
+            { "kode": "SMA-BIO-D1-S3", "urutan": 3, "nama": "Ekosistem", "kompetensi": "Menganalisis komponen-komponen ekosistem, interaksi antarkomponen, dan solusi atas permasalahannya.", "cakupan": ["Komponen ekosistem dan interaksi antar komponen", "Pelestarian ekosistem"], "batasan": "Ekosistem yang ada di Indonesia." }
+          ]
+        },
+        {
+          "kode": "SMA-BIO-D2",
+          "urutan": 2,
+          "nama": "Sel",
+          "subdomain": [
+            { "kode": "SMA-BIO-D2-S1", "urutan": 1, "nama": "Metabolisme sel", "kompetensi": "Menganalisis proses metabolisme dan peran enzim.", "batasan": "Katabolisme; anabolisme; sifat dan cara kerja enzim." }
+          ]
+        },
+        {
+          "kode": "SMA-BIO-D3",
+          "urutan": 3,
+          "nama": "Proses-proses pada Makhluk Hidup",
+          "subdomain": [
+            { "kode": "SMA-BIO-D3-S1", "urutan": 1, "nama": "Transport dan pertukaran zat pada manusia", "kompetensi": "Menganalisis keterkaitan struktur organ pada sistem sirkulasi, sistem respirasi, dan sistem ekskresi beserta fungsinya.", "cakupan": ["Sistem sirkulasi", "Sistem respirasi", "Sistem ekskresi"], "batasan": "Keterkaitan antarsistem." },
+            { "kode": "SMA-BIO-D3-S2", "urutan": 2, "nama": "Sistem imun", "kompetensi": "Menganalisis peran sistem imun terhadap kekebalan tubuh.", "batasan": "Mekanisme kerja sistem imun." },
+            { "kode": "SMA-BIO-D3-S3", "urutan": 3, "nama": "Sistem koordinasi", "kompetensi": "Menganalisis sistem koordinasi dalam tubuh manusia.", "batasan": "Mekanisme kerja sistem saraf dan sistem hormon." },
+            { "kode": "SMA-BIO-D3-S4", "urutan": 4, "nama": "Sistem reproduksi", "kompetensi": "Menganalisis keterkaitan struktur organ pada sistem reproduksi dan fungsinya.", "cakupan": ["Sistem reproduksi pria", "Sistem reproduksi wanita"], "batasan": "Struktur dan fungsi organ reproduksi." }
+          ]
+        },
+        {
+          "kode": "SMA-BIO-D4",
+          "urutan": 4,
+          "nama": "Keterampilan Proses",
+          "subdomain": [
+            { "kode": "SMA-BIO-D4-S1", "urutan": 1, "nama": "Mempertanyakan dan memprediksi", "kompetensi": "Merumuskan pertanyaan yang dapat diselidiki secara ilmiah.", "batasan": "Konteks soal sesuai dengan konten pengetahuan pada elemen keanekaragaman hayati, sel, dan proses-proses pada makhluk hidup." },
+            { "kode": "SMA-BIO-D4-S2", "urutan": 2, "nama": "Merencanakan dan melakukan penyelidikan", "kompetensi": "Merancang penyelidikan ilmiah.", "batasan": "Konteks soal sesuai dengan konten pengetahuan pada elemen keanekaragaman hayati, sel, dan proses-proses pada makhluk hidup." },
+            { "kode": "SMA-BIO-D4-S3", "urutan": 3, "nama": "Memproses, menganalisis data dan informasi", "kompetensi": "Mengolah data dan menyimpulkan hasil penyelidikan.", "batasan": "Konteks soal sesuai dengan konten pengetahuan pada elemen keanekaragaman hayati, sel, dan proses-proses pada makhluk hidup." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-PPKN",
+      "nama": "Pendidikan Pancasila dan Kewarganegaraan/Pendidikan Pancasila",
+      "nama_lengkap": "Pendidikan Pancasila dan Kewarganegaraan/Pendidikan Pancasila SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 10,
+      "deskripsi": "Mengukur kemampuan murid dalam menjelaskan, menerapkan dan menganalisis Pancasila, UUD NRI Tahun 1945, Bhinneka Tunggal Ika, dan komitmen terhadap NKRI sebagai warga negara yang cerdas, demokratis dan bertanggung jawab.",
+      "tipe_struktur": "elemen_subelemen",
+      "level_kognitif_ref": "PRESET-KNOW-APPLY-REASON",
+      "kompetensi_yang_diukur": [
+        "Pemahaman konsep Pancasila, UUD tahun 1945, Bhinneka Tunggal Ika, dan komitmen terhadap NKRI",
+        "Penerapan konsep Pancasila, UUD tahun 1945, Bhinneka Tunggal Ika, dan komitmen terhadap NKRI",
+        "Penalaran dalam menyelesaikan permasalahan terkait Pancasila, UUD tahun 1945, Bhinneka Tunggal Ika, dan komitmen terhadap NKRI"
+      ],
+      "domain": [
+        {
+          "kode": "SMA-PPKN-D1",
+          "urutan": 1,
+          "nama": "Pancasila",
+          "subdomain": [
+            {
+              "kode": "SMA-PPKN-D1-S1",
+              "urutan": 1,
+              "nama": "Pancasila sebagai dasar negara, ideologi negara, identitas nasional, hak asasi manusia dan demokrasi Pancasila",
+              "kompetensi": "Menjelaskan, menerapkan dan menganalisis makna sila-sila Pancasila, sejarah perumusan Pancasila, dasar negara, ideologi, identitas nasional, pelaksanaan hak asasi manusia, demokrasi Pancasila, permasalahan dan solusi dalam penerapan nilai-nilai Pancasila."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-PPKN-D2",
+          "urutan": 2,
+          "nama": "Undang-Undang Dasar Negara Republik Indonesia Tahun 1945",
+          "subdomain": [
+            {
+              "kode": "SMA-PPKN-D2-S1",
+              "urutan": 1,
+              "nama": "Penegakan hukum, perlindungan HAM, ketentuan UUD NRI Tahun 1945, demokrasi, hubungan pemerintah pusat dan daerah, kewenangan lembaga negara, hak dan kewajiban warga negara",
+              "kompetensi": "Menjelaskan, menerapkan, dan menganalisis perilaku taat hukum, sejarah dan perkembangan undang-undang dasar di Indonesia, kewenangan lembaga negara menurut UUD NRI Tahun 1945, hubungan pemerintah pusat dengan pemerintah daerah, demokrasi, hak dan kewajiban warga negara."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-PPKN-D3",
+          "urutan": 3,
+          "nama": "Bhinneka Tunggal Ika",
+          "subdomain": [
+            {
+              "kode": "SMA-PPKN-D3-S1",
+              "urutan": 1,
+              "nama": "Integrasi nasional, mengelola kebinekaan sebagai modal sosial, harmoni dalam keberagaman, implementasi prinsip gotong royong, dan ancaman terhadap kebinekaan",
+              "kompetensi": "Menjelaskan, menerapkan dan menganalisis kebersamaan dan keberagaman dalam Bhinneka Tunggal Ika, implementasi prinsip gotong royong, kebinekaan sebagai modal sosial, dan potensi ancaman terhadap keberagaman."
+            }
+          ]
+        },
+        {
+          "kode": "SMA-PPKN-D4",
+          "urutan": 4,
+          "nama": "Negara Kesatuan Republik Indonesia",
+          "subdomain": [
+            {
+              "kode": "SMA-PPKN-D4-S1",
+              "urutan": 1,
+              "nama": "Perilaku warga negara yang baik, bentuk negara, bentuk dan sistem pemerintahan, pengaruh kemajuan IPTEKS terhadap NKRI, menjaga keutuhan NKRI dalam konteks Wawasan Nusantara, pemilih pemula dalam demokrasi Indonesia, sistem pertahanan Indonesia, peran Indonesia dalam perdamaian dunia",
+              "kompetensi": "Menjelaskan, menerapkan dan menganalisis perilaku yang sesuai dengan hak dan kewajiban warga negara, menjaga keutuhan NKRI, peran Indonesia dalam perdamaian dunia, sistem pertahanan dan keamanan negara, praktik demokrasi, bentuk negara, bentuk pemerintahan, dan sistem pemerintahan."
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-EKO",
+      "nama": "Ekonomi",
+      "nama_lengkap": "Ekonomi SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 11,
+      "deskripsi": "TKA Ekonomi menilai pemahaman konseptual dan keterampilan analitis murid dalam bidang ekonomi, termasuk keterampilan berpikir kritis dalam menganalisis isu ekonomi dan keuangan berdasarkan fenomena aktual.",
+      "tipe_struktur": "elemen_subelemen",
+      "kompetensi_yang_diukur": [
+        { "nama": "Pemahaman konsep", "deskripsi": "Kemampuan mengenali, menjelaskan, dan mengaplikasikan teori serta prinsip ekonomi dalam berbagai konteks di masyarakat, baik dalam lingkup nasional maupun global." },
+        { "nama": "Keterampilan proses", "deskripsi": "Kemampuan menganalisis, mengevaluasi, dan menyelesaikan masalah ekonomi berdasarkan data, grafik, dan fenomena nyata. Meliputi keterampilan analitis, pemecahan masalah ekonomi, dan pengambilan keputusan ekonomi." }
+      ],
+      "level_kognitif": [
+        { "level": 1, "kode": "L1", "nama": "Pemahaman", "nama_en": "Knowing", "deskripsi": "Murid mampu mengenali, mengingat, dan memahami konsep dasar ilmu ekonomi, konsep ekonomi makro dan mikro, ekonomi internasional, serta konsep dasar akuntansi. Soal menguji pengetahuan tentang definisi, teori, serta konsep dasar." },
+        { "level": 2, "kode": "L2", "nama": "Penerapan", "nama_en": "Applying", "deskripsi": "Murid dapat mengaplikasikan konsep, melakukan perhitungan berdasarkan konsep yang ada, menginterpretasikan data, dan menerapkan prinsip ekonomi untuk menyelesaikan masalah." },
+        { "level": 3, "kode": "L3", "nama": "Penalaran", "nama_en": "Reasoning", "deskripsi": "Murid berpikir kritis dan menalar logis dengan mengaitkan konsep dengan fenomena nyata, menganalisis data berdasarkan kasus ekonomi, mengevaluasi, dan menarik kesimpulan dalam pengambilan keputusan ekonomi." }
+      ],
+      "domain": [
+        {
+          "kode": "SMA-EKO-D1",
+          "urutan": 1,
+          "nama": "Konsep Dasar Ilmu Ekonomi",
+          "subdomain": [
+            { "kode": "SMA-EKO-D1-S1", "urutan": 1, "nama": "Konsep dasar ilmu ekonomi: kelangkaan, biaya peluang, dan kegiatan ekonomi", "kompetensi": "Menganalisis konsep dasar ilmu ekonomi mencakup kelangkaan, biaya peluang, dan kegiatan ekonomi." }
+          ]
+        },
+        {
+          "kode": "SMA-EKO-D2",
+          "urutan": 2,
+          "nama": "Ekonomi Mikro dan Makro",
+          "subdomain": [
+            { "kode": "SMA-EKO-D2-S1", "urutan": 1, "nama": "Permintaan, penawaran, dan keseimbangan pasar", "kompetensi": "Menganalisis permintaan, penawaran, dan keseimbangan pasar." },
+            { "kode": "SMA-EKO-D2-S2", "urutan": 2, "nama": "Pendapatan nasional, pertumbuhan ekonomi, dan pembangunan ekonomi", "kompetensi": "Menganalisis konsep pendapatan nasional, pertumbuhan ekonomi, dan pembangunan ekonomi." },
+            { "kode": "SMA-EKO-D2-S3", "urutan": 3, "nama": "Ketenagakerjaan", "kompetensi": "Menganalisis konsep ketenagakerjaan dan permasalahannya." },
+            { "kode": "SMA-EKO-D2-S4", "urutan": 4, "nama": "Indeks Harga dan Inflasi", "kompetensi": "Mengevaluasi indeks harga dan inflasi." },
+            { "kode": "SMA-EKO-D2-S5", "urutan": 5, "nama": "Bank sentral dan kebijakan moneter", "kompetensi": "Mengidentifikasi peran bank sentral dan menganalisis kebijakan moneter." },
+            { "kode": "SMA-EKO-D2-S6", "urutan": 6, "nama": "Kebijakan fiskal dan perpajakan", "kompetensi": "Menerapkan konsep perpajakan dan menganalisis kebijakan fiskal." },
+            { "kode": "SMA-EKO-D2-S7", "urutan": 7, "nama": "Manajemen badan usaha dalam perekonomian Indonesia (BUMN, BUMD, BUMS, dan Koperasi)", "kompetensi": "Mendeskripsikan konsep manajemen badan usaha dalam perekonomian Indonesia." }
+          ]
+        },
+        {
+          "kode": "SMA-EKO-D3",
+          "urutan": 3,
+          "nama": "Ekonomi Internasional",
+          "subdomain": [
+            { "kode": "SMA-EKO-D3-S1", "urutan": 1, "nama": "Kerja sama ekonomi dan perdagangan internasional", "kompetensi": "Menganalisis kerja sama ekonomi dan perdagangan internasional." }
+          ]
+        },
+        {
+          "kode": "SMA-EKO-D4",
+          "urutan": 4,
+          "nama": "Akuntansi Keuangan Dasar",
+          "subdomain": [
+            { "kode": "SMA-EKO-D4-S1", "urutan": 1, "nama": "Persamaan dasar akuntansi dan laporan keuangan", "kompetensi": "Menerapkan persamaan dasar akuntansi dan laporan keuangan." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-GEO",
+      "nama": "Geografi",
+      "nama_lengkap": "Geografi SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 12,
+      "deskripsi": "TKA Geografi mengukur kemampuan murid dalam memahami, menerapkan, dan menganalisis pengetahuan faktual, konseptual, serta prosedural yang berkaitan dengan fenomena geosfer.",
+      "tipe_struktur": "elemen_subelemen",
+      "level_kognitif_ref": "PRESET-KNOW-APPLY-REASON",
+      "domain": [
+        {
+          "kode": "SMA-GEO-D1",
+          "urutan": 1,
+          "nama": "Wilayah tempat tinggal dan lingkungan sekitar (karakteristik, keunikan, persamaan–perbedaan wilayah)",
+          "subdomain": [
+            { "kode": "SMA-GEO-D1-S1", "urutan": 1, "nama": "Karakteristik fisik dan sosial wilayah", "kompetensi": "Menjelaskan karakteristik wilayah berdasarkan informasi spasial." },
+            { "kode": "SMA-GEO-D1-S2", "urutan": 2, "nama": "Konsep dan teori dasar mengenai dinamika kependudukan pada suatu wilayah tempat tinggal", "kompetensi": "Menganalisis konsep dan teori dasar mengenai dinamika kependudukan pada suatu wilayah tempat tinggal." },
+            { "kode": "SMA-GEO-D1-S3", "urutan": 3, "nama": "Keterkaitan antara karakteristik wilayah fisik dan sosial (kependudukan)", "kompetensi": "Menganalisis keterkaitan antara karakteristik wilayah fisik dan sosial (kependudukan) terhadap daya dukung lingkungan." },
+            { "kode": "SMA-GEO-D1-S4", "urutan": 4, "nama": "Permasalahan kewilayahan", "kompetensi": "Menerapkan penelitian geografi untuk memecahkan permasalahan kewilayahan." }
+          ]
+        },
+        {
+          "kode": "SMA-GEO-D2",
+          "urutan": 2,
+          "nama": "Proses yang memengaruhi lingkungan fisik dan sosial",
+          "subdomain": [
+            { "kode": "SMA-GEO-D2-S1", "urutan": 1, "nama": "Faktor yang berpengaruh dalam lingkungan sosial", "kompetensi": "Menerapkan indikator-indikator keberhasilan pembangunan untuk pengembangan wilayah; menganalisis konsep dinamika kependudukan dan faktor-faktor yang mempengaruhinya." },
+            { "kode": "SMA-GEO-D2-S2", "urutan": 2, "nama": "Proses/fenomena yang memengaruhi lingkungan fisik", "kompetensi": "Menggunakan informasi tentang proses alam untuk menjelaskan perubahan lingkungan fisik di wilayah tertentu; menganalisis peranan manusia dalam mengubah lingkungan fisik; menganalisis persebaran bioma di dunia dan pengaruhnya terhadap manusia." }
+          ]
+        },
+        {
+          "kode": "SMA-GEO-D3",
+          "urutan": 3,
+          "nama": "Interaksi antargejala fisik alam dan manusia dan pengaruhnya terhadap kehidupan",
+          "subdomain": [
+            { "kode": "SMA-GEO-D3-S1", "urutan": 1, "nama": "Posisi strategis Indonesia dan pengaruhnya bagi kehidupan ekonomi, sosial, budaya secara nasional maupun internasional", "kompetensi": "Menjelaskan posisi geografis Indonesia." },
+            { "kode": "SMA-GEO-D3-S2", "urutan": 2, "nama": "Potensi Sumber Daya Alam Indonesia terhadap dinamika kehidupan", "kompetensi": "Menganalisis pemanfaatan SDA sesuai konteks wilayah dengan menggunakan informasi (peta, data); menganalisis pengelolaan SDA secara berkelanjutan." }
+          ]
+        },
+        {
+          "kode": "SMA-GEO-D4",
+          "urutan": 4,
+          "nama": "Cara mitigasi dan adaptasi terhadap bencana alam di lingkungan tempat tinggal dan negaranya",
+          "subdomain": [
+            { "kode": "SMA-GEO-D4-S1", "urutan": 1, "nama": "Bencana geologis/hidroklimatologis", "kompetensi": "Menganalisis ragam risiko dan faktor penyebab bencana alam." },
+            { "kode": "SMA-GEO-D4-S2", "urutan": 2, "nama": "Mitigasi dan adaptasi manusia terhadap bencana geologis/hidroklimatologis", "kompetensi": "Menggunakan data atau studi kasus untuk menjelaskan bentuk adaptasi masyarakat terhadap bencana geologis atau hidroklimatologis di suatu wilayah; mengevaluasi upaya pengurangan risiko bencana geologis/hidroklimatologis." }
+          ]
+        },
+        {
+          "kode": "SMA-GEO-D5",
+          "urutan": 5,
+          "nama": "Fenomena geografi dalam kehidupan sehari-hari dan manfaatnya",
+          "subdomain": [
+            { "kode": "SMA-GEO-D5-S1", "urutan": 1, "nama": "Peta, penginderaan jauh dan SIG (Sistem Informasi Geografis)", "kompetensi": "Menjelaskan penggunaan informasi geospasial dalam kehidupan sehari-hari; menganalisis fenomena geosfer dari peta/citra penginderaan jauh." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-SOS",
+      "nama": "Sosiologi",
+      "nama_lengkap": "Sosiologi SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 13,
+      "deskripsi": "TKA Sosiologi mengukur pemahaman murid terhadap konsep-konsep sosiologi serta kemampuan analisis terhadap fenomena sosial yang terjadi di masyarakat.",
+      "tipe_struktur": "elemen_subelemen",
+      "level_kognitif": [
+        { "level": 1, "kode": "L1", "nama": "Pemahaman", "nama_en": "Knowing", "deskripsi": "Kemampuan dasar murid dalam mengenali, mengingat, dan memahami konsep-konsep sosiologi secara faktual, termasuk definisi, konsep, teori, serta langkah prosedural dalam penyelidikan sosiologi." },
+        { "level": 2, "kode": "L2", "nama": "Penerapan", "nama_en": "Applying", "deskripsi": "Kemampuan menerapkan konsep-konsep sosiologi pada fenomena sosial nyata: menganalisis kasus, menginterpretasikan data sosial, serta menerapkan prinsip sosiologi dalam memecahkan masalah sosial." },
+        { "level": 3, "kode": "L3", "nama": "Penalaran", "nama_en": "Reasoning", "deskripsi": "Kemampuan berpikir kritis dan menalar logis dengan mengaitkan konsep sosiologi dengan fenomena nyata; menganalisis data berdasarkan kasus sosial, menemukan pola, merumuskan kesimpulan hingga memberikan rekomendasi." }
+      ],
+      "domain": [
+        {
+          "kode": "SMA-SOS-D1",
+          "urutan": 1,
+          "nama": "Sosiologi sebagai Ilmu",
+          "subdomain": [
+            { "kode": "SMA-SOS-D1-S1", "urutan": 1, "nama": "Pengertian dan perkembangan sosiologi dan manfaat sosiologi dalam kehidupan masyarakat", "kompetensi": "Mendeskripsikan dan menganalisis pengertian dan perkembangan serta manfaat sosiologi sebagai ilmu pengetahuan." }
+          ]
+        },
+        {
+          "kode": "SMA-SOS-D2",
+          "urutan": 2,
+          "nama": "Hubungan dan Gejala Sosial",
+          "subdomain": [
+            { "kode": "SMA-SOS-D2-S1", "urutan": 1, "nama": "Konsep dan bentuk hubungan sosial", "kompetensi": "Mengidentifikasi dan menganalisis konsep dan bentuk hubungan sosial yang terjadi di masyarakat." },
+            { "kode": "SMA-SOS-D2-S2", "urutan": 2, "nama": "Pembentukan kepribadian, kelompok dan lembaga sosial", "kompetensi": "Mengidentifikasi berbagai lembaga sosial dan perannya di masyarakat." },
+            { "kode": "SMA-SOS-D2-S3", "urutan": 3, "nama": "Ragam gejala sosial", "kompetensi": "Menjelaskan ragam gejala sosial di lingkungan sekitar." },
+            { "kode": "SMA-SOS-D2-S4", "urutan": 4, "nama": "Masyarakat multikultural", "kompetensi": "Menganalisis dinamika masyarakat multikultural." }
+          ]
+        },
+        {
+          "kode": "SMA-SOS-D3",
+          "urutan": 3,
+          "nama": "Penelitian Sosial",
+          "subdomain": [
+            { "kode": "SMA-SOS-D3-S1", "urutan": 1, "nama": "Langkah penelitian sosial dan metode penelitian", "kompetensi": "Menjelaskan dan menganalisis berbagai langkah dan metode penelitian sosial." }
+          ]
+        },
+        {
+          "kode": "SMA-SOS-D4",
+          "urutan": 4,
+          "nama": "Kelompok Sosial, Kesetaraan, dan Konflik Sosial",
+          "subdomain": [
+            { "kode": "SMA-SOS-D4-S1", "urutan": 1, "nama": "Konsep Kelompok Sosial dan dinamika Kelompok Sosial", "kompetensi": "Mengidentifikasi, menjelaskan, dan menganalisis berbagai kelompok sosial dengan dinamikanya." },
+            { "kode": "SMA-SOS-D4-S2", "urutan": 2, "nama": "Ketidaksetaraan sosial dan upaya mewujudkan kesetaraan sosial", "kompetensi": "Memahami faktor yang memengaruhi ketidaksetaraan sosial dan menganalisis upaya mewujudkan kesetaraan sosial." },
+            { "kode": "SMA-SOS-D4-S3", "urutan": 3, "nama": "Konflik sosial dan penanganan konflik", "kompetensi": "Mendeskripsikan berbagai konsep konflik sosial dan menganalisis berbagai upaya penanganan konflik." }
+          ]
+        },
+        {
+          "kode": "SMA-SOS-D5",
+          "urutan": 5,
+          "nama": "Perubahan Sosial dan Globalisasi",
+          "subdomain": [
+            { "kode": "SMA-SOS-D5-S1", "urutan": 1, "nama": "Bentuk-bentuk perubahan sosial dan dampaknya", "kompetensi": "Mengidentifikasi bentuk-bentuk perubahan sosial dan menganalisis dampak perubahan sosial." },
+            { "kode": "SMA-SOS-D5-S2", "urutan": 2, "nama": "Globalisasi dan dampak globalisasi", "kompetensi": "Menjelaskan dan menganalisis pengaruh globalisasi dan dampaknya." },
+            { "kode": "SMA-SOS-D5-S3", "urutan": 3, "nama": "Sikap kritis globalisasi", "kompetensi": "Menganalisis fenomena sosial yang dipengaruhi globalisasi secara kritis." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-SEJ",
+      "nama": "Sejarah",
+      "nama_lengkap": "Sejarah SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 14,
+      "deskripsi": "TKA Sejarah mengukur kemampuan murid dalam memahami dan mengkaji peristiwa sejarah dalam konteks ruang dan waktu, serta mengembangkan kemampuan berpikir historis. Difokuskan pada perubahan dan keberlanjutan sejarah, serta sebab-akibat peristiwa penting dalam sejarah Indonesia dari periode Hindu-Buddha hingga Reformasi.",
+      "tipe_struktur": "elemen_subelemen",
+      "level_kognitif": [
+        { "level": 1, "kode": "L1", "nama": "Pemahaman", "nama_en": "Knowing", "deskripsi": "Kemampuan dasar mengenali, mengingat, mengidentifikasi, dan memahami konsep serta informasi sejarah secara faktual; menyebutkan tokoh, peristiwa, tanggal, tempat, serta istilah penting dalam sejarah." },
+        { "level": 2, "kode": "L2", "nama": "Penerapan", "nama_en": "Applying", "deskripsi": "Kemampuan menerapkan konsep dan informasi sejarah dalam berbagai konteks: menganalisis dan menginterpretasikan data/fakta/sumber sejarah (teks, gambar, peta, tabel), menyusun kronologi, menjelaskan hubungan sebab-akibat, membandingkan peristiwa." },
+        { "level": 3, "kode": "L3", "nama": "Penalaran", "nama_en": "Reasoning", "deskripsi": "Kemampuan berpikir kritis dan menalar logis: mengevaluasi dan merefleksi informasi dari berbagai sumber sejarah, menjawab pertanyaan inferensial, serta menyusun argumentasi berbasis teori, data, atau fakta historis." }
+      ],
+      "catatan_stimulus": "TKA Sejarah menggunakan bacaan/ilustrasi berdasar sumber sejarah primer maupun sekunder, disertai kutipan dokumen, peta, tabel, foto, dengan memperhatikan beragam perspektif dalam historiografi.",
+      "domain": [
+        {
+          "kode": "SMA-SEJ-D1",
+          "urutan": 1,
+          "nama": "Pengantar Ilmu Sejarah",
+          "subdomain": [
+            { "kode": "SMA-SEJ-D1-S1", "urutan": 1, "nama": "Konsep Dasar Sejarah", "kompetensi": "Menjelaskan dan menganalisis konsep perubahan, keberlanjutan, serta sebab-akibat untuk memahami pengaruh peristiwa sejarah terhadap fenomena sosial yang dialami murid." },
+            { "kode": "SMA-SEJ-D1-S2", "urutan": 2, "nama": "Fenomena sejarah dalam kehidupan sehari-hari", "kompetensi": "Menganalisis keterkaitan antara peristiwa sejarah masa lalu dan dinamika sosial budaya masyarakat masa kini dengan menggunakan prinsip perubahan, keberlanjutan, dan sebab-akibat." },
+            { "kode": "SMA-SEJ-D1-S3", "urutan": 3, "nama": "Sumber-sumber sejarah", "kompetensi": "Mengidentifikasi fungsi dan perbedaan antara sumber sejarah primer dan sekunder serta menganalisis penggunaannya untuk merekonstruksi peristiwa masa lalu secara kontekstual." }
+          ]
+        },
+        {
+          "kode": "SMA-SEJ-D2",
+          "urutan": 2,
+          "nama": "Periode Kerajaan Hindu-Buddha dan Islam",
+          "subdomain": [
+            { "kode": "SMA-SEJ-D2-S1", "urutan": 1, "nama": "Kehidupan religi, budaya, politik, dan ekonomi masyarakat di Nusantara pada masa kerajaan Hindu-Buddha", "kompetensi": "Mengevaluasi teori masuknya agama dan kebudayaan Hindu-Buddha ke Nusantara berdasarkan konsep dasar sejarah, menganalisis kehidupan politik dan ekonomi kerajaan-kerajaan Hindu-Buddha, serta mengklasifikasikan peninggalan budaya yang dihasilkannya." },
+            { "kode": "SMA-SEJ-D2-S2", "urutan": 2, "nama": "Kehidupan religi, budaya, politik, dan ekonomi masyarakat di Nusantara pada masa kerajaan Islam", "kompetensi": "Menganalisis hubungan antara masuknya agama dan kebudayaan Islam dengan perubahan dalam sistem politik, ekonomi, serta perkembangan budaya masyarakat Nusantara." }
+          ]
+        },
+        {
+          "kode": "SMA-SEJ-D3",
+          "urutan": 3,
+          "nama": "Perlawanan terhadap Bangsa Eropa",
+          "subdomain": [
+            { "kode": "SMA-SEJ-D3-S1", "urutan": 1, "nama": "Proses kedatangan Bangsa Eropa ke Nusantara", "kompetensi": "Menjelaskan dan menganalisis keterkaitan antara motivasi kedatangan bangsa Eropa dan perubahan sosial, ekonomi, serta politik di Nusantara dengan menggunakan pendekatan diakronik dan sinkronik." },
+            { "kode": "SMA-SEJ-D3-S2", "urutan": 2, "nama": "Perlawanan terhadap Bangsa Eropa sebelum Abad ke-20", "kompetensi": "Menganalisis keterkaitan antara kebijakan kolonial bangsa Eropa dan munculnya berbagai bentuk perlawanan rakyat Nusantara sebelum abad ke-20, serta mengevaluasi strategi perjuangan yang dilakukan." }
+          ]
+        },
+        {
+          "kode": "SMA-SEJ-D4",
+          "urutan": 4,
+          "nama": "Pergerakan Nasional sampai Proklamasi Kemerdekaan",
+          "subdomain": [
+            { "kode": "SMA-SEJ-D4-S1", "urutan": 1, "nama": "Pergerakan Nasional Indonesia", "kompetensi": "Mengidentifikasi dampak Politik Etis dan munculnya berbagai organisasi pada masa Pergerakan Nasional serta menganalisis strategi perlawanan yang dilakukan dalam berbagai bidang." },
+            { "kode": "SMA-SEJ-D4-S2", "urutan": 2, "nama": "Relevansi semangat Pergerakan Nasional dengan masa kini", "kompetensi": "Menganalisis relevansi nilai dan semangat perjuangan tokoh-tokoh pergerakan nasional dalam menghadapi tantangan kehidupan berbangsa dan bernegara di masa kini." },
+            { "kode": "SMA-SEJ-D4-S3", "urutan": 3, "nama": "Kehidupan Bangsa Indonesia di bawah penjajahan Jepang dan perlawanan Bangsa Indonesia", "kompetensi": "Mengevaluasi beberapa penjelasan tentang penyebab utama runtuhnya kekuasaan Belanda di Indonesia sebelum pendudukan Jepang berdasarkan sumber sejarah yang relevan; menganalisis dampak kebijakan pendudukan Jepang di bidang politik, ekonomi, sosial, dan budaya." },
+            { "kode": "SMA-SEJ-D4-S4", "urutan": 4, "nama": "Peristiwa dan Makna Proklamasi Kemerdekaan Indonesia", "kompetensi": "Menjelaskan dan menganalisis peristiwa pada masa proklamasi kemerdekaan Indonesia dan maknanya." }
+          ]
+        },
+        {
+          "kode": "SMA-SEJ-D5",
+          "urutan": 5,
+          "nama": "Revolusi Kemerdekaan Indonesia sampai Demokrasi Terpimpin",
+          "subdomain": [
+            { "kode": "SMA-SEJ-D5-S1", "urutan": 1, "nama": "Perjuangan mempertahankan kemerdekaan", "kompetensi": "Mendeskripsikan proses pembentukan negara dan pemerintahan Republik Indonesia setelah Proklamasi Kemerdekaan, serta menganalisis upaya perjuangan bangsa Indonesia dalam mempertahankan kemerdekaan melalui jalur diplomasi dan perjuangan fisik." },
+            { "kode": "SMA-SEJ-D5-S2", "urutan": 2, "nama": "Kehidupan masyarakat Indonesia pada masa Demokrasi Liberal", "kompetensi": "Menggunakan konsep kronologis untuk menjelaskan perkembangan politik dan ekonomi Indonesia pada masa Demokrasi Liberal berdasarkan peristiwa-peristiwa penting." },
+            { "kode": "SMA-SEJ-D5-S3", "urutan": 3, "nama": "Kehidupan masyarakat pada masa Demokrasi Terpimpin", "kompetensi": "Mengidentifikasi perkembangan politik dan ekonomi serta menganalisis dampak kebijakan pemerintah pada masa Demokrasi Terpimpin." }
+          ]
+        },
+        {
+          "kode": "SMA-SEJ-D6",
+          "urutan": 6,
+          "nama": "Orde Baru sampai Reformasi",
+          "subdomain": [
+            { "kode": "SMA-SEJ-D6-S1", "urutan": 1, "nama": "Kehidupan Masyarakat pada Masa Orde Baru", "kompetensi": "Menganalisis kronologi perubahan Demokrasi Terpimpin menjadi Orde Baru dengan menggunakan konsep sejarah serta mengevaluasi dampak kebijakan politik dan ekonomi Orde Baru terhadap kehidupan masyarakat Indonesia." },
+            { "kode": "SMA-SEJ-D6-S2", "urutan": 2, "nama": "Kehidupan Masyarakat pada Masa Reformasi", "kompetensi": "Menganalisis proses lahirnya Reformasi dan peran pelajar serta mahasiswa sebagai pelaku sejarah, dengan menggunakan konsep perubahan dan kronologi, serta mengevaluasi dampak kebijakan politik dan ekonomi Reformasi terhadap kehidupan masyarakat Indonesia." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-ANT",
+      "nama": "Antropologi",
+      "nama_lengkap": "Antropologi SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 15,
+      "deskripsi": "TKA Antropologi memberikan gambaran holistik mengenai kemampuan murid dalam memahami, menganalisis dan mengaplikasikan antropologi sebagai disiplin keilmuan, termasuk menerapkan metode serta cara berpikir antropologis dalam menganalisis problematika sosial dan budaya.",
+      "tipe_struktur": "elemen_subelemen",
+      "level_kognitif": [
+        { "level": 1, "kode": "L1", "nama": "Pemahaman", "nama_en": "Knowing", "deskripsi": "Murid mampu mengenali, mengingat, dan memahami konsep-konsep dasar dalam Antropologi, seperti kebudayaan, sistem sosial, etnografi, dan perubahan budaya." },
+        { "level": 2, "kode": "L2", "nama": "Penerapan", "nama_en": "Applying", "deskripsi": "Murid menerapkan konsep dalam menganalisis fenomena sosial budaya, menghubungkan teori dengan realitas, mengidentifikasi pola dalam kehidupan masyarakat, serta membandingkan kebudayaan yang berbeda." },
+        { "level": 3, "kode": "L3", "nama": "Penalaran", "nama_en": "Reasoning", "deskripsi": "Murid mampu merefleksi dan mengevaluasi berbagai teori dan perspektif antropologi secara kritis serta menyusun pemikiran baru, menghasilkan sintesis dari berbagai konsep atau membuat interpretasi baru mengenai suatu fenomena budaya." }
+      ],
+      "domain": [
+        {
+          "kode": "SMA-ANT-D1",
+          "urutan": 1,
+          "nama": "Pengantar dan Ruang Lingkup Antropologi",
+          "subdomain": [
+            { "kode": "SMA-ANT-D1-S1", "urutan": 1, "nama": "Konsep Dasar dan Sejarah Perkembangan Antropologi", "kompetensi": "Mendeskripsikan dan menganalisis konsep dasar dan sejarah perkembangan Antropologi." },
+            { "kode": "SMA-ANT-D1-S2", "urutan": 2, "nama": "Prinsip Dasar dan Pendekatan Antropologi", "kompetensi": "Mengidentifikasi dan menganalisis prinsip dasar Antropologi untuk menjelaskan fenomena sosial budaya di masyarakat." },
+            { "kode": "SMA-ANT-D1-S3", "urutan": 3, "nama": "Ruang Lingkup Antropologi (Antropologi Ragawi, Arkeologi, dan Etnologi Bahasa)", "kompetensi": "Menjelaskan dan menganalisis keterkaitan antara cabang-cabang antropologi untuk memahami keberagaman budaya dan dinamika masyarakat manusia." }
+          ]
+        },
+        {
+          "kode": "SMA-ANT-D2",
+          "urutan": 2,
+          "nama": "Etnografi",
+          "subdomain": [
+            { "kode": "SMA-ANT-D2-S1", "urutan": 1, "nama": "Pengertian Etnografi", "kompetensi": "Menjelaskan konsep etnografi sebagai metode dalam penelitian Antropologi." },
+            { "kode": "SMA-ANT-D2-S2", "urutan": 2, "nama": "Metode dan Proses Penelitian Etnografi", "kompetensi": "Menjelaskan dan menganalisis berbagai jenis metode penelitian Etnografi." },
+            { "kode": "SMA-ANT-D2-S3", "urutan": 3, "nama": "Pemanfaatan Hasil Penelitian Etnografi secara Kritis", "kompetensi": "Menganalisis pemanfaatan hasil penelitian etnografi dalam memahami dinamika sosial budaya secara kritis dan kontekstual." },
+            { "kode": "SMA-ANT-D2-S4", "urutan": 4, "nama": "Penerapan Etnografi dalam Kehidupan Sehari-Hari", "kompetensi": "Menjelaskan penerapan etnografi dalam kehidupan sehari-hari." }
+          ]
+        },
+        {
+          "kode": "SMA-ANT-D3",
+          "urutan": 3,
+          "nama": "Masyarakat Multikultural",
+          "subdomain": [
+            { "kode": "SMA-ANT-D3-S1", "urutan": 1, "nama": "Jenis-Jenis Multikulturalisme dalam Masyarakat", "kompetensi": "Mengidentifikasi dan menganalisis keberagaman masyarakat Indonesia sebagai masyarakat multikultural; mendeskripsikan berbagai konsep masyarakat multikultural dan menjelaskan jenis-jenis multikulturalisme dalam masyarakat." },
+            { "kode": "SMA-ANT-D3-S2", "urutan": 2, "nama": "Masyarakat Multikultural di Indonesia dan Global serta Tantangan dan Peluangnya", "kompetensi": "Mendeskripsikan berbagai konsep masyarakat multikultural dan menjelaskan jenis-jenis multikulturalisme dalam masyarakat." }
+          ]
+        },
+        {
+          "kode": "SMA-ANT-D4",
+          "urutan": 4,
+          "nama": "Perubahan Sosial Budaya",
+          "subdomain": [
+            { "kode": "SMA-ANT-D4-S1", "urutan": 1, "nama": "Konsep, Bentuk, dan Faktor Perubahan Sosial dan Budaya", "kompetensi": "Mendeskripsikan serta menganalisis konsep, bentuk, dan faktor perubahan sosial dan budaya." },
+            { "kode": "SMA-ANT-D4-S2", "urutan": 2, "nama": "Dampak dan Respon Masyarakat terhadap Perubahan Sosial dan Budaya di Indonesia", "kompetensi": "Menjelaskan dan menganalisis dampak dan respon masyarakat terhadap perubahan sosial dan budaya di Indonesia." }
+          ]
+        },
+        {
+          "kode": "SMA-ANT-D5",
+          "urutan": 5,
+          "nama": "Antropologi Sosial dan Antropologi Budaya",
+          "subdomain": [
+            { "kode": "SMA-ANT-D5-S1", "urutan": 1, "nama": "Pengertian dan Cakupan Antropologi Sosial dan Antropologi Budaya", "kompetensi": "Memahami ruang lingkup kajian antropologi sosial dan antropologi budaya." },
+            { "kode": "SMA-ANT-D5-S2", "urutan": 2, "nama": "Antropologi Sosial dan Antropologi Budaya sebagai Antropologi Terapan serta Studi Kasusnya di Masyarakat", "kompetensi": "Menjelaskan dan menganalisis berbagai kajian antropologi sosial budaya sebagai antropologi terapan dalam sistem sosial budaya masyarakat; menganalisis studi kasus antropologi terapan untuk memahami dinamika atau solusi terhadap permasalahan budaya." }
+          ]
+        },
+        {
+          "kode": "SMA-ANT-D6",
+          "urutan": 6,
+          "nama": "Kearifan Lokal dan Tradisi Lisan",
+          "subdomain": [
+            { "kode": "SMA-ANT-D6-S1", "urutan": 1, "nama": "Definisi dan Bentuk-Bentuk Kearifan Lokal dalam Antropologi", "kompetensi": "Memahami definisi dan bentuk-bentuk kearifan lokal dalam Antropologi." },
+            { "kode": "SMA-ANT-D6-S2", "urutan": 2, "nama": "Peran Kearifan Lokal dalam Kehidupan Masyarakat", "kompetensi": "Menjelaskan dan menganalisis peran kearifan lokal dalam kehidupan masyarakat." },
+            { "kode": "SMA-ANT-D6-S3", "urutan": 3, "nama": "Jenis-Jenis dan Fungsi Tradisi Lisan dalam Masyarakat", "kompetensi": "Menjelaskan dan menganalisis jenis-jenis dan fungsi tradisi lisan dalam masyarakat." },
+            { "kode": "SMA-ANT-D6-S4", "urutan": 4, "nama": "Tantangan Kearifan Lokal dan Tradisi Lisan di Era Modern", "kompetensi": "Menjelaskan dan menganalisis tantangan kearifan lokal dan tradisi lisan di era modern." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BPRC",
+      "nama": "Bahasa Prancis",
+      "nama_lengkap": "Bahasa Prancis SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 16,
+      "fokus_keterampilan": "Membaca (compréhension écrite)",
+      "standar_kemampuan": "Setara level A2-2 Standar CECRL",
+      "deskripsi": "TKA Bahasa Prancis mengukur kemampuan murid dalam berbahasa Prancis yang sederhana, difokuskan pada kemampuan membaca murid SMA kelas XII.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "karakteristik_teks": {
+          "jenis_teks": "Teks pendek seperti pengumuman, pesan singkat, deskripsi orang dan tempat, serta instruksi tanda dan rambu.",
+          "tujuan_teks": "Memberikan informasi, mendeskripsikan sesuatu, atau menyampaikan pesan tertentu.",
+          "struktur_teks": "Sederhana dengan kalimat pendek dan jelas.",
+          "jumlah_kosakata": "60–80 kosakata mengenai perkenalan diri dan seseorang, aktivitas sehari-hari, dan lingkungan sekitar.",
+          "kompleksitas_kata": "Kata-kata umum dengan sedikit istilah teknis.",
+          "kompleksitas_kalimat": "Kalimat sederhana (subjek + kata kerja + objek) dalam bentuk présent."
+        },
+        "materi": [
+          "Ungkapan salam dan berpamitan (salutation et prendre congé)",
+          "Ungkapan selamat dan harapan (féliciter et souhaiter quelqu'un)",
+          "Menyatakan opini (donner des opinions)",
+          "Kosakata angka (jam, tanggal, dll.)",
+          "Pemberitahuan (messages courts et annonces)",
+          "Perkenalan diri dan aktivitas sehari-hari (se présenter, la vie quotidienne)",
+          "Keberadaan orang dan benda (se situer dans l'espace)",
+          "Instruksi tanda dan rambu (panneaux, signes)",
+          "Karakteristik seseorang (caractères des personnes)",
+          "Kosakata benda dan bangunan publik"
+        ]
+      },
+      "domain": [
+        {
+          "kode": "SMA-BPRC-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Literal",
+          "deskripsi": "Mengidentifikasi informasi eksplisit dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BPRC-D1-S1", "urutan": 1, "nama": "Menemukan informasi tersurat dari gambar atau teks pendek interpersonal/transaksional, pengumuman, pesan singkat, deskripsi orang dan tempat, serta instruksi tanda dan rambu." },
+            { "kode": "SMA-BPRC-D1-S2", "urutan": 2, "nama": "Melengkapi teks yang dirumpangkan untuk menerapkan kosakata dan ungkapan komunikatif sesuai topik dari isi teks pendek." }
+          ]
+        },
+        {
+          "kode": "SMA-BPRC-D2",
+          "urutan": 2,
+          "nama": "Reorganisasi",
+          "deskripsi": "Mengorganisir kalimat-kalimat pernyataan menjadi paragraf padu.",
+          "subdomain": [
+            { "kode": "SMA-BPRC-D2-S1", "urutan": 1, "nama": "Mengorganisir kalimat-kalimat pernyataan menjadi paragraf padu." }
+          ]
+        },
+        {
+          "kode": "SMA-BPRC-D3",
+          "urutan": 3,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Menarik kesimpulan atau memahami makna tersirat dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BPRC-D3-S1", "urutan": 1, "nama": "Menemukan informasi tersirat dari gambar atau teks pendek interpersonal/transaksional, pengumuman, pesan singkat, deskripsi orang dan tempat, serta instruksi tanda dan rambu." },
+            { "kode": "SMA-BPRC-D3-S2", "urutan": 2, "nama": "Menyimpulkan gambar atau isi teks pendek interpersonal/transaksional/pengumuman, pesan singkat, deskripsi orang dan tempat, serta instruksi tanda dan rambu." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BJRM",
+      "nama": "Bahasa Jerman",
+      "nama_lengkap": "Bahasa Jerman SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 17,
+      "fokus_keterampilan": "Membaca",
+      "standar_kemampuan": "Level A1 Plus hingga A2.1 sesuai standar GER/CEFR",
+      "deskripsi": "TKA Bahasa Jerman mengukur kemampuan murid memahami informasi terkait ungkapan komunikatif sehari-hari, hal-hal konkret dan rutin dari berbagai teks tulis sederhana dengan konteks situasi di negara-negara penutur Bahasa Jerman.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "karakteristik_teks": {
+          "jenis_teks": "Teks tulis sederhana berbentuk naratif, deskripsi, dialog, dan teks fungsional seperti formulir, kartu identitas, jadwal pelajaran (Stundenplan), e-mail, pemberitahuan (Zettel/Informationsschilder), iklan singkat (kurze Anzeigen), papan petunjuk (Hinweisschilder/Aushänge), agenda kegiatan/buku harian (Terminkalender/Tagebuch), tiket perjalanan (Fahrkarte), jadwal perjalanan (Fahrplan), resep makanan (Kochrezepte), brosur (Broschüre), statistik sederhana, dan rencana perjalanan (Reiseprogramm).",
+          "topik": ["Identität", "Schulleben", "Familien", "Wohnen", "Freizeitaktivitäten", "Berufe", "Essen und Trinken", "Einkaufen", "Reisen"],
+          "jumlah_kosakata": "Sekitar 750 kata, terdiri dari 650 kata level A1 plus dan 100 kata baru level A2.1.",
+          "panjang_teks_kata": "Bervariasi antara 3 hingga 100 kata tergantung jenis teks.",
+          "cakupan_gramatik": [
+            "Nomen",
+            "bestimmter und unbestimmter Artikel im Nominativ",
+            "Konjugationen",
+            "Konjunktionen",
+            "Position des Verbs im Satz",
+            "Aussagesätzen, W-Fragen und Ja/Nein-Fragen",
+            "regelmäßige Verben, sein, haben und Verben mit Vokalwechsel (unregelmäßig)",
+            "Präpositionen mit dem Dativ: aus, bei, mit, nach, seit, von, zu",
+            "Präpositionen mit dem Akkusativ: für, um, durch, gegen, ohne",
+            "Wechselpräpositionen: an, in, auf, über, unter, hinter, vor, neben, zwischen + Akk./Dativ",
+            "Modalverben",
+            "Negation nicht",
+            "Possessivartikel",
+            "Negativartikel kein, keine, keinen",
+            "Nominativ und Akkusativ",
+            "Personalpronomen im Nominativ, Akkusativ, Dativ",
+            "Imperativ",
+            "Präteritum von haben und sein",
+            "Perfekt",
+            "Indefinitpronomen man"
+          ]
+        },
+        "aspek_keterampilan_membaca": [
+          "Memahami informasi umum dalam teks tulis sederhana (globales Lesen)",
+          "Memahami informasi selektif dalam teks tulis sederhana (selektives Lesen)",
+          "Memahami informasi rinci dalam teks dan hubungan antar bagian dalam teks (detailliertes Lesen)",
+          "Menggunakan kosakata aktif sesuai konteks dalam teks tulis sederhana"
+        ]
+      },
+      "domain": [
+        {
+          "kode": "SMA-BJRM-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Literal",
+          "subdomain": [
+            { "kode": "SMA-BJRM-D1-S1", "urutan": 1, "nama": "Menentukan informasi spesifik (selektiv) yang tersurat dalam teks tulis sederhana berbentuk naratif, deskripsi, transaksional atau teks fungsional." },
+            { "kode": "SMA-BJRM-D1-S2", "urutan": 2, "nama": "Menentukan informasi detail (detailliert) yang tersurat dalam teks tulis sederhana berbentuk naratif, deskripsi, transaksional atau teks fungsional." },
+            { "kode": "SMA-BJRM-D1-S3", "urutan": 3, "nama": "Menggunakan kosakata dan ungkapan komunikatif yang tepat sesuai konteks secara literal dalam teks tulis rumpang sederhana." }
+          ]
+        },
+        {
+          "kode": "SMA-BJRM-D2",
+          "urutan": 2,
+          "nama": "Reorganisasi",
+          "subdomain": [
+            { "kode": "SMA-BJRM-D2-S1", "urutan": 1, "nama": "Menyusun sebuah teks berdasarkan pemahaman terhadap sebuah teks tulis sederhana berbentuk naratif, deskripsi, transaksional atau teks fungsional." }
+          ]
+        },
+        {
+          "kode": "SMA-BJRM-D3",
+          "urutan": 3,
+          "nama": "Pemahaman Inferensial",
+          "subdomain": [
+            { "kode": "SMA-BJRM-D3-S1", "urutan": 1, "nama": "Menentukan informasi umum (global) yang tersirat dalam teks tulis sederhana." },
+            { "kode": "SMA-BJRM-D3-S2", "urutan": 2, "nama": "Menentukan informasi spesifik (selektiv) yang tersirat dalam teks tulis sederhana." },
+            { "kode": "SMA-BJRM-D3-S3", "urutan": 3, "nama": "Menentukan informasi detail (detailliert) yang tersirat dalam teks tulis sederhana." },
+            { "kode": "SMA-BJRM-D3-S4", "urutan": 4, "nama": "Menggunakan kosakata dan ungkapan komunikatif yang tepat sesuai konteks secara inferensial dalam teks tulis rumpang sederhana." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BJPN",
+      "nama": "Bahasa Jepang",
+      "nama_lengkap": "Bahasa Jepang SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 18,
+      "fokus_keterampilan": "Membaca",
+      "standar_kemampuan": "Level A1 JF Standard",
+      "deskripsi": "TKA Bahasa Jepang mengukur kemampuan murid dalam berbahasa Jepang pada level A1 JF Standard dan bernalar kritis-kreatif pada aktivitas komunikasi, difokuskan pada keterampilan membaca.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "karakteristik_teks": {
+          "jenis_teks": "Teks pendek yang meliputi teks interpersonal/transaksional, pengumuman, pesan singkat, deskripsi orang dan tempat.",
+          "topik": ["aisatsu (persalaman)", "jikoshoukai (perkenalan diri)", "jikan (waktu)", "kazoku (keluarga)", "dekirukoto (kemampuan)", "gakkou no seikatsu (kehidupan sekolah)", "uchi (rumah)", "mainichi no seikatsu (kehidupan sehari-hari)", "shumi (hobi)", "himana toki (waktu senggang)"],
+          "kompleksitas": "Dapat berupa ilustrasi gambar, kata, atau kalimat sederhana yang terdiri dari 5–7 kata dan teks pendek sederhana maksimal 50 kata.",
+          "pola_kalimat": "Subjek + Objek + Predikat (SOP) atau dapat ditambahkan keterangan sederhana.",
+          "sistem_penulisan": "Hiragana, katakana, dan/atau romaji sesuai tingkatan level A1."
+        }
+      },
+      "domain": [
+        {
+          "kode": "SMA-BJPN-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Literal",
+          "deskripsi": "Mengidentifikasi informasi eksplisit dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BJPN-D1-S1", "urutan": 1, "nama": "Menemukan informasi tersurat dari gambar atau teks sederhana." },
+            { "kode": "SMA-BJPN-D1-S2", "urutan": 2, "nama": "Melengkapi teks dengan kosakata dan ungkapan komunikatif sesuai topik dari isi teks sederhana." }
+          ]
+        },
+        {
+          "kode": "SMA-BJPN-D2",
+          "urutan": 2,
+          "nama": "Reorganisasi",
+          "deskripsi": "Mengorganisasi ulang informasi dari teks untuk menjawab pertanyaan.",
+          "subdomain": [
+            { "kode": "SMA-BJPN-D2-S1", "urutan": 1, "nama": "Menyusun kata-kata menjadi kalimat utuh sesuai struktur Bahasa Jepang." }
+          ]
+        },
+        {
+          "kode": "SMA-BJPN-D3",
+          "urutan": 3,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Menarik kesimpulan atau memahami makna tersirat dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BJPN-D3-S1", "urutan": 1, "nama": "Menyimpulkan informasi tersirat dari teks sederhana." },
+            { "kode": "SMA-BJPN-D3-S2", "urutan": 2, "nama": "Mengaplikasikan penggunaan tata bahasa bentuk negasi, lampau, atau akan datang pada teks sederhana." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BMDR",
+      "nama": "Bahasa Mandarin",
+      "nama_lengkap": "Bahasa Mandarin SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 19,
+      "fokus_keterampilan": "Membaca",
+      "standar_kemampuan": "Level HSK 1 (setara A1 CEFR)",
+      "deskripsi": "TKA Bahasa Mandarin menguji kemampuan murid dalam memahami bahasa Mandarin dasar pada level HSK 1, berfokus pada keterampilan membaca murid kelas XII.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "karakteristik_teks": {
+          "topik": ["Identitas diri", "Kehidupan sekolah", "Kehidupan keluarga", "Kehidupan sehari-hari", "Kegiatan di waktu senggang/hobi"],
+          "sistem_penulisan": "Aksara Han/Hanzi sederhana (简体字) disertai Hanyu Pinyin, jarang menggunakan idiom atau konsep abstrak.",
+          "jumlah_kosakata": "Sekitar 150 kosakata dasar dari HSK 1.",
+          "struktur_kalimat": ["S + V + O (Subjek + Predikat + Objek)", "S + 是 + N (Subjek + 'adalah' + Nomina)", "S + 在 + lokasi (Subjek + berada di + tempat)"],
+          "kata_tanya_umum": ["什么 (apa)", "谁 (siapa)", "哪里 (di mana)", "吗 (partikel tanya ya/tidak)"],
+          "klasifikasi_kosakata": [
+            "Kata ganti orang: 我 (saya), 你 (kamu), 他/她 (dia)",
+            "Kata kerja dasar: 吃 (makan), 喝 (minum), 看 (melihat), 学 (belajar)",
+            "Kata tanya umum: 什么 (apa), 谁 (siapa), 哪里 (di mana)"
+          ]
+        }
+      },
+      "domain": [
+        {
+          "kode": "SMA-BMDR-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Literal",
+          "deskripsi": "Mengidentifikasi informasi yang dinyatakan secara eksplisit dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BMDR-D1-S1", "urutan": 1, "nama": "Mengidentifikasi Hanyu Pinyin, kosakata, guratan, serta makna kata dalam kalimat sederhana." },
+            { "kode": "SMA-BMDR-D1-S2", "urutan": 2, "nama": "Menemukan dan memahami informasi penting yang disajikan secara eksplisit dalam teks tingkat dasar." },
+            { "kode": "SMA-BMDR-D1-S3", "urutan": 3, "nama": "Melengkapi kalimat atau teks rumpang untuk menerapkan kosakata dari teks sederhana." }
+          ]
+        },
+        {
+          "kode": "SMA-BMDR-D2",
+          "urutan": 2,
+          "nama": "Reorganisasi",
+          "deskripsi": "Menata ulang informasi dari teks untuk menjawab pertanyaan dengan tepat.",
+          "subdomain": [
+            { "kode": "SMA-BMDR-D2-S1", "urutan": 1, "nama": "Menyusun kosakata menjadi kalimat sederhana yang tepat." },
+            { "kode": "SMA-BMDR-D2-S2", "urutan": 2, "nama": "Mengurutkan kalimat acak menjadi teks sederhana yang runtut dan logis." }
+          ]
+        },
+        {
+          "kode": "SMA-BMDR-D3",
+          "urutan": 3,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Menyimpulkan atau memahami makna yang tidak disampaikan secara langsung (implisit) dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BMDR-D3-S1", "urutan": 1, "nama": "Menyimpulkan informasi implisit dari teks atau gambar sederhana." },
+            { "kode": "SMA-BMDR-D3-S2", "urutan": 2, "nama": "Menganalisis penggunaan tata bahasa dalam kalimat." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BKOR",
+      "nama": "Bahasa Korea",
+      "nama_lengkap": "Bahasa Korea SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 20,
+      "fokus_keterampilan": "Membaca",
+      "standar_kemampuan": "CEFR Level A1 atau TOPIK I Level 1",
+      "deskripsi": "TKA Bahasa Korea mengukur kemampuan membaca dalam memahami berbagai jenis teks sederhana Bahasa Korea tentang kehidupan sehari-hari serta hal-hal yang sering ditemui di lingkungan sekitar.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "karakteristik_teks": {
+          "topik": ["자기 소개 (perkenalan diri)", "인사 (salam)", "쇼핑 (belanja)", "취미 (hobi)", "교통 (transportasi)", "날씨 (cuaca)", "일상생활 (kehidupan sehari-hari)", "가족생활 (kehidupan keluarga)", "여행 (wisata)", "학교활동 (kehidupan sekolah)"],
+          "format_teks": "Teks pendek, ilustrasi gambar, dialog, pengumuman, memo, pesan teks, dan berbagai jenis teks sederhana lainnya.",
+          "jumlah_kosakata": "800 kosakata dasar dan gramatika sederhana Bahasa Korea (TOPIK I Level 1).",
+          "panjang_teks": "Maksimal 200 karakter Hangeul."
+        }
+      },
+      "domain": [
+        {
+          "kode": "SMA-BKOR-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Literal",
+          "deskripsi": "Mengidentifikasi informasi tertulis yang secara tersurat jelas dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BKOR-D1-S1", "urutan": 1, "nama": "Memahami huruf Hangeul dan tata bahasa dasar pada kata, frasa, atau kalimat sederhana." },
+            { "kode": "SMA-BKOR-D1-S2", "urutan": 2, "nama": "Memahami fakta/informasi tersurat pada kalimat atau teks sederhana." }
+          ]
+        },
+        {
+          "kode": "SMA-BKOR-D2",
+          "urutan": 2,
+          "nama": "Reorganisasi",
+          "deskripsi": "Menata ulang, mengelompokkan, atau mengkategorikan isi teks untuk menjawab pertanyaan dengan tepat.",
+          "subdomain": [
+            { "kode": "SMA-BKOR-D2-S1", "urutan": 1, "nama": "Menyusun urutan kata atau kalimat pada kalimat atau teks sederhana." },
+            { "kode": "SMA-BKOR-D2-S2", "urutan": 2, "nama": "Mengkategorikan fakta/informasi dari kalimat atau teks sederhana." }
+          ]
+        },
+        {
+          "kode": "SMA-BKOR-D3",
+          "urutan": 3,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Menyimpulkan atau memahami makna yang tidak dinyatakan secara langsung atau tersirat dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BKOR-D3-S1", "urutan": 1, "nama": "Menyimpulkan fakta/informasi tersirat pada kalimat atau teks sederhana." },
+            { "kode": "SMA-BKOR-D3-S2", "urutan": 2, "nama": "Menyimpulkan hubungan sebab akibat atau perbandingan pada kalimat atau teks sederhana." },
+            { "kode": "SMA-BKOR-D3-S3", "urutan": 3, "nama": "Mengaplikasikan penggunaan tata bahasa bentuk negasi, kala kini, kala lampau, atau kala yang akan datang pada teks sederhana." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMA-BARB",
+      "nama": "Bahasa Arab",
+      "nama_lengkap": "Bahasa Arab SMA/MA/sederajat dan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 21,
+      "fokus_keterampilan": "Membaca (al-Qirā'ah)",
+      "deskripsi": "TKA Bahasa Arab mengukur kemampuan murid dalam berbahasa Arab, mencakup pemahaman teks tersurat maupun tersirat, serta penguasaan kaidah dasar bahasa Arab dalam berbagai aktivitas komunikasi.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+      "muatan": {
+        "karakteristik_teks": {
+          "topik": "Kehidupan sehari-hari (al-ḥayāt al-yaumiyyah) mencakup kehidupan sekolah, kehidupan keluarga, hobi, pekerjaan, pelayanan umum, lingkungan sekitar (al-bi'ah), serta dialog yang memuat ungkapan persetujuan (muwāfaqah), perintah (al-amr), dan larangan (an-nahyu).",
+          "ragam_bahasa": "Bahasa Arab baku (fusha).",
+          "panjang_teks": "Satu paragraf teks naratif idealnya terdiri atas maksimal 25–50 kosakata atau sekitar 2–4 baris. Dalam bentuk dialog, satu dialog dapat berupa 5–6 kali tanya jawab.",
+          "batasan_kebahasaan": "Kosakata dan kalimat mudah dipahami, tidak rumit, sesuai jenjang murid; merupakan bentuk yang umum dan sering digunakan; benar secara nahwu dan sharf, familier dalam konteks dunia Arab."
+        }
+      },
+      "domain": [
+        {
+          "kode": "SMA-BARB-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Literal",
+          "deskripsi": "Mengidentifikasi informasi yang dinyatakan secara eksplisit dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BARB-D1-S1", "urutan": 1, "nama": "Mengidentifikasi dan menjelaskan informasi tersurat dalam teks." },
+            { "kode": "SMA-BARB-D1-S2", "urutan": 2, "nama": "Menentukan sinonim atau antonim kata dalam suatu kalimat." },
+            { "kode": "SMA-BARB-D1-S3", "urutan": 3, "nama": "Menentukan arti kosakata (mufradat) dalam konteks kalimat tertentu." }
+          ]
+        },
+        {
+          "kode": "SMA-BARB-D2",
+          "urutan": 2,
+          "nama": "Reorganisasi",
+          "deskripsi": "Menata ulang informasi dari teks untuk menjawab pertanyaan dengan tepat.",
+          "subdomain": [
+            { "kode": "SMA-BARB-D2-S1", "urutan": 1, "nama": "Menyusun kosakata acak menjadi kalimat yang tepat sesuai konteks dialog atau teks sederhana." },
+            { "kode": "SMA-BARB-D2-S2", "urutan": 2, "nama": "Mengurutkan kalimat acak menjadi teks sederhana." }
+          ]
+        },
+        {
+          "kode": "SMA-BARB-D3",
+          "urutan": 3,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Menyimpulkan atau memahami makna yang tidak disampaikan secara langsung (implisit) dalam teks.",
+          "subdomain": [
+            { "kode": "SMA-BARB-D3-S1", "urutan": 1, "nama": "Menyimpulkan informasi atau makna tersirat dalam teks." },
+            { "kode": "SMA-BARB-D3-S2", "urutan": 2, "nama": "Menjelaskan topik atau ide pokok pada teks sederhana." },
+            { "kode": "SMA-BARB-D3-S3", "urutan": 3, "nama": "Menyimpulkan makna teks berdasarkan gramatika bahasa Arab (nahwu dan sharf)." }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMK-PKK",
+      "nama": "Produk/Projek Kreatif dan Kewirausahaan",
+      "nama_lengkap": "Produk/Projek Kreatif dan Kewirausahaan SMK/MAK",
+      "tipe": "pilihan",
+      "urutan": 22,
+      "khusus_satuan_pendidikan": "SMK/MAK",
+      "deskripsi": "TKA Produk/Projek Kreatif dan Kewirausahaan menilai pemahaman konseptual dan keterampilan analitis murid dalam kegiatan produksi, distribusi, pemasaran, dan pengelolaan usaha, termasuk peluang usaha, proposal usaha, biaya produksi, laporan keuangan, dan kasus HaKI.",
+      "tipe_struktur": "elemen_subelemen",
+      "kompetensi_yang_diukur": [
+        {
+          "nama": "Kegiatan produksi",
+          "cakupan": [
+            "Menyusun rencana produksi",
+            "Membuat produk, menetapkan strategi produksi, dan melaksanakan kegiatan produksi",
+            "Melakukan pengendalian mutu produk (quality assurance)",
+            "Membuat desain kemasan, labelling, dan melaksanakan pengemasan produk",
+            "Menentukan strategi distribusi"
+          ]
+        },
+        {
+          "nama": "Kewirausahaan",
+          "cakupan": [
+            "Membaca peluang usaha dengan mengidentifikasi potensi yang ada di lingkungan internal dan eksternal",
+            "Melakukan pengelolaan usaha (perencanaan, penyelenggaraan, dan evaluasi usaha)",
+            "Menyusun proposal usaha",
+            "Memasarkan produk usaha",
+            "Menerapkan prinsip Hak Atas Kekayaan Intelektual (HAKI)",
+            "Menyusun laporan keuangan"
+          ]
+        }
+      ],
+      "level_kognitif": [
+        { "level": 1, "kode": "L1", "nama": "Pemahaman", "nama_en": "Knowing", "deskripsi": "Murid dapat mengenal dan memahami konsep dasar produksi, prosedur pengembangan produk, strategi pemasaran, serta distribusi produk; mengidentifikasi komponen dalam proposal usaha dan mengenali berbagai jenis HaKI." },
+        { "level": 2, "kode": "L2", "nama": "Penerapan", "nama_en": "Applying", "deskripsi": "Murid dapat mengaplikasikan desain produk dan kemasan, menghitung biaya produksi secara akurat, merancang strategi pemasaran, melakukan distribusi produk, memanfaatkan peluang usaha, menerapkan prinsip pengendalian mutu dan HaKI, serta menyusun proposal dan laporan kegiatan usaha secara sistematis." },
+        { "level": 3, "kode": "L3", "nama": "Penalaran", "nama_en": "Reasoning", "deskripsi": "Murid mampu menganalisis desain produk dan kemasan, menganalisis perencanaan produksi, mengevaluasi strategi pemasaran serta distribusi produk, menganalisis proposal dan pelaporan usaha, serta menentukan solusi permasalahan yang berkaitan dengan HaKI." }
+      ],
+      "domain": [
+        {
+          "kode": "SMK-PKK-D1",
+          "urutan": 1,
+          "nama": "Kegiatan Produksi, Pemasaran, dan Distribusi",
+          "subdomain": [
+            { "kode": "SMK-PKK-D1-S1", "urutan": 1, "nama": "Pengembangan Desain Produk", "kompetensi": "Menganalisis desain dan prosedur pengembangan desain produk." },
+            { "kode": "SMK-PKK-D1-S2", "urutan": 2, "nama": "Pengembangan Desain Kemasan Produk", "kompetensi": "Mengevaluasi desain kemasan dan label produk." },
+            { "kode": "SMK-PKK-D1-S3", "urutan": 3, "nama": "Pengembangan Prototipe Produk", "kompetensi": "Menerapkan pengembangan prototipe produk." },
+            { "kode": "SMK-PKK-D1-S4", "urutan": 4, "nama": "Perencanaan Produksi", "kompetensi": "Menentukan perencanaan dan biaya produksi." },
+            { "kode": "SMK-PKK-D1-S5", "urutan": 5, "nama": "Proses Produksi", "kompetensi": "Menerapkan proses produksi." },
+            { "kode": "SMK-PKK-D1-S6", "urutan": 6, "nama": "Pengemasan Produk", "kompetensi": "Menerapkan pengemasan produk." },
+            { "kode": "SMK-PKK-D1-S7", "urutan": 7, "nama": "Pengendalian Mutu Produk (Quality Assurance)", "kompetensi": "Menerapkan pengendalian mutu produk." },
+            { "kode": "SMK-PKK-D1-S8", "urutan": 8, "nama": "Pemasaran Produk", "kompetensi": "Mengevaluasi strategi dan pemasaran produk." },
+            { "kode": "SMK-PKK-D1-S9", "urutan": 9, "nama": "Distribusi Produk", "kompetensi": "Menerapkan distribusi produk." }
+          ]
+        },
+        {
+          "kode": "SMK-PKK-D2",
+          "urutan": 2,
+          "nama": "Pengelolaan Usaha",
+          "subdomain": [
+            { "kode": "SMK-PKK-D2-S1", "urutan": 1, "nama": "Analisis Peluang Usaha", "kompetensi": "Menentukan peluang usaha." },
+            { "kode": "SMK-PKK-D2-S2", "urutan": 2, "nama": "Proposal Usaha", "kompetensi": "Menganalisis proposal usaha." },
+            { "kode": "SMK-PKK-D2-S3", "urutan": 3, "nama": "Pelaporan Keuangan", "kompetensi": "Menganalisis laporan keuangan." },
+            { "kode": "SMK-PKK-D2-S4", "urutan": 4, "nama": "HaKI", "kompetensi": "Mengevaluasi HaKI." }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "template_metadata_soal": {
+    "deskripsi": "Struktur metadata minimum yang harus melekat pada setiap soal, mengikuti format contoh soal pada lampiran regulasi.",
+    "field": [
+      { "nama": "kode_jenjang", "tipe": "string", "wajib": true, "contoh": "SMA" },
+      { "nama": "kode_mata_uji", "tipe": "string", "wajib": true, "contoh": "SMA-FIS" },
+      { "nama": "kode_domain", "tipe": "string", "wajib": true, "contoh": "SMA-FIS-D2", "catatan": "Kompetensi (mata uji bahasa) atau Elemen/Materi (mata uji lain)." },
+      { "nama": "kode_subdomain", "tipe": "string", "wajib": true, "contoh": "SMA-FIS-D2-S1", "catatan": "Subkompetensi atau Sub-elemen/Submateri. Unit analisis kelemahan murid." },
+      { "nama": "level_kognitif", "tipe": "string", "wajib": false, "contoh": "L3", "catatan": "Diisi untuk mata uji yang memiliki skema level kognitif. Mata uji bahasa (termasuk bahasa asing) memakai struktur kompetensi, bukan level kognitif." },
+      { "nama": "proses_berpikir", "tipe": "string", "wajib": false, "contoh": "Menganalisis" },
+      { "nama": "bentuk_soal", "tipe": "enum", "wajib": true, "nilai": ["pg", "pgk_mcma", "pgk_kategori"] },
+      { "nama": "jenis_soal", "tipe": "enum", "wajib": true, "nilai": ["tunggal", "grup"] },
+      { "nama": "kode_stimulus", "tipe": "string", "wajib": false, "catatan": "Wajib diisi jika jenis_soal = grup." },
+      { "nama": "tingkat_kesulitan", "tipe": "enum", "wajib": false, "nilai": ["mudah", "sedang", "sulit"] }
+    ]
+  },
+
+  "mapping_database": {
+    "catatan": "Kerangka ini memiliki 3 tingkat hierarki. Skema database perlu menyediakan ketiganya agar analisis kelemahan dapat dilaporkan pada tingkat subdomain dan diagregasi ke tingkat domain.",
+    "hierarki": [
+      { "tingkat": 1, "entitas_kerangka": "mata_uji", "saran_tabel": "subjects", "contoh": "Fisika, Matematika, Bahasa Indonesia" },
+      { "tingkat": 2, "entitas_kerangka": "domain", "saran_tabel": "domains", "contoh": "Dinamika (fisika) / Pemahaman Inferensial (bahasa)" },
+      { "tingkat": 3, "entitas_kerangka": "subdomain", "saran_tabel": "subdomains", "contoh": "Momentum dan Impuls / Memprediksi lanjutan atau akhir uraian" }
+    ],
+    "unit_analisis_kelemahan": "subdomain",
+    "agregasi_laporan": ["subdomain", "domain", "mata_uji"],
+    "catatan_tipe_mata_uji": "Field 'tipe' pada mata uji bernilai 'wajib' atau 'pilihan'. Saat menyusun paket tes, terapkan aturan pada 'aturan_pemilihan_mata_uji': semua mata uji wajib dikerjakan, dan peserta memilih 2 mata uji pilihan.",
+    "catatan_istilah": "Istilah 'domain' dan 'subdomain' di file ini menyatukan dua penamaan berbeda dalam regulasi: 'Kompetensi'/'Subkompetensi' untuk mata uji bahasa, dan 'Elemen/Materi'/'Sub-elemen/Submateri' untuk mata uji lain. Field 'tipe_struktur' pada setiap mata uji menyatakan penamaan aslinya."
+  }
+}

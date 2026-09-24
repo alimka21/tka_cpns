@@ -1,0 +1,487 @@
+{
+  "meta": {
+    "kode_jenjang": "SMP",
+    "nama_jenjang": "SMP/MTs/sederajat",
+    "nama_asesmen": "Tes Kemampuan Akademik (TKA)",
+    "versi_file": "1.0.0",
+    "tanggal_disusun": "2026-09-24",
+    "bahasa": "id-ID",
+    "catatan_penggunaan": "File ini adalah sumber kebenaran (source of truth) kerangka asesmen TKA jenjang SMP/MTs. Seluruh soal dalam bank soal WAJIB tertaut ke salah satu subdomain di file ini. Field 'batasan' dan 'cakupan' adalah pagar ruang lingkup: soal (termasuk soal hasil generate AI) tidak boleh keluar dari batasan tersebut."
+  },
+
+  "referensi_regulasi": {
+    "nomor": "047/H/AN/2025",
+    "tentang": "Kerangka Asesmen Tes Kemampuan Akademik Jenjang SD/MI/Sederajat dan SMP/MTs/Sederajat",
+    "penerbit": "Kepala Badan Standar, Kurikulum, dan Asesmen Pendidikan, Kementerian Pendidikan Dasar dan Menengah Republik Indonesia",
+    "ditetapkan_di": "Jakarta",
+    "tanggal_ditetapkan": "2025-07-24",
+    "dasar_hukum_terkait": [
+      "Peraturan Menteri Pendidikan Dasar dan Menengah RI Nomor 9 Tahun 2025 tentang Tes Kemampuan Akademik",
+      "Keputusan Menteri Pendidikan Dasar dan Menengah Nomor 95/M/2025 tentang Pedoman Penyelenggaraan Tes Kemampuan Akademik"
+    ],
+    "acuan_kurikulum": ["Kurikulum 2013", "Kurikulum Merdeka"]
+  },
+
+  "tujuan_tka": [
+    "Menyediakan pelaporan capaian akademik individu murid dari penilaian yang terstandar.",
+    "Menyediakan skor yang relatif lebih dapat dibandingkan lintas satuan pendidikan untuk keperluan seleksi akademik.",
+    "Menjadi bagian dari upaya pengendalian dan penjaminan mutu pendidikan.",
+    "Menjadi pengakuan hasil belajar bagi murid dari jalur pendidikan nonformal dan informal."
+  ],
+
+  "catatan_penting": [
+    "TKA BUKAN evaluasi untuk menentukan kelulusan murid dari satuan pendidikan.",
+    "Tidak semua mata pelajaran dalam kurikulum menjadi mata uji TKA.",
+    "Pada mata pelajaran yang diujikan pun, tidak seluruh muatan kurikulum diukur."
+  ],
+
+  "jenis_soal": [
+    {
+      "kode": "tunggal",
+      "nama": "Soal Tunggal",
+      "deskripsi": "Soal yang berdiri sendiri, tidak terkait dengan soal-soal lain."
+    },
+    {
+      "kode": "grup",
+      "nama": "Soal Grup",
+      "deskripsi": "Sekumpulan soal yang mengacu pada sebuah stimulus yang sama."
+    }
+  ],
+
+  "bentuk_soal": [
+    {
+      "kode": "pg",
+      "nama": "Pilihan Ganda Sederhana",
+      "singkatan": "PG",
+      "deskripsi": "Hanya terdapat satu pilihan jawaban yang benar. Peserta diminta memilih satu jawaban dari pilihan yang tersedia.",
+      "aturan_penskoran": "Benar jika opsi yang dipilih sama dengan kunci jawaban tunggal.",
+      "struktur_jawaban": "single_correct"
+    },
+    {
+      "kode": "pgk_mcma",
+      "nama": "Pilihan Ganda Kompleks model Multiple Choice Multiple Answers",
+      "singkatan": "PGK MCMA",
+      "deskripsi": "Terdapat kemungkinan lebih dari satu pilihan jawaban benar. Peserta diminta memilih lebih dari satu pilihan yang dianggap benar.",
+      "aturan_penskoran": "Ditentukan oleh pengelola (disarankan: benar penuh jika seluruh opsi benar terpilih dan tidak ada opsi salah terpilih).",
+      "struktur_jawaban": "multiple_correct"
+    },
+    {
+      "kode": "pgk_kategori",
+      "nama": "Pilihan Ganda Kompleks model Kategori",
+      "singkatan": "PGK Kategori",
+      "deskripsi": "Terdapat beberapa pernyataan yang semuanya perlu direspon, misalnya dengan pilihan 'benar' atau 'salah' dan 'sesuai' atau 'tidak sesuai'. Peserta diminta memberi respon untuk masing-masing pernyataan.",
+      "aturan_penskoran": "Ditentukan oleh pengelola (disarankan: benar penuh jika seluruh pernyataan direspon sesuai kunci).",
+      "struktur_jawaban": "categorical_per_statement",
+      "pasangan_kategori_umum": [
+        ["Benar", "Salah"],
+        ["Sesuai", "Tidak Sesuai"]
+      ]
+    }
+  ],
+
+  "mata_uji": [
+    {
+      "kode": "SMP-BIND",
+      "nama": "Bahasa Indonesia",
+      "nama_lengkap": "Bahasa Indonesia SMP/MTs/sederajat",
+      "tipe": "wajib",
+      "urutan": 1,
+      "wajib_dikerjakan": true,
+      "fokus_keterampilan": "Membaca",
+      "deskripsi": "Sebagaimana TKA Bahasa Indonesia SD/MI/sederajat, TKA Bahasa Indonesia SMP/MTs/sederajat juga difokuskan pada keterampilan membaca.",
+      "tipe_struktur": "kompetensi_subkompetensi",
+
+      "muatan": {
+        "jenis_teks": [
+          {
+            "kode": "teks_informasi",
+            "nama": "Teks Informasi",
+            "deskripsi": "Teks yang berisi fakta, konsep, atau prosedur dari berbagai bidang atau topik yang berskala lokal, nasional, atau global. Teks informasi dapat berupa teks tunggal maupun teks jamak."
+          },
+          {
+            "kode": "teks_fiksi",
+            "nama": "Teks Fiksi",
+            "deskripsi": "Cerita rekaan yang dapat bersifat faktual (sejarah/biografi) atau realisme dengan latar cerita konkret atau abstrak, tokoh berkarakter bulat, konflik tunggal atau jamak dengan penyelesaian tertutup, alur campuran, dan sudut pandang orang ketiga."
+          }
+        ],
+        "karakteristik_teks": {
+          "kosakata": "Kata umum, kata berimbuhan/konfiks, kata abstrak, makna denotatif, istilah teknis, makna konotatif konteks tertentu.",
+          "kalimat": "Jumlah kata per kalimat 5–9 kata, kalimat tunggal berbagai pola, kalimat majemuk setara.",
+          "wacana": "Kohesi penyulihan/substitusi, konjungsi antarparagraf perbandingan dan penekanan/intensifikasi, penggunaan tanda baca untuk mendukung deskripsi.",
+          "panjang_teks_kata": {
+            "min": 200,
+            "max": 250,
+            "pengecualian": "Kecuali teks puisi."
+          }
+        }
+      },
+
+      "aspek_keterampilan_membaca": [
+        "Mengidentifikasi informasi tersurat dalam teks",
+        "Menyusun ulang, mengelompokkan, membuat ikhtisar, dan menyajikan kembali informasi tersurat dalam teks",
+        "Mengidentifikasi dan menyimpulkan informasi tersirat dalam teks",
+        "Menilai gagasan, fakta, atau opini dalam teks",
+        "Menanggapi isi teks, merefleksi diri dengan tokoh atau kejadian, dan menanggapi bahasa penulis dalam teks"
+      ],
+
+      "domain": [
+        {
+          "kode": "SMP-BIND-D1",
+          "urutan": 1,
+          "nama": "Pemahaman Tekstual",
+          "deskripsi": "Kemampuan untuk memahami informasi yang dikemukakan secara eksplisit, mengelompokkan, menyusun ulang, dan menyajikan kembali informasi secara eksplisit dari teks.",
+          "subdomain": [
+            {
+              "kode": "SMP-BIND-D1-S1",
+              "urutan": 1,
+              "nama": "Mengidentifikasi penggunaan istilah dalam berbagai bidang."
+            },
+            {
+              "kode": "SMP-BIND-D1-S2",
+              "urutan": 2,
+              "nama": "Mengidentifikasi objek dan/atau latar berdasarkan kosakata yang digunakan dalam teks fiksi atau nonfiksi."
+            },
+            {
+              "kode": "SMP-BIND-D1-S3",
+              "urutan": 3,
+              "nama": "Mengidentifikasi informasi penting yang tersurat dalam teks."
+            },
+            {
+              "kode": "SMP-BIND-D1-S4",
+              "urutan": 4,
+              "nama": "Menyusun kerangka atau bagan berdasarkan bagian-bagian penting dalam teks."
+            }
+          ]
+        },
+        {
+          "kode": "SMP-BIND-D2",
+          "urutan": 2,
+          "nama": "Pemahaman Inferensial",
+          "deskripsi": "Kemampuan untuk menarik kesimpulan berdasarkan informasi yang tersirat dalam teks.",
+          "subdomain": [
+            {
+              "kode": "SMP-BIND-D2-S1",
+              "urutan": 1,
+              "nama": "Menyimpulkan ide pokok, gagasan pendukung, tokoh, peristiwa, latar, dan/atau nilai-nilai dalam dan/atau antarteks."
+            },
+            {
+              "kode": "SMP-BIND-D2-S2",
+              "urutan": 2,
+              "nama": "Menjelaskan kelogisan hubungan antarperistiwa, antargagasan, dan/atau antarinformasi dalam dan/atau antarteks."
+            },
+            {
+              "kode": "SMP-BIND-D2-S3",
+              "urutan": 3,
+              "nama": "Memprediksi peristiwa dalam teks."
+            },
+            {
+              "kode": "SMP-BIND-D2-S4",
+              "urutan": 4,
+              "nama": "Menjelaskan bahasa kias dan citraan yang digunakan dalam teks fiksi."
+            }
+          ]
+        },
+        {
+          "kode": "SMP-BIND-D3",
+          "urutan": 3,
+          "nama": "Evaluasi dan Apresiasi",
+          "deskripsi": "Kemampuan untuk membuat penilaian terhadap ide, menanggapi teks secara emosional dan estetis dengan mempertimbangkan dampaknya terhadap perasaan, imajinasi, serta penggunaan bahasa oleh penulis.",
+          "subdomain": [
+            {
+              "kode": "SMP-BIND-D3-S1",
+              "urutan": 1,
+              "nama": "Menilai relevansi peristiwa dalam teks dengan kehidupan sehari-hari."
+            },
+            {
+              "kode": "SMP-BIND-D3-S2",
+              "urutan": 2,
+              "nama": "Menilai kesesuaian dan/atau keakuratan unsur, kebahasaan, atau isi berdasarkan perbandingan informasi dalam dan/atau antarteks."
+            },
+            {
+              "kode": "SMP-BIND-D3-S3",
+              "urutan": 3,
+              "nama": "Menyimpulkan respons emosional terhadap unsur teks fiksi."
+            }
+          ]
+        }
+      ]
+    },
+
+    {
+      "kode": "SMP-MTK",
+      "nama": "Matematika",
+      "nama_lengkap": "Matematika SMP/MTs/sederajat",
+      "tipe": "wajib",
+      "urutan": 2,
+      "wajib_dikerjakan": true,
+      "deskripsi": "Sebagaimana TKA Matematika SD/MI/sederajat, TKA Matematika SMP/MTs/sederajat juga mengukur kemampuan murid dalam memahami fakta, konsep, prinsip, dan prosedur matematika, serta kemampuan mereka dalam menerapkan pengetahuan matematika untuk menyelesaikan masalah (problem solving).",
+      "tipe_struktur": "elemen_subelemen",
+
+      "muatan": {
+        "catatan": "Muatan merujuk pada elemen kurikulum atau materi matematika yang dipelajari murid pada Kurikulum 2013 dan Kurikulum Merdeka. Penggunaan logika matematika diintegrasikan langsung dengan elemen matematika yang tertera dalam kurikulum.",
+        "konteks_pengukuran": [
+          "Konteks matematika",
+          "Konteks keseharian yang dapat meliputi kejadian atau situasi di lingkup personal, keluarga, atau lingkungan sekitar yang bersifat lokal"
+        ]
+      },
+
+      "kemampuan_matematis_yang_diukur": [
+        "Pengetahuan matematika",
+        "Representasi matematis",
+        "Penalaran dan penggunaan logika matematis",
+        "Pemecahan masalah matematis",
+        "Koneksi matematis"
+      ],
+
+      "level_kognitif": [
+        {
+          "level": 1,
+          "kode": "L1",
+          "nama": "Pengetahuan dan Pemahaman",
+          "nama_en": "Knowing and Understanding",
+          "proses_berpikir": [
+            {
+              "nama": "Menghitung",
+              "deskripsi": "Melakukan perhitungan berdasarkan prosedur yang mencakup operasi hitung aritmatika (+, -, ×, ÷, atau kombinasinya), operasi aljabar, atau operasi matematika lainnya."
+            },
+            {
+              "nama": "Memahami informasi",
+              "deskripsi": "Memahami informasi dari grafik fungsi, tabel, diagram, infografis, atau bentuk visual lainnya."
+            },
+            {
+              "nama": "Mengelompokkan",
+              "deskripsi": "Mengelompokkan objek berdasarkan fakta, konsep, dan prinsip matematika dalam cakupan sub-elemen."
+            },
+            {
+              "nama": "Mengidentifikasi",
+              "deskripsi": "Melakukan identifikasi terhadap objek menggunakan konsep, fakta, dan prinsip matematika dalam cakupan sub-elemen."
+            }
+          ]
+        },
+        {
+          "level": 2,
+          "kode": "L2",
+          "nama": "Aplikasi",
+          "nama_en": "Applying",
+          "proses_berpikir": [
+            {
+              "nama": "Memodelkan",
+              "deskripsi": "Memodelkan permasalahan kontekstual terkait cakupan sub-elemen ke dalam kalimat matematika."
+            },
+            {
+              "nama": "Mengaplikasikan",
+              "deskripsi": "Mengaplikasikan strategi dan operasi matematika (berupa operasi hitung, operasi aljabar, atau bentuk operasi lainnya) untuk menyelesaikan permasalahan yang melibatkan konsep dan prosedur matematis yang familiar dan rutin."
+            },
+            {
+              "nama": "Menginterpretasikan",
+              "deskripsi": "Memahami dan menjelaskan makna dari berbagai situasi, kejadian, pernyataan, representasi, atau masalah matematika."
+            }
+          ]
+        },
+        {
+          "level": 3,
+          "kode": "L3",
+          "nama": "Penalaran",
+          "nama_en": "Reasoning",
+          "proses_berpikir": [
+            {
+              "nama": "Menganalisis",
+              "deskripsi": "Menentukan, menjelaskan, dan menggunakan hubungan beberapa konsep, fakta, prinsip, atau prosedur matematika dalam cakupan sub-elemen."
+            },
+            {
+              "nama": "Memecahkan masalah",
+              "deskripsi": "Mengaitkan beberapa konsep, fakta, prinsip, prosedur, dan representasi matematika dalam cakupan sub-elemen, untuk menyelesaikan permasalahan dalam situasi baru atau konteks yang tidak rutin."
+            },
+            {
+              "nama": "Mengevaluasi",
+              "deskripsi": "Mengevaluasi alternatif strategi dan solusi dari suatu pemecahan masalah."
+            },
+            {
+              "nama": "Menyimpulkan",
+              "deskripsi": "Menarik kesimpulan yang valid dari informasi, data, atau bukti yang diberikan menggunakan konsep, fakta, prinsip, dan prosedur matematika dalam cakupan sub-elemen."
+            },
+            {
+              "nama": "Melakukan generalisasi",
+              "deskripsi": "Menyusun pernyataan matematis yang menggambarkan hubungan yang lebih umum terkait konsep, fakta, prinsip, dan prosedur dalam cakupan sub-elemen."
+            }
+          ]
+        }
+      ],
+
+      "kompetensi_umum": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+
+      "domain": [
+        {
+          "kode": "SMP-MTK-D1",
+          "urutan": 1,
+          "nama": "Bilangan",
+          "subdomain": [
+            {
+              "kode": "SMP-MTK-D1-S1",
+              "urutan": 1,
+              "nama": "Bilangan Real",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Perbandingan dan sifat-sifat bilangan",
+                "Operasi aritmetika pada bilangan",
+                "Estimasi/perkiraan hasil perhitungan",
+                "Faktorisasi prima bilangan asli",
+                "Rasio (skala, proporsi, dan laju perubahan)",
+                "Perbandingan senilai dan berbalik nilai"
+              ],
+              "batasan": "Bilangan mencakup bilangan bulat, bilangan rasional dan irasional, bilangan berpangkat bulat, bilangan akar, dan bilangan dalam notasi ilmiah."
+            }
+          ]
+        },
+        {
+          "kode": "SMP-MTK-D2",
+          "urutan": 2,
+          "nama": "Aljabar",
+          "subdomain": [
+            {
+              "kode": "SMP-MTK-D2-S1",
+              "urutan": 1,
+              "nama": "Persamaan dan Pertidaksamaan Linier",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Persamaan linear satu variabel",
+                "Pertidaksamaan linear satu variabel",
+                "Sistem persamaan linear dua variabel"
+              ],
+              "batasan": null
+            },
+            {
+              "kode": "SMP-MTK-D2-S2",
+              "urutan": 2,
+              "nama": "Bentuk Aljabar",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Bentuk aljabar dan sifat-sifat operasinya (komutatif, asosiatif, dan distributif)"
+              ],
+              "batasan": null
+            },
+            {
+              "kode": "SMP-MTK-D2-S3",
+              "urutan": 3,
+              "nama": "Fungsi",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Relasi dan fungsi (domain, kodomain, range), serta penyajiannya"
+              ],
+              "batasan": null
+            },
+            {
+              "kode": "SMP-MTK-D2-S4",
+              "urutan": 4,
+              "nama": "Barisan dan Deret",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Barisan berhingga bilangan",
+                "Deret berhingga bilangan"
+              ],
+              "batasan": null
+            }
+          ]
+        },
+        {
+          "kode": "SMP-MTK-D3",
+          "urutan": 3,
+          "nama": "Geometri dan Pengukuran",
+          "subdomain": [
+            {
+              "kode": "SMP-MTK-D3-S1",
+              "urutan": 1,
+              "nama": "Objek Geometri",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Hubungan antar-sudut yang terbentuk oleh dua garis yang berpotongan, dan oleh dua garis sejajar yang dipotong suatu garis transversal (termasuk penentuan besar sudut dalam segitiga)",
+                "Teorema Pythagoras",
+                "Kekongruenan dan kesebangunan bangun datar",
+                "Jaring-jaring bangun ruang (prisma, tabung, limas dan kerucut)"
+              ],
+              "batasan": null
+            },
+            {
+              "kode": "SMP-MTK-D3-S2",
+              "urutan": 2,
+              "nama": "Transformasi Geometri",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Transformasi tunggal (refleksi, translasi, rotasi, dan dilatasi) terhadap titik, garis, dan bangun datar pada bidang"
+              ],
+              "batasan": null
+            },
+            {
+              "kode": "SMP-MTK-D3-S3",
+              "urutan": 3,
+              "nama": "Pengukuran",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Keliling dan luas bangun datar (daerah segi banyak dan daerah lingkaran, serta daerah gabungannya)",
+                "Volume bangun ruang (prisma, limas, dan bola)"
+              ],
+              "batasan": null
+            }
+          ]
+        },
+        {
+          "kode": "SMP-MTK-D4",
+          "urutan": 4,
+          "nama": "Data dan Peluang",
+          "subdomain": [
+            {
+              "kode": "SMP-MTK-D4-S1",
+              "urutan": 1,
+              "nama": "Data",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Perumusan pertanyaan untuk mendapatkan data, serta penyajian, dan penginterpretasian data",
+                "Penentuan dan penaksiran rerata (mean), median, modus, dan jangkauan (range) dari data",
+                "Perbandingan ukuran pemusatan dan ukuran penyebaran beberapa kelompok data"
+              ],
+              "batasan": "Penyajian data meliputi: diagram batang, diagram garis, diagram lingkaran, dan tabel."
+            },
+            {
+              "kode": "SMP-MTK-D4-S2",
+              "urutan": 2,
+              "nama": "Peluang",
+              "kompetensi": "Memahami, mengaplikasikan, dan bernalar yang lebih tinggi untuk menyelesaikan permasalahan terkait cakupan sub-elemen.",
+              "cakupan": [
+                "Peluang dan frekuensi relatif dari kejadian tunggal"
+              ],
+              "batasan": null
+            }
+          ]
+        }
+      ]
+    }
+  ],
+
+  "template_metadata_soal": {
+    "deskripsi": "Struktur metadata minimum yang harus melekat pada setiap soal, mengikuti format contoh soal pada lampiran regulasi.",
+    "field": [
+      { "nama": "kode_jenjang", "tipe": "string", "wajib": true, "contoh": "SMP" },
+      { "nama": "kode_mata_uji", "tipe": "string", "wajib": true, "contoh": "SMP-MTK" },
+      { "nama": "kode_domain", "tipe": "string", "wajib": true, "contoh": "SMP-MTK-D2", "catatan": "Kompetensi (bahasa) atau Elemen/Materi (matematika)." },
+      { "nama": "kode_subdomain", "tipe": "string", "wajib": true, "contoh": "SMP-MTK-D2-S1", "catatan": "Subkompetensi (bahasa) atau Sub-elemen/Submateri (matematika). Unit analisis kelemahan murid." },
+      { "nama": "level_kognitif", "tipe": "string", "wajib": false, "contoh": "L3", "catatan": "Wajib untuk Matematika; tidak berlaku untuk Bahasa Indonesia yang memakai struktur kompetensi." },
+      { "nama": "proses_berpikir", "tipe": "string", "wajib": false, "contoh": "Memecahkan masalah" },
+      { "nama": "bentuk_soal", "tipe": "enum", "wajib": true, "nilai": ["pg", "pgk_mcma", "pgk_kategori"] },
+      { "nama": "jenis_soal", "tipe": "enum", "wajib": true, "nilai": ["tunggal", "grup"] },
+      { "nama": "kode_stimulus", "tipe": "string", "wajib": false, "catatan": "Wajib diisi jika jenis_soal = grup." },
+      { "nama": "tingkat_kesulitan", "tipe": "enum", "wajib": false, "nilai": ["mudah", "sedang", "sulit"] }
+    ]
+  },
+
+  "mapping_database": {
+    "catatan": "Kerangka ini memiliki 3 tingkat hierarki. Skema database perlu menyediakan ketiganya agar analisis kelemahan dapat dilaporkan pada tingkat subdomain dan diagregasi ke tingkat domain.",
+    "hierarki": [
+      { "tingkat": 1, "entitas_kerangka": "mata_uji", "saran_tabel": "subjects", "contoh": "Bahasa Indonesia, Matematika" },
+      { "tingkat": 2, "entitas_kerangka": "domain", "saran_tabel": "domains", "contoh": "Pemahaman Inferensial (bahasa) / Aljabar (matematika)" },
+      { "tingkat": 3, "entitas_kerangka": "subdomain", "saran_tabel": "subdomains", "contoh": "Memprediksi peristiwa dalam teks / Persamaan dan Pertidaksamaan Linier" }
+    ],
+    "unit_analisis_kelemahan": "subdomain",
+    "agregasi_laporan": ["subdomain", "domain", "mata_uji"],
+    "catatan_istilah": "Istilah 'domain' dan 'subdomain' di file ini menyatukan dua penamaan berbeda dalam regulasi: untuk mata uji bahasa disebut 'Kompetensi' dan 'Subkompetensi'; untuk matematika disebut 'Elemen/Materi' dan 'Sub-elemen/Submateri'. Field 'tipe_struktur' pada setiap mata uji menyatakan penamaan aslinya."
+  }
+}

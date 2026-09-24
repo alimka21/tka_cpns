@@ -159,7 +159,7 @@ export function ImportUploader() {
                 <tr>
                   <th className="px-5 py-3">Baris</th>
                   <th className="px-5 py-3">Status</th>
-                  <th className="px-5 py-3">Topik / Subtopik</th>
+                  <th className="px-5 py-3">Subdomain</th>
                   <th className="px-5 py-3">Pertanyaan</th>
                   <th className="px-5 py-3">Kunci</th>
                   <th className="px-5 py-3">Tingkat</th>
@@ -174,8 +174,14 @@ export function ImportUploader() {
                         <Badge variant="success">Valid</Badge>
                       </td>
                       <td className="px-5 py-3">
-                        <div className="font-medium">{row.topicName}</div>
-                        <div className="text-xs text-muted-foreground">{row.subtopicName}</div>
+                        <div className="font-mono text-xs font-semibold text-primary">{row.subdomainCode}</div>
+                        <div className="line-clamp-1 font-medium" title={row.subdomainName}>
+                          {row.subdomainName}
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          {row.jenjang} · {row.subjectName}
+                          {row.cognitiveLevel && ` · ${row.cognitiveLevel}`}
+                        </div>
                       </td>
                       <td className="max-w-md px-5 py-3">
                         <p className="line-clamp-2">{row.questionText}</p>
@@ -211,7 +217,7 @@ export function ImportUploader() {
                   <>
                     <p className="line-clamp-2">{row.questionText}</p>
                     <span className="text-xs text-muted-foreground">
-                      {row.topicName} · {row.subtopicName} · Kunci {row.answer} · {difficultyLabel[row.difficulty]}
+                      {row.subdomainCode} · {row.subjectName} · Kunci {row.answer} · {difficultyLabel[row.difficulty]}
                     </span>
                   </>
                 ) : (

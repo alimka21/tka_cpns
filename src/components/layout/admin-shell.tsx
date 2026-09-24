@@ -23,7 +23,7 @@ type NavItem = { href: string; label: string; icon: LucideIcon; badge?: string }
 const navItems: NavItem[] = [
   { href: "/admin", label: "Dashboard", icon: LayoutGrid },
   { href: "/admin/users", label: "Manajemen User", icon: Users },
-  { href: "/admin/topik", label: "Topik & Subtopik", icon: FolderTree },
+  { href: "/admin/topik", label: "Kerangka Asesmen", icon: FolderTree },
   { href: "/admin/soal", label: "Bank Soal", icon: Library },
   { href: "/admin/soal/import", label: "Import Soal", icon: FileUp },
   { href: "/admin/soal/generate-ai", label: "Generate AI", icon: Sparkles, badge: "Fase 2" },

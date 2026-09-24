@@ -9,28 +9,54 @@ import {
 } from "drizzle-orm/mysql-core";
 import { users } from "./users";
 
+// Hierarki konten = kerangka asesmen TKA (asesmen/tka-*.json, lihat
+// src/server/asesmen): jenjang → mata uji → domain → subdomain.
+// Nama tabel `topics`/`subtopics` dipertahankan: topic = domain,
+// subtopic = subdomain (unit analisis kelemahan). Detail cakupan/batasan
+// tidak disalin ke DB — dibaca dari file kerangka lewat `code`.
+
+/** Jenjang: SD, SMP, SMA. */
 export const categories = mysqlTable("categories", {
   id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 8 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
 });
 
-export const topics = mysqlTable("topics", {
+/** Mata uji, mis. SMP-MTK. */
+export const subjects = mysqlTable("subjects", {
   id: int("id").autoincrement().primaryKey(),
   categoryId: int("category_id")
     .notNull()
     .references(() => categories.id),
+  code: varchar("code", { length: 32 }).notNull().unique(),
   name: varchar("name", { length: 255 }).notNull(),
-  slug: varchar("slug", { length: 255 }).notNull(),
+  fullName: varchar("full_name", { length: 255 }).notNull(),
+  type: mysqlEnum("type", ["wajib", "pilihan"]).notNull(),
+  structure: mysqlEnum("structure", ["kompetensi_subkompetensi", "elemen_subelemen"]).notNull(),
   order: int("order").notNull().default(0),
 });
 
+/** Domain (kompetensi / elemen), mis. SMP-MTK-D1. */
+export const topics = mysqlTable("topics", {
+  id: int("id").autoincrement().primaryKey(),
+  subjectId: int("subject_id")
+    .notNull()
+    .references(() => subjects.id),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  order: int("order").notNull().default(0),
+});
+
+/** Subdomain (subkompetensi / sub-elemen), mis. SMP-MTK-D1-S1. */
 export const subtopics = mysqlTable("subtopics", {
   id: int("id").autoincrement().primaryKey(),
   topicId: int("topic_id")
     .notNull()
     .references(() => topics.id),
-  name: varchar("name", { length: 255 }).notNull(),
-  slug: varchar("slug", { length: 255 }).notNull(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  // Nama subdomain terpanjang di regulasi 284 karakter (SMA-PPKN-D4-S1).
+  name: varchar("name", { length: 512 }).notNull(),
   order: int("order").notNull().default(0),
 });
 
@@ -45,6 +71,8 @@ export const questions = mysqlTable("questions", {
   questionText: text("question_text").notNull(),
   imageUrl: varchar("image_url", { length: 2048 }),
   difficulty: mysqlEnum("difficulty", ["easy", "medium", "hard"]).notNull(),
+  /** L1/L2/L3 sesuai level kognitif mata uji; null untuk mata uji bahasa. */
+  cognitiveLevel: varchar("cognitive_level", { length: 4 }),
   status: mysqlEnum("status", ["draft", "pending_review", "published"])
     .notNull()
     .default("draft"),

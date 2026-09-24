@@ -9,6 +9,7 @@
     "lint": "eslint",
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
+    "db:seed:asesmen": "tsx --env-file=.env src/server/db/seed-asesmen.ts",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run"
   },
@@ -38,6 +39,7 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.5",
     "tailwindcss": "^4",
+    "tsx": "^4.23.15",
     "typescript": "^5",
     "vitest": "^4.1.11"
   }

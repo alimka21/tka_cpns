@@ -14,6 +14,8 @@ export const questionInput = z
     questionText: z.string().trim().min(1, "Pertanyaan wajib diisi"),
     imageUrl: z.url("URL gambar tidak valid").max(2048).nullish(),
     difficulty: z.enum(DIFFICULTIES),
+    // Kecocokan level dengan mata uji dicek di server lewat kerangka asesmen.
+    cognitiveLevel: z.string().regex(/^L\d$/, "Level kognitif harus L1, L2, atau L3").nullish(),
     status: z.enum(QUESTION_STATUSES).default("draft"),
     options: z.array(questionOptionInput).min(4, "Minimal 4 opsi").max(5, "Maksimal 5 opsi"),
     explanationText: z.string().trim().nullish(),

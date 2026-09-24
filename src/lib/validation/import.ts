@@ -3,8 +3,7 @@ import { OPTION_LABELS, type Difficulty } from "./enums";
 
 // Kolom baku template import (ARCHITECTURE §3.4). Urutan = urutan kolom Excel.
 export const IMPORT_COLUMNS = [
-  "topik",
-  "subtopik",
+  "kode_subdomain",
   "pertanyaan",
   "opsi_a",
   "opsi_b",
@@ -14,7 +13,11 @@ export const IMPORT_COLUMNS = [
   "kunci",
   "pembahasan",
   "tingkat_kesulitan",
+  "level_kognitif",
 ] as const;
+
+/** Kolom yang boleh tidak ada di file (selain itu wajib ada header-nya). */
+export const IMPORT_OPTIONAL_COLUMNS: readonly ImportColumn[] = ["opsi_e", "pembahasan", "level_kognitif"];
 
 export type ImportColumn = (typeof IMPORT_COLUMNS)[number];
 export type RawImportRow = Partial<Record<ImportColumn, string>>;
@@ -38,8 +41,10 @@ const optional = z
 
 export const importRowSchema = z
   .object({
-    topik: required("Topik"),
-    subtopik: required("Subtopik"),
+    // Keberadaan kode di kerangka asesmen dicek di server (question-import.ts).
+    kode_subdomain: required("Kode subdomain")
+      .toUpperCase()
+      .regex(/^(SD|SMP|SMA|SMK)(-[A-Z0-9]+)+$/, "Kode subdomain tidak dikenali (contoh: SMP-MTK-D1-S1)"),
     pertanyaan: required("Pertanyaan"),
     opsi_a: required("Opsi A"),
     opsi_b: required("Opsi B"),
@@ -52,6 +57,13 @@ export const importRowSchema = z
       .toUpperCase()
       .pipe(z.enum(OPTION_LABELS, "Kunci harus salah satu dari A–E")),
     pembahasan: optional,
+    level_kognitif: optional.pipe(
+      z
+        .string()
+        .transform((v) => v.toUpperCase())
+        .pipe(z.enum(["L1", "L2", "L3"], "Level kognitif harus L1, L2, atau L3"))
+        .optional(),
+    ),
     tingkat_kesulitan: z
       .string()
       .trim()
@@ -68,8 +80,8 @@ export const importRowSchema = z
       (t): t is string => t !== undefined,
     );
     return {
-      topicName: r.topik,
-      subtopicName: r.subtopik,
+      subdomainCode: r.kode_subdomain,
+      cognitiveLevel: r.level_kognitif ?? null,
       questionText: r.pertanyaan,
       difficulty: r.tingkat_kesulitan,
       explanationText: r.pembahasan ?? null,

@@ -9,18 +9,14 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { PageHeader } from "@/components/layout/page-header";
 
 export const metadata: Metadata = { title: "Pengaturan" };
 
 export default function PengaturanPage() {
   return (
-    <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-2xl font-semibold">Pengaturan</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Kelola profil dan API key Gemini milikmu.
-        </p>
-      </div>
+    <div className="flex max-w-3xl flex-col gap-6">
+      <PageHeader title="Pengaturan" description="Kelola profil dan API key Gemini milikmu." />
 
       <Card>
         <CardHeader>

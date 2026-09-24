@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { AlarmClock, Clock } from "lucide-react";
 import { formatDuration, remainingMs } from "@/lib/exam";
 import { cn } from "@/lib/utils";
 
@@ -38,16 +39,22 @@ export function ExamTimer({ endsAt, serverNow, onExpire }: Props) {
     return () => clearInterval(id);
   }, [endsAtMs, offset]);
 
+  const critical = left <= 5 * 60_000;
   return (
     <div
       role="timer"
       aria-label="Sisa waktu"
       className={cn(
-        "rounded-md border px-3 py-1.5 font-mono text-lg tabular-nums",
-        left <= 5 * 60_000 && "border-destructive/50 bg-destructive/10 text-destructive",
+        "flex items-center gap-2 rounded-lg border px-3 py-1.5",
+        critical
+          ? "border-destructive/60 bg-destructive-soft text-destructive"
+          : "border-transparent bg-primary-soft text-primary",
       )}
     >
-      {formatDuration(left)}
+      {/* Status kritis tidak hanya lewat warna: ikon + teks (docs/UI_UX.md §6). */}
+      {critical ? <AlarmClock className="size-4 shrink-0 motion-safe:animate-pulse" aria-hidden /> : <Clock className="size-4 shrink-0" aria-hidden />}
+      <span className="hidden text-xs font-semibold sm:inline">{critical ? "Waktu hampir habis" : "Sisa waktu"}</span>
+      <span className="text-lg font-bold tabular-nums">{formatDuration(left)}</span>
     </div>
   );
 }

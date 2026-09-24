@@ -5,6 +5,10 @@ const nextConfig: NextConfig = {
   // Proyek sudah punya CLAUDE.md sendiri (lihat root) — jangan ditimpa/ditambah otomatis oleh `next dev`.
   agentRules: false,
   poweredByHeader: false,
+  experimental: {
+    // Upload import soal lewat server action (maks. 5 MB, lihat IMPORT_MAX_BYTES).
+    serverActions: { bodySizeLimit: "6mb" },
+  },
   async headers() {
     return [
       {

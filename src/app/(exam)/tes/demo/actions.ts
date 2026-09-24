@@ -16,5 +16,5 @@ export async function demoSaveAnswer(input: {
 }
 
 export async function demoSubmitAttempt() {
-  return { ok: true, redirectTo: "/dashboard" };
+  return { ok: true, redirectTo: "/hasil/demo" };
 }

@@ -18,8 +18,8 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 
 ## 1. Prinsip desain
 
-- **Terpercaya & fokus** — ini platform tes akademik/CPNS, bukan produk
-  konsumer yang ramai. Hindari elemen dekoratif berlebihan, terutama di
+- **Terpercaya & fokus** — ini platform latihan TKA untuk siswa SD/SMP/SMA,
+  bukan produk konsumer yang ramai. Hindari elemen dekoratif berlebihan, terutama di
   halaman pengerjaan tes.
 - **Mobile-first** — mayoritas user Indonesia akses lewat browser HP.
   Semua layout didesain dari lebar mobile dulu, baru melebar ke desktop.
@@ -36,25 +36,30 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 |---|---|---|
 | `primary` | `#1E3A8A` (deep blue) | Warna utama brand, navbar, judul penting, elemen fokus |
 | `primary-hover` | `#1E40AF` | Hover state tombol primary |
-| `accent` | `#F59E0B` (amber) | CTA utama ("Daftar Gratis", "Mulai Tes"), highlight premium |
-| `accent-hover` | `#D97706` | Hover state tombol accent |
-| `success` | `#16A34A` | Jawaban benar, progres positif, badge "Aktif" |
-| `danger` | `#DC2626` | Jawaban salah, timer kritis (<5 menit), peringatan |
-| `warning` | `#F59E0B` (sama dgn accent) | Status "ragu-ragu", "pending review" |
+| `primary-soft` | `#EFF6FF` | Latar opsi terpilih, menu aktif, timer normal, ikon stat card |
+| `accent` → kode: `cta` | `#F59E0B` (amber) | CTA utama ("Daftar Gratis", "Mulai Tes"), highlight premium |
+| `accent-hover` → kode: `cta-hover` | `#D97706` | Hover state tombol CTA |
+| `cta-foreground` | `#0F172A` | Teks di atas amber (putih di atas amber gagal kontras) |
+| `success` / `success-soft` | `#16A34A` / `#ECFDF5` | Jawaban benar, progres positif, badge "Tayang"/"Premium" |
+| `danger` → kode: `destructive` / `destructive-soft` | `#DC2626` / `#FEF2F2` | Jawaban salah, timer kritis (<5 menit), subtopik terlemah |
+| `warning` / `warning-soft` / `warning-strong` | `#F59E0B` / `#FEF3C7` / `#B45309` | Status "ragu-ragu", "menunggu review" (teks pakai `warning-strong`) |
 | `neutral-bg` | `#F8FAFC` | Background halaman |
 | `neutral-surface` | `#FFFFFF` | Background card/panel |
 | `neutral-border` | `#E2E8F0` | Border card, divider |
 | `neutral-text` | `#0F172A` | Teks utama |
 | `neutral-text-muted` | `#64748B` | Teks sekunder, caption |
 
-> Implementasi: definisikan sebagai CSS variable / Tailwind theme di
-> `tailwind.config` atau `globals.css` (Tailwind v4 pakai `@theme`),
-> jangan hardcode hex di tiap komponen.
+> Implementasi: semua token ada di `src/app/globals.css` (`:root` +
+> `@theme inline`), dipakai sebagai kelas Tailwind (`bg-primary`,
+> `bg-cta`, `text-warning-strong`, dst). Jangan hardcode hex di komponen.
+> Nama `accent` di tabel ini dipetakan ke `cta` di kode karena shadcn/ui
+> sudah memakai `accent` untuk latar hover. Aplikasi light-only.
 
 ### 2.2 Tipografi
 
-- Font: sans-serif bawaan sistem atau satu Google Font netral (mis.
-  **Inter** atau **Plus Jakarta Sans**) — pilih satu, pakai konsisten.
+- Font: **Plus Jakarta Sans** (sesuai design system Stitch), dimuat lewat
+  `next/font` di `src/app/layout.tsx`. Satu font untuk semua teks, termasuk
+  angka besar.
 - Skala:
   | Level | Ukuran | Pemakaian |
   |---|---|---|
@@ -71,8 +76,12 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 ### 2.3 Spacing, radius, shadow
 
 - Spacing scale: kelipatan 4px (Tailwind default: `1`=4px, `2`=8px, dst).
-- Radius: `12px` untuk card besar, `8px` untuk tombol/input, `9999px`
-  (full) untuk badge/pill.
+- Radius: `16px` (`rounded-2xl`) untuk card/panel/dialog, `12px` untuk
+  kartu opsi jawaban, `8px` untuk tombol/input/kotak navigasi soal,
+  `9999px` (full) untuk badge/pill. (Diubah dari 12px → 16px mengikuti
+  hasil Stitch.)
+- Tinggi kontrol: tombol & input default 40px, tombol `lg` 44px, kotak
+  navigasi soal 44×44px (target sentuh minimum).
 - Shadow: soft shadow saja (`shadow-sm`/`shadow-md` Tailwind), hindari
   shadow tebal/gelap.
 - Container max-width halaman konten: `~1200px`, dengan padding
@@ -82,14 +91,16 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 
 | Komponen | Aturan |
 |---|---|
-| **Tombol primary** | Background `primary`, teks putih, radius 8px, dipakai untuk aksi utama non-CTA marketing (mis. "Simpan", "Masuk") |
-| **Tombol accent/CTA** | Background `accent`, teks gelap/putih (cek kontras), dipakai khusus untuk ajakan konversi ("Daftar Gratis", "Mulai Tes", "Upgrade Premium") |
+| **Tombol primary** | `<Button>` — background `primary`, teks putih, radius 8px, dipakai untuk aksi utama non-CTA marketing (mis. "Simpan", "Masuk") |
+| **Tombol accent/CTA** | `<Button variant="cta">` — background amber, teks gelap `#0F172A`, khusus ajakan konversi ("Daftar Gratis", "Latih subtopik ini", "Kumpulkan") |
 | **Tombol secondary** | Outline/border `neutral-border`, teks `neutral-text` |
-| **Badge status** | Pill kecil, warna sesuai makna: hijau=published/benar, amber=pending/ragu-ragu, merah=salah/terkunci, abu=draft |
-| **Card** | Background `neutral-surface`, border `neutral-border` tipis, radius 12px, padding 16-24px |
+| **Badge status** | `<Badge variant="success\|warning\|danger\|muted\|info">` — pill, latar lembut + teks tegas: hijau=published/benar, amber=pending/ragu-ragu, merah=salah/terkunci, abu=draft |
+| **Card** | Kelas `surface-card` atau `<Card>` — background putih, border tipis, radius 16px, soft shadow, padding 20–32px |
+| **Opsi jawaban** | Resting: border tipis + badge huruf bulat abu. Terpilih: border 2px `primary`, latar `primary-soft`, badge huruf solid biru |
+| **Kategori skor** | `scoreTone()` di `src/lib/format.ts`: ≥75% Baik (hijau), 50–74% Cukup (amber), <50% Perlu latihan (merah) |
 | **Input/Form** | Border `neutral-border`, radius 8px, focus ring warna `primary` |
 | **Tabel (admin)** | Header sticky, baris zebra tipis opsional, aksi di kolom kanan (ikon edit/toggle), hover row highlight ringan |
-| **Navigasi soal (grid angka)** | Kotak kecil persegi, radius 6-8px: terjawab=solid biru, ragu-ragu=solid amber, belum=outline abu |
+| **Navigasi soal (grid angka)** | Kotak 44px, radius 8px: terjawab=solid biru, ragu-ragu=solid amber + ikon bendera (teks gelap), belum=outline abu, soal aktif=ring biru 2px |
 | **Chart** | Ikuti palet warna di atas untuk series; radar chart untuk subtopik, bar chart untuk perbandingan, line chart untuk tren waktu |
 
 ## 4. Layout per halaman
@@ -98,10 +109,15 @@ Ringkasan struktur tiap halaman (detail lengkap ada di prompt Stitch
 yang sudah dipakai — file ini fokus ke aturan visual & konsistensi).
 
 ### 4.1 Landing page (publik)
-Navbar transparan/putih → Hero (headline + CTA ganda + ilustrasi
-dashboard) → trust bar angka → 4 kartu fitur → 2 kartu kategori
-(Akademik vs CPNS) → perbandingan Gratis vs Premium → testimoni →
+Navbar putih → Hero (headline + CTA ganda + ilustrasi kartu hasil) →
+bar keunggulan singkat → 4 kartu fitur → 3 kartu jenjang (SD/SMP/SMA) →
+perbandingan Gratis vs Premium → cara kerja 3 langkah → CTA akhir →
 footer.
+
+**Aturan konten:** hanya klaim faktual. Jangan tampilkan jumlah pengguna,
+tingkat kelulusan, testimoni, atau harga sebelum datanya nyata (versi
+Stitch memuat angka & testimoni contoh — sengaja tidak dipakai). Bagian
+testimoni boleh ditambahkan kembali setelah ada testimoni asli.
 
 ### 4.2 Login / Register
 Card terpusat di atas background lembut, logo di atas card, form
@@ -136,9 +152,11 @@ Layout minim distraksi. Topbar: judul tes + timer besar (berubah merah
 navigasi soal dengan kode warna status.
 
 ### 4.9 Student — Hasil & Analisis
-Skor besar di atas dengan badge lulus/tidak (mode CPNS). Radar chart
-per subtopik dengan subtopik terlemah di-highlight. Bar chart detail
-per subtopik. Riwayat percobaan + tren skor di bawah.
+Skor besar (0–100) di atas dengan badge kategori skor + stat
+benar/salah/kosong/durasi. Radar chart per subtopik dengan subtopik
+terlemah ditandai merah + ikon ⚠ (bukan warna saja), kartu "Prioritas
+latihan #1" dan "Kekuatan tertinggi". Rincian per subtopik (bar + angka,
+sekaligus jadi table view chart). Tren skor + riwayat percobaan di bawah.
 
 ## 5. Aturan responsif
 
@@ -173,3 +191,27 @@ per subtopik. Riwayat percobaan + tren skor di bawah.
 4. Kalau ada screenshot Stitch yang mau dijadikan acuan presisi, lampirkan
    filenya ke Claude Code langsung — dia bisa membaca gambar untuk
    mencocokkan detail visual.
+
+## 8. Peta layar Stitch → kode
+
+Proyek Stitch acuan: **"Web Tes Premium Landing Page"**
+(`projects/18299207747758193730`). Proyek Stitch lain di akun (CMS
+sekolah, portfolio, administrasi guru, dsb.) bukan bagian produk ini.
+
+| Layar Stitch | Route | File utama |
+|---|---|---|
+| Landing Page | `/` | `src/app/(public)/page.tsx` |
+| Masuk | `/masuk` | `src/app/(auth)/masuk/page.tsx`, `components/auth/auth-form.tsx` |
+| Daftar Akun Baru | `/daftar` | `src/app/(auth)/daftar/page.tsx` |
+| Dashboard Siswa | `/dashboard` | `src/app/(student)/dashboard/page.tsx` |
+| Pengerjaan Ujian | `/tes/demo` (nanti `/tes/[packageId]`) | `components/tes/exam-shell.tsx` |
+| Hasil & Analisis | `/hasil/[attemptId]` | `src/app/(student)/hasil/[attemptId]/page.tsx` |
+| Dashboard Admin | `/admin` | `src/app/(admin)/admin/page.tsx` |
+| Manajemen User | `/admin/users` | `src/app/(admin)/admin/users/page.tsx` |
+| Bank Soal | `/admin/soal` | `components/admin/question-bank.tsx` |
+| Import Soal | `/admin/soal/import` | `components/admin/import-uploader.tsx` |
+
+Layout: admin = `components/layout/admin-shell.tsx` (sidebar + drawer
+mobile), siswa = `components/layout/student-header.tsx` (topbar),
+pengerjaan tes = grup `(exam)` tanpa navigasi situs. Halaman yang belum
+tersambung DB memakai `src/lib/demo-data.ts` + banner `DemoDataNotice`.

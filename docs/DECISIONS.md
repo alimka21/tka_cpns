@@ -12,6 +12,22 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-24 — UI mengikuti Stitch "Web Tes Premium", konten disesuaikan TKA
+Keputusan: 10 layar proyek Stitch "Web Tes Premium Landing Page"
+diimplementasikan ke kode (peta di `docs/UI_UX.md` §8). Token: Plus
+Jakarta Sans, radius card 16px, warna tetap dari UI_UX §2 (amber di kode
+bernama `cta`). Semua konten CPNS/SNBT/BKN, statistik pengguna, testimoni,
+dan harga dari mockup Stitch dibuang; diganti copy TKA SD/SMP/SMA yang
+faktual. Proyek Stitch lain (CMS sekolah, portfolio, dsb.) tidak dipakai.
+Halaman tanpa DB memakai `src/lib/demo-data.ts` + banner "data contoh";
+pengerjaan tes dipindah ke grup route `(exam)` tanpa navigasi situs.
+Import Excel sudah berfungsi sampai tahap pratinjau (server action).
+Alasan: mockup Stitch dibuat sebelum scope CPNS dihapus dan berisi angka
+contoh yang akan jadi klaim palsu kalau tayang.
+Alternatif yang ditolak: menyalin HTML Stitch apa adanya (Tailwind CDN,
+Material Symbols, konten CPNS) — tidak konsisten dengan shadcn/lucide dan
+scope proyek.
+
 ---
 
 ## 2026-09-24 — Rumus KaTeX dirender di server

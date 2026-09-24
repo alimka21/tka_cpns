@@ -11,6 +11,14 @@ Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
 `sitemap.xml` (butuh env `SITE_URL`), halaman akun/admin `noindex`,
 header keamanan di `next.config.ts`, font Geist diperbaiki.
 
+**UI 2026-09-24:** semua halaman dibangun ulang sesuai layar Stitch
+"Web Tes Premium" (peta layar → file di `docs/UI_UX.md` §8): landing,
+masuk/daftar (validasi Zod, belum ada sesi), dashboard siswa, pengerjaan
+tes (grup route `(exam)`), hasil & analisis (`/hasil/demo`, radar chart),
+admin dashboard/user/bank soal/import. Data contoh di
+`src/lib/demo-data.ts` — hapus bertahap saat query DB siap. Import Excel
+sudah jalan sampai pratinjau (`src/server/actions/question-import.ts`).
+
 **Fase 1 — MVP, bagian non-database selesai.** Logika skor
 (`src/server/services/scoring.ts`), agregasi subtopik/topik
 (`analytics.ts`), skema Zod (`src/lib/validation/`), parser & template
@@ -42,8 +50,8 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [ ] Admin: CRUD soal manual (dengan KaTeX preview)
       — ✅ skema Zod `questionInput` & komponen `MathText` siap
 - [ ] Admin: import soal via Excel (template + validasi + preview)
-      — ✅ template + parser + validasi per baris siap; sisa: halaman
-      upload/preview, cocokkan topik/subtopik ke DB, insert draft
+      — ✅ template + parser + validasi per baris + halaman upload/
+      pratinjau siap; sisa: cocokkan topik/subtopik ke DB, insert draft
 - [ ] Admin: susun paket tes (pilih soal, atur durasi & poin per soal)
       — ✅ skema Zod `testPackageInput` siap
 - [ ] Admin: entitlement manual (kasih akses paket premium ke user)
@@ -56,6 +64,7 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
       subtopik — ✅ `scoreAttempt` + `summarizeBySubtopic` teruji;
       sisa: sambungkan ke DB
 - [ ] Student: halaman hasil — skor total + grafik per subtopik + riwayat
+      — ✅ UI siap (`/hasil/demo`, data contoh); sisa: baca dari DB
 
 ## Fase 2 — AI generate soal
 

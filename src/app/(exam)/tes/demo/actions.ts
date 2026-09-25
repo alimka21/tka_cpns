@@ -3,22 +3,15 @@
 // Server action tiruan untuk halaman demo — belum ada database.
 // Ganti dengan action asli di src/server/actions/ setelah tabel attempts siap.
 
+import type { AnswerResponse } from "@/lib/validation/attempt";
 import { saveAnswerInput } from "@/lib/validation/attempt";
 
 export async function demoSaveAnswer(input: {
   questionId: number;
-  selectedOptionId: number | null;
+  response: AnswerResponse | null;
   isFlagged: boolean;
 }) {
-  // UI ujian masih mengirim format PG (selectedOptionId) — diubah ke
-  // `response` di Fase 1.5c.
-  const { selectedOptionId, isFlagged, questionId } = input;
-  const parsed = saveAnswerInput.safeParse({
-    attemptId: 1,
-    questionId,
-    isFlagged,
-    response: selectedOptionId == null ? null : { type: "pg", optionId: selectedOptionId },
-  });
+  const parsed = saveAnswerInput.safeParse({ attemptId: 1, ...input });
   if (!parsed.success) return { ok: false, error: "Data jawaban tidak valid." };
   return { ok: true };
 }

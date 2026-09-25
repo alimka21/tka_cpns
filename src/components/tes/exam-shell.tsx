@@ -14,16 +14,19 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import type {
-  ExamAnswerState,
-  ExamQuestion,
-  SaveAnswerFn,
-  SubmitAttemptFn,
+import {
+  answerStatus,
+  type ExamAnswerState,
+  type ExamQuestion,
+  type ExamStimulus,
+  type SaveAnswerFn,
+  type SubmitAttemptFn,
 } from "@/lib/exam";
 import { cn } from "@/lib/utils";
 import { ExamTimer } from "./exam-timer";
 import { QuestionNavigator } from "./question-navigator";
 import { QuestionView } from "./question-view";
+import { StimulusAside, StimulusCollapsible } from "./stimulus-panel";
 
 const AUTOSAVE_DEBOUNCE_MS = 400;
 const AUTOSAVE_RETRY_MS = 3000;
@@ -41,6 +44,8 @@ type FontScaleId = (typeof FONT_SCALES)[number]["id"];
 type Props = {
   title: string;
   questions: ExamQuestion[];
+  /** Stimulus soal grup; soal merujuk lewat `stimulusId`. */
+  stimuli?: ExamStimulus[];
   initialAnswers: Record<number, ExamAnswerState>;
   endsAt: string;
   serverNow: string;
@@ -51,6 +56,7 @@ type Props = {
 export function ExamShell({
   title,
   questions,
+  stimuli = [],
   initialAnswers,
   endsAt,
   serverNow,
@@ -149,7 +155,7 @@ export function ExamShell({
   const updateAnswer = (questionId: number, patch: Partial<ExamAnswerState>) => {
     if (phase !== "active") return;
     const next: ExamAnswerState = {
-      selectedOptionId: answers[questionId]?.selectedOptionId ?? null,
+      response: answers[questionId]?.response ?? null,
       isFlagged: answers[questionId]?.isFlagged ?? false,
       ...patch,
     };
@@ -181,9 +187,15 @@ export function ExamShell({
 
   const question = questions[currentIndex];
   const answer = answers[question.id];
-  const answeredCount = questions.filter((q) => answers[q.id]?.selectedOptionId != null).length;
+  const statuses = questions.map((q) => answerStatus(q, answers[q.id]?.response));
+  const answeredCount = statuses.filter((st) => st === "complete").length;
+  const partialCount = statuses.filter((st) => st === "partial").length;
   const flaggedCount = questions.filter((q) => answers[q.id]?.isFlagged).length;
   const unansweredCount = questions.length - answeredCount;
+  const stimulus = stimuli.find((st) => st.id === question.stimulusId) ?? null;
+  const stimulusNumbers = stimulus
+    ? questions.flatMap((q, i) => (q.stimulusId === stimulus.id ? [i + 1] : []))
+    : [];
   const locked = phase !== "active";
 
   const goTo = (index: number) => {
@@ -193,7 +205,7 @@ export function ExamShell({
 
   const navigator = (
     <QuestionNavigator
-      questionIds={questions.map((q) => q.id)}
+      questions={questions}
       answers={answers}
       currentIndex={currentIndex}
       onSelect={goTo}
@@ -203,7 +215,7 @@ export function ExamShell({
   return (
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
-        <div className="mx-auto flex w-full max-w-7xl items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
+        <div className="mx-auto flex w-full max-w-[96rem] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
           <span className="hidden size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground sm:flex">
             <GraduationCap className="size-5" aria-hidden />
           </span>
@@ -222,8 +234,11 @@ export function ExamShell({
         </div>
       </header>
 
-      <div className="mx-auto grid w-full max-w-7xl flex-1 gap-6 px-4 py-6 pb-28 sm:px-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8 lg:pb-8">
-        <div className="flex flex-col gap-4">
+      <div className="mx-auto grid w-full max-w-[96rem] flex-1 gap-6 px-4 py-6 pb-28 sm:px-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8 lg:pb-8">
+        {/* Soal grup: stimulus di kiri (xl ke atas), soal di kanan. */}
+        <div className={cn("grid min-w-0 gap-6", stimulus && "xl:grid-cols-2 xl:items-start")}>
+        {stimulus && <StimulusAside stimulus={stimulus} questionNumbers={stimulusNumbers} />}
+        <div className="flex min-w-0 flex-col gap-4">
           {submitError && (
             <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive-soft px-4 py-3 text-sm text-destructive">
               {submitError} Coba kumpulkan lagi.
@@ -268,13 +283,14 @@ export function ExamShell({
               </div>
             </div>
 
-            <div className={FONT_SCALES.find((f) => f.id === fontScale)?.textClass}>
+            <div className={cn("flex flex-col gap-6", FONT_SCALES.find((f) => f.id === fontScale)?.textClass)}>
+              {stimulus && <StimulusCollapsible stimulus={stimulus} questionNumbers={stimulusNumbers} />}
               <QuestionView
                 number={currentIndex + 1}
                 question={question}
-                answer={answer}
+                response={answer?.response ?? null}
                 disabled={locked}
-                onSelectOption={(selectedOptionId) => updateAnswer(question.id, { selectedOptionId })}
+                onChange={(response) => updateAnswer(question.id, { response })}
               />
             </div>
           </section>
@@ -311,6 +327,8 @@ export function ExamShell({
               </Button>
             )}
           </div>
+        </div>
+
         </div>
 
         {/* Palet nomor soal — desktop */}
@@ -363,6 +381,8 @@ export function ExamShell({
           <AlertDialogHeader>
             <AlertDialogTitle>Kumpulkan jawaban sekarang?</AlertDialogTitle>
             <AlertDialogDescription>
+              {partialCount > 0 &&
+                `${partialCount} soal kategori belum lengkap — soal yang tidak dijawab semua pernyataannya bernilai 0. `}
               Setelah dikumpulkan, jawaban tidak bisa diubah lagi.
             </AlertDialogDescription>
           </AlertDialogHeader>

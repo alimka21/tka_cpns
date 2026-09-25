@@ -104,10 +104,15 @@ baca 1–2 folder, bukan seluruh `src/`.
 
 ### 3.4 Import soal via Excel
 
-1. Admin unduh template (`.xlsx`) dengan kolom baku: topik, subtopik,
-   pertanyaan, opsi_a..opsi_e, kunci, pembahasan, tingkat_kesulitan.
+1. Admin unduh template (`.xlsx`) dengan kolom baku (`IMPORT_COLUMNS`
+   di `src/lib/validation/import.ts`): kode_subdomain, bentuk_soal,
+   pertanyaan, opsi_a..opsi_e, kunci (`D` / `B,D` / `B,S,B`), kategori,
+   pembahasan, tingkat_kesulitan, level_kognitif, kode_stimulus; sheet
+   "Stimulus" untuk soal grup; sheet "Kode Subdomain" sebagai referensi.
 2. Upload → parse server-side dengan exceljs → validasi tiap baris
-   dengan Zod → tampilkan preview (baris valid vs error, dengan alasan).
+   dengan Zod (aturan bentuk soal = `questionInput`) → cocokkan kode ke
+   kerangka asesmen → tautkan stimulus → tampilkan preview (baris valid
+   vs error, dengan alasan).
 3. Admin konfirmasi → insert sebagai `status = 'draft'` (bukan langsung
    published) supaya masih bisa dicek sebelum tampil ke peserta.
 

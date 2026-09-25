@@ -40,7 +40,7 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 | `accent` → kode: `cta` | `#F59E0B` (amber) | CTA utama ("Daftar Gratis", "Mulai Tes"), highlight premium |
 | `accent-hover` → kode: `cta-hover` | `#D97706` | Hover state tombol CTA |
 | `cta-foreground` | `#0F172A` | Teks di atas amber (putih di atas amber gagal kontras) |
-| `success` / `success-soft` | `#16A34A` / `#ECFDF5` | Jawaban benar, progres positif, badge "Tayang"/"Premium" |
+| `success` / `success-soft` / `success-strong` | `#16A34A` / `#ECFDF5` / `#15803D` | Jawaban benar, progres positif, badge "Tayang"/"Premium". Teks hijau & teks putih di atas hijau pakai `success-strong` (kontras ≥4.5:1) |
 | `danger` → kode: `destructive` / `destructive-soft` | `#DC2626` / `#FEF2F2` | Jawaban salah, timer kritis (<5 menit), subtopik terlemah |
 | `warning` / `warning-soft` / `warning-strong` | `#F59E0B` / `#FEF3C7` / `#B45309` | Status "ragu-ragu", "menunggu review" (teks pakai `warning-strong`) |
 | `neutral-bg` | `#F8FAFC` | Background halaman |
@@ -213,6 +213,9 @@ sekolah, portfolio, administrasi guru, dsb.) bukan bagian produk ini.
 | Manajemen User | `/admin/users` | `src/app/(admin)/admin/users/page.tsx` |
 | Bank Soal | `/admin/soal` | `components/admin/question-bank.tsx` |
 | Import Soal | `/admin/soal/import` | `components/admin/import-uploader.tsx` |
+| — (tanpa layar Stitch) | `/admin/soal/baru` | `components/admin/question-form.tsx` |
+| — (tanpa layar Stitch) | `/admin/soal/stimulus` | `components/admin/stimulus-form.tsx` |
+| — (tanpa layar Stitch) | `/admin/topik` (Kerangka Asesmen) | `components/admin/framework-browser.tsx` |
 
 Layout: admin = `components/layout/admin-shell.tsx` (sidebar + drawer
 mobile), siswa = `components/layout/student-header.tsx` (topbar),

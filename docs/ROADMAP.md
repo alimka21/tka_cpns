@@ -11,13 +11,13 @@ Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
 `sitemap.xml` (butuh env `SITE_URL`), halaman akun/admin `noindex`,
 header keamanan di `next.config.ts`, font Geist diperbaiki.
 
-**Fase 1.5 2026-09-25:** 1.5a (skema & validasi), 1.5b (penskoran), dan
-1.5c (UI ujian) selesai — enum `pg`/`pgk_mcma`/`pgk_kategori`, tabel
-`stimuli`, jawaban JSON `answerResponse`, skor benar-penuh per bentuk,
-`QuestionView` per bentuk + panel stimulus + status "belum lengkap" di
-navigator; `/tes/demo` berisi contoh semua bentuk & 1 grup stimulus.
-Migrasi 0004–0006 dibuat, **belum dijalankan**. Berikutnya 1.5d (form
-soal admin per bentuk, kelola stimulus, import Excel multi-bentuk).
+**Fase 1.5 2026-09-25:** 1.5a–1.5d selesai (bagian tanpa DB) — skema &
+validasi 3 bentuk soal + stimulus, skor benar-penuh, UI ujian per bentuk
++ panel stimulus, import Excel multi-bentuk (`bentuk_soal`, kunci ganda,
+`kategori`, `kode_stimulus` + sheet Stimulus), form soal `/admin/soal/baru`,
+kelola stimulus `/admin/soal/stimulus`, logika paket soal grup utuh.
+Migrasi 0002–0006 **belum dijalankan**. Sisa Fase 1.5: 1.5e (AI) dan
+bagian yang menunggu DB (simpan soal/stimulus, UI susun paket).
 
 **Kerangka asesmen 2026-09-24:** `asesmen/*.json` jadi sumber hierarki
 konten (lihat `asesmen/README.md`). Migrasi `0002`/`0003` (tabel
@@ -145,17 +145,20 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
       attempt selesai saja) — menunggu halaman pembahasan dibuat
 
 ### 1.5d Admin & import
-- [ ] Form soal manual: pilih bentuk → field menyesuaikan (kunci tunggal
+- [x] Form soal manual: pilih bentuk → field menyesuaikan (kunci tunggal
       / kunci ganda / kategori per pernyataan), pilih stimulus opsional
-- [ ] Kelola stimulus: daftar, buat/edit, lihat soal yang memakainya
-- [ ] Bank soal: badge bentuk & penanda grup stimulus, filter per bentuk
+      — `/admin/soal/baru`, validasi aktif; simpan menunggu DB
+- [x] Kelola stimulus: daftar, buat, lihat soal yang memakainya —
+      `/admin/soal/stimulus` (data contoh); edit & simpan menunggu DB
+- [x] Bank soal: badge bentuk & penanda grup stimulus, filter per bentuk
 - [ ] Susun paket tes: soal grup masuk utuh & berurutan (tidak bisa
-      diambil sebagian)
-- [ ] Import Excel: kolom `bentuk_soal` (pg/pgk_mcma/pgk_kategori),
+      diambil sebagian) — ✅ logika `completeGroups` &
+      `validatePackageOrder` teruji; sisa: UI susun paket (Fase 1)
+- [x] Import Excel: kolom `bentuk_soal` (pg/pgk_mcma/pgk_kategori),
       `kunci` multi (`A,C` untuk MCMA; `B,S,B` untuk Kategori),
       `kategori` (`Benar/Salah` | `Sesuai/Tidak Sesuai`),
       `kode_stimulus` + sheet "Stimulus" (kode, judul, teks)
-- [ ] Template & petunjuk import diperbarui + test parser per bentuk
+- [x] Template & petunjuk import diperbarui + test parser per bentuk
 
 ### 1.5e AI (menyambung Fase 2)
 - [ ] `buildGenerationContext` menerima bentuk soal & mode grup

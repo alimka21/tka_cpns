@@ -11,12 +11,13 @@ Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
 `sitemap.xml` (butuh env `SITE_URL`), halaman akun/admin `noindex`,
 header keamanan di `next.config.ts`, font Geist diperbaiki.
 
-**Fase 1.5 2026-09-25:** 1.5a (skema & validasi) dan 1.5b (penskoran)
-selesai — enum `pg`/`pgk_mcma`/`pgk_kategori`, tabel `stimuli`, format
-jawaban JSON `answerResponse`, skor benar-penuh per bentuk (70 test).
-Migrasi 0004–0006 dibuat, **belum dijalankan**. Berikutnya 1.5c (UI
-ujian per bentuk + panel stimulus); `ExamShell` sementara masih PG saja
-(demo action mengonversi ke format `response`).
+**Fase 1.5 2026-09-25:** 1.5a (skema & validasi), 1.5b (penskoran), dan
+1.5c (UI ujian) selesai — enum `pg`/`pgk_mcma`/`pgk_kategori`, tabel
+`stimuli`, jawaban JSON `answerResponse`, skor benar-penuh per bentuk,
+`QuestionView` per bentuk + panel stimulus + status "belum lengkap" di
+navigator; `/tes/demo` berisi contoh semua bentuk & 1 grup stimulus.
+Migrasi 0004–0006 dibuat, **belum dijalankan**. Berikutnya 1.5d (form
+soal admin per bentuk, kelola stimulus, import Excel multi-bentuk).
 
 **Kerangka asesmen 2026-09-24:** `asesmen/*.json` jadi sumber hierarki
 konten (lihat `asesmen/README.md`). Migrasi `0002`/`0003` (tabel
@@ -129,19 +130,19 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
       payload manipulasi
 
 ### 1.5c UI pengerjaan tes
-- [ ] `ExamQuestion` & `ExamAnswerState` membawa `type`,
+- [x] `ExamQuestion` & `ExamAnswerState` membawa `type`,
       `categoryLabels`, `stimulus` — tetap **tanpa** kunci jawaban
-- [ ] `QuestionView` per bentuk: radio (PG), checkbox + petunjuk
-      "pilih lebih dari satu" (MCMA), tabel pernyataan × kategori
+- [x] `QuestionView` per bentuk: radio (PG), checkbox + petunjuk
+      "jawaban benar bisa lebih dari satu" (MCMA), tabel pernyataan × kategori
       dengan radio per baris (Kategori; di HP jadi kartu per pernyataan)
-- [ ] Panel stimulus: desktop split (stimulus kiri, scroll sendiri;
+- [x] Panel stimulus: desktop split (stimulus kiri, scroll sendiri;
       soal kanan), HP bagian "Baca stimulus" yang bisa dilipat
-- [ ] Navigator menandai soal satu grup (label stimulus) dan status
+- [x] Navigator menandai soal satu grup (label stimulus) dan status
       "belum lengkap" untuk Kategori yang baru sebagian terisi
-- [ ] Autosave & `saveAnswer` memakai payload `response` baru
-- [ ] `/tes/demo`: contoh 1 soal tiap bentuk + 1 grup stimulus 2 soal
+- [x] Autosave & `saveAnswer` memakai payload `response` baru
+- [x] `/tes/demo`: contoh 1 soal tiap bentuk + 1 grup stimulus 2 soal
 - [ ] Halaman hasil/pembahasan: tampilkan kunci per bentuk (setelah
-      attempt selesai saja)
+      attempt selesai saja) — menunggu halaman pembahasan dibuat
 
 ### 1.5d Admin & import
 - [ ] Form soal manual: pilih bentuk → field menyesuaikan (kunci tunggal

@@ -97,10 +97,13 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 | **Badge status** | `<Badge variant="success\|warning\|danger\|muted\|info">` — pill, latar lembut + teks tegas: hijau=published/benar, amber=pending/ragu-ragu, merah=salah/terkunci, abu=draft |
 | **Card** | Kelas `surface-card` atau `<Card>` — background putih, border tipis, radius 16px, soft shadow, padding 20–32px |
 | **Opsi jawaban** | Resting: border tipis + badge huruf bulat abu. Terpilih: border 2px `primary`, latar `primary-soft`, badge huruf solid biru |
+| **Opsi PGK MCMA** | Sama dengan opsi PG, tapi badge huruf kotak (bukan bulat) berisi centang saat dipilih; petunjuk "Jawaban benar bisa lebih dari satu" + penghitung "n opsi dipilih" |
+| **Pernyataan PGK Kategori** | Desktop: tabel pernyataan × 2 kolom kategori (tombol segmen). HP: kartu per pernyataan dengan 2 tombol penuh lebar. Klik kategori yang sama = kosongkan; penghitung "n dari m pernyataan dijawab" |
+| **Panel stimulus (soal grup)** | ≥1280px: kolom kiri sticky, scroll sendiri, judul + "Stimulus untuk soal 4–5". Di bawahnya: bagian yang bisa dilipat (default terbuka) di atas soal |
 | **Kategori skor** | `scoreTone()` di `src/lib/format.ts`: ≥75% Baik (hijau), 50–74% Cukup (amber), <50% Perlu latihan (merah) |
 | **Input/Form** | Border `neutral-border`, radius 8px, focus ring warna `primary` |
 | **Tabel (admin)** | Header sticky, baris zebra tipis opsional, aksi di kolom kanan (ikon edit/toggle), hover row highlight ringan |
-| **Navigasi soal (grid angka)** | Kotak 44px, radius 8px: terjawab=solid biru, ragu-ragu=solid amber + ikon bendera (teks gelap), belum=outline abu, soal aktif=ring biru 2px |
+| **Navigasi soal (grid angka)** | Kotak 44px, radius 8px: terjawab=solid biru, belum lengkap (Kategori sebagian)=outline biru putus-putus + latar biru muda, ragu-ragu=solid amber + ikon bendera (teks gelap), belum=outline abu, soal aktif=ring biru 2px, soal grup stimulus=garis kecil di bawah angka |
 | **Chart** | Ikuti palet warna di atas untuk series; radar chart untuk subtopik, bar chart untuk perbandingan, line chart untuk tren waktu |
 
 ## 4. Layout per halaman

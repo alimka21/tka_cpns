@@ -44,6 +44,7 @@
   --color-cta-foreground: var(--cta-foreground);
   --color-success: var(--success);
   --color-success-soft: var(--success-soft);
+  --color-success-strong: var(--success-strong);
   --color-warning: var(--warning);
   --color-warning-soft: var(--warning-soft);
   --color-warning-strong: var(--warning-strong);
@@ -84,6 +85,8 @@
   --cta-foreground: #0f172a;
   --success: #16a34a;
   --success-soft: #ecfdf5;
+  /* Hijau untuk teks/latar tegas — kontras ≥4.5:1 (success biasa hanya 3.3:1). */
+  --success-strong: #15803d;
   --warning: #f59e0b;
   --warning-soft: #fef3c7;
   --warning-strong: #b45309;

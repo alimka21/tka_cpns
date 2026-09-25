@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { FileUp, Plus } from "lucide-react";
+import { BookOpenText, FileUp, Plus } from "lucide-react";
 import { QuestionBank } from "@/components/admin/question-bank";
 import { DemoDataNotice, PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
@@ -25,7 +25,10 @@ export default async function AdminSoalPage({ searchParams }: PageProps<"/admin/
             <Button variant="outline" nativeButton={false} render={<Link href="/admin/soal/import" />}>
               <FileUp aria-hidden /> Import Excel
             </Button>
-            <Button disabled title="Form tambah soal tersedia setelah database tersambung">
+            <Button variant="outline" nativeButton={false} render={<Link href="/admin/soal/stimulus" />}>
+              <BookOpenText aria-hidden /> Stimulus
+            </Button>
+            <Button nativeButton={false} render={<Link href="/admin/soal/baru" />}>
               <Plus aria-hidden /> Tambah Soal
             </Button>
           </>

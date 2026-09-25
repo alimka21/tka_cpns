@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  BookOpenText,
   FileUp,
   FolderTree,
   LayoutGrid,
@@ -25,6 +26,7 @@ const navItems: NavItem[] = [
   { href: "/admin/users", label: "Manajemen User", icon: Users },
   { href: "/admin/topik", label: "Kerangka Asesmen", icon: FolderTree },
   { href: "/admin/soal", label: "Bank Soal", icon: Library },
+  { href: "/admin/soal/stimulus", label: "Stimulus", icon: BookOpenText },
   { href: "/admin/soal/import", label: "Import Soal", icon: FileUp },
   { href: "/admin/soal/generate-ai", label: "Generate AI", icon: Sparkles, badge: "Fase 2" },
   { href: "/admin/paket-tes", label: "Paket Tes", icon: Package },

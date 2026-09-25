@@ -6,17 +6,20 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   previewQuestionImport,
+  type ImportPreviewError,
   type ImportPreviewResult,
   type ImportPreviewRow,
 } from "@/server/actions/question-import";
+import { QUESTION_TYPE_META } from "@/lib/question-forms";
 import { cn } from "@/lib/utils";
 
 const MAX_MB = 5;
 const difficultyLabel = { easy: "Mudah", medium: "Sedang", hard: "Sulit" } as const;
 
-type Row =
-  | ({ kind: "valid" } & ImportPreviewRow)
-  | { kind: "error"; rowNumber: number; messages: string[] };
+type Row = ({ kind: "valid" } & ImportPreviewRow) | ({ kind: "error" } & ImportPreviewError);
+
+const rowKey = (row: Row) => `${row.kind === "error" && row.sheet === "Stimulus" ? "stimulus" : "soal"}-${row.rowNumber}`;
+const rowLabel = (row: Row) => (row.kind === "error" && row.sheet === "Stimulus" ? `Stimulus baris ${row.rowNumber}` : `Baris ${row.rowNumber}`);
 
 export function ImportUploader() {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -45,7 +48,11 @@ export function ImportUploader() {
       ? [
           ...result.valid.map((r) => ({ kind: "valid" as const, ...r })),
           ...result.errors.map((e) => ({ kind: "error" as const, ...e })),
-        ].sort((a, b) => a.rowNumber - b.rowNumber)
+        ].sort(
+          (a, b) =>
+            Number(a.kind === "error" && a.sheet === "Stimulus") - Number(b.kind === "error" && b.sheet === "Stimulus") ||
+            a.rowNumber - b.rowNumber,
+        )
       : [];
 
   return (
@@ -153,6 +160,18 @@ export function ImportUploader() {
             </div>
           </div>
 
+          {result.stimuli.length > 0 && (
+            <div className="flex flex-wrap gap-2 border-b bg-primary-soft/40 px-5 py-3 text-sm">
+              <span className="font-semibold">Stimulus:</span>
+              {result.stimuli.map((st) => (
+                <span key={st.code} className="rounded-full border bg-card px-3 py-0.5">
+                  <span className="font-mono text-xs font-semibold text-primary">{st.code}</span> · {st.title} ·{" "}
+                  {st.questionCount} soal
+                </span>
+              ))}
+            </div>
+          )}
+
           <div className="hidden overflow-x-auto md:block">
             <table className="w-full text-sm">
               <thead className="bg-muted/50 text-left text-xs font-semibold text-muted-foreground uppercase">
@@ -161,14 +180,14 @@ export function ImportUploader() {
                   <th className="px-5 py-3">Status</th>
                   <th className="px-5 py-3">Subdomain</th>
                   <th className="px-5 py-3">Pertanyaan</th>
-                  <th className="px-5 py-3">Kunci</th>
+                  <th className="px-5 py-3">Bentuk & kunci</th>
                   <th className="px-5 py-3">Tingkat</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {rows.map((row) =>
                   row.kind === "valid" ? (
-                    <tr key={row.rowNumber}>
+                    <tr key={rowKey(row)}>
                       <td className="px-5 py-3 tabular-nums text-muted-foreground">{row.rowNumber}</td>
                       <td className="px-5 py-3">
                         <Badge variant="success">Valid</Badge>
@@ -184,16 +203,29 @@ export function ImportUploader() {
                         </div>
                       </td>
                       <td className="max-w-md px-5 py-3">
+                        {row.stimulusCode && (
+                          <div className="mb-1 text-xs font-semibold text-primary">
+                            Grup {row.stimulusCode} · soal ke-{row.stimulusOrder}
+                          </div>
+                        )}
                         <p className="line-clamp-2">{row.questionText}</p>
                       </td>
-                      <td className="px-5 py-3 font-semibold">
-                        {row.answer} <span className="text-xs font-normal text-muted-foreground">/ {row.optionCount} opsi</span>
+                      <td className="px-5 py-3">
+                        <Badge variant="outline">{QUESTION_TYPE_META[row.type].short}</Badge>
+                        <div className="mt-1 font-semibold whitespace-nowrap">
+                          {row.answer}{" "}
+                          <span className="text-xs font-normal text-muted-foreground">
+                            / {row.optionCount} {row.type === "pgk_kategori" ? "pernyataan" : "opsi"}
+                          </span>
+                        </div>
                       </td>
                       <td className="px-5 py-3">{difficultyLabel[row.difficulty]}</td>
                     </tr>
                   ) : (
-                    <tr key={row.rowNumber} className="bg-destructive-soft/50">
-                      <td className="px-5 py-3 tabular-nums text-muted-foreground">{row.rowNumber}</td>
+                    <tr key={rowKey(row)} className="bg-destructive-soft/50">
+                      <td className="px-5 py-3 whitespace-nowrap tabular-nums text-muted-foreground">
+                        {row.sheet === "Stimulus" ? rowLabel(row) : row.rowNumber}
+                      </td>
                       <td className="px-5 py-3">
                         <Badge variant="danger">Error</Badge>
                       </td>
@@ -208,16 +240,18 @@ export function ImportUploader() {
           </div>
           <ul className="divide-y md:hidden">
             {rows.map((row) => (
-              <li key={row.rowNumber} className="flex flex-col gap-1.5 p-4 text-sm">
+              <li key={rowKey(row)} className="flex flex-col gap-1.5 p-4 text-sm">
                 <div className="flex items-center gap-2">
-                  <span className="text-xs text-muted-foreground">Baris {row.rowNumber}</span>
+                  <span className="text-xs text-muted-foreground">{rowLabel(row)}</span>
                   <Badge variant={row.kind === "valid" ? "success" : "danger"}>{row.kind === "valid" ? "Valid" : "Error"}</Badge>
                 </div>
                 {row.kind === "valid" ? (
                   <>
                     <p className="line-clamp-2">{row.questionText}</p>
                     <span className="text-xs text-muted-foreground">
-                      {row.subdomainCode} · {row.subjectName} · Kunci {row.answer} · {difficultyLabel[row.difficulty]}
+                      {row.subdomainCode} · {QUESTION_TYPE_META[row.type].short} · Kunci {row.answer} ·{" "}
+                      {difficultyLabel[row.difficulty]}
+                      {row.stimulusCode && ` · Grup ${row.stimulusCode} #${row.stimulusOrder}`}
                     </span>
                   </>
                 ) : (

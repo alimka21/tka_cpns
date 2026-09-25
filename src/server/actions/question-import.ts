@@ -10,7 +10,7 @@ import {
   ImportFileError,
   parseImportFile,
 } from "@/server/services/question-import";
-import type { Difficulty, OptionLabel } from "@/lib/validation/enums";
+import type { Difficulty, QuestionType } from "@/lib/validation/enums";
 
 export type ImportPreviewRow = {
   rowNumber: number;
@@ -22,13 +22,25 @@ export type ImportPreviewRow = {
   cognitiveLevel: string | null;
   questionText: string;
   difficulty: Difficulty;
-  answer: OptionLabel;
+  type: QuestionType;
+  /** Ringkasan kunci siap tampil: "D", "B, D", atau "B, S, B". */
+  answer: string;
   optionCount: number;
+  stimulusCode: string | null;
+  stimulusOrder: number | null;
 };
 
+export type ImportPreviewStimulus = { code: string; title: string; questionCount: number };
+
+export type ImportPreviewError = { rowNumber: number; messages: string[]; sheet?: "Soal" | "Stimulus" };
+
 export type ImportPreviewResult =
-  | { ok: true; valid: ImportPreviewRow[]; errors: { rowNumber: number; messages: string[] }[] }
+  | { ok: true; valid: ImportPreviewRow[]; stimuli: ImportPreviewStimulus[]; errors: ImportPreviewError[] }
   | { ok: false; error: string };
+
+function shortCategory(category: string | null) {
+  return { Benar: "B", Salah: "S", Sesuai: "S", "Tidak Sesuai": "TS" }[category ?? ""] ?? "?";
+}
 
 export async function previewQuestionImport(formData: FormData): Promise<ImportPreviewResult> {
   const file = formData.get("file");
@@ -47,6 +59,7 @@ export async function previewQuestionImport(formData: FormData): Promise<ImportP
     return {
       ok: true,
       errors: result.errors,
+      stimuli: result.stimuli.map((st) => ({ code: st.code, title: st.title, questionCount: st.questionCount })),
       valid: result.valid.map((row) => ({
         rowNumber: row.rowNumber,
         subdomainCode: row.subdomainCode,
@@ -57,8 +70,14 @@ export async function previewQuestionImport(formData: FormData): Promise<ImportP
         cognitiveLevel: row.cognitiveLevel,
         questionText: row.questionText,
         difficulty: row.difficulty,
-        answer: row.options.find((o) => o.isCorrect)!.label,
+        type: row.type,
+        answer:
+          row.type === "pgk_kategori"
+            ? row.options.map((o) => shortCategory(o.correctCategory)).join(", ")
+            : row.options.filter((o) => o.isCorrect).map((o) => o.label).join(", "),
         optionCount: row.options.length,
+        stimulusCode: row.stimulusCode,
+        stimulusOrder: row.stimulusOrder,
       })),
     };
   } catch (error) {

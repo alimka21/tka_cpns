@@ -15,7 +15,7 @@ const badgeVariants = cva(
           "bg-destructive/10 text-destructive focus-visible:ring-destructive/20 dark:bg-destructive/20 dark:focus-visible:ring-destructive/40 [a]:hover:bg-destructive/20",
         // Badge status — docs/UI_UX.md §3: hijau=published/benar, amber=pending/ragu,
         // merah=salah/terkunci, abu=draft.
-        success: "bg-success-soft text-success",
+        success: "bg-success-soft text-success-strong",
         warning: "bg-warning-soft text-warning-strong",
         danger: "bg-destructive-soft text-destructive",
         muted: "bg-muted text-muted-foreground",

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDown, FileUp, Pencil, Plus, Search, Sparkles, UserPen } from "lucide-react";
+import { BookOpenText, ChevronDown, FileUp, Pencil, Plus, Search, Sparkles, UserPen } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -15,12 +15,14 @@ import {
 } from "@/components/ui/select";
 import type { DemoQuestionRow, DemoTopicNode } from "@/lib/demo-data";
 import { formatDate } from "@/lib/format";
-import type { Difficulty } from "@/lib/validation/enums";
+import { QUESTION_TYPE_META } from "@/lib/question-forms";
+import { QUESTION_TYPES, type Difficulty, type QuestionType } from "@/lib/validation/enums";
 import { cn } from "@/lib/utils";
 
 type Status = DemoQuestionRow["status"];
 type StatusFilter = "all" | Status;
 type DifficultyFilter = "all" | Difficulty;
+type TypeFilter = "all" | QuestionType;
 
 const difficultyMeta: Record<Difficulty, { label: string; variant: "success" | "warning" | "danger" }> = {
   easy: { label: "Mudah", variant: "success" },
@@ -47,6 +49,10 @@ const statusItems: Record<StatusFilter, string> = {
   pending_review: "Menunggu review",
   draft: "Draft",
 };
+const typeItems = {
+  all: "Semua bentuk",
+  ...Object.fromEntries(QUESTION_TYPES.map((t) => [t, QUESTION_TYPE_META[t].short])),
+} as Record<TypeFilter, string>;
 const difficultyItems: Record<DifficultyFilter, string> = {
   all: "Semua tingkat",
   easy: "Mudah",
@@ -65,6 +71,7 @@ export function QuestionBank({ tree, questions, initialStatus }: Props) {
   const [query, setQuery] = useState("");
   const [status, setStatus] = useState<StatusFilter>(initialStatus);
   const [difficulty, setDifficulty] = useState<DifficultyFilter>("all");
+  const [type, setType] = useState<TypeFilter>("all");
 
   const q = query.trim().toLowerCase();
   const visible = questions.filter(
@@ -72,7 +79,8 @@ export function QuestionBank({ tree, questions, initialStatus }: Props) {
       (subtopicId == null || row.subtopicId === subtopicId) &&
       (q === "" || row.text.toLowerCase().includes(q)) &&
       (status === "all" || row.status === status) &&
-      (difficulty === "all" || row.difficulty === difficulty),
+      (difficulty === "all" || row.difficulty === difficulty) &&
+      (type === "all" || row.type === type),
   );
   const selectedName = tree
     .flatMap((j) => j.topics.flatMap((t) => t.subtopics.map((s) => ({ ...s, label: `${j.jenjang} · ${t.name} · ${s.name}` }))))
@@ -95,7 +103,19 @@ export function QuestionBank({ tree, questions, initialStatus }: Props) {
               className="pl-10"
             />
           </div>
-          <div className="flex gap-3">
+          <div className="grid grid-cols-3 gap-3 md:flex">
+            <Select items={typeItems} value={type} onValueChange={(v) => setType(v as TypeFilter)}>
+              <SelectTrigger className="w-full md:w-40" aria-label="Filter bentuk soal">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(typeItems).map(([value, label]) => (
+                  <SelectItem key={value} value={value}>
+                    {label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <Select items={difficultyItems} value={difficulty} onValueChange={(v) => setDifficulty(v as DifficultyFilter)}>
               <SelectTrigger className="w-full md:w-36" aria-label="Filter tingkat kesulitan">
                 <SelectValue />
@@ -141,6 +161,7 @@ export function QuestionBank({ tree, questions, initialStatus }: Props) {
             return (
               <li key={row.id} className="surface-card flex flex-col gap-3 p-5">
                 <div className="flex flex-wrap items-center gap-2">
+                  <Badge variant="info">{QUESTION_TYPE_META[row.type].short}</Badge>
                   <Badge variant={statusMeta[row.status].variant}>{statusMeta[row.status].label}</Badge>
                   <Badge variant={difficultyMeta[row.difficulty].variant}>{difficultyMeta[row.difficulty].label}</Badge>
                   <Badge variant="outline">
@@ -148,6 +169,14 @@ export function QuestionBank({ tree, questions, initialStatus }: Props) {
                   </Badge>
                   <span className="ml-auto text-xs text-muted-foreground">#{row.id}</span>
                 </div>
+                {row.stimulusCode && (
+                  <Link
+                    href="/admin/soal/stimulus"
+                    className="flex w-fit items-center gap-1.5 rounded-lg bg-primary-soft px-2.5 py-1 text-xs font-semibold text-primary hover:underline"
+                  >
+                    <BookOpenText className="size-3.5" aria-hidden /> Soal grup {row.stimulusCode} · urutan {row.stimulusOrder}
+                  </Link>
+                )}
                 <p className="leading-relaxed">{row.text}</p>
                 <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
                   <span>

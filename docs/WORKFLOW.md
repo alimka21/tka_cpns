@@ -77,6 +77,28 @@ Skema Drizzle sama persis, tinggal jalankan migrasi ke database baru.
 
 ## 7. Menjalankan migrasi ke MySQL Hostinger
 
+### Langkah cepat (database baru)
+1. hPanel → **Databases → MySQL Databases** → buat database + user +
+   password (catat nama lengkapnya, biasanya berawalan `u123456789_`).
+   phpMyAdmin hanya untuk *melihat* data — jangan buat/ubah tabel di sana.
+2. hPanel → **Databases → Remote MySQL** → tambahkan IP publik komputer
+   Anda (atau `%` sementara saat development, hapus lagi setelahnya).
+   Catat **hostname MySQL** yang ditampilkan (bukan domain website).
+3. Isi `.env`:
+   `DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/NAMA_DB"` —
+   karakter khusus di password wajib di-encode (`@`→`%40`, `#`→`%23`,
+   `/`→`%2F`, `:`→`%3A`).
+4. `npm run db:check` — tes koneksi (read-only), tampilkan versi server,
+   tabel, dan jumlah migrasi yang sudah jalan. Error diberi petunjuk.
+5. `npm run db:migrate` — buat semua tabel (migrasi 0000–dst).
+6. `npm run db:seed:asesmen` — isi jenjang, mata uji, domain, subdomain
+   dari `asesmen/*.json`.
+7. `npm run db:check` lagi — pastikan tabel & migrasi tercatat.
+
+Saat aplikasi nanti jalan di Node.js hosting Hostinger, `DATABASE_URL`
+di environment hosting memakai host yang ditunjukkan hPanel untuk
+koneksi dari server yang sama (bukan host remote).
+
 Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
 
 **A. `npm run db:migrate` (disarankan, kalau bisa)**

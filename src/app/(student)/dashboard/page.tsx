@@ -7,19 +7,21 @@ import { PackageGrid } from "@/components/student/package-grid";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { demoHistory, demoPackages, demoStudent, demoWeakest } from "@/lib/demo-data";
+import { requireUser } from "@/server/auth/session";
 import { formatDateTime, scoreTone } from "@/lib/format";
 
 export const metadata: Metadata = { title: "Dashboard" };
 
 // TODO: ganti data contoh dengan query attempts, attempt_subtopic_scores, dan
 // test_packages milik siswa yang login.
-export default function DashboardPage() {
-  const firstName = demoStudent.name.split(" ")[0];
+export default async function DashboardPage() {
+  const { user } = await requireUser("/dashboard");
+  const firstName = user.name.split(" ")[0];
   const average = Math.round(demoHistory.reduce((sum, h) => sum + h.score, 0) / demoHistory.length);
 
   return (
     <div className="flex flex-col gap-10">
-      <DemoDataNotice />
+      <DemoDataNotice>Statistik, paket, dan riwayat di bawah masih contoh — akan diganti data pengerjaanmu setelah fitur tes tersambung database.</DemoDataNotice>
 
       <section className="flex flex-col gap-6">
         <div>

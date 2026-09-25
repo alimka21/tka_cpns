@@ -6,9 +6,20 @@ generate migrasi — jangan tulis ulang dokumen ini kecuali skema berubah.
 
 ## Grup: Users & Auth
 
-**users**
-- id (pk), name, email (unique), password_hash, role (`student`|`admin`),
-  created_at
+**users** (Better Auth, id INT serial)
+- id (pk), name, email (unique), email_verified, image (nullable),
+  role (`student`|`admin`, tidak bisa diisi dari form daftar),
+  created_at, updated_at
+
+**sessions** — id, user_id (fk cascade), token (unique), expires_at,
+ip_address, user_agent, created_at, updated_at
+
+**accounts** — id, user_id (fk cascade), account_id, provider_id
+(`credential` untuk email/password), password (hash scrypt), token OAuth
+(nullable), created_at, updated_at
+
+**verifications** — id, identifier, value, expires_at, created_at,
+updated_at
 
 **user_ai_settings**
 - id (pk), user_id (fk users), gemini_api_key_encrypted, gemini_key_masked

@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-25 — Better Auth dengan ID serial & tabel auth terpisah
+Keputusan: Better Auth memakai `generateId: "serial"` (id INT
+auto-increment) dan tabel `users`/`sessions`/`accounts`/`verifications`.
+Password disimpan Better Auth di `accounts.password` (scrypt); kolom
+`users.password_hash` dihapus. `role` adalah additionalField dengan
+`input: false` — tidak bisa diisi dari form daftar; admin ditetapkan lewat
+`npm run user:role` (yang juga menghapus sesi lama). Proteksi di layout
+(redirect) + cek ulang di setiap server action/route admin.
+Alasan: FK yang sudah ada (questions.created_by, stimuli.created_by, dst.)
+sudah INT; mengikuti skema bawaan Better Auth menghindari adapter kustom.
+Alternatif yang ditolak: id string bawaan Better Auth (harus mengubah semua
+FK ke varchar); menyimpan hash sendiri di users (menduplikasi logika auth).
+
 ## 2026-09-25 — Aturan bentuk soal PGK & soal grup stimulus
 Keputusan: (1) Penskoran semua bentuk *benar penuh atau 0* — PGK MCMA
 benar bila himpunan pilihan persis sama dengan kunci; PGK Kategori benar

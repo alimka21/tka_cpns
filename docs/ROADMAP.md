@@ -7,8 +7,17 @@
 **Database 2026-09-25:** tersambung ke Hostinger (MariaDB 11.8, via
 Remote MySQL; `npm run db:check`). Migrasi 0000–0006 **sudah
 dijalankan**, seed kerangka asesmen sudah masuk (3 jenjang, 26 mata uji,
-97 domain, 268 subdomain). Berikutnya: auth (Better Auth) lalu CRUD soal
-yang benar-benar menyimpan.
+97 domain, 268 subdomain).
+
+**Auth 2026-09-25:** Better Auth (email/password) terpasang — tabel
+`sessions`/`accounts`/`verifications`, `users` tanpa `password_hash`
+(password di `accounts.password`), id INT serial, role via
+`npm run user:role -- <email> admin`. `/dashboard`, `/pengaturan`,
+`/hasil` wajib login; `/admin/*` wajib admin; action import & template
+cek admin. Migrasi **0007–0008 belum dijalankan** (akses DB ditolak
+karena IP berubah — whitelist IP baru di Remote MySQL lalu
+`npm run db:migrate`). Berikutnya: uji alur daftar/masuk/keluar di DB
+asli, lalu CRUD soal yang benar-benar menyimpan.
 Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dijalankan
 bersama migrasi lain (lihat status Database di atas).
 
@@ -64,7 +73,8 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 
 ## Fase 1 — MVP fungsional
 
-- [ ] Auth: register/login, role student/admin
+- [x] Auth: register/login, role student/admin — Better Auth; tinggal
+      jalankan migrasi 0007–0008 & uji di DB asli
 - [ ] Skema Drizzle: users, categories, topics, subtopics, questions,
       question_options, question_explanations — ✅ konten + stimuli siap;
       sisa: test_packages, entitlements, attempts, attempt_answers

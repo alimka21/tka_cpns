@@ -2,14 +2,15 @@
 
 // Pratinjau import Excel: parse + validasi per baris, belum menyimpan apa pun.
 // Kode subdomain & level kognitif sudah dicocokkan ke kerangka asesmen.
-// TODO: tambahkan cek sesi admin (Better Auth) dan action konfirmasi yang
-// memetakan kode subdomain → subtopics.id lalu insert sebagai draft.
+// TODO: action konfirmasi yang memetakan kode subdomain → subtopics.id lalu
+// insert sebagai draft.
 
 import {
   IMPORT_MAX_BYTES,
   ImportFileError,
   parseImportFile,
 } from "@/server/services/question-import";
+import { getAdminSession } from "@/server/auth/session";
 import type { Difficulty, QuestionType } from "@/lib/validation/enums";
 
 export type ImportPreviewRow = {
@@ -43,6 +44,8 @@ function shortCategory(category: string | null) {
 }
 
 export async function previewQuestionImport(formData: FormData): Promise<ImportPreviewResult> {
+  // Server action bisa dipanggil langsung — jangan andalkan proteksi layout.
+  if (!(await getAdminSession())) return { ok: false, error: "Sesi admin berakhir. Silakan masuk lagi." };
   const file = formData.get("file");
   if (!(file instanceof File) || file.size === 0) {
     return { ok: false, error: "Pilih file .xlsx terlebih dahulu." };

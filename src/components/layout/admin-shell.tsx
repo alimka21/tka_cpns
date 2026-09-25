@@ -16,6 +16,7 @@ import {
   X,
   type LucideIcon,
 } from "lucide-react";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
@@ -40,7 +41,9 @@ function activeHref(pathname: string) {
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 }
 
-export function AdminShell({ children }: { children: React.ReactNode }) {
+type Props = { children: React.ReactNode; user: { name: string; email: string } };
+
+export function AdminShell({ children, user }: Props) {
   const pathname = usePathname();
   // Menu mobile terbuka untuk path tertentu saja — otomatis tertutup saat pindah halaman.
   const [openOn, setOpenOn] = useState<string | null>(null);
@@ -121,14 +124,14 @@ export function AdminShell({ children }: { children: React.ReactNode }) {
           </button>
           <span className="text-sm font-semibold lg:hidden">Admin Panel</span>
           <div className="ml-auto flex items-center gap-3">
-            {/* TODO: ganti dengan data sesi Better Auth setelah auth aktif. */}
             <div className="hidden text-right sm:block">
-              <div className="text-sm font-semibold leading-tight">Admin</div>
-              <div className="text-xs text-muted-foreground">Administrator</div>
+              <div className="text-sm font-semibold leading-tight">{user.name}</div>
+              <div className="text-xs text-muted-foreground">{user.email}</div>
             </div>
             <span className="flex size-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
-              A
+              {user.name.charAt(0).toUpperCase()}
             </span>
+            <SignOutButton withLabel={false} />
           </div>
         </header>
         <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-8">{children}</main>

@@ -11,6 +11,7 @@
     "db:generate": "drizzle-kit generate",
     "db:migrate": "drizzle-kit migrate",
     "db:seed:asesmen": "tsx --env-file=.env src/server/db/seed-asesmen.ts",
+    "user:role": "tsx --env-file=.env src/server/db/set-role.ts",
     "db:studio": "drizzle-kit studio",
     "test": "vitest run"
   },

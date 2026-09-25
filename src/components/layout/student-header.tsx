@@ -4,18 +4,20 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Menu, X } from "lucide-react";
+import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
 
-const navItems = [
+const baseNav = [
   { href: "/dashboard", label: "Dashboard" },
   { href: "/pengaturan", label: "Pengaturan" },
 ];
 
-type Props = { name: string; subtitle: string };
+type Props = { name: string; subtitle: string; isAdmin?: boolean };
 
-export function StudentHeader({ name, subtitle }: Props) {
+export function StudentHeader({ name, subtitle, isAdmin }: Props) {
   const pathname = usePathname();
+  const navItems = isAdmin ? [...baseNav, { href: "/admin", label: "Panel Admin" }] : baseNav;
   // Menu mobile terbuka untuk path tertentu saja — otomatis tertutup saat pindah halaman.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;
@@ -57,6 +59,7 @@ export function StudentHeader({ name, subtitle }: Props) {
           <span className="flex size-9 items-center justify-center rounded-full bg-primary text-sm font-bold text-primary-foreground">
             {initials}
           </span>
+          <SignOutButton className="hidden md:flex" withLabel={false} />
           <button
             type="button"
             onClick={() => setOpen(!open)}
@@ -82,6 +85,7 @@ export function StudentHeader({ name, subtitle }: Props) {
               {item.label}
             </Link>
           ))}
+          <SignOutButton className="justify-start" />
         </nav>
       )}
     </header>

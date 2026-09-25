@@ -2,16 +2,29 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, Info, Lock, Mail, User, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { authClient } from "@/lib/auth-client";
+import { safeRedirectPath } from "@/lib/redirect";
 import { signInInput, signUpInput } from "@/lib/validation/auth";
 import { cn } from "@/lib/utils";
 
 type Mode = "signin" | "signup";
 type Errors = Partial<Record<string, string>>;
+
+// Kode error Better Auth → pesan Bahasa Indonesia.
+const AUTH_ERRORS: Record<string, string> = {
+  INVALID_EMAIL_OR_PASSWORD: "Email atau kata sandi salah.",
+  USER_ALREADY_EXISTS: "Email ini sudah terdaftar. Silakan masuk.",
+  USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "Email ini sudah terdaftar. Silakan masuk.",
+  PASSWORD_TOO_SHORT: "Kata sandi minimal 8 karakter.",
+  PASSWORD_TOO_LONG: "Kata sandi terlalu panjang.",
+  INVALID_EMAIL: "Format email tidak valid.",
+};
 
 const copy = {
   signin: {
@@ -32,29 +45,47 @@ const copy = {
   },
 };
 
-export function AuthForm({ mode }: { mode: Mode }) {
+export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
+  const router = useRouter();
   const [errors, setErrors] = useState<Errors>({});
   const [notice, setNotice] = useState<string | null>(null);
+  const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const c = copy[mode];
 
-  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const values = Object.fromEntries(new FormData(e.currentTarget));
-    const parsed = (mode === "signin" ? signInInput : signUpInput).safeParse(values);
+    const signUp = mode === "signup" ? signUpInput.safeParse(values) : null;
+    const parsed = signUp ?? signInInput.safeParse(values);
     if (!parsed.success) {
-      const next: Errors = {};
+      const fieldErrors: Errors = {};
       for (const issue of parsed.error.issues) {
         const key = String(issue.path[0]);
-        next[key] ??= issue.message;
+        fieldErrors[key] ??= issue.message;
       }
-      setErrors(next);
+      setErrors(fieldErrors);
       setNotice(null);
       return;
     }
     setErrors({});
-    // TODO: panggil Better Auth (signIn.email / signUp.email) setelah auth di-setup.
-    setNotice("Autentikasi belum aktif di versi pengembangan ini. Data kamu belum dikirim ke mana pun.");
+    setNotice(null);
+    setPending(true);
+    const { email, password } = parsed.data;
+    const { data, error } = signUp?.success
+      ? await authClient.signUp.email({ name: signUp.data.name, email, password })
+      : await authClient.signIn.email({ email, password });
+    if (error) {
+      setPending(false);
+      setNotice(
+        (error.code && AUTH_ERRORS[error.code]) ??
+          (error.status === 429 ? "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi." : "Gagal memproses. Coba lagi."),
+      );
+      return;
+    }
+    const home = data?.user && "role" in data.user && data.user.role === "admin" ? "/admin" : "/dashboard";
+    router.replace(safeRedirectPath(next, home));
+    router.refresh();
   }
 
   return (
@@ -118,13 +149,13 @@ export function AuthForm({ mode }: { mode: Mode }) {
         )}
 
         {notice && (
-          <p role="status" className="flex gap-2 rounded-lg border border-primary/20 bg-primary-soft px-3 py-2.5 text-sm text-primary">
+          <p role="alert" className="flex gap-2 rounded-lg border border-destructive/30 bg-destructive-soft px-3 py-2.5 text-sm text-destructive">
             <Info className="mt-0.5 size-4 shrink-0" aria-hidden /> {notice}
           </p>
         )}
 
-        <Button type="submit" size="lg" className="w-full">
-          {c.submit} <ArrowRight aria-hidden />
+        <Button type="submit" size="lg" className="w-full" disabled={pending}>
+          {pending ? "Memproses…" : c.submit} {!pending && <ArrowRight aria-hidden />}
         </Button>
       </form>
 
@@ -142,7 +173,10 @@ export function AuthForm({ mode }: { mode: Mode }) {
       )}
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {c.switchText}{" "}
-        <Link href={c.switchHref} className="font-semibold text-primary hover:underline">
+        <Link
+          href={next ? `${c.switchHref}?next=${encodeURIComponent(next)}` : c.switchHref}
+          className="font-semibold text-primary hover:underline"
+        >
           {c.switchLabel}
         </Link>
       </p>

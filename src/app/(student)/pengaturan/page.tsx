@@ -10,10 +10,12 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
+import { requireUser } from "@/server/auth/session";
 
 export const metadata: Metadata = { title: "Pengaturan" };
 
-export default function PengaturanPage() {
+export default async function PengaturanPage() {
+  const { user } = await requireUser("/pengaturan");
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <PageHeader title="Pengaturan" description="Kelola profil dan API key Gemini milikmu." />
@@ -26,14 +28,14 @@ export default function PengaturanPage() {
         <CardContent className="flex flex-col gap-4 sm:max-w-sm">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">Nama</Label>
-            <Input id="name" defaultValue="Alimka" disabled />
+            <Input id="name" defaultValue={user.name} disabled />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="email">Email</Label>
             <Input
               id="email"
               type="email"
-              defaultValue="kpbgalimka@gmail.com"
+              defaultValue={user.email}
               disabled
             />
           </div>

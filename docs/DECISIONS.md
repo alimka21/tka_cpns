@@ -12,6 +12,24 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-25 — Aturan bentuk soal PGK & soal grup stimulus
+Keputusan: (1) Penskoran semua bentuk *benar penuh atau 0* — PGK MCMA
+benar bila himpunan pilihan persis sama dengan kunci; PGK Kategori benar
+bila semua pernyataan sesuai kunci. (2) MCMA: 4–5 opsi, kunci 1 s.d.
+(jumlah opsi − 1). (3) Kategori: 3–5 pernyataan, pasangan Benar/Salah
+atau Sesuai/Tidak Sesuai. (4) Satu stimulus boleh dipakai soal lintas
+subdomain; analisis tetap per subdomain soal. Jawaban disimpan sebagai
+JSON `attempt_answers.response` (bukan `selected_option_id`). Enum
+`single_choice` → `pg` lewat migrasi 3 langkah (0004 tambah, 0005 data,
+0006 hapus nilai lama) supaya aman bila tabel sudah berisi.
+Alasan: kerangka BSKAP menyerahkan penskoran PGK ke pengelola dan
+menyarankan benar penuh; aturan biner paling mudah dijelaskan ke siswa
+dan konsisten dengan skor 0–100 yang sudah ada. Batas jumlah kunci MCMA
+mencegah soal yang bisa dijawab "pilih semua".
+Alternatif yang ditolak: skor parsial proporsional (menambah kerumitan
+pelaporan & bisa menguntungkan tebakan acak); kolom jawaban terpisah per
+bentuk (skema lebih lebar, validasi tersebar).
+
 ## 2026-09-24 — Kerangka asesmen TKA jadi sumber hierarki konten
 Keputusan: `asesmen/tka-{sd,smp,sma}.json` (transkripsi kerangka BSKAP)
 menjadi sumber kebenaran. Loader `src/server/asesmen/` memvalidasi &

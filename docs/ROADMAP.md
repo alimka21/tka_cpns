@@ -11,10 +11,12 @@ Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
 `sitemap.xml` (butuh env `SITE_URL`), halaman akun/admin `noindex`,
 header keamanan di `next.config.ts`, font Geist diperbaiki.
 
-**Rencana 2026-09-24:** Fase 1.5 (PG + PGK MCMA + PGK Kategori + soal
-grup stimulus) masuk roadmap. Skema 1.5a harus dikerjakan sebelum tabel
-attempt dibuat; ada 4 keputusan penskoran/batas yang perlu ditetapkan
-dulu (lihat bagian Fase 1.5).
+**Fase 1.5 2026-09-25:** 1.5a (skema & validasi) dan 1.5b (penskoran)
+selesai — enum `pg`/`pgk_mcma`/`pgk_kategori`, tabel `stimuli`, format
+jawaban JSON `answerResponse`, skor benar-penuh per bentuk (70 test).
+Migrasi 0004–0006 dibuat, **belum dijalankan**. Berikutnya 1.5c (UI
+ujian per bentuk + panel stimulus); `ExamShell` sementara masih PG saja
+(demo action mengonversi ke format `response`).
 
 **Kerangka asesmen 2026-09-24:** `asesmen/*.json` jadi sumber hierarki
 konten (lihat `asesmen/README.md`). Migrasi `0002`/`0003` (tabel
@@ -58,7 +60,8 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 
 - [ ] Auth: register/login, role student/admin
 - [ ] Skema Drizzle: users, categories, topics, subtopics, questions,
-      question_options, question_explanations
+      question_options, question_explanations — ✅ konten + stimuli siap;
+      sisa: test_packages, entitlements, attempts, attempt_answers
 - [x] Admin: kategori/topik/subtopik — diganti seed dari kerangka asesmen
       (`npm run db:seed:asesmen`) + penjelajah read-only `/admin/topik`
 - [ ] Admin: CRUD soal manual (dengan KaTeX preview)
@@ -89,44 +92,40 @@ Kerangka asesmen (`asesmen/*.json` → `bentuk_soal`, `jenis_soal`) memakai
 `attempt_answers` dibuat di Fase 1, supaya format jawaban tidak perlu
 dimigrasi ulang. Sisanya (1.5b–e) berjalan paralel dengan Fase 1.
 
-**Keputusan yang perlu diambil dulu** (catat di `docs/DECISIONS.md`):
-- Penskoran PGK — kerangka menyerahkan ke pengelola. Usulan: *benar
-  penuh atau 0* (MCMA: himpunan pilihan persis sama dengan kunci;
-  Kategori: semua pernyataan sesuai kunci). Alternatif: skor parsial
-  proporsional.
-- Batas MCMA — usulan: 4–5 opsi, kunci minimal 1 dan maksimal
-  (jumlah opsi − 1), ada petunjuk "pilih lebih dari satu".
-- Batas Kategori — usulan: 3–5 pernyataan, pasangan kategori
-  Benar/Salah atau Sesuai/Tidak Sesuai (dari kerangka).
-- Stimulus lintas subdomain — usulan: boleh; tiap soal di grup tetap
-  punya subdomain sendiri (analisis kelemahan tetap per subdomain).
+**Keputusan (ditetapkan 2026-09-25, lihat `docs/DECISIONS.md`):**
+skor benar penuh atau 0 untuk semua bentuk; MCMA 4–5 opsi dengan 1 s.d.
+(jumlah opsi − 1) kunci; Kategori 3–5 pernyataan, pasangan Benar/Salah
+atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
 
 ### 1.5a Skema & validasi (fondasi)
-- [ ] `questions.type` → enum `pg` | `pgk_mcma` | `pgk_kategori`
+- [x] `questions.type` → enum `pg` | `pgk_mcma` | `pgk_kategori`
       (ganti `single_choice`, migrasi data `single_choice` → `pg`)
-- [ ] `questions.category_labels` (JSON, nullable) — pasangan kategori
+- [x] `questions.category_labels` (JSON, nullable) — pasangan kategori
       untuk PGK Kategori, mis. `["Benar","Salah"]`
-- [ ] `question_options.correct_category` (nullable) — kunci per
+- [x] `question_options.correct_category` (nullable) — kunci per
       pernyataan untuk PGK Kategori; `is_correct` tetap untuk PG & MCMA
-- [ ] Tabel `stimuli`: id, code (unique), title, content (teks/KaTeX),
+- [x] Tabel `stimuli`: id, code (unique), title, content (teks/KaTeX),
       image_url, status, created_by, created_at
-- [ ] `questions.stimulus_id` (fk nullable) + `questions.stimulus_order`
+- [x] `questions.stimulus_id` (fk nullable) + `questions.stimulus_order`
       — `jenis_soal` = grup bila `stimulus_id` terisi
-- [ ] `attempt_answers.response` (JSON) menggantikan
-      `selected_option_id`: `{optionId}` | `{optionIds[]}` |
-      `{byOption: {optionId: kategori}}`
-- [ ] Zod: `questionInput` jadi discriminated union per bentuk (aturan
+- [x] `attempt_answers.response` (JSON) menggantikan
+      `selected_option_id` — format dikunci di Zod `answerResponse` &
+      `docs/DATABASE.md` (`{type,optionId}` | `{type,optionIds}` |
+      `{type,answers:[{optionId,category}]}`); tabelnya dibuat bersama
+      attempts di Fase 1
+- [x] Zod: `questionInput` jadi discriminated union per bentuk (aturan
       jumlah opsi/kunci di atas) + `stimulusInput` + `answerResponse`
-- [ ] Update `docs/DATABASE.md` (skema + aturan skor per bentuk)
+- [x] Update `docs/DATABASE.md` (skema + aturan skor per bentuk)
 
 ### 1.5b Penskoran & analitik
-- [ ] `scoring.ts`: `scoreQuestion` per bentuk; opsi/pernyataan yang
+- [x] `scoring.ts`: `scoreQuestion` per bentuk; opsi/pernyataan yang
       bukan milik soal tetap diabaikan (anti manipulasi payload)
-- [ ] Definisi "terjawab": PG 1 opsi; MCMA ≥1 opsi; Kategori semua
-      pernyataan terisi (sebagian terisi = belum lengkap, skor 0)
-- [ ] `analytics.ts` tidak berubah (tetap per subdomain) — tambah test
+- [x] Definisi "terjawab": PG 1 opsi; MCMA ≥1 opsi; Kategori semua
+      pernyataan terisi (sebagian terisi = `partial`: dihitung dijawab
+      untuk statistik kosong, skor 0; UI menandainya "belum lengkap")
+- [x] `analytics.ts` tidak berubah (tetap per subdomain) — tambah test
       untuk soal grup yang subdomainnya berbeda-beda
-- [ ] Unit test tiap bentuk: benar penuh, sebagian, salah, kosong,
+- [x] Unit test tiap bentuk: benar penuh, sebagian, salah, kosong,
       payload manipulasi
 
 ### 1.5c UI pengerjaan tes

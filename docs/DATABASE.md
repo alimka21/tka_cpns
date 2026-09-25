@@ -37,8 +37,11 @@ tidak disalin ke DB — dibaca dari file kerangka berdasarkan `code`.
   (varchar 512 — nama terpanjang di regulasi 284 karakter), order
 
 **questions**
-- id, subtopic_id (fk), type (`single_choice`; tipe lain menyusul kalau
-  perlu), question_text, image_url (nullable), difficulty
+- id, subtopic_id (fk), type (`pg`|`pgk_mcma`|`pgk_kategori` — bentuk
+  soal kerangka TKA), category_labels (JSON nullable, hanya
+  `pgk_kategori`: `["Benar","Salah"]` atau `["Sesuai","Tidak Sesuai"]`),
+  stimulus_id (fk nullable) + stimulus_order (nullable) — terisi = soal
+  grup, question_text, image_url (nullable), difficulty
   (`easy`|`medium`|`hard`), cognitive_level (nullable, `L1`–`L3` sesuai
   mata uji; null untuk mata uji bahasa), status (`draft`|`pending_review`|`published`),
   generated_by (`manual`|`ai`|`import`), source_user_id (nullable, siapa
@@ -47,7 +50,17 @@ tidak disalin ke DB — dibaca dari file kerangka berdasarkan `code`.
 
 **question_options**
 - id, question_id (fk), label (A/B/C/D/E), option_text, is_correct
-  (bool, default false), order
+  (bool, default false — kunci untuk `pg`/`pgk_mcma`), correct_category
+  (nullable — kunci per pernyataan untuk `pgk_kategori`), order
+- Aturan per bentuk: `pg` 4–5 opsi, tepat 1 kunci; `pgk_mcma` 4–5 opsi,
+  1 s.d. (jumlah opsi − 1) kunci; `pgk_kategori` 3–5 pernyataan, semua
+  punya `correct_category` dari `category_labels`. (Zod `questionInput`.)
+
+**stimuli** (stimulus bersama soal grup)
+- id, code (unique), title, content (teks/KaTeX), image_url (nullable),
+  status (`draft`|`published`), created_by, created_at
+- Satu stimulus boleh dipakai soal dari subdomain berbeda; analisis
+  kelemahan tetap per subdomain soal.
 
 **question_explanations**
 - id, question_id (fk, 1:1), explanation_text
@@ -85,7 +98,10 @@ kalau susunan soal dipilih manual oleh admin.)*
   total_score (nullable, diisi saat finalize)
 
 **attempt_answers**
-- id, attempt_id (fk), question_id (fk), selected_option_id (nullable),
+- id, attempt_id (fk), question_id (fk), response (JSON nullable —
+  Zod `answerResponse`: `{type:"pg",optionId}` |
+  `{type:"pgk_mcma",optionIds}` |
+  `{type:"pgk_kategori",answers:[{optionId,category}]}`),
   is_flagged (bool, "ragu-ragu"), answered_at
 - unique constraint: (attempt_id, question_id)
 
@@ -95,14 +111,19 @@ kalau susunan soal dipilih manual oleh admin.)*
 
 ## Enum penting
 
-- Aturan skor (satu-satunya): benar = +1 atau `points_override`,
-  salah/kosong = 0.
+- Aturan skor (satu-satunya, semua bentuk): benar penuh = +1 atau
+  `points_override`, selain itu 0 — **tidak ada skor parsial**.
+  `pg`: opsi = kunci. `pgk_mcma`: himpunan pilihan persis sama dengan
+  himpunan kunci. `pgk_kategori`: semua pernyataan dijawab & sesuai kunci
+  (baru sebagian = `partial`, dihitung dijawab tapi 0). Implementasi:
+  `src/server/services/scoring.ts`.
 - `question.status`: `draft` → `pending_review` (khusus asal AI) →
   `published`. Soal manual boleh langsung `published` kalau admin yakin.
 
 ## Index yang wajib ada sejak awal
 
 - `questions(subtopic_id)`
+- `questions(stimulus_id)` (otomatis dari FK)
 - `attempt_answers(attempt_id)`
 - `attempt_answers(attempt_id, question_id)` unique
 - `attempt_subtopic_scores(attempt_id)`

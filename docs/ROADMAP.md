@@ -3,8 +3,14 @@
 ## Status saat ini
 
 **Scope: TKA sekolah saja (SD/SMP/SMA), CPNS dihapus 2026-09-24.**
-Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dibuat,
-**belum dijalankan** ke database.
+
+**Database 2026-09-25:** tersambung ke Hostinger (MariaDB 11.8, via
+Remote MySQL; `npm run db:check`). Migrasi 0000–0006 **sudah
+dijalankan**, seed kerangka asesmen sudah masuk (3 jenjang, 26 mata uji,
+97 domain, 268 subdomain). Berikutnya: auth (Better Auth) lalu CRUD soal
+yang benar-benar menyimpan.
+Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dijalankan
+bersama migrasi lain (lihat status Database di atas).
 
 **Optimasi 2026-09-24:** rumus KaTeX dirender di server
 (`math-render.ts` → `ExamQuestion.html`), metadata SEO + `robots.txt`/
@@ -16,14 +22,13 @@ validasi 3 bentuk soal + stimulus, skor benar-penuh, UI ujian per bentuk
 + panel stimulus, import Excel multi-bentuk (`bentuk_soal`, kunci ganda,
 `kategori`, `kode_stimulus` + sheet Stimulus), form soal `/admin/soal/baru`,
 kelola stimulus `/admin/soal/stimulus`, logika paket soal grup utuh.
-Migrasi 0002–0006 **belum dijalankan**. Sisa Fase 1.5: 1.5e (AI) dan
+Migrasi 0002–0006 sudah dijalankan (2026-09-25). Sisa Fase 1.5: 1.5e (AI) dan
 bagian yang menunggu DB (simpan soal/stimulus, UI susun paket).
 
 **Kerangka asesmen 2026-09-24:** `asesmen/*.json` jadi sumber hierarki
 konten (lihat `asesmen/README.md`). Migrasi `0002`/`0003` (tabel
 `subjects`, kolom `code`, `cognitive_level`) + seed
-`npm run db:seed:asesmen` sudah dibuat, **belum dijalankan** ke DB
-(jalankan `db:migrate` lalu seed; asumsi tabel konten masih kosong).
+`npm run db:seed:asesmen` sudah dijalankan ke DB (2026-09-25).
 Import Excel kini pakai `kode_subdomain`; konteks prompt AI siap di
 `src/server/asesmen/generation-context.ts`.
 
@@ -52,8 +57,8 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 
 - [x] `npx create-next-app` (TypeScript, App Router, Tailwind, ESLint)
 - [x] Install shadcn/ui, Drizzle ORM + Drizzle Kit, Zod, Better Auth
-- [ ] Koneksi ke MySQL Hostinger (env `DATABASE_URL`) — bisa pakai
-      database lokal/dev dulu sebelum ada hosting aktif
+- [x] Koneksi ke MySQL Hostinger (env `DATABASE_URL`) — MariaDB 11.8
+      via Remote MySQL, cek dengan `npm run db:check`
 - [ ] Setup Git + repo GitHub, hubungkan ke VS Code
 - [ ] Push awal, sambungkan Hostinger auto-deploy dari `main`
 

@@ -14,6 +14,11 @@ generate migrasi — jangan tulis ulang dokumen ini kecuali skema berubah.
 - id (pk), user_id (fk users), gemini_api_key_encrypted, gemini_key_masked
   (mis. `AIza...ab12`, untuk ditampilkan di UI), updated_at
 
+> **Server produksi: MariaDB 11.8 (Hostinger).** Kolom `json` di MariaDB
+> disimpan sebagai `longtext` — mysql2 mengembalikannya sebagai string,
+> jadi `JSON.parse` (mis. lewat custom type Drizzle) saat membaca
+> `questions.category_labels` dan `attempt_answers.response`.
+
 ## Grup: Konten
 
 Hierarki = kerangka asesmen TKA resmi (`asesmen/tka-*.json`, loader di

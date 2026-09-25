@@ -14,10 +14,11 @@ dijalankan**, seed kerangka asesmen sudah masuk (3 jenjang, 26 mata uji,
 (password di `accounts.password`), id INT serial, role via
 `npm run user:role -- <email> admin`. `/dashboard`, `/pengaturan`,
 `/hasil` wajib login; `/admin/*` wajib admin; action import & template
-cek admin. Migrasi **0007–0008 belum dijalankan** (akses DB ditolak
-karena IP berubah — whitelist IP baru di Remote MySQL lalu
-`npm run db:migrate`). Berikutnya: uji alur daftar/masuk/keluar di DB
-asli, lalu CRUD soal yang benar-benar menyimpan.
+cek admin. Migrasi 0007–0008 sudah dijalankan; alur daftar → masuk →
+keluar, blokir siswa dari /admin, salah password, `?next`, dan open
+redirect sudah diuji end-to-end di DB asli (akun uji dihapus lagi).
+Berikutnya: CRUD soal yang benar-benar menyimpan (form & import → DB),
+lalu Bank Soal membaca data asli.
 Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dijalankan
 bersama migrasi lain (lihat status Database di atas).
 
@@ -73,8 +74,8 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 
 ## Fase 1 — MVP fungsional
 
-- [x] Auth: register/login, role student/admin — Better Auth; tinggal
-      jalankan migrasi 0007–0008 & uji di DB asli
+- [x] Auth: register/login, role student/admin — Better Auth, teruji
+      end-to-end di DB Hostinger
 - [ ] Skema Drizzle: users, categories, topics, subtopics, questions,
       question_options, question_explanations — ✅ konten + stimuli siap;
       sisa: test_packages, entitlements, attempts, attempt_answers

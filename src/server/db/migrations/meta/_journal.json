@@ -29,6 +29,27 @@
       "when": 1790263523382,
       "tag": "0003_asesmen_hierarki_bersihkan",
       "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "5",
+      "when": 1790295966260,
+      "tag": "0004_bentuk_soal_tambah",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "5",
+      "when": 1790295972062,
+      "tag": "0005_bentuk_soal_migrasi_data",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "5",
+      "when": 1790295980084,
+      "tag": "0006_bentuk_soal_bersihkan",
+      "breakpoints": true
     }
   ]
 }

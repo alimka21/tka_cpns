@@ -1,0 +1,1 @@
+ALTER TABLE `questions` MODIFY COLUMN `type` enum('pg','pgk_mcma','pgk_kategori') NOT NULL DEFAULT 'pg';

@@ -1,12 +1,14 @@
 import {
   boolean,
   int,
+  json,
   mysqlEnum,
   mysqlTable,
   text,
   timestamp,
   varchar,
 } from "drizzle-orm/mysql-core";
+import { QUESTION_TYPES, STIMULUS_STATUSES } from "@/lib/validation/enums";
 import { users } from "./users";
 
 // Hierarki konten = kerangka asesmen TKA (asesmen/tka-*.json, lihat
@@ -60,14 +62,34 @@ export const subtopics = mysqlTable("subtopics", {
   order: int("order").notNull().default(0),
 });
 
+/** Stimulus bersama untuk soal grup (jenis_soal = grup di kerangka). */
+export const stimuli = mysqlTable("stimuli", {
+  id: int("id").autoincrement().primaryKey(),
+  code: varchar("code", { length: 32 }).notNull().unique(),
+  title: varchar("title", { length: 255 }).notNull(),
+  content: text("content").notNull(),
+  imageUrl: varchar("image_url", { length: 2048 }),
+  status: mysqlEnum("status", STIMULUS_STATUSES).notNull().default("draft"),
+  createdBy: int("created_by")
+    .notNull()
+    .references(() => users.id),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+});
+
 export const questions = mysqlTable("questions", {
   id: int("id").autoincrement().primaryKey(),
   subtopicId: int("subtopic_id")
     .notNull()
     .references(() => subtopics.id),
-  type: mysqlEnum("type", ["single_choice"])
+  /** Bentuk soal kerangka TKA: pg | pgk_mcma | pgk_kategori. */
+  type: mysqlEnum("type", QUESTION_TYPES)
     .notNull()
-    .default("single_choice"),
+    .default("pg"),
+  /** Hanya PGK Kategori: pasangan kategori, mis. ["Benar","Salah"]. */
+  categoryLabels: json("category_labels").$type<[string, string]>(),
+  /** Soal grup: stimulus bersama + nomor urut soal di dalam grup. */
+  stimulusId: int("stimulus_id").references(() => stimuli.id),
+  stimulusOrder: int("stimulus_order"),
   questionText: text("question_text").notNull(),
   imageUrl: varchar("image_url", { length: 2048 }),
   difficulty: mysqlEnum("difficulty", ["easy", "medium", "hard"]).notNull(),
@@ -95,7 +117,10 @@ export const questionOptions = mysqlTable("question_options", {
     .references(() => questions.id),
   label: mysqlEnum("label", ["A", "B", "C", "D", "E"]).notNull(),
   optionText: text("option_text").notNull(),
+  /** PG & PGK MCMA: opsi ini kunci jawaban. */
   isCorrect: boolean("is_correct").notNull().default(false),
+  /** PGK Kategori: kategori kunci pernyataan ini (salah satu category_labels). */
+  correctCategory: varchar("correct_category", { length: 32 }),
   order: int("order").notNull().default(0),
 });
 

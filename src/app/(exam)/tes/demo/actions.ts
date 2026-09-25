@@ -10,7 +10,15 @@ export async function demoSaveAnswer(input: {
   selectedOptionId: number | null;
   isFlagged: boolean;
 }) {
-  const parsed = saveAnswerInput.safeParse({ attemptId: 1, ...input });
+  // UI ujian masih mengirim format PG (selectedOptionId) — diubah ke
+  // `response` di Fase 1.5c.
+  const { selectedOptionId, isFlagged, questionId } = input;
+  const parsed = saveAnswerInput.safeParse({
+    attemptId: 1,
+    questionId,
+    isFlagged,
+    response: selectedOptionId == null ? null : { type: "pg", optionId: selectedOptionId },
+  });
   if (!parsed.success) return { ok: false, error: "Data jawaban tidak valid." };
   return { ok: true };
 }

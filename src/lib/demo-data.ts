@@ -3,7 +3,6 @@
 // Drizzle) tinggal mengisi tipe yang sama. Hapus file ini setelah semua
 // halaman membaca data asli.
 
-import type { Difficulty, QuestionType } from "@/lib/validation/enums";
 
 export type Jenjang = "SD" | "SMP" | "SMA";
 
@@ -270,100 +269,4 @@ export const demoUsers: DemoUser[] = [
   { id: 3, name: "Bagas Saputra", email: "bagas.s@example.com", role: "student", jenjang: "SMA", premium: true, createdAt: "2026-09-08" },
   { id: 4, name: "Dimas Ananda", email: "dimas.ananda@example.com", role: "student", jenjang: "SD", premium: false, createdAt: "2026-09-12" },
   { id: 5, name: "Salsabila Putri", email: "salsa.putri@example.com", role: "student", jenjang: "SMA", premium: false, createdAt: "2026-09-19" },
-];
-
-// Pohon Jenjang → Mata pelajaran (topik) → Subtopik untuk Bank Soal.
-export type DemoTopicNode = {
-  jenjang: Jenjang;
-  topics: { id: number; name: string; subtopics: { id: number; name: string; count: number }[] }[];
-};
-
-export const demoTopicTree: DemoTopicNode[] = [
-  {
-    jenjang: "SD",
-    topics: [
-      { id: 1, name: "Matematika", subtopics: [{ id: 11, name: "Pecahan", count: 42 }, { id: 12, name: "Pengukuran", count: 28 }] },
-      { id: 2, name: "Bahasa Indonesia", subtopics: [{ id: 21, name: "Ide Pokok", count: 35 }] },
-    ],
-  },
-  {
-    jenjang: "SMP",
-    topics: [
-      {
-        id: 3,
-        name: "Matematika",
-        subtopics: [
-          { id: 31, name: "Pecahan & Perbandingan", count: 56 },
-          { id: 32, name: "Persamaan Linear", count: 48 },
-          { id: 33, name: "Bangun Datar & Luas", count: 39 },
-        ],
-      },
-      { id: 4, name: "Bahasa Indonesia", subtopics: [{ id: 41, name: "Teks Eksplanasi", count: 44 }, { id: 42, name: "Kalimat Efektif", count: 31 }] },
-    ],
-  },
-  {
-    jenjang: "SMA",
-    topics: [
-      { id: 5, name: "Matematika", subtopics: [{ id: 51, name: "Fungsi Kuadrat", count: 37 }, { id: 52, name: "Peluang", count: 29 }] },
-      { id: 6, name: "Bahasa Inggris", subtopics: [{ id: 61, name: "Reading Comprehension", count: 47 }] },
-    ],
-  },
-];
-
-export type DemoQuestionRow = {
-  id: number;
-  text: string;
-  jenjang: Jenjang;
-  topic: string;
-  subtopicId: number;
-  subtopic: string;
-  difficulty: Difficulty;
-  type: QuestionType;
-  status: "draft" | "pending_review" | "published";
-  generatedBy: "manual" | "ai" | "import";
-  createdAt: string;
-  stimulusCode?: string;
-  stimulusOrder?: number;
-};
-
-export type DemoStimulus = {
-  id: number;
-  code: string;
-  title: string;
-  content: string;
-  status: "draft" | "published";
-  createdAt: string;
-};
-
-export const demoStimuli: DemoStimulus[] = [
-  {
-    id: 1,
-    code: "STM-SMP-BIND-001",
-    title: "Suara Kecil di Panggung Besar",
-    content:
-      "Rara selalu gemetar setiap kali harus berbicara di depan kelas. Ketika acara perpisahan sekolah tinggal satu minggu lagi, Bu Wati bertanya siapa yang mau menyanyi. Rara diam saja. Malamnya, ia teringat pesan kakeknya: \"Suara kecil pun bisa terdengar kalau kita berani mencobanya.\" Keesokan harinya, Rara mengangkat tangan.",
-    status: "published",
-    createdAt: "2026-09-15",
-  },
-  {
-    id: 2,
-    code: "STM-SMP-MTK-001",
-    title: "Tabel Harga Tiket Museum",
-    content: "Tiket dewasa Rp25.000, anak Rp15.000. Rombongan minimal 20 orang mendapat potongan 10% untuk semua tiket.",
-    status: "draft",
-    createdAt: "2026-09-21",
-  },
-];
-
-export const demoQuestions: DemoQuestionRow[] = [
-  { id: 101, text: "Ibu membeli 3/4 kg gula, lalu memakai 1/2 kg untuk membuat kue. Sisa gula Ibu adalah ...", jenjang: "SMP", topic: "Matematika", subtopicId: 31, subtopic: "Pecahan & Perbandingan", difficulty: "easy", type: "pg", status: "published", generatedBy: "manual", createdAt: "2026-09-10" },
-  { id: 102, text: "Perbandingan uang Adi dan Budi 3 : 5. Jika selisih uang mereka Rp40.000, jumlah uang keduanya adalah ...", jenjang: "SMP", topic: "Matematika", subtopicId: 31, subtopic: "Pecahan & Perbandingan", difficulty: "medium", type: "pg", status: "published", generatedBy: "import", createdAt: "2026-09-11" },
-  { id: 103, text: "Sebuah peta berskala 1 : 250.000. Jarak dua kota pada peta 8 cm. Jarak sebenarnya adalah ...", jenjang: "SMP", topic: "Matematika", subtopicId: 31, subtopic: "Pecahan & Perbandingan", difficulty: "medium", type: "pg", status: "pending_review", generatedBy: "ai", createdAt: "2026-09-20" },
-  { id: 104, text: "Nilai x yang memenuhi (2x + 4)/3 = 6 adalah ...", jenjang: "SMP", topic: "Matematika", subtopicId: 32, subtopic: "Persamaan Linear", difficulty: "easy", type: "pg", status: "published", generatedBy: "manual", createdAt: "2026-09-12" },
-  { id: 105, text: "Tiga tahun lalu umur ayah empat kali umur anaknya. Jumlah umur mereka sekarang 56 tahun. Umur anak sekarang adalah ...", jenjang: "SMP", topic: "Matematika", subtopicId: 32, subtopic: "Persamaan Linear", difficulty: "hard", type: "pg", status: "draft", generatedBy: "ai", createdAt: "2026-09-22" },
-  { id: 107, text: "Manakah bilangan berikut yang habis dibagi 3? (jawaban bisa lebih dari satu)", jenjang: "SMP", topic: "Matematika", subtopicId: 31, subtopic: "Pecahan & Perbandingan", difficulty: "medium", type: "pgk_mcma", status: "published", generatedBy: "manual", createdAt: "2026-09-23" },
-  { id: 108, text: "Tentukan benar atau salah setiap pernyataan tentang perbandingan senilai berikut.", jenjang: "SMP", topic: "Matematika", subtopicId: 31, subtopic: "Pecahan & Perbandingan", difficulty: "hard", type: "pgk_kategori", status: "pending_review", generatedBy: "ai", createdAt: "2026-09-24" },
-  { id: 109, text: "Berdasarkan teks, apa yang membuat Rara akhirnya berani tampil?", jenjang: "SMP", topic: "Bahasa Indonesia", subtopicId: 41, subtopic: "Teks Eksplanasi", difficulty: "easy", type: "pg", status: "published", generatedBy: "import", createdAt: "2026-09-15", stimulusCode: "STM-SMP-BIND-001", stimulusOrder: 1 },
-  { id: 110, text: "Tentukan kesesuaian setiap pernyataan berikut dengan isi teks.", jenjang: "SMP", topic: "Bahasa Indonesia", subtopicId: 41, subtopic: "Teks Eksplanasi", difficulty: "medium", type: "pgk_kategori", status: "published", generatedBy: "import", createdAt: "2026-09-15", stimulusCode: "STM-SMP-BIND-001", stimulusOrder: 2 },
-  { id: 106, text: "Kalimat berikut yang merupakan kalimat efektif adalah ...", jenjang: "SMP", topic: "Bahasa Indonesia", subtopicId: 42, subtopic: "Kalimat Efektif", difficulty: "medium", type: "pg", status: "published", generatedBy: "import", createdAt: "2026-09-14" },
 ];

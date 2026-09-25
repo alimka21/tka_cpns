@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useTransition } from "react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Check, CircleAlert, CircleCheck, Minus, Plus, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,6 +18,7 @@ import {
   type QuestionType,
 } from "@/lib/validation/enums";
 import { questionInput } from "@/lib/validation/question";
+import { createQuestionAction } from "@/server/actions/questions";
 
 export type SubdomainOption = {
   code: string;
@@ -56,7 +59,9 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
   const [stimulusId, setStimulusId] = useState("");
   const [stimulusOrder, setStimulusOrder] = useState("1");
   const [errors, setErrors] = useState<string[]>([]);
-  const [saved, setSaved] = useState(false);
+  const [saved, setSaved] = useState<number | null>(null);
+  const [saving, startSaving] = useTransition();
+  const router = useRouter();
 
   const subdomain = subdomains.find((s) => s.code === subdomainCode);
   const limits = LIMITS[type];
@@ -72,18 +77,18 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
       while (resized.length < min) resized.push({ text: "", isCorrect: false, correctCategory: null });
       return resized.map((o) => ({ ...o, isCorrect: false, correctCategory: null }));
     });
-    setSaved(false);
+    setSaved(null);
   }
 
   function updateOption(i: number, patch: Partial<OptionDraft>) {
     setOptions((prev) => prev.map((o, j) => (j === i ? { ...o, ...patch } : o)));
-    setSaved(false);
+    setSaved(null);
   }
 
   function toggleKey(i: number) {
     if (type === "pg") setOptions((prev) => prev.map((o, j) => ({ ...o, isCorrect: j === i })));
     else updateOption(i, { isCorrect: !options[i].isCorrect });
-    setSaved(false);
+    setSaved(null);
   }
 
   function submit(e: React.FormEvent) {
@@ -92,10 +97,8 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
     if (!subdomain) problems.push("Pilih subdomain dari kerangka asesmen.");
     if (subdomain && subdomain.levels.length > 0 && !cognitiveLevel) problems.push("Pilih level kognitif untuk mata uji ini.");
 
-    const parsed = questionInput.safeParse({
+    const payload = {
       type,
-      // TODO: server action memetakan kode subdomain → subtopics.id.
-      subtopicId: 1,
       questionText,
       difficulty,
       cognitiveLevel: cognitiveLevel || null,
@@ -109,10 +112,27 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
         isCorrect: o.isCorrect,
         correctCategory: type === "pgk_kategori" ? o.correctCategory : null,
       })),
-    });
+    };
+    // Validasi cepat di browser (id subdomain asli dipetakan server).
+    const parsed = questionInput.safeParse({ ...payload, subtopicId: 1 });
     if (!parsed.success) problems.push(...new Set(parsed.error.issues.map((i) => i.message)));
     setErrors(problems);
-    setSaved(problems.length === 0);
+    if (problems.length > 0) return;
+
+    startSaving(async () => {
+      const result = await createQuestionAction({ subdomainCode, question: payload });
+      if (!result.ok) {
+        setErrors(result.errors);
+        return;
+      }
+      setSaved(result.id);
+      // Siap untuk soal berikutnya di subdomain & bentuk yang sama.
+      setQuestionText("");
+      setExplanation("");
+      setOptions((prev) => prev.map(() => ({ text: "", isCorrect: false, correctCategory: null })));
+      if (stimulusId) setStimulusOrder(String(Number(stimulusOrder) + 1));
+      router.refresh();
+    });
   }
 
   return (
@@ -153,7 +173,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
               value={questionText}
               onChange={(e) => {
                 setQuestionText(e.target.value);
-                setSaved(false);
+                setSaved(null);
               }}
               rows={4}
               placeholder="Tulis pertanyaan. Rumus pakai KaTeX: $x^2$ atau $$\frac{1}{2}$$"
@@ -400,14 +420,19 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
             </ul>
           </div>
         )}
-        {saved && (
-          <p role="status" className="flex gap-2 rounded-xl border border-success/40 bg-success-soft p-4 text-sm text-success">
+        {saved != null && (
+          <p role="status" className="flex gap-2 rounded-xl border border-success/40 bg-success-soft p-4 text-sm text-success-strong">
             <CircleCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
-            Soal valid. Penyimpanan ke bank soal aktif setelah database tersambung.
+            <span>
+              Soal #{saved} tersimpan sebagai draft. Form siap untuk soal berikutnya.{" "}
+              <Link href="/admin/soal?status=draft" className="font-semibold underline">
+                Lihat di Bank Soal
+              </Link>
+            </span>
           </p>
         )}
-        <Button type="submit" size="lg">
-          Validasi & simpan draft
+        <Button type="submit" size="lg" disabled={saving}>
+          {saving ? "Menyimpan…" : "Simpan sebagai draft"}
         </Button>
       </aside>
     </form>

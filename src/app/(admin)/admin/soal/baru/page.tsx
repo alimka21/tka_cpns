@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { QuestionForm, type StimulusOption, type SubdomainOption } from "@/components/admin/question-form";
-import { DemoDataNotice, PageHeader } from "@/components/layout/page-header";
-import { demoQuestions, demoStimuli } from "@/lib/demo-data";
+import { PageHeader } from "@/components/layout/page-header";
+import { listStimuli } from "@/server/queries/question-bank";
 import { FRAMEWORKS } from "@/server/asesmen";
 
 export const metadata: Metadata = { title: "Tambah Soal" };
 
-export default function AdminTambahSoalPage() {
+export default async function AdminTambahSoalPage() {
   // Subdomain & level kognitif dibaca dari kerangka asesmen (sumber kebenaran).
   const subdomains: SubdomainOption[] = Object.values(FRAMEWORKS).flatMap((fw) =>
     fw.subjects.flatMap((subject) =>
@@ -21,17 +21,15 @@ export default function AdminTambahSoalPage() {
     ),
   );
 
-  // TODO: ganti dengan query tabel stimuli.
-  const stimuli: StimulusOption[] = demoStimuli.map((st) => ({
+  const stimuli: StimulusOption[] = (await listStimuli()).map((st) => ({
     id: st.id,
     code: st.code,
     title: st.title,
-    questionCount: demoQuestions.filter((q) => q.stimulusCode === st.code).length,
+    questionCount: st.questions.length,
   }));
 
   return (
     <div className="flex flex-col gap-8">
-      <DemoDataNotice>Validasi soal sudah aktif; penyimpanan ke bank soal menyusul setelah database tersambung.</DemoDataNotice>
       <PageHeader
         title="Tambah Soal"
         description="Pilih bentuk soal — field kunci jawaban menyesuaikan. Aturan sama dengan import Excel."

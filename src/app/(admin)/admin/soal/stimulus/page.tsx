@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
 import { BookOpenText, Plus } from "lucide-react";
 import { StimulusForm } from "@/components/admin/stimulus-form";
-import { DemoDataNotice, PageHeader } from "@/components/layout/page-header";
+import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
-import { demoQuestions, demoStimuli } from "@/lib/demo-data";
+import { listStimuli } from "@/server/queries/question-bank";
 import { formatDate } from "@/lib/format";
 import { QUESTION_TYPE_META } from "@/lib/question-forms";
 
 export const metadata: Metadata = { title: "Stimulus" };
 
-// TODO: ganti data contoh dengan query tabel stimuli + questions.stimulus_id.
-export default function AdminStimulusPage() {
+export default async function AdminStimulusPage() {
+  const stimuli = await listStimuli();
   return (
     <div className="flex flex-col gap-8">
-      <DemoDataNotice />
       <PageHeader
         title="Stimulus"
         description="Bacaan, tabel, atau grafik yang dipakai bersama oleh beberapa soal (soal grup). Soal dalam satu grup selalu tampil & masuk paket secara utuh."
@@ -29,10 +28,13 @@ export default function AdminStimulusPage() {
       </details>
 
       <ul className="flex flex-col gap-4">
-        {demoStimuli.map((st) => {
-          const questions = demoQuestions
-            .filter((q) => q.stimulusCode === st.code)
-            .sort((a, b) => (a.stimulusOrder ?? 0) - (b.stimulusOrder ?? 0));
+        {stimuli.length === 0 && (
+          <li className="surface-card px-6 py-12 text-center text-sm text-muted-foreground">
+            Belum ada stimulus. Buat lewat &ldquo;Stimulus baru&rdquo; di atas, atau lewat sheet Stimulus saat import Excel.
+          </li>
+        )}
+        {stimuli.map((st) => {
+          const questions = st.questions;
           return (
             <li key={st.id} className="surface-card flex flex-col gap-4 p-6">
               <div className="flex flex-wrap items-center gap-2">
@@ -58,7 +60,7 @@ export default function AdminStimulusPage() {
                     {questions.map((q) => (
                       <li key={q.id} className="flex flex-wrap items-center gap-3 px-4 py-3 text-sm">
                         <span className="flex size-6 items-center justify-center rounded-full bg-primary-soft text-xs font-bold text-primary">
-                          {q.stimulusOrder}
+                          {q.order}
                         </span>
                         <Badge variant="info">{QUESTION_TYPE_META[q.type].short}</Badge>
                         <span className="min-w-0 flex-1 truncate">{q.text}</span>

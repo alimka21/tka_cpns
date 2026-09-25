@@ -4,8 +4,11 @@ import { useRef, useState, useTransition } from "react";
 import { CircleAlert, CircleCheck, Download, FileSpreadsheet, LoaderCircle, UploadCloud, X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
 import {
+  confirmQuestionImport,
   previewQuestionImport,
+  type ImportConfirmResult,
   type ImportPreviewError,
   type ImportPreviewResult,
   type ImportPreviewRow,
@@ -26,12 +29,22 @@ export function ImportUploader() {
   const [file, setFile] = useState<File | null>(null);
   const [dragging, setDragging] = useState(false);
   const [result, setResult] = useState<ImportPreviewResult | null>(null);
+  const [saved, setSaved] = useState<ImportConfirmResult | null>(null);
   const [pending, startTransition] = useTransition();
+  const [saving, startSaving] = useTransition();
+
+  function save() {
+    if (!file) return;
+    const data = new FormData();
+    data.set("file", file);
+    startSaving(async () => setSaved(await confirmQuestionImport(data)));
+  }
 
   function pick(next: File | undefined) {
     if (!next) return;
     setFile(next);
     setResult(null);
+    setSaved(null);
     const data = new FormData();
     data.set("file", next);
     startTransition(async () => setResult(await previewQuestionImport(data)));
@@ -40,6 +53,7 @@ export function ImportUploader() {
   function reset() {
     setFile(null);
     setResult(null);
+    setSaved(null);
     if (inputRef.current) inputRef.current.value = "";
   }
 
@@ -264,18 +278,40 @@ export function ImportUploader() {
           <div className="flex flex-col gap-3 border-t bg-muted/30 p-5 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-sm text-muted-foreground">
               {result.errors.length > 0
-                ? "Perbaiki baris error di Excel lalu upload ulang, atau lanjutkan hanya dengan baris valid."
-                : "Semua baris valid."}
+                ? "Perbaiki baris error di Excel lalu upload ulang, atau simpan hanya baris valid."
+                : "Semua baris valid. Soal disimpan sebagai draft dan perlu diterbitkan di Bank Soal."}
             </p>
-            <Button
-              disabled
-              title="Penyimpanan ke bank soal tersedia setelah database tersambung"
-              className="shrink-0"
-            >
-              Simpan {result.valid.length} soal sebagai draft
+            <Button onClick={save} disabled={saving || result.valid.length === 0 || saved?.ok === true} className="shrink-0">
+              {saving ? "Menyimpan…" : `Simpan ${result.valid.length} soal sebagai draft`}
             </Button>
           </div>
         </section>
+      )}
+
+      {saved?.ok === false && (
+        <p role="alert" className="flex gap-2 rounded-lg border border-destructive/40 bg-destructive-soft px-4 py-3 text-sm text-destructive">
+          <CircleAlert className="mt-0.5 size-4 shrink-0" aria-hidden /> {saved.error}
+        </p>
+      )}
+      {saved?.ok === true && (
+        <div role="status" className="flex flex-col gap-2 rounded-xl border border-success/40 bg-success-soft p-4 text-sm text-success-strong">
+          <p className="flex items-center gap-2 font-semibold">
+            <CircleCheck className="size-4" aria-hidden /> {saved.questionCount} soal tersimpan sebagai draft
+            {saved.stimulusCount > 0 && ` · ${saved.stimulusCount} stimulus baru`}.
+          </p>
+          {saved.skipped.length > 0 && (
+            <ul className="list-disc pl-6 text-destructive">
+              {saved.skipped.map((s) => (
+                <li key={s.rowNumber}>
+                  Baris {s.rowNumber} dilewati: {s.message}
+                </li>
+              ))}
+            </ul>
+          )}
+          <Link href="/admin/soal?status=draft" className="w-fit font-semibold underline">
+            Review & terbitkan di Bank Soal →
+          </Link>
+        </div>
       )}
     </div>
   );

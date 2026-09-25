@@ -1,7 +1,6 @@
 import {
   boolean,
   int,
-  json,
   mysqlEnum,
   mysqlTable,
   text,
@@ -9,6 +8,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 import { QUESTION_TYPES, STIMULUS_STATUSES } from "@/lib/validation/enums";
+import { jsonText } from "./json-text";
 import { users } from "./users";
 
 // Hierarki konten = kerangka asesmen TKA (asesmen/tka-*.json, lihat
@@ -86,7 +86,7 @@ export const questions = mysqlTable("questions", {
     .notNull()
     .default("pg"),
   /** Hanya PGK Kategori: pasangan kategori, mis. ["Benar","Salah"]. */
-  categoryLabels: json("category_labels").$type<[string, string]>(),
+  categoryLabels: jsonText<[string, string]>("category_labels"),
   /** Soal grup: stimulus bersama + nomor urut soal di dalam grup. */
   stimulusId: int("stimulus_id").references(() => stimuli.id),
   stimulusOrder: int("stimulus_order"),

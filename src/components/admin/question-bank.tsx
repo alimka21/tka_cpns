@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { BookOpenText, ChevronDown, FileUp, Pencil, Plus, Search, Sparkles, UserPen } from "lucide-react";
+import { useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
+import { BookOpenText, ChevronDown, FileUp, Plus, Search, Send, Sparkles, Undo2, UserPen } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,13 +14,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import type { DemoQuestionRow, DemoTopicNode } from "@/lib/demo-data";
+import type { QuestionListRow, TopicTreeNode } from "@/lib/question-bank-types";
+import { updateQuestionStatusAction } from "@/server/actions/questions";
 import { formatDate } from "@/lib/format";
 import { QUESTION_TYPE_META } from "@/lib/question-forms";
 import { QUESTION_TYPES, type Difficulty, type QuestionType } from "@/lib/validation/enums";
 import { cn } from "@/lib/utils";
 
-type Status = DemoQuestionRow["status"];
+type Status = QuestionListRow["status"];
 type StatusFilter = "all" | Status;
 type DifficultyFilter = "all" | Difficulty;
 type TypeFilter = "all" | QuestionType;
@@ -61,8 +63,8 @@ const difficultyItems: Record<DifficultyFilter, string> = {
 };
 
 type Props = {
-  tree: DemoTopicNode[];
-  questions: DemoQuestionRow[];
+  tree: TopicTreeNode[];
+  questions: QuestionListRow[];
   initialStatus: StatusFilter;
 };
 
@@ -182,9 +184,7 @@ export function QuestionBank({ tree, questions, initialStatus }: Props) {
                   <span>
                     {row.jenjang} · {row.topic} · {row.subtopic} · {formatDate(row.createdAt)}
                   </span>
-                  <Button variant="ghost" size="sm" disabled title="Edit soal tersedia setelah database tersambung">
-                    <Pencil aria-hidden /> Edit
-                  </Button>
+                  <StatusButton id={row.id} status={row.status} />
                 </div>
               </li>
             );
@@ -208,7 +208,7 @@ function TopicTree({
   selected,
   onSelect,
 }: {
-  tree: DemoTopicNode[];
+  tree: TopicTreeNode[];
   selected: number | null;
   onSelect: (id: number | null) => void;
 }) {
@@ -260,5 +260,33 @@ function TopicTree({
         ))}
       </div>
     </nav>
+  );
+}
+
+/** Terbitkan soal draft/review, atau kembalikan soal tayang ke draft. */
+function StatusButton({ id, status }: { id: number; status: Status }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const next: Status = status === "published" ? "draft" : "published";
+  return (
+    <span className="flex items-center gap-2">
+      {error && <span className="text-destructive">{error}</span>}
+      <Button
+        variant={next === "published" ? "default" : "ghost"}
+        size="sm"
+        disabled={pending}
+        onClick={() =>
+          startTransition(async () => {
+            const result = await updateQuestionStatusAction({ id, status: next });
+            if (!result.ok) setError(result.errors[0]);
+            else router.refresh();
+          })
+        }
+      >
+        {next === "published" ? <Send aria-hidden /> : <Undo2 aria-hidden />}
+        {pending ? "Menyimpan…" : next === "published" ? "Terbitkan" : "Jadikan draft"}
+      </Button>
+    </span>
   );
 }

@@ -1,11 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState, useTransition } from "react";
+import { useRouter } from "next/navigation";
 import { CircleAlert, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { stimulusInput } from "@/lib/validation/question";
+import { createStimulusAction } from "@/server/actions/questions";
 
 const fieldClass =
   "w-full rounded-lg border border-input bg-card px-3.5 py-2.5 text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15 focus-visible:outline-none";
@@ -13,17 +15,31 @@ const fieldClass =
 export function StimulusForm() {
   const [errors, setErrors] = useState<string[]>([]);
   const [valid, setValid] = useState(false);
+  const [saving, startSaving] = useTransition();
+  const formRef = useRef<HTMLFormElement>(null);
+  const router = useRouter();
 
   function submit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = Object.fromEntries(new FormData(e.currentTarget));
-    const parsed = stimulusInput.safeParse({ ...data, imageUrl: data.imageUrl || null });
+    const payload = { ...data, imageUrl: data.imageUrl || null };
+    const parsed = stimulusInput.safeParse(payload);
     setErrors(parsed.success ? [] : parsed.error.issues.map((i) => i.message));
-    setValid(parsed.success);
+    if (!parsed.success) return;
+    startSaving(async () => {
+      const result = await createStimulusAction(payload);
+      if (!result.ok) {
+        setErrors(result.errors);
+        return;
+      }
+      setValid(true);
+      formRef.current?.reset();
+      router.refresh();
+    });
   }
 
   return (
-    <form onSubmit={submit} noValidate className="flex flex-col gap-4" onChange={() => setValid(false)}>
+    <form ref={formRef} onSubmit={submit} noValidate className="flex flex-col gap-4" onChange={() => setValid(false)}>
       <div className="grid gap-4 sm:grid-cols-[14rem_1fr]">
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="stimulus-code" className="font-semibold">
@@ -67,11 +83,11 @@ export function StimulusForm() {
       )}
       {valid && (
         <p role="status" className="flex gap-2 rounded-lg border border-success/40 bg-success-soft p-3 text-sm text-success-strong">
-          <CircleCheck className="mt-0.5 size-4 shrink-0" aria-hidden /> Stimulus valid. Penyimpanan aktif setelah database tersambung.
+          <CircleCheck className="mt-0.5 size-4 shrink-0" aria-hidden /> Stimulus tersimpan. Sekarang bisa dipilih di form Tambah Soal.
         </p>
       )}
-      <Button type="submit" className="w-fit">
-        Validasi & simpan
+      <Button type="submit" className="w-fit" disabled={saving}>
+        {saving ? "Menyimpan…" : "Simpan stimulus"}
       </Button>
     </form>
   );

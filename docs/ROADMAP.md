@@ -17,8 +17,13 @@ dijalankan**, seed kerangka asesmen sudah masuk (3 jenjang, 26 mata uji,
 cek admin. Migrasi 0007–0008 sudah dijalankan; alur daftar → masuk →
 keluar, blokir siswa dari /admin, salah password, `?next`, dan open
 redirect sudah diuji end-to-end di DB asli (akun uji dihapus lagi).
-Berikutnya: CRUD soal yang benar-benar menyimpan (form & import → DB),
-lalu Bank Soal membaca data asli.
+**Simpan soal 2026-09-26:** form Tambah Soal, form Stimulus, dan
+konfirmasi import Excel menyimpan ke DB (draft) lewat server action
+(`src/server/actions/questions.ts`, `confirmQuestionImport`); Bank Soal
+& halaman Stimulus membaca DB (`src/server/queries/question-bank.ts`);
+tombol Terbitkan/Jadikan draft. Kolom JSON pakai `jsonText` (aman untuk
+MariaDB). **Belum diuji end-to-end di DB** — koneksi dari laptop sering
+ditolak karena IP seluler berganti-ganti (lihat WORKFLOW §6/§7).
 Migrasi `0001_*` (hapus `score_weight`/`tkp_weighted`) sudah dijalankan
 bersama migrasi lain (lihat status Database di atas).
 
@@ -82,10 +87,10 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [x] Admin: kategori/topik/subtopik — diganti seed dari kerangka asesmen
       (`npm run db:seed:asesmen`) + penjelajah read-only `/admin/topik`
 - [ ] Admin: CRUD soal manual (dengan KaTeX preview)
-      — ✅ skema Zod `questionInput` & komponen `MathText` siap
+      — ✅ tambah soal (semua bentuk) & ubah status tersimpan ke DB;
+      sisa: edit/hapus soal, pratinjau KaTeX di form
 - [ ] Admin: import soal via Excel (template + validasi + preview)
-      — ✅ template + parser + validasi per baris + halaman upload/
-      pratinjau siap; sisa: cocokkan topik/subtopik ke DB, insert draft
+      — ✅ selesai: template, validasi, pratinjau, simpan draft ke DB
 - [ ] Admin: susun paket tes (pilih soal, atur durasi & poin per soal)
       — ✅ skema Zod `testPackageInput` siap
 - [ ] Admin: entitlement manual (kasih akses paket premium ke user)

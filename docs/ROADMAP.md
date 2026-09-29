@@ -96,6 +96,10 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [x] Setup Git + repo GitHub (`origin` sudah diatur ke
       `github.com/alimka21/tka_cpns`)
 - [ ] Push awal, sambungkan Hostinger auto-deploy dari `main`
+      - Build produksi pakai `next build --webpack` (Turbopack crash di
+        PostCSS saat build Hostinger — lihat DECISIONS 2026-09-29).
+        Node 22 di hPanel; env: DATABASE_URL, BETTER_AUTH_SECRET,
+        BETTER_AUTH_URL, ENCRYPTION_SECRET, SITE_URL.
 
 ## Fase 1 — MVP fungsional
 

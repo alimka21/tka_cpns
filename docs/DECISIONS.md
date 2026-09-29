@@ -12,6 +12,16 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-29 — Build produksi pakai webpack, bukan Turbopack
+Keputusan: script `build` = `next build --webpack`; `engines.node >=20.9.0` (Next 16).
+Alasan: deploy Hostinger gagal — proses anak PostCSS Turbopack mati tanpa
+pesan (exit 0) saat memproses `globals.css`, kemungkinan karena batas
+memori/proses di build Hostinger. Webpack menjalankan PostCSS di proses
+yang sama; build lokal & CSS Tailwind hasilnya utuh. Konfigurasi Tailwind v4
+(`@tailwindcss/postcss`, `@import "tailwindcss"`) sudah benar, tidak diubah.
+Alternatif yang ditolak: downgrade Tailwind ke v3 (tidak menyentuh akar
+masalah). `next dev` tetap Turbopack.
+
 ## 2026-09-29 — Latihan adaptif: bank dulu, soal AI tanpa review, key siswa
 Keputusan: fitur "Latihan Kelemahan" per siswa (Fase 2.5,
 `docs/AI_GENERATION.md`) mengambil soal subdomain lemah dari bank soal

@@ -10,8 +10,8 @@ import { demoSaveAnswer, demoSubmitAttempt } from "./actions";
 
 export const metadata: Metadata = { title: "Demo TKA" };
 
-// Halaman pratinjau UI pengerjaan tes dengan data contoh (tanpa database).
-// Hapus setelah /tes/[packageId] terhubung ke tabel attempts.
+// Demo publik UI pengerjaan tes dengan data contoh (tanpa database, tanpa
+// penilaian) — ditautkan dari landing page.
 
 export const dynamic = "force-dynamic";
 
@@ -108,6 +108,15 @@ export default function DemoTesPage() {
       serverNow={now.toISOString()}
       saveAnswer={demoSaveAnswer}
       submitAttempt={demoSubmitAttempt}
+      doneWithoutResult={{
+        title: "Demo selesai!",
+        message:
+          "Ini tes contoh, jadi jawabanmu tidak disimpan atau dinilai. Daftar gratis untuk mengerjakan paket tes sungguhan dan melihat analisis kelemahanmu per subtopik.",
+        actions: [
+          { href: "/daftar", label: "Daftar gratis" },
+          { href: "/", label: "Kembali ke beranda" },
+        ],
+      }}
     />
   );
 }

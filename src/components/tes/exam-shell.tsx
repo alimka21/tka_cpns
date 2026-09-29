@@ -1,8 +1,9 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, Flag, GraduationCap, LayoutGrid, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Flag, GraduationCap, LayoutGrid, LoaderCircle, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -51,6 +52,11 @@ type Props = {
   serverNow: string;
   saveAnswer: SaveAnswerFn;
   submitAttempt: SubmitAttemptFn;
+  /**
+   * Isi pop-up setelah dikumpulkan bila action tidak mengembalikan
+   * `redirectTo` (mis. mode demo tanpa database).
+   */
+  doneWithoutResult?: { title: string; message: string; actions: { href: string; label: string }[] };
 };
 
 export function ExamShell({
@@ -62,6 +68,7 @@ export function ExamShell({
   serverNow,
   saveAnswer,
   submitAttempt,
+  doneWithoutResult,
 }: Props) {
   const router = useRouter();
   const [answers, setAnswers] = useState(initialAnswers);
@@ -70,6 +77,7 @@ export function ExamShell({
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [phase, setPhase] = useState<"active" | "submitting" | "done">("active");
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [resultHref, setResultHref] = useState<string | null>(null);
   const [paletteOpen, setPaletteOpen] = useState(false);
   const [fontScale, setFontScale] = useState<FontScaleId>("md");
 
@@ -182,7 +190,10 @@ export function ExamShell({
       return;
     }
     setPhase("done");
-    if (result.redirectTo) router.push(result.redirectTo);
+    if (result.redirectTo) {
+      setResultHref(result.redirectTo);
+      router.push(result.redirectTo);
+    }
   }, [flushSaves, submitAttempt, router]);
 
   const question = questions[currentIndex];
@@ -242,11 +253,6 @@ export function ExamShell({
           {submitError && (
             <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive-soft px-4 py-3 text-sm text-destructive">
               {submitError} Coba kumpulkan lagi.
-            </p>
-          )}
-          {phase === "done" && (
-            <p role="status" className="rounded-lg border border-success/40 bg-success-soft px-4 py-3 text-sm text-success">
-              Jawaban sudah dikumpulkan. Mengalihkan ke hasil…
             </p>
           )}
 
@@ -376,6 +382,10 @@ export function ExamShell({
         </div>
       )}
 
+      {phase !== "active" && (
+        <SubmitOverlay phase={phase} resultHref={resultHref} doneWithoutResult={doneWithoutResult} />
+      )}
+
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
@@ -428,5 +438,70 @@ function SaveIndicator({ status }: { status: SaveStatus }) {
     <span aria-live="polite" className={cn("ml-2", status === "error" && "text-destructive")}>
       · {text}
     </span>
+  );
+}
+
+/** Pop-up tengah saat & setelah mengumpulkan; latar diburamkan dan tidak bisa diklik. */
+function SubmitOverlay({
+  phase,
+  resultHref,
+  doneWithoutResult,
+}: {
+  phase: "submitting" | "done";
+  resultHref: string | null;
+  doneWithoutResult?: Props["doneWithoutResult"];
+}) {
+  const plainDone = phase === "done" && !resultHref;
+  const fallback = doneWithoutResult ?? {
+    title: "Jawaban terkumpul",
+    message: "Jawabanmu sudah tersimpan.",
+    actions: [{ href: "/dashboard", label: "Kembali ke Dashboard" }],
+  };
+
+  return (
+    <div
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="submit-overlay-title"
+      aria-describedby="submit-overlay-desc"
+      className="fixed inset-0 z-[60] flex items-center justify-center bg-foreground/20 p-4 backdrop-blur-sm"
+    >
+      <div className="flex w-full max-w-sm flex-col items-center gap-4 rounded-2xl border bg-card p-8 text-center shadow-xl">
+        {phase === "submitting" ? (
+          <LoaderCircle className="size-12 animate-spin text-primary" aria-hidden />
+        ) : (
+          <span className="flex size-14 items-center justify-center rounded-full bg-success-soft text-success-strong">
+            <CheckCircle2 className="size-8" aria-hidden />
+          </span>
+        )}
+        <div aria-live="polite">
+          <h2 id="submit-overlay-title" className="text-lg font-bold">
+            {phase === "submitting" ? "Mengumpulkan jawaban…" : plainDone ? fallback.title : "Jawaban terkumpul"}
+          </h2>
+          <p id="submit-overlay-desc" className="mt-1 text-sm text-muted-foreground">
+            {phase === "submitting"
+              ? "Jangan tutup halaman ini."
+              : plainDone
+                ? fallback.message
+                : "Sedang membuka hasil tesmu…"}
+          </p>
+        </div>
+        {phase === "done" && resultHref && (
+          // Cadangan bila navigasi otomatis lambat.
+          <Button variant="outline" nativeButton={false} render={<Link href={resultHref} />}>
+            Buka hasil sekarang
+          </Button>
+        )}
+        {plainDone && (
+          <div className="flex w-full flex-col gap-2">
+            {fallback.actions.map((a, i) => (
+              <Button key={a.href} variant={i === 0 ? "default" : "outline"} nativeButton={false} render={<Link href={a.href} />}>
+                {a.label}
+              </Button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
   );
 }

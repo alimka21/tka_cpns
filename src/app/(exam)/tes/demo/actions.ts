@@ -1,7 +1,6 @@
 "use server";
 
-// Server action tiruan untuk halaman demo — belum ada database.
-// Ganti dengan action asli di src/server/actions/ setelah tabel attempts siap.
+// Server action tiruan untuk halaman demo publik — tidak menyimpan apa pun.
 
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { saveAnswerInput } from "@/lib/validation/attempt";
@@ -17,7 +16,7 @@ export async function demoSaveAnswer(input: {
 }
 
 export async function demoSubmitAttempt() {
-  // Tanpa redirectTo: tetap di halaman ini dan tampilkan pesan "selesai"
-  // dari ExamShell — /hasil/[attemptId] sekarang butuh attempt asli di DB.
+  // Tanpa redirectTo: ExamShell menampilkan pop-up `doneWithoutResult`
+  // (demo tidak punya attempt di DB, jadi tidak ada halaman hasil).
   return { ok: true };
 }

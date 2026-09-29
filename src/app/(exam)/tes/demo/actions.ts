@@ -17,5 +17,7 @@ export async function demoSaveAnswer(input: {
 }
 
 export async function demoSubmitAttempt() {
-  return { ok: true, redirectTo: "/hasil/demo" };
+  // Tanpa redirectTo: tetap di halaman ini dan tampilkan pesan "selesai"
+  // dari ExamShell — /hasil/[attemptId] sekarang butuh attempt asli di DB.
+  return { ok: true };
 }

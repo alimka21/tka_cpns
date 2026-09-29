@@ -7,8 +7,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, scoreTone } from "@/lib/format";
 import { requireUser } from "@/server/auth/session";
-import { getWeakestSubtopicForStudent, listStudentHistory } from "@/server/queries/attempts";
+import { listStudentHistory } from "@/server/queries/attempts";
 import { listPackagesForStudent } from "@/server/queries/packages";
+import { getStudentProgress, type PrioritySubdomain } from "@/server/queries/progress";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -18,11 +19,12 @@ export default async function DashboardPage() {
   const userId = Number(user.id);
   const firstName = user.name.split(" ")[0];
 
-  const [packages, history, weakest] = await Promise.all([
+  const [packages, history, progress] = await Promise.all([
     listPackagesForStudent(userId),
     listStudentHistory(userId, 10),
-    getWeakestSubtopicForStudent(userId),
+    getStudentProgress(userId),
   ]);
+  const weakest = progress.priorities[0];
   const average = history.length > 0 ? Math.round(history.reduce((sum, h) => sum + h.score, 0) / history.length) : null;
 
   return (
@@ -36,8 +38,15 @@ export default async function DashboardPage() {
         </div>
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard label="Paket tersedia" value={String(packages.length)} icon={Layers} hint="Paket tes yang sudah diterbitkan" />
-          <StatCard label="Tes selesai" value={String(history.length)} unit="sesi" icon={BookOpenCheck} tone="success" />
-          <StatCard label="Rata-rata skor" value={average == null ? "—" : String(average)} unit="/ 100" icon={TrendingUp} tone="cta" />
+          <StatCard label="Tes selesai" value={String(progress.testCount)} unit="sesi" icon={BookOpenCheck} tone="success" />
+          <StatCard
+            label="Rata-rata skor"
+            value={average == null ? "—" : String(average)}
+            unit="/ 100"
+            icon={TrendingUp}
+            tone="cta"
+            hint={history.length > 0 ? `${history.length} tes terakhir` : undefined}
+          />
         </div>
       </section>
 
@@ -56,16 +65,23 @@ export default async function DashboardPage() {
       </section>
 
       <section aria-labelledby="riwayat-heading" className="flex flex-col gap-5">
-        <h2 id="riwayat-heading" className="text-xl font-bold">
-          Riwayat Pengerjaan
-        </h2>
+        <div className="flex items-end justify-between gap-4">
+          <h2 id="riwayat-heading" className="text-xl font-bold">
+            Riwayat Pengerjaan
+          </h2>
+          {history.length > 0 && (
+            <Link href="/riwayat" className="text-sm font-semibold text-primary hover:underline">
+              Lihat semua
+            </Link>
+          )}
+        </div>
         {history.length === 0 ? (
           <p className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">
             Belum ada percobaan yang selesai. Kerjakan paket tes pertamamu di atas.
           </p>
         ) : (
           <ul className="surface-card divide-y">
-            {history.map((item) => {
+            {history.slice(0, 5).map((item) => {
               const tone = scoreTone(item.score);
               return (
                 <li key={item.attemptId}>
@@ -76,6 +92,7 @@ export default async function DashboardPage() {
                     <div className="min-w-0 flex-1">
                       <div className="text-xs font-medium text-muted-foreground">
                         {item.jenjang} · {formatDateTime(item.finishedAt)}
+                        {item.status === "expired" && " · waktu habis"}
                       </div>
                       <div className="mt-0.5 font-semibold">{item.packageTitle}</div>
                       <div className="mt-1 text-sm text-muted-foreground">
@@ -100,12 +117,7 @@ export default async function DashboardPage() {
   );
 }
 
-function WeakestCard({
-  weakest,
-}: {
-  weakest: { subtopic: string; topic: string; subject: string; percentage: number; correct: number; total: number };
-}) {
-  const w = weakest;
+function WeakestCard({ weakest: w }: { weakest: PrioritySubdomain }) {
   return (
     <section
       aria-labelledby="terlemah-heading"
@@ -115,19 +127,28 @@ function WeakestCard({
         <div className="max-w-2xl">
           <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
             <TriangleAlert className="size-3.5 text-cta" aria-hidden />
-            Subtopik terlemah · akurasi {w.percentage}%
+            Prioritas latihan · akurasi {w.diagnosis.accuracy}%
           </span>
           <h2 id="terlemah-heading" className="mt-3 text-2xl font-bold tracking-tight">
-            {w.subtopic}
+            {w.name}
           </h2>
           <p className="mt-2 text-sm text-white/80">
-            {w.subject} → {w.topic}. Kamu menjawab benar {w.correct} dari {w.total} soal di subtopik ini pada
-            keseluruhan percobaanmu. Cari paket yang membahas subtopik ini untuk menutup celahnya.
+            {w.subject} → {w.domain}. Ini subdomain dengan akurasi terendah dari {w.diagnosis.windowQuestions} soal
+            terbarumu di sana. Cari paket yang membahasnya untuk menutup celahnya.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-          <Button size="lg" variant="cta" nativeButton={false} render={<Link href="#paket-heading" />}>
-            Lihat paket latihan <ArrowRight aria-hidden />
+          <Button size="lg" variant="cta" nativeButton={false} render={<Link href="/progres" />}>
+            Lihat progres lengkap <ArrowRight aria-hidden />
+          </Button>
+          <Button
+            size="lg"
+            variant="outline"
+            className="border-white/30 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
+            nativeButton={false}
+            render={<Link href="#paket-heading" />}
+          >
+            Lihat paket latihan
           </Button>
         </div>
       </div>

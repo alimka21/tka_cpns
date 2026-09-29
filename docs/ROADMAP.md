@@ -22,6 +22,9 @@ sudah dijalankan (tabel test_packages, test_package_questions,
 entitlements, attempts, attempt_answers, attempt_subtopic_scores).
 Menyusul 2026-09-29: halaman pembahasan `/hasil/[attemptId]/pembahasan`,
 edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
+Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
+berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
+Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
 
 **Database 2026-09-25:** tersambung ke Hostinger (MariaDB 11.8, via
 Remote MySQL; `npm run db:check`). Migrasi 0000–0006 **sudah
@@ -236,10 +239,13 @@ Rancangan lengkap: `docs/AI_GENERATION.md` (Jalur B, urutan kerja §8).
 Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
 (label "Latihan AI", bukan skor resmi); key Gemini milik siswa.
 
-- [ ] Service `diagnose()` (akurasi per subdomain, bobot data terbaru,
-      status & prioritas) + unit test
-- [ ] Halaman `/progres` (peta kemampuan, tren per subdomain, ringkasan
-      kalimat) & `/riwayat` (tes + latihan, filter)
+- [x] Service `diagnose()` (akurasi per subdomain, bobot data terbaru,
+      status & prioritas) + unit test — `services/diagnosis.ts`, jendela
+      ±20 soal terbaru, min 3 soal; dipakai juga kartu prioritas dashboard
+- [x] Halaman `/progres` (peta kemampuan, tren, ringkasan kalimat) &
+      `/riwayat` (filter jenjang) — `queries/progress.ts`. Tren per
+      subdomain baru berupa naik/turun vs sebelum tes terakhir (belum
+      grafik garis per subdomain). Filter tes/latihan menunggu tabel latihan.
 - [ ] Tabel `practice_sessions` & `practice_session_items`; latihan
       kelemahan **bank-only** dengan pembahasan langsung per soal
 - [ ] Tabel `practice_questions` + generate AI saat bank kurang (key

@@ -9,7 +9,7 @@ const H = 200;
 const PAD = { top: 16, right: 20, bottom: 28, left: 32 };
 const TICKS = [0, 50, 100];
 
-/** Tren skor antar percobaan satu paket (satu seri, skala 0–100). */
+/** Tren skor antar percobaan (satu seri, skala 0–100). */
 export function ScoreTrend({ points }: { points: Point[] }) {
   const [active, setActive] = useState<number | null>(null);
   const plotW = W - PAD.left - PAD.right;
@@ -18,6 +18,9 @@ export function ScoreTrend({ points }: { points: Point[] }) {
   const y = (v: number) => PAD.top + plotH - (plotH * v) / 100;
   const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(p.score)}`).join(" ");
   const last = points.length - 1;
+  // Maks ±6 label sumbu-x supaya tidak bertabrakan; detail tiap titik di tooltip.
+  const labelStep = Math.ceil(points.length / 6);
+  const showLabel = (i: number) => i === last || (i % labelStep === 0 && last - i >= labelStep / 2);
 
   return (
     <div className="relative">
@@ -43,9 +46,11 @@ export function ScoreTrend({ points }: { points: Point[] }) {
         {points.map((p, i) => (
           <g key={i}>
             <circle cx={x(i)} cy={y(p.score)} r={i === last ? 5 : 4} fill="var(--primary)" stroke="var(--card)" strokeWidth={2} />
-            <text x={x(i)} y={H - 6} textAnchor="middle" className="fill-muted-foreground text-[11px]">
-              {p.label}
-            </text>
+            {showLabel(i) && (
+              <text x={x(i)} y={H - 6} textAnchor="middle" className="fill-muted-foreground text-[11px]">
+                {p.label}
+              </text>
+            )}
             {/* Kolom hover selebar jarak antar titik */}
             <rect
               x={x(i) - plotW / Math.max(points.length - 1, 1) / 2}

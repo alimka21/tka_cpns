@@ -10,6 +10,8 @@ import { cn } from "@/lib/utils";
 
 const baseNav = [
   { href: "/dashboard", label: "Dashboard" },
+  { href: "/progres", label: "Progres" },
+  { href: "/riwayat", label: "Riwayat" },
   { href: "/pengaturan", label: "Pengaturan" },
 ];
 

@@ -35,3 +35,14 @@ export function scoreTone(percentage: number): ScoreTone {
   if (percentage >= 50) return { variant: "warning", label: "Cukup" };
   return { variant: "danger", label: "Perlu latihan" };
 }
+
+export type DiagnosisStatusKey = "untested" | "insufficient" | "perlu_latihan" | "cukup" | "baik";
+
+/** Label & warna status diagnosa per subdomain (docs/AI_GENERATION.md §4). */
+export const DIAGNOSIS_STATUS: Record<DiagnosisStatusKey, { label: string; variant: "success" | "warning" | "danger" | "muted" | "outline" }> = {
+  baik: { label: "Baik", variant: "success" },
+  cukup: { label: "Cukup", variant: "warning" },
+  perlu_latihan: { label: "Perlu latihan", variant: "danger" },
+  insufficient: { label: "Data belum cukup", variant: "outline" },
+  untested: { label: "Belum diuji", variant: "muted" },
+};

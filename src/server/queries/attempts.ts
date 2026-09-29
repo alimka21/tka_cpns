@@ -3,7 +3,7 @@
 // jawaban tersimpan lewat scoreAttempt (fungsi murni yang sama dipakai saat
 // finalize) — bukan cuma membaca ringkasan subtopik.
 
-import { and, desc, eq, inArray, sql } from "drizzle-orm";
+import { and, desc, eq, inArray, ne, sql } from "drizzle-orm";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { db } from "@/server/db";
 import {
@@ -11,7 +11,6 @@ import {
   attemptSubtopicScores,
   attempts,
   categories,
-  subjects,
   subtopics,
   testPackages,
   topics,
@@ -134,6 +133,8 @@ export async function getAttemptResult(attemptId: number, userId: number): Promi
 
 export type StudentHistoryItem = {
   attemptId: number;
+  /** `expired` = waktu habis sebelum siswa menekan kirim (tetap dinilai). */
+  status: "submitted" | "expired";
   packageTitle: string;
   jenjang: string;
   finishedAt: string;
@@ -142,10 +143,13 @@ export type StudentHistoryItem = {
   score: number;
 };
 
+/** Tes yang sudah selesai (dikirim atau waktu habis), terbaru dulu. */
 export async function listStudentHistory(userId: number, limit = 10): Promise<StudentHistoryItem[]> {
   const rows = await db
     .select({
       attemptId: attempts.id,
+      status: attempts.status,
+      startedAt: attempts.startedAt,
       packageTitle: testPackages.title,
       jenjang: categories.code,
       submittedAt: attempts.submittedAt,
@@ -155,8 +159,8 @@ export async function listStudentHistory(userId: number, limit = 10): Promise<St
     .from(attempts)
     .innerJoin(testPackages, eq(testPackages.id, attempts.testPackageId))
     .innerJoin(categories, eq(categories.id, testPackages.categoryId))
-    .where(and(eq(attempts.userId, userId), eq(attempts.status, "submitted")))
-    .orderBy(desc(attempts.submittedAt))
+    .where(and(eq(attempts.userId, userId), ne(attempts.status, "in_progress")))
+    .orderBy(desc(attempts.startedAt))
     .limit(limit);
   if (rows.length === 0) return [];
 
@@ -173,49 +177,12 @@ export async function listStudentHistory(userId: number, limit = 10): Promise<St
 
   return rows.map((r) => ({
     attemptId: r.attemptId,
+    status: r.status === "expired" ? "expired" : "submitted",
     packageTitle: r.packageTitle,
     jenjang: r.jenjang,
-    finishedAt: (r.submittedAt ?? new Date()).toISOString(),
+    finishedAt: (r.submittedAt ?? r.startedAt).toISOString(),
     correct: totalsByAttempt.get(r.attemptId)?.correct ?? 0,
     total: totalsByAttempt.get(r.attemptId)?.total ?? 0,
     score: r.maxScore ? Math.round(((r.totalScore ?? 0) / r.maxScore) * 100) : 0,
   }));
-}
-
-export type WeakestSubtopic = { subtopic: string; topic: string; subject: string; percentage: number; correct: number; total: number };
-
-/** Subtopik terlemah di seluruh riwayat percobaan siswa (agregat, bukan per attempt). */
-export async function getWeakestSubtopicForStudent(userId: number): Promise<WeakestSubtopic | null> {
-  const rows = await db
-    .select({
-      subtopic: subtopics.name,
-      topic: topics.name,
-      subject: subjects.name,
-      correctCount: sql<number>`sum(${attemptSubtopicScores.correctCount})`,
-      totalCount: sql<number>`sum(${attemptSubtopicScores.totalCount})`,
-    })
-    .from(attemptSubtopicScores)
-    .innerJoin(attempts, eq(attempts.id, attemptSubtopicScores.attemptId))
-    .innerJoin(subtopics, eq(subtopics.id, attemptSubtopicScores.subtopicId))
-    .innerJoin(topics, eq(topics.id, subtopics.topicId))
-    .innerJoin(subjects, eq(subjects.id, topics.subjectId))
-    .where(and(eq(attempts.userId, userId), eq(attempts.status, "submitted")))
-    .groupBy(attemptSubtopicScores.subtopicId, subtopics.name, topics.name, subjects.name);
-  if (rows.length === 0) return null;
-
-  const withPct = rows.map((r) => ({
-    ...r,
-    correctCount: Number(r.correctCount),
-    totalCount: Number(r.totalCount),
-    percentage: Number(r.totalCount) > 0 ? Math.round((Number(r.correctCount) / Number(r.totalCount)) * 10000) / 100 : 0,
-  }));
-  const weakest = withPct.reduce((min, r) => (r.percentage < min.percentage ? r : min));
-  return {
-    subtopic: weakest.subtopic,
-    topic: weakest.topic,
-    subject: weakest.subject,
-    percentage: weakest.percentage,
-    correct: weakest.correctCount,
-    total: weakest.totalCount,
-  };
 }

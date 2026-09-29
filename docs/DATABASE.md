@@ -81,7 +81,7 @@ tidak disalin ke DB — dibaca dari file kerangka berdasarkan `code`.
 **question_explanations**
 - id, question_id (fk, 1:1), explanation_text
 
-## Grup: Paket Tes
+## Grup: Paket Tes — **implementasi selesai** (`src/server/db/schema/packages.ts`)
 
 **test_packages**
 - id, title, description, category_id (fk), duration_minutes,
@@ -89,41 +89,71 @@ tidak disalin ke DB — dibaca dari file kerangka berdasarkan `code`.
   status (`draft`|`published`), created_by, created_at
 
 **test_package_questions**
-- id, test_package_id (fk), question_id (fk), order, points_override
-  (nullable, override skor default kalau perlu)
+- id, test_package_id (fk, cascade), question_id (fk), order,
+  points_override (nullable, override skor default kalau perlu)
+- unique (test_package_id, question_id)
+
+Susunan soal grup stimulus wajib utuh & berdampingan berurutan
+(`src/server/services/package-composition.ts`, dicek ulang di server
+lewat `validatePackageOrder` saat simpan/terbitkan — jangan percaya
+urutan dari client). UI: `/admin/paket-tes` (daftar), `/admin/paket-tes/baru`
+& `/admin/paket-tes/[id]` (form + `PackageForm`).
 
 *(Kalau nanti butuh "acak N soal dari subtopik X" otomatis saat attempt
 dimulai, tambahkan tabel `test_package_rules` — belum perlu di fase 1
 kalau susunan soal dipilih manual oleh admin.)*
 
-## Grup: Akses / Entitlement (tanpa payment dulu)
+## Grup: Akses / Entitlement (tanpa payment dulu) — **implementasi selesai**
 
 **entitlements**
-- id, user_id (fk), test_package_id (fk), granted_by (`admin_manual` di
-  fase ini; nanti bisa `purchase`), granted_at
+- id, user_id (fk, cascade), test_package_id (fk, cascade), granted_by
+  (`admin_manual` di fase ini; nanti bisa `purchase`), granted_by_user_id
+  (fk nullable, admin yang memberi akses), granted_at
+- unique (user_id, test_package_id)
 
-> Fase 1: baris ini diisi manual oleh admin lewat panel admin sederhana.
-> Struktur ini sengaja sudah menyerupai "hasil dari pembelian" supaya nanti
-> saat payment gateway masuk, tinggal insert ke tabel yang sama.
+Diatur **per paket**, bukan toggle global per user — lihat panel "Akses
+Premium" di halaman edit paket (`/admin/paket-tes/[id]`, hanya tampil
+kalau paket premium). Cari user via `searchUsersAction`, beri/cabut akses
+via `setEntitlementAction`. Manajemen User hanya menampilkan ringkasan
+("N paket") dan tautan ke sana — lihat DECISIONS 2026-09-29.
 
-## Grup: Attempt (pengerjaan)
+## Grup: Attempt (pengerjaan) — **implementasi selesai**
+(`src/server/db/schema/attempts.ts`, alur di `src/server/services/attempts.ts`)
 
 **attempts**
-- id, user_id (fk), test_package_id (fk), started_at, ends_at,
+- id, user_id (fk, cascade), test_package_id (fk), started_at, ends_at,
   submitted_at (nullable), status (`in_progress`|`submitted`|`expired`),
-  total_score (nullable, diisi saat finalize)
+  total_score (nullable), max_score (nullable) — keduanya diisi saat
+  finalize; skor 0–100 yang ditampilkan = `round(total_score/max_score*100)`
 
 **attempt_answers**
-- id, attempt_id (fk), question_id (fk), response (JSON nullable —
+- id, attempt_id (fk, cascade), question_id, response (JSON nullable —
   Zod `answerResponse`: `{type:"pg",optionId}` |
   `{type:"pgk_mcma",optionIds}` |
   `{type:"pgk_kategori",answers:[{optionId,category}]}`),
   is_flagged (bool, "ragu-ragu"), answered_at
-- unique constraint: (attempt_id, question_id)
+- unique constraint: (attempt_id, question_id) — dipakai untuk upsert
+  autosave (`onDuplicateKeyUpdate`)
 
 **attempt_subtopic_scores** (tabel ringkasan, diisi saat finalize)
-- id, attempt_id (fk), subtopic_id (fk), correct_count, total_count,
-  score, percentage
+- id, attempt_id (fk, cascade), subtopic_id (fk), correct_count,
+  total_count, score, percentage (`decimal(5,2)`)
+- unique (attempt_id, subtopic_id) — finalize idempoten (delete+insert ulang)
+
+**Alur finalize** (`finalizeAttempt`, dipanggil dari submit siswa & dari
+auto-expire): baca semua `attempt_answers` → `scoreAttempt()` →
+`summarizeBySubtopic()` → simpan `total_score`/`max_score` di `attempts`
++ tulis ulang `attempt_subtopic_scores`, dalam satu transaksi. Halaman
+hasil (`getAttemptResult`) **tidak** membaca `correct`/`wrong`/`blank`
+dari kolom tersimpan (tidak ada kolomnya) — dihitung ulang dari
+`attempt_answers` lewat `scoreAttempt()` yang sama, supaya selalu
+konsisten dengan logika skor terbaru.
+
+**Mulai/lanjutkan attempt** (`startOrResumeAttempt`): attempt
+`in_progress` yang belum habis waktunya dilanjutkan (resume, jawaban
+tersimpan dimuat ulang); yang sudah lewat `ends_at` tapi belum pernah
+di-submit (tab ditutup) di-finalize otomatis sebagai `expired` sebelum
+attempt baru dibuat — jawaban yang sempat ter-autosave tetap dinilai.
 
 ## Enum penting
 
@@ -143,5 +173,11 @@ kalau susunan soal dipilih manual oleh admin.)*
 - `attempt_answers(attempt_id)`
 - `attempt_answers(attempt_id, question_id)` unique
 - `attempt_subtopic_scores(attempt_id)`
+- `attempt_subtopic_scores(attempt_id, subtopic_id)` unique
 - `test_package_questions(test_package_id)`
+- `test_package_questions(test_package_id, question_id)` unique
 - `entitlements(user_id, test_package_id)` unique
+
+Semua index di atas sudah dibuat oleh migrasi `0009_paket_tes_attempt`
+(dijalankan ke DB Hostinger 2026-09-29) — bagian ini tinggal referensi,
+bukan lagi rencana.

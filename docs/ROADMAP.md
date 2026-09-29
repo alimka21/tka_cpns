@@ -4,6 +4,25 @@
 
 **Scope: TKA sekolah saja (SD/SMP/SMA), CPNS dihapus 2026-09-24.**
 
+**Fase 1 + 1.5 selesai 2026-09-29:** alur inti produk sekarang nyata
+end-to-end — admin bisa import/tambah soal → terbitkan → susun paket tes
+(`/admin/paket-tes`, termasuk soal grup stimulus utuh & berurutan) →
+terbitkan paket → siswa mengerjakan tes sungguhan (`/tes/[packageId]`,
+timer server, autosave, resume, auto-expire) → submit → skor & analisis
+per subtopik tersimpan & tampil di `/hasil/[attemptId]` dari data asli →
+riwayat & subtopik terlemah di dashboard siswa dari data asli → dashboard
+admin (stat, grafik 7 hari, percobaan terbaru) dari data asli. Akses
+premium diatur per paket (cari user → beri/cabut akses) di halaman edit
+paket, bukan toggle per user. Diuji end-to-end di DB Hostinger (skrip
+manual, dibersihkan setelahnya): daftar → jadi admin → import 5 soal +
+1 stimulus → terbitkan → buat & terbitkan paket → siswa daftar →
+kerjakan tes (semua bentuk soal + grup stimulus) → submit → lihat hasil
+→ beri/cabut akses premium — semua lolos. Migrasi `0009_paket_tes_attempt`
+sudah dijalankan (tabel test_packages, test_package_questions,
+entitlements, attempts, attempt_answers, attempt_subtopic_scores).
+**Belum ada:** edit/hapus soal individual, pratinjau KaTeX di form soal,
+halaman pembahasan (tampilkan kunci setelah attempt selesai).
+
 **Database 2026-09-25:** tersambung ke Hostinger (MariaDB 11.8, via
 Remote MySQL; `npm run db:check`). Migrasi 0000–0006 **sudah
 dijalankan**, seed kerangka asesmen sudah masuk (3 jenjang, 26 mata uji,
@@ -74,37 +93,42 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [x] Install shadcn/ui, Drizzle ORM + Drizzle Kit, Zod, Better Auth
 - [x] Koneksi ke MySQL Hostinger (env `DATABASE_URL`) — MariaDB 11.8
       via Remote MySQL, cek dengan `npm run db:check`
-- [ ] Setup Git + repo GitHub, hubungkan ke VS Code
+- [x] Setup Git + repo GitHub (`origin` sudah diatur ke
+      `github.com/alimka21/tka_cpns`)
 - [ ] Push awal, sambungkan Hostinger auto-deploy dari `main`
 
 ## Fase 1 — MVP fungsional
 
 - [x] Auth: register/login, role student/admin — Better Auth, teruji
       end-to-end di DB Hostinger
-- [ ] Skema Drizzle: users, categories, topics, subtopics, questions,
-      question_options, question_explanations — ✅ konten + stimuli siap;
-      sisa: test_packages, entitlements, attempts, attempt_answers
+- [x] Skema Drizzle: users, categories, topics, subtopics, questions,
+      question_options, question_explanations, test_packages,
+      test_package_questions, entitlements, attempts, attempt_answers,
+      attempt_subtopic_scores — semua tabel Fase 1 sudah ada & termigrasi
 - [x] Admin: kategori/topik/subtopik — diganti seed dari kerangka asesmen
       (`npm run db:seed:asesmen`) + penjelajah read-only `/admin/topik`
 - [ ] Admin: CRUD soal manual (dengan KaTeX preview)
       — ✅ tambah soal (semua bentuk) & ubah status tersimpan ke DB;
       sisa: edit/hapus soal, pratinjau KaTeX di form
-- [ ] Admin: import soal via Excel (template + validasi + preview)
-      — ✅ selesai: template, validasi, pratinjau, simpan draft ke DB
-- [ ] Admin: susun paket tes (pilih soal, atur durasi & poin per soal)
-      — ✅ skema Zod `testPackageInput` siap
-- [ ] Admin: entitlement manual (kasih akses paket premium ke user)
-- [ ] Student: lihat daftar paket tes (gratis/premium, lock kalau belum
-      punya entitlement)
-- [ ] Student: kerjakan tes — timer server-side, autosave jawaban,
-      navigasi soal, submit — ✅ UI `ExamShell` siap (lihat `/tes/demo`);
-      sisa: server action start/save/finalize ke tabel attempts
-      (**setelah** skema Fase 1.5a — format `attempt_answers.response`)
-- [ ] Finalize attempt: hitung skor, simpan ringkasan
-      subtopik — ✅ `scoreAttempt` + `summarizeBySubtopic` teruji;
-      sisa: sambungkan ke DB
-- [ ] Student: halaman hasil — skor total + grafik per subtopik + riwayat
-      — ✅ UI siap (`/hasil/demo`, data contoh); sisa: baca dari DB
+- [x] Admin: import soal via Excel (template + validasi + preview)
+      — selesai: template, validasi, pratinjau, simpan draft ke DB
+- [x] Admin: susun paket tes (pilih soal, atur durasi & poin per soal)
+      — `/admin/paket-tes/baru` & `/admin/paket-tes/[id]`, soal grup
+      stimulus otomatis ikut utuh, validasi urutan di server
+- [x] Admin: entitlement manual (kasih akses paket premium ke user) —
+      per paket di `/admin/paket-tes/[id]` (cari user → beri/cabut akses)
+- [x] Student: lihat daftar paket tes (gratis/premium, lock kalau belum
+      punya entitlement) — dashboard, `listPackagesForStudent`
+- [x] Student: kerjakan tes — timer server-side, autosave jawaban,
+      navigasi soal, submit — `/tes/[packageId]`, resume attempt
+      in_progress, auto-expire attempt yang ditinggal tanpa submit
+- [x] Finalize attempt: hitung skor, simpan ringkasan subtopik —
+      `finalizeAttempt` (transaksi: attempts + attempt_subtopic_scores),
+      dipanggil dari submit siswa & dari auto-expire
+- [x] Student: halaman hasil — skor total + grafik per subtopik + riwayat
+      — `/hasil/[attemptId]` dari data asli (`getAttemptResult`); riwayat
+      & subtopik terlemah di dashboard (`listStudentHistory`,
+      `getWeakestSubtopicForStudent`)
 
 ## Fase 1.5 — Bentuk soal TKA lengkap & soal grup stimulus
 
@@ -163,7 +187,8 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
 - [x] Autosave & `saveAnswer` memakai payload `response` baru
 - [x] `/tes/demo`: contoh 1 soal tiap bentuk + 1 grup stimulus 2 soal
 - [ ] Halaman hasil/pembahasan: tampilkan kunci per bentuk (setelah
-      attempt selesai saja) — menunggu halaman pembahasan dibuat
+      attempt selesai saja) — tombol "Lihat pembahasan" di
+      `/hasil/[attemptId]` masih disabled, halaman belum dibuat
 
 ### 1.5d Admin & import
 - [x] Form soal manual: pilih bentuk → field menyesuaikan (kunci tunggal

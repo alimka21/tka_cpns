@@ -12,6 +12,47 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-29 — Entitlement per paket, bukan toggle per user
+Keputusan: akses premium diatur dari halaman edit paket
+(`/admin/paket-tes/[id]`, panel "Akses Premium" — cari user, beri/cabut
+akses satu per satu), bukan toggle global "premium: ya/tidak" di halaman
+Manajemen User. Manajemen User hanya menampilkan ringkasan ("N paket")
+per user, tautan ke halaman paket untuk mengelolanya.
+Alasan: skema `entitlements` adalah relasi user↔paket (banyak-ke-banyak);
+satu switch boolean per user di tabel Users tidak bisa merepresentasikan
+"punya akses ke paket A tapi tidak ke paket B". Mengelola dari sisi paket
+juga lebih alami: admin biasanya berpikir "siapa yang boleh mengerjakan
+paket premium ini", bukan "paket premium mana yang boleh dikerjakan user
+ini".
+Alternatif yang ditolak: toggle boolean per user yang menyalakan/mematikan
+akses ke *semua* paket premium sekaligus — terlalu kasar begitu ada lebih
+dari satu paket premium dengan target berbeda (mis. premium SMP vs SMA).
+
+## 2026-09-29 — correct/wrong/blank dihitung ulang, bukan disimpan
+Keputusan: halaman hasil (`getAttemptResult`) tidak menyimpan kolom
+`correct_count`/`wrong_count`/`blank_count` di tabel `attempts`. Ketiganya
+dihitung ulang saat halaman dibuka, dari `attempt_answers` + `scoreAttempt()`
+— fungsi murni yang sama dipakai saat finalize. Yang disimpan permanen
+hanya `total_score`, `max_score`, dan ringkasan per subtopik
+(`attempt_subtopic_scores`, yang punya `correct_count`/`total_count` tapi
+tidak membedakan salah vs kosong).
+Alasan: satu sumber kebenaran untuk logika skor — kalau `scoreAttempt()`
+berubah (mis. aturan skor baru), hasil lama otomatis konsisten tanpa
+migrasi data, karena tidak ada angka correct/wrong/blank yang "membeku"
+di tabel. Biayanya murah (re-join beberapa baris, bukan agregasi berat).
+Alternatif yang ditolak: menambah kolom count ke `attempts` saat finalize
+— lebih cepat baca, tapi bisa basi kalau logika skor berubah, dan
+menduplikasi data yang sudah bisa diturunkan dari `attempt_answers`.
+
+## 2026-09-29 — Role admin tetap hanya lewat CLI, bukan tombol di UI
+Keputusan: halaman Manajemen User (dibangun ulang untuk memakai data DB
+sungguhan) tidak diberi kontrol ubah role di UI. Role tetap dilihat
+sebagai badge saja; satu-satunya cara menjadikan seseorang admin tetap
+`npm run user:role -- <email> admin` (keputusan 2026-09-25, dipertahankan).
+Alasan: konsisten dengan keputusan sebelumnya — menjadikan admin adalah
+tindakan sensitif yang sebaiknya butuh akses terminal/server, bukan satu
+klik dari sesama admin di browser.
+
 ## 2026-09-25 — Better Auth dengan ID serial & tabel auth terpisah
 Keputusan: Better Auth memakai `generateId: "serial"` (id INT
 auto-increment) dan tabel `users`/`sessions`/`accounts`/`verifications`.

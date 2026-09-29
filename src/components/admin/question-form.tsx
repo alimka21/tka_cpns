@@ -1,12 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useDeferredValue, useMemo, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, CircleAlert, CircleCheck, Minus, Plus, X } from "lucide-react";
+import { Check, CircleAlert, CircleCheck, Eye, Lock, Minus, Plus, X } from "lucide-react";
+import { RichHtml } from "@/components/tes/rich-html";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { renderMathToHtml } from "@/lib/math-html";
+import type { QuestionEditData } from "@/lib/question-bank-types";
 import { QUESTION_TYPE_META } from "@/lib/question-forms";
 import { cn } from "@/lib/utils";
 import {
@@ -18,7 +21,7 @@ import {
   type QuestionType,
 } from "@/lib/validation/enums";
 import { questionInput } from "@/lib/validation/question";
-import { createQuestionAction } from "@/server/actions/questions";
+import { createQuestionAction, updateQuestionAction } from "@/server/actions/questions";
 
 export type SubdomainOption = {
   code: string;
@@ -47,17 +50,26 @@ const emptyOptions = (n: number): OptionDraft[] =>
 const selectClass =
   "h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15 focus-visible:outline-none";
 
-export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOption[]; stimuli: StimulusOption[] }) {
-  const [type, setType] = useState<QuestionType>("pg");
-  const [subdomainCode, setSubdomainCode] = useState("");
-  const [questionText, setQuestionText] = useState("");
-  const [difficulty, setDifficulty] = useState<Difficulty>("medium");
-  const [cognitiveLevel, setCognitiveLevel] = useState("");
-  const [explanation, setExplanation] = useState("");
-  const [pairIndex, setPairIndex] = useState(0);
-  const [options, setOptions] = useState<OptionDraft[]>(emptyOptions(4));
-  const [stimulusId, setStimulusId] = useState("");
-  const [stimulusOrder, setStimulusOrder] = useState("1");
+type Props = {
+  subdomains: SubdomainOption[];
+  stimuli: StimulusOption[];
+  /** Diisi = mode edit. */
+  initial?: QuestionEditData;
+};
+
+export function QuestionForm({ subdomains, stimuli, initial }: Props) {
+  const [type, setType] = useState<QuestionType>(initial?.type ?? "pg");
+  const [subdomainCode, setSubdomainCode] = useState(initial?.subdomainCode ?? "");
+  const [questionText, setQuestionText] = useState(initial?.questionText ?? "");
+  const [difficulty, setDifficulty] = useState<Difficulty>(initial?.difficulty ?? "medium");
+  const [cognitiveLevel, setCognitiveLevel] = useState(initial?.cognitiveLevel ?? "");
+  const [explanation, setExplanation] = useState(initial?.explanationText ?? "");
+  const [pairIndex, setPairIndex] = useState(() =>
+    Math.max(0, CATEGORY_PAIRS.findIndex((p) => p.join("/") === initial?.categoryLabels?.join("/"))),
+  );
+  const [options, setOptions] = useState<OptionDraft[]>(initial?.options ?? emptyOptions(4));
+  const [stimulusId, setStimulusId] = useState(initial?.stimulusId ? String(initial.stimulusId) : "");
+  const [stimulusOrder, setStimulusOrder] = useState(String(initial?.stimulusOrder ?? 1));
   const [errors, setErrors] = useState<string[]>([]);
   const [saved, setSaved] = useState<number | null>(null);
   const [saving, startSaving] = useTransition();
@@ -67,6 +79,10 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
   const limits = LIMITS[type];
   const pair = CATEGORY_PAIRS[pairIndex];
   const groups = [...new Set(subdomains.map((s) => s.group))];
+  const isEdit = initial != null;
+  // Aturan kunci sama dengan updateQuestionAction (server tetap memeriksa ulang).
+  const structureLocked = (initial?.usage.answers ?? 0) > 0;
+  const stimulusLocked = structureLocked || (initial?.usage.packages ?? 0) > 0;
 
   function changeType(next: QuestionType) {
     setType(next);
@@ -103,6 +119,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
       difficulty,
       cognitiveLevel: cognitiveLevel || null,
       explanationText: explanation || null,
+      imageUrl: initial?.imageUrl ?? null,
       categoryLabels: type === "pgk_kategori" ? [...pair] : undefined,
       stimulusId: stimulusId ? Number(stimulusId) : null,
       stimulusOrder: stimulusId ? Number(stimulusOrder) : null,
@@ -120,6 +137,15 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
     if (problems.length > 0) return;
 
     startSaving(async () => {
+      if (isEdit) {
+        const result = await updateQuestionAction({ id: initial.id, subdomainCode, question: payload });
+        if (!result.ok) setErrors(result.errors);
+        else {
+          setSaved(initial.id);
+          router.refresh();
+        }
+        return;
+      }
       const result = await createQuestionAction({ subdomainCode, question: payload });
       if (!result.ok) {
         setErrors(result.errors);
@@ -138,6 +164,14 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
   return (
     <form onSubmit={submit} noValidate className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="flex flex-col gap-6">
+        {stimulusLocked && (
+          <p className="flex gap-2 rounded-xl border border-warning/40 bg-warning-soft p-4 text-sm text-warning-strong">
+            <Lock className="mt-0.5 size-4 shrink-0" aria-hidden />
+            {structureLocked
+              ? `Soal ini sudah dijawab siswa (${initial?.usage.answers} jawaban). Bentuk, jumlah opsi, kunci, subdomain, dan stimulus dikunci supaya hasil lama tetap konsisten — teks, pembahasan, dan tingkat kesulitan tetap bisa diperbaiki.`
+              : `Soal ini dipakai di ${initial?.usage.packages} paket tes, jadi stimulus & urutan grup dikunci.`}
+          </p>
+        )}
         {/* Bentuk soal */}
         <fieldset className="surface-card flex flex-col gap-4 p-6">
           <legend className="sr-only">Bentuk soal</legend>
@@ -149,9 +183,10 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
                 type="button"
                 role="radio"
                 aria-checked={type === t}
+                disabled={structureLocked}
                 onClick={() => changeType(t)}
                 className={cn(
-                  "flex flex-col gap-1 rounded-xl border p-4 text-left transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/25",
+                  "flex flex-col gap-1 rounded-xl border p-4 text-left transition-colors hover:border-primary/40 focus-visible:outline-none focus-visible:ring-3 focus-visible:ring-ring/25 disabled:cursor-not-allowed disabled:opacity-60",
                   type === t && "border-primary bg-primary-soft shadow-[0_0_0_1px_var(--primary)]",
                 )}
               >
@@ -191,6 +226,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
                     type="button"
                     role="radio"
                     aria-checked={pairIndex === i}
+                    disabled={structureLocked}
                     onClick={() => {
                       setPairIndex(i);
                       setOptions((prev) => prev.map((o) => ({ ...o, correctCategory: null })));
@@ -223,7 +259,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
                   variant="outline"
                   size="icon-sm"
                   aria-label={`Kurangi ${limits.unit}`}
-                  disabled={options.length <= limits.min}
+                  disabled={structureLocked || options.length <= limits.min}
                   onClick={() => setOptions((prev) => prev.slice(0, -1))}
                 >
                   <Minus aria-hidden />
@@ -233,7 +269,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
                   variant="outline"
                   size="icon-sm"
                   aria-label={`Tambah ${limits.unit}`}
-                  disabled={options.length >= limits.max}
+                  disabled={structureLocked || options.length >= limits.max}
                   onClick={() => setOptions((prev) => [...prev, { text: "", isCorrect: false, correctCategory: null }])}
                 >
                   <Plus aria-hidden />
@@ -261,6 +297,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
                         type="button"
                         role="radio"
                         aria-checked={o.correctCategory === label}
+                        disabled={structureLocked}
                         onClick={() => updateOption(i, { correctCategory: label })}
                         className={cn(
                           "h-10 rounded-lg border px-2 text-sm font-semibold text-muted-foreground",
@@ -277,6 +314,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
                     role={type === "pg" ? "radio" : "checkbox"}
                     aria-checked={o.isCorrect}
                     aria-label={`Jadikan ${OPTION_LABELS[i]} kunci`}
+                    disabled={structureLocked}
                     onClick={() => toggleKey(i)}
                     className={cn(
                       "flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-lg border px-3 text-sm font-semibold text-muted-foreground",
@@ -304,6 +342,14 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
             />
           </div>
         </section>
+
+        <QuestionPreview
+          type={type}
+          questionText={questionText}
+          options={options}
+          explanation={explanation}
+          categoryLabels={type === "pgk_kategori" ? pair : null}
+        />
       </div>
 
       {/* Metadata */}
@@ -317,6 +363,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
             <select
               id="subdomain"
               value={subdomainCode}
+              disabled={structureLocked}
               onChange={(e) => {
                 setSubdomainCode(e.target.value);
                 setCognitiveLevel("");
@@ -383,7 +430,13 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
             <Label htmlFor="stimulus" className="font-semibold">
               Stimulus
             </Label>
-            <select id="stimulus" value={stimulusId} onChange={(e) => setStimulusId(e.target.value)} className={selectClass}>
+            <select
+              id="stimulus"
+              value={stimulusId}
+              disabled={stimulusLocked}
+              onChange={(e) => setStimulusId(e.target.value)}
+              className={selectClass}
+            >
               <option value="">Soal tunggal (tanpa stimulus)</option>
               {stimuli.map((st) => (
                 <option key={st.id} value={st.id}>
@@ -402,6 +455,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
                 type="number"
                 min={1}
                 value={stimulusOrder}
+                disabled={stimulusLocked}
                 onChange={(e) => setStimulusOrder(e.target.value)}
               />
             </div>
@@ -424,7 +478,7 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
           <p role="status" className="flex gap-2 rounded-xl border border-success/40 bg-success-soft p-4 text-sm text-success-strong">
             <CircleCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
             <span>
-              Soal #{saved} tersimpan sebagai draft. Form siap untuk soal berikutnya.{" "}
+              {isEdit ? `Perubahan soal #${saved} tersimpan.` : `Soal #${saved} tersimpan sebagai draft. Form siap untuk soal berikutnya.`}{" "}
               <Link href="/admin/soal?status=draft" className="font-semibold underline">
                 Lihat di Bank Soal
               </Link>
@@ -432,9 +486,72 @@ export function QuestionForm({ subdomains, stimuli }: { subdomains: SubdomainOpt
           </p>
         )}
         <Button type="submit" size="lg" disabled={saving}>
-          {saving ? "Menyimpan…" : "Simpan sebagai draft"}
+          {saving ? "Menyimpan…" : isEdit ? "Simpan perubahan" : "Simpan sebagai draft"}
         </Button>
       </aside>
     </form>
+  );
+}
+
+/** Pratinjau seperti yang dilihat siswa, termasuk render rumus KaTeX. */
+function QuestionPreview({
+  type,
+  questionText,
+  options,
+  explanation,
+  categoryLabels,
+}: {
+  type: QuestionType;
+  questionText: string;
+  options: OptionDraft[];
+  explanation: string;
+  categoryLabels: readonly string[] | null;
+}) {
+  // Ditunda supaya mengetik tetap lancar walau rumus panjang.
+  const deferred = useDeferredValue({ questionText, options, explanation });
+  const html = useMemo(
+    () => ({
+      question: renderMathToHtml(deferred.questionText),
+      options: deferred.options.map((o) => renderMathToHtml(o.text)),
+      explanation: renderMathToHtml(deferred.explanation),
+    }),
+    [deferred],
+  );
+
+  return (
+    <section aria-labelledby="preview-heading" className="surface-card flex flex-col gap-4 p-6">
+      <h2 id="preview-heading" className="flex items-center gap-2 font-bold">
+        <Eye className="size-4 text-primary" aria-hidden /> Pratinjau
+      </h2>
+      {deferred.questionText.trim() === "" ? (
+        <p className="text-sm text-muted-foreground">Mulai tulis pertanyaan — rumus $...$ langsung dirender di sini.</p>
+      ) : (
+        <>
+          <RichHtml html={html.question} className="leading-relaxed" />
+          <ul className="flex flex-col gap-2">
+            {deferred.options.map((o, i) => (
+              <li key={i} className="flex items-start gap-3 rounded-lg border p-3 text-sm">
+                <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold">
+                  {OPTION_LABELS[i]}
+                </span>
+                <RichHtml html={html.options[i] || "<span class='text-muted-foreground'>—</span>"} className="flex-1" />
+                {type === "pgk_kategori"
+                  ? o.correctCategory && <span className="text-xs font-semibold text-success-strong">{o.correctCategory}</span>
+                  : o.isCorrect && <span className="text-xs font-semibold text-success-strong">Kunci</span>}
+              </li>
+            ))}
+          </ul>
+          {categoryLabels && (
+            <p className="text-xs text-muted-foreground">Siswa memilih {categoryLabels.join(" / ")} untuk tiap pernyataan.</p>
+          )}
+          {deferred.explanation.trim() !== "" && (
+            <div className="rounded-lg bg-primary-soft p-4 text-sm">
+              <div className="font-semibold text-primary">Pembahasan</div>
+              <RichHtml html={html.explanation} className="mt-1 block leading-relaxed" />
+            </div>
+          )}
+        </>
+      )}
+    </section>
   );
 }

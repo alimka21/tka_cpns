@@ -73,6 +73,7 @@ export function ImportUploader() {
     <div className="flex flex-col gap-6">
       <ol className="grid gap-4 md:grid-cols-3">
         <Step n={1} title="Unduh template" active={!file}>
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages -- unduhan file dari route handler, bukan halaman */}
           <a
             href="/admin/soal/import/template"
             className="mt-2 inline-flex items-center gap-1.5 text-sm font-semibold text-primary hover:underline"

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { BookOpenText, ChevronDown, FileUp, Plus, Search, Send, Sparkles, Undo2, UserPen } from "lucide-react";
+import { BookOpenText, ChevronDown, FileUp, Pencil, Plus, Search, Send, Sparkles, Undo2, UserPen } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -184,7 +184,12 @@ export function QuestionBank({ tree, questions, initialStatus }: Props) {
                   <span>
                     {row.jenjang} · {row.topic} · {row.subtopic} · {formatDate(row.createdAt)}
                   </span>
-                  <StatusButton id={row.id} status={row.status} />
+                  <span className="flex items-center gap-1">
+                    <Button variant="ghost" size="sm" nativeButton={false} render={<Link href={`/admin/soal/${row.id}`} />}>
+                      <Pencil aria-hidden /> Edit
+                    </Button>
+                    <StatusButton id={row.id} status={row.status} />
+                  </span>
                 </div>
               </li>
             );

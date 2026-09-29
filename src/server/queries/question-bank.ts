@@ -1,9 +1,11 @@
-// Query baca Bank Soal & Stimulus (admin). Tidak memuat kunci jawaban.
+// Query baca Bank Soal & Stimulus (admin). Tidak memuat kunci jawaban,
+// kecuali `getQuestionForEdit` (halaman Edit Soal, admin saja).
 
 import { asc, desc, eq, isNotNull } from "drizzle-orm";
 import { db } from "@/server/db";
-import { categories, questions, stimuli, subjects, subtopics, topics } from "@/server/db/schema";
-import type { QuestionListRow, StimulusListItem } from "@/lib/question-bank-types";
+import { categories, questionExplanations, questionOptions, questions, stimuli, subjects, subtopics, topics } from "@/server/db/schema";
+import type { QuestionEditData, QuestionListRow, StimulusListItem } from "@/lib/question-bank-types";
+import { questionUsage } from "@/server/services/question-store";
 
 /** Batas sementara sebelum ada paginasi server. */
 const LIST_LIMIT = 500;
@@ -65,4 +67,35 @@ export async function listStimuli(): Promise<StimulusListItem[]> {
       .filter((q) => q.stimulusId === s.id)
       .map((q) => ({ id: q.id, order: q.order, type: q.type, text: q.text, subtopic: q.subtopic })),
   }));
+}
+
+export async function getQuestionForEdit(id: number): Promise<QuestionEditData | undefined> {
+  const [row] = await db
+    .select({ question: questions, subdomainCode: subtopics.code, explanation: questionExplanations.explanationText })
+    .from(questions)
+    .innerJoin(subtopics, eq(subtopics.id, questions.subtopicId))
+    .leftJoin(questionExplanations, eq(questionExplanations.questionId, questions.id))
+    .where(eq(questions.id, id));
+  if (!row) return undefined;
+  const q = row.question;
+  const [options, usage] = await Promise.all([
+    db.select().from(questionOptions).where(eq(questionOptions.questionId, id)).orderBy(asc(questionOptions.order)),
+    questionUsage(db, id),
+  ]);
+  return {
+    id: q.id,
+    subdomainCode: row.subdomainCode,
+    type: q.type,
+    questionText: q.questionText,
+    imageUrl: q.imageUrl,
+    difficulty: q.difficulty,
+    cognitiveLevel: q.cognitiveLevel,
+    status: q.status,
+    categoryLabels: q.categoryLabels,
+    stimulusId: q.stimulusId,
+    stimulusOrder: q.stimulusOrder,
+    explanationText: row.explanation ?? "",
+    options: options.map((o) => ({ text: o.optionText, isCorrect: o.isCorrect, correctCategory: o.correctCategory })),
+    usage,
+  };
 }

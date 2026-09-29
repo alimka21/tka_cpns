@@ -20,8 +20,8 @@ kerjakan tes (semua bentuk soal + grup stimulus) → submit → lihat hasil
 → beri/cabut akses premium — semua lolos. Migrasi `0009_paket_tes_attempt`
 sudah dijalankan (tabel test_packages, test_package_questions,
 entitlements, attempts, attempt_answers, attempt_subtopic_scores).
-**Belum ada:** edit/hapus soal individual, pratinjau KaTeX di form soal.
-Halaman pembahasan `/hasil/[attemptId]/pembahasan` selesai 2026-09-29.
+Menyusul 2026-09-29: halaman pembahasan `/hasil/[attemptId]/pembahasan`,
+edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 
 **Database 2026-09-25:** tersambung ke Hostinger (MariaDB 11.8, via
 Remote MySQL; `npm run db:check`). Migrasi 0000–0006 **sudah
@@ -111,9 +111,10 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
       attempt_subtopic_scores — semua tabel Fase 1 sudah ada & termigrasi
 - [x] Admin: kategori/topik/subtopik — diganti seed dari kerangka asesmen
       (`npm run db:seed:asesmen`) + penjelajah read-only `/admin/topik`
-- [ ] Admin: CRUD soal manual (dengan KaTeX preview)
-      — ✅ tambah soal (semua bentuk) & ubah status tersimpan ke DB;
-      sisa: edit/hapus soal, pratinjau KaTeX di form
+- [x] Admin: CRUD soal manual (dengan KaTeX preview) — tambah,
+      `/admin/soal/[id]` edit & hapus, pratinjau langsung di form; soal
+      yang sudah dijawab/masuk paket dikunci sebagian
+      (`editLockViolation`, DECISIONS 2026-09-29)
 - [x] Admin: import soal via Excel (template + validasi + preview)
       — selesai: template, validasi, pratinjau, simpan draft ke DB
 - [x] Admin: susun paket tes (pilih soal, atur durasi & poin per soal)

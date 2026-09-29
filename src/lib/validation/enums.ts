@@ -14,6 +14,7 @@ export const CATEGORY_PAIRS = [
 export type CategoryPair = (typeof CATEGORY_PAIRS)[number];
 export const DIFFICULTIES = ["easy", "medium", "hard"] as const;
 export const QUESTION_STATUSES = ["draft", "pending_review", "published"] as const;
+export type QuestionStatus = (typeof QUESTION_STATUSES)[number];
 export const OPTION_LABELS = ["A", "B", "C", "D", "E"] as const;
 export const PACKAGE_STATUSES = ["draft", "published"] as const;
 

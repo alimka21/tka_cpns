@@ -12,6 +12,20 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-29 — Edit/hapus soal yang sudah dipakai dikunci sebagian
+Keputusan: soal yang **sudah dijawab siswa** hanya boleh diubah teks,
+opsi (teksnya), pembahasan, kesulitan, level — bentuk, jumlah opsi, kunci,
+pasangan kategori, subdomain, stimulus dikunci; opsi di-update di tempat
+(id tetap). Soal yang **hanya masuk paket** dikunci stimulus & urutan
+grupnya. Hapus hanya bila belum di paket & belum dijawab (selain itu:
+jadikan draft). Aturan di `question-edit-rules.ts`, dicek ulang di server.
+Alasan: hasil & pembahasan dihitung ulang dari jawaban tersimpan
+(`attempt_answers.response` berisi id opsi) — ganti kunci/opsi diam-diam
+membuat hasil lama berubah atau rusak, tidak cocok dengan
+`attempt_subtopic_scores` yang sudah tersimpan.
+Alternatif yang ditolak: versioning soal (terlalu berat untuk sekarang);
+bebas edit (merusak riwayat siswa).
+
 ## 2026-09-29 — Build produksi pakai webpack, bukan Turbopack
 Keputusan: script `build` = `next build --webpack`; `engines.node >=20.9.0` (Next 16).
 Alasan: deploy Hostinger gagal — proses anak PostCSS Turbopack mati tanpa

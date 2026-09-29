@@ -65,3 +65,22 @@ export type StimulusListItem = {
   createdAt: string;
   questions: { id: number; order: number | null; type: QuestionType; text: string; subtopic: string }[];
 };
+
+/** Data form Edit Soal (admin saja — memuat kunci jawaban). */
+export type QuestionEditData = {
+  id: number;
+  subdomainCode: string;
+  type: QuestionType;
+  questionText: string;
+  imageUrl: string | null;
+  difficulty: Difficulty;
+  cognitiveLevel: string | null;
+  status: QuestionListRow["status"];
+  categoryLabels: [string, string] | null;
+  stimulusId: number | null;
+  stimulusOrder: number | null;
+  explanationText: string;
+  options: { text: string; isCorrect: boolean; correctCategory: string | null }[];
+  /** Jumlah paket yang memakai soal & jumlah jawaban siswa tersimpan. */
+  usage: { packages: number; answers: number };
+};

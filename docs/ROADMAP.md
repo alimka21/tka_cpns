@@ -214,6 +214,8 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
 
 ## Fase 2 — AI generate soal
 
+Rancangan: `docs/AI_GENERATION.md` (Jalur A + fondasi §2–3).
+
 - [ ] Halaman pengaturan: simpan Gemini API key user (terenkripsi)
 - [ ] Server action generate soal by subdomain/jumlah/kesulitan/level
       — ✅ konteks prompt dari kerangka (`buildGenerationContext`) siap
@@ -221,6 +223,22 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
       dan soal grup berbasis stimulus — butuh Fase 1.5 selesai
 - [ ] Validasi output AI dengan Zod, retry sekali kalau gagal parse
 - [ ] Admin: antrian review soal AI (approve/edit/reject)
+
+## Fase 2.5 — Diagnosa & latihan adaptif per siswa
+
+Rancangan lengkap: `docs/AI_GENERATION.md` (Jalur B, urutan kerja §8).
+Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
+(label "Latihan AI", bukan skor resmi); key Gemini milik siswa.
+
+- [ ] Service `diagnose()` (akurasi per subdomain, bobot data terbaru,
+      status & prioritas) + unit test
+- [ ] Halaman `/progres` (peta kemampuan, tren per subdomain, ringkasan
+      kalimat) & `/riwayat` (tes + latihan, filter)
+- [ ] Tabel `practice_sessions` & `practice_session_items`; latihan
+      kelemahan **bank-only** dengan pembahasan langsung per soal
+- [ ] Tabel `practice_questions` + generate AI saat bank kurang (key
+      siswa), label "Latihan AI", batas panggilan per hari
+- [ ] Laporkan soal AI (siswa) + antrian laporan (admin)
 
 ## Fase 3 — Monetisasi (nanti, belum sekarang)
 

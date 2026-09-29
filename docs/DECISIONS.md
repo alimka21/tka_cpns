@@ -12,6 +12,26 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-29 — Latihan adaptif: bank dulu, soal AI tanpa review, key siswa
+Keputusan: fitur "Latihan Kelemahan" per siswa (Fase 2.5,
+`docs/AI_GENERATION.md`) mengambil soal subdomain lemah dari bank soal
+tayang terlebih dahulu; hanya kalau stok kurang, AI membuat soal
+tambahan. Soal AI untuk latihan pribadi langsung dipakai tanpa review
+admin — divalidasi otomatis, berlabel "Latihan AI", disimpan terpisah
+(`practice_questions`, bukan bank), tidak dihitung ke skor tes resmi, dan
+bisa dilaporkan siswa. Generate memakai API key Gemini **milik siswa**;
+tanpa key, latihan tetap jalan dari bank saja.
+Alasan: bank yang sudah direview menjaga kualitas & menghemat kuota;
+latihan tidak boleh tertahan menunggu admin; tetap konsisten dengan SRS
+(tidak ada key Gemini di server). Pengecualian review hanya untuk latihan
+pribadi — soal AI untuk bank resmi & tes tetap wajib review.
+Alternatif yang ditolak: selalu generate AI baru (boros kuota, tanpa
+review); wajib review admin untuk latihan (siswa menunggu lama); key
+admin/sekolah (biaya ditanggung pengelola, bertentangan dengan SRS).
+Risiko yang diterima: sebagian besar siswa SD/SMP mungkin tanpa key →
+fitur harus tetap berguna bank-only; tinjau ulang opsi key admin
+berkuota bila data pemakaian menunjukkan perlu.
+
 ## 2026-09-29 — Entitlement per paket, bukan toggle per user
 Keputusan: akses premium diatur dari halaman edit paket
 (`/admin/paket-tes/[id]`, panel "Akses Premium" — cari user, beri/cabut

@@ -1,0 +1,188 @@
+# Generate Soal AI & Latihan Adaptif — Web Tes Premium
+
+Rancangan (belum diimplementasi) untuk dua hal yang saling terkait:
+
+- **Jalur A — Admin mengisi bank soal dengan AI** → review → tayang
+  (SRS §7, ROADMAP Fase 2).
+- **Jalur B — Latihan adaptif per siswa**: setelah tes, sistem tahu
+  subdomain mana yang lemah, lalu membuat sesi latihan *hanya* untuk
+  subdomain itu. Soal diambil dari bank dulu; kalau kurang, AI membuat
+  soal tambahan khusus siswa itu. Riwayat & progres kemampuan per
+  subdomain bisa dibaca siswa dengan mudah (ROADMAP Fase 2.5).
+
+Keputusan dasar (2026-09-29, lihat `DECISIONS.md`):
+
+| Topik | Keputusan |
+|---|---|
+| Sumber soal latihan | **Bank dulu**, AI hanya menambal kekurangan |
+| Review soal AI latihan | **Langsung dipakai**, divalidasi otomatis, label "Latihan AI", tidak masuk bank resmi & tidak dihitung ke skor tes resmi, siswa bisa melapor |
+| API key Gemini | **Milik siswa sendiri** (Pengaturan). Tanpa key → latihan tetap jalan, tapi hanya dari bank |
+
+Yang **tidak** berubah: soal AI yang dibuat admin untuk bank resmi tetap
+wajib review (`pending_review` → `published`). Tes resmi (paket tes)
+tetap hanya memakai soal bank yang sudah tayang.
+
+---
+
+## 1. Fondasi yang sudah ada
+
+- `src/server/asesmen/generation-context.ts` — `buildGenerationContext()`
+  merakit prompt dari kerangka asesmen: posisi subdomain, kompetensi,
+  **cakupan (wajib di dalam)**, **batasan (dilarang keluar)**, level
+  kognitif + proses berpikir, karakteristik teks mata uji. Saat ini hanya
+  bentuk PG tunggal.
+- `attempt_subtopic_scores` — ringkasan benar/total per subdomain tiap
+  percobaan tes (bahan diagnosa).
+- `user_ai_settings` — tabel key terenkripsi (belum dipakai).
+- `scoring.ts`, `answerResponse`, `questionInput` — aturan skor & validasi
+  3 bentuk soal dipakai ulang apa adanya untuk soal latihan.
+- `src/server/services/ai-generate.ts` & `crypto.ts` — **masih kosong**.
+
+## 2. API key siswa
+
+- Halaman **Pengaturan**: simpan / ganti / hapus key Gemini. Ditampilkan
+  hanya versi tersamar (`AIza…ab12`, kolom `gemini_key_masked`).
+- Enkripsi AES-256-GCM di `crypto.ts` dengan `ENCRYPTION_SECRET` (env
+  server). Key didekripsi **hanya** di server saat memanggil Gemini, tidak
+  pernah dikirim ke browser, tidak pernah ditulis ke log.
+- Saat menyimpan, lakukan panggilan uji kecil ke Gemini → tolak key yang
+  tidak valid dengan pesan jelas.
+- Siswa SD/SMP umumnya belum punya key → UI harus tetap berguna tanpa key
+  (latihan dari bank) dan memberi panduan singkat cara membuat key.
+- Nama model Gemini dari env `GEMINI_MODEL` (default varian yang murah &
+  cepat), bukan di-hardcode.
+
+## 3. Kontrak output AI
+
+- Prompt meminta **JSON saja** dengan skema per bentuk:
+  `{ questions: [{ type, questionText, options[], key, categoryLabels?,
+  explanation, cognitiveLevel? }] }` — satu skema Zod `aiQuestionOutput`
+  yang lalu dipetakan ke `questionInput`.
+- `buildGenerationContext` diperluas: parameter `form`
+  (`pg`|`pgk_mcma`|`pgk_kategori`) + contoh JSON per bentuk di prompt
+  (ROADMAP 1.5e).
+- Validasi otomatis (wajib lolos semua, per soal):
+  1. Zod `questionInput` (jumlah opsi, jumlah kunci, kategori sah).
+  2. Opsi tidak ganda, tidak kosong, panjang wajar; KaTeX bisa dirender
+     (`renderMathToHtml` tanpa error).
+  3. Subdomain & level kognitif sesuai permintaan (bukan dari AI).
+  4. Tidak identik dengan soal bank / soal latihan siswa itu sebelumnya
+     (normalisasi teks + hash).
+- Soal yang gagal dibuang; kalau hasil valid < diminta, **retry sekali**
+  untuk kekurangannya saja. Masih kurang → pakai yang ada, sesi tetap
+  jalan.
+- Timeout per panggilan (mis. 30 detik); error key/kuota Gemini → sesi
+  jatuh ke mode bank-only dengan pesan "AI sedang tidak tersedia".
+
+## 4. Diagnosa kelemahan
+
+Satuan diagnosa = **subdomain** (sama dengan analisis hasil tes).
+
+- **Akurasi per subdomain** = benar / total dari soal yang pernah
+  dikerjakan siswa di subdomain itu, dengan **bobot lebih besar untuk
+  yang terbaru** (mis. hanya 20 soal terakhir per subdomain), supaya
+  kemajuan cepat terlihat.
+- **Status** (selaras `scoreTone`, `docs/UI_UX.md` §3):
+  `Belum diuji` · `Perlu latihan` (<50%) · `Cukup` (50–74%) ·
+  `Baik` (≥75%). Status butuh minimal 3 soal; di bawah itu tampil
+  "data belum cukup".
+- **Sumber data**: tes resmi **dan** latihan dihitung, tetapi di UI
+  keduanya bisa dipisah (filter) karena latihan AI tidak direview.
+- **Prioritas latihan**: urutkan subdomain berstatus Perlu latihan/Cukup
+  dari akurasi terendah; seri → yang soalnya lebih banyak diujikan.
+- Implementasi: service murni `diagnose(history)` (bisa dites tanpa DB)
+  + query yang mengambil riwayat jawaban per subdomain.
+
+## 5. Alur latihan adaptif
+
+1. Siswa membuka **"Latihan Kelemahan"** (dari dashboard, kartu subdomain
+   terlemah, atau halaman hasil tes).
+2. Sistem mengusulkan **1–3 subdomain prioritas** (siswa boleh mengganti
+   pilihan) dan jumlah soal (default 10).
+3. Susun soal per subdomain:
+   - Ambil soal **bank tayang** di subdomain itu yang **belum pernah**
+     dikerjakan siswa; lalu yang paling lama tidak dikerjakan.
+   - Kekurangan → generate AI (kalau siswa punya key), tingkat kesulitan
+     menyesuaikan akurasi: <50% → mudah/sedang, 50–74% → sedang/sulit.
+   - Soal grup stimulus di bank tetap diambil utuh (aturan paket).
+4. Mode latihan **tanpa timer wajib** (opsional hitung waktu), dan setiap
+   soal langsung menampilkan **benar/salah + pembahasan** setelah
+   dijawab — tujuannya belajar, bukan ujian.
+5. Selesai sesi → ringkasan: skor, per subdomain, perubahan status
+   ("Pecahan: Perlu latihan 38% → Cukup 55%").
+6. Soal berlabel **"Latihan AI"** punya tombol **"Laporkan soal"**
+   (kunci salah / ambigu / di luar materi). Soal yang dilaporkan
+   disembunyikan dari siswa itu dan masuk antrian admin.
+
+## 6. Riwayat & progres (mudah dibaca siswa)
+
+- **/progres** — peta kemampuan: per mata uji → domain → subdomain
+  dengan chip status & persentase; tren akurasi per subdomain (garis);
+  ringkasan kalimat biasa, mis. *"Kamu kuat di Bilangan Real (82%).
+  Perlu latihan di Pecahan (38%) — naik 17 poin sejak 2 minggu lalu."*
+- **/riwayat** — semua tes resmi & sesi latihan, bisa difilter
+  (tes / latihan / mata uji), masing-masing membuka hasilnya.
+- **/latihan/[sessionId]/hasil** — ringkasan sesi + pembahasan per soal.
+- Semua grafik mengikuti aturan chart di `docs/UI_UX.md` §3 dan tetap
+  punya tampilan tabel/teks (tidak hanya warna).
+
+## 7. Model data (rencana — tambahkan ke `docs/DATABASE.md` saat dibangun)
+
+**practice_questions** — soal AI privat milik satu siswa (bukan bank)
+- id, owner_user_id (fk), subtopic_id (fk), type, question_text,
+  category_labels (JSON), options (JSON: label, text, is_correct,
+  correct_category), explanation_text, difficulty, cognitive_level,
+  model, prompt_hash, content_hash (dedup), reported_at, report_reason,
+  created_at
+- Kunci jawaban hanya di server — sama seperti `question_options`.
+
+**practice_sessions**
+- id, user_id (fk), target_subtopic_ids (JSON), question_count,
+  status (`in_progress`|`completed`|`abandoned`), started_at,
+  completed_at, total_score, max_score
+
+**practice_session_items**
+- id, session_id (fk), order, question_id (fk nullable — soal bank),
+  practice_question_id (fk nullable — soal AI; tepat satu dari keduanya
+  terisi), response (JSON `answerResponse`), is_correct, answered_at
+
+**ai_generation_logs** — audit & pembatasan
+- id, user_id (fk), purpose (`bank_admin`|`practice`), subtopic_code,
+  requested, valid_count, model, error (nullable), duration_ms,
+  created_at — **tanpa** isi key.
+
+Batas pemakaian per siswa (mis. maks 5 panggilan generate/hari) walau
+key milik siswa — melindungi kuota mereka dari klik berulang.
+
+## 8. Urutan kerja (ROADMAP Fase 2 & 2.5)
+
+1. **Key & client Gemini**: `crypto.ts`, halaman Pengaturan, client
+   Gemini + timeout + log (tanpa key).
+2. **Kontrak output**: `buildGenerationContext` per bentuk (1.5e), Zod
+   `aiQuestionOutput`, validasi & dedup, retry sekali. Unit test dengan
+   output AI palsu (tanpa memanggil Gemini).
+3. **Jalur A (admin)**: halaman Generate AI → hasil `pending_review` →
+   antrian review (approve/edit/reject).
+4. **Diagnosa**: service `diagnose()` + test, lalu **/progres** &
+   **/riwayat** (tidak butuh AI sama sekali — bisa dirilis duluan).
+5. **Latihan adaptif bank-only**: tabel sesi, pemilihan soal, mode
+   latihan dengan pembahasan langsung, ringkasan sesi.
+6. **Tambal dengan AI**: `practice_questions`, generate saat bank kurang,
+   label "Latihan AI", batas harian.
+7. **Laporkan soal**: tombol siswa + antrian admin.
+
+Langkah 4–5 memberi nilai terbesar (diagnosa & latihan terarah) tanpa
+bergantung pada siswa punya key; AI (langkah 6) menambah variasi.
+
+## 9. Risiko & catatan
+
+- **Kualitas soal AI tanpa review** — dimitigasi validasi otomatis,
+  label jelas, laporan siswa, dan tidak masuk skor/tes resmi. Tetap bisa
+  ada kunci yang salah; jangan pernah dipakai untuk penilaian resmi.
+- **Sebagian besar siswa tanpa key** — jangan desain fitur yang hanya
+  berguna dengan AI; bank tetap sumber utama. Pertimbangkan ulang opsi
+  "key admin dengan kuota" bila terbukti banyak siswa tanpa key.
+- **Hak cipta** — prompt melarang menyalin soal resmi yang dipublikasi
+  (sudah ada di `generation-context.ts`).
+- **Biaya & privasi** — data siswa yang dikirim ke Gemini hanya konteks
+  kerangka & tingkat kesulitan; tidak ada nama/email siswa di prompt.

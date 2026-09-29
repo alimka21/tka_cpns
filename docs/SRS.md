@@ -60,12 +60,27 @@ Paket Tes (kumpulan soal dari berbagai topik/subtopik, dengan durasi & poin per 
      `pending_review`), bukan langsung ke bank soal.
    - Admin review satu per satu (edit kalau perlu) → approve → masuk ke
      bank soal.
+   - Detail rancangan: `docs/AI_GENERATION.md` (Jalur A).
 8. **Akses gratis vs premium (tanpa payment gateway dulu)**:
    - Field `is_premium` di Paket Tes.
    - Field `is_premium_unlocked` / tabel `entitlements` per user —
      untuk fase ini di-*toggle manual oleh admin* (belum ada checkout).
    - Struktur data harus sudah siap supaya payment gateway bisa
      ditambahkan belakangan tanpa migrasi besar (lihat ROADMAP fase 3).
+9. **Diagnosa & latihan adaptif per siswa** (Fase 2.5, rancangan di
+   `docs/AI_GENERATION.md` Jalur B):
+   - Diagnosa kelemahan per **subdomain** dari seluruh riwayat tes &
+     latihan siswa (status: belum diuji / perlu latihan / cukup / baik).
+   - "Latihan Kelemahan": sesi latihan yang hanya berisi soal dari
+     subdomain lemah milik siswa itu. Soal diambil dari **bank dulu**;
+     kalau kurang, AI membuat soal tambahan **memakai API key Gemini
+     milik siswa** (tanpa key → bank saja).
+   - Soal AI latihan **langsung dipakai tanpa review admin**, divalidasi
+     otomatis, berlabel "Latihan AI", tidak masuk bank resmi, tidak
+     dihitung ke skor tes resmi, dan bisa dilaporkan siswa.
+   - Pembahasan tampil langsung per soal di mode latihan.
+   - Halaman progres (peta kemampuan per subdomain + tren + ringkasan
+     kalimat biasa) dan riwayat lengkap tes & latihan.
 
 ## 5. Fitur eksplisit DI-SKIP di fase ini
 

@@ -4,6 +4,7 @@ import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import {
   Award,
+  BookOpenText,
   CalendarDays,
   Check,
   ChevronRight,
@@ -77,8 +78,8 @@ export default async function HasilPage({ params }: PageProps<"/hasil/[attemptId
           <Button variant="outline" nativeButton={false} render={<Link href={`/tes/${r.packageId}`} />}>
             <RotateCcw aria-hidden /> Kerjakan lagi
           </Button>
-          <Button disabled title="Tersedia setelah fitur pembahasan dibuat">
-            Lihat pembahasan
+          <Button nativeButton={false} render={<Link href={`/hasil/${r.attemptId}/pembahasan`} />}>
+            <BookOpenText aria-hidden /> Lihat pembahasan
           </Button>
         </div>
       </header>

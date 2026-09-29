@@ -20,8 +20,8 @@ kerjakan tes (semua bentuk soal + grup stimulus) → submit → lihat hasil
 → beri/cabut akses premium — semua lolos. Migrasi `0009_paket_tes_attempt`
 sudah dijalankan (tabel test_packages, test_package_questions,
 entitlements, attempts, attempt_answers, attempt_subtopic_scores).
-**Belum ada:** edit/hapus soal individual, pratinjau KaTeX di form soal,
-halaman pembahasan (tampilkan kunci setelah attempt selesai).
+**Belum ada:** edit/hapus soal individual, pratinjau KaTeX di form soal.
+Halaman pembahasan `/hasil/[attemptId]/pembahasan` selesai 2026-09-29.
 
 **Database 2026-09-25:** tersambung ke Hostinger (MariaDB 11.8, via
 Remote MySQL; `npm run db:check`). Migrasi 0000–0006 **sudah
@@ -190,9 +190,10 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
       "belum lengkap" untuk Kategori yang baru sebagian terisi
 - [x] Autosave & `saveAnswer` memakai payload `response` baru
 - [x] `/tes/demo`: contoh 1 soal tiap bentuk + 1 grup stimulus 2 soal
-- [ ] Halaman hasil/pembahasan: tampilkan kunci per bentuk (setelah
-      attempt selesai saja) — tombol "Lihat pembahasan" di
-      `/hasil/[attemptId]` masih disabled, halaman belum dibuat
+- [x] Halaman hasil/pembahasan: tampilkan kunci per bentuk (setelah
+      attempt selesai saja) — `/hasil/[attemptId]/pembahasan`
+      (`getAttemptReview`), filter semua/salah/kosong/benar, stimulus
+      grup, tabel kunci PGK Kategori
 
 ### 1.5d Admin & import
 - [x] Form soal manual: pilih bentuk → field menyesuaikan (kunci tunggal
@@ -201,9 +202,9 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
 - [x] Kelola stimulus: daftar, buat, lihat soal yang memakainya —
       `/admin/soal/stimulus` (data contoh); edit & simpan menunggu DB
 - [x] Bank soal: badge bentuk & penanda grup stimulus, filter per bentuk
-- [ ] Susun paket tes: soal grup masuk utuh & berurutan (tidak bisa
-      diambil sebagian) — ✅ logika `completeGroups` &
-      `validatePackageOrder` teruji; sisa: UI susun paket (Fase 1)
+- [x] Susun paket tes: soal grup masuk utuh & berurutan (tidak bisa
+      diambil sebagian) — logika `completeGroups` & `validatePackageOrder`
+      + UI `/admin/paket-tes`
 - [x] Import Excel: kolom `bentuk_soal` (pg/pgk_mcma/pgk_kategori),
       `kunci` multi (`A,C` untuk MCMA; `B,S,B` untuk Kategori),
       `kategori` (`Benar/Salah` | `Sesuai/Tidak Sesuai`),

@@ -14,7 +14,7 @@ const current = {
     { text: "3", isCorrect: false, correctCategory: null },
     { text: "4", isCorrect: false, correctCategory: null },
   ],
-  usage: { packages: 0, answers: 0 },
+  usage: { packages: 0, answers: 0, practiceItems: 0 },
 };
 
 function next(patch: Partial<Record<string, unknown>> = {}): QuestionInput {
@@ -42,7 +42,7 @@ describe("editLockViolation", () => {
   });
 
   it("sudah dijawab: teks boleh, kunci/subdomain/stimulus tidak", () => {
-    const used = { ...current, usage: { packages: 1, answers: 3 } };
+    const used = { ...current, usage: { packages: 1, answers: 3, practiceItems: 0 } };
     expect(editLockViolation(used, next({ questionText: "Soal diperbaiki" }), used.subdomainCode)).toBeNull();
     expect(editLockViolation(used, wrongKey, used.subdomainCode)).toMatch(/sudah dijawab/);
     expect(editLockViolation(used, next(), "SMP.MAT.2.1")).toMatch(/sudah dijawab/);
@@ -50,7 +50,7 @@ describe("editLockViolation", () => {
   });
 
   it("hanya masuk paket: kunci boleh, stimulus tidak", () => {
-    const inPackage = { ...current, usage: { packages: 2, answers: 0 } };
+    const inPackage = { ...current, usage: { packages: 2, answers: 0, practiceItems: 0 } };
     expect(editLockViolation(inPackage, wrongKey, inPackage.subdomainCode)).toBeNull();
     expect(editLockViolation(inPackage, next({ stimulusId: null, stimulusOrder: null }), inPackage.subdomainCode)).toMatch(/stimulus/);
   });

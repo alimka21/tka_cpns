@@ -6,21 +6,53 @@ import type { ReviewItem } from "@/lib/review";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { db } from "@/server/db";
 import { practiceSessionItems, practiceSessions, subtopics } from "@/server/db/schema";
-import { lastSeenByQuestion, listPracticeCandidates, loadQuestionsWithKeys } from "@/server/queries/practice";
+import { lastSeenByQuestion, listPracticeCandidates, loadDiagnosisRecords, loadItemQuestions } from "@/server/queries/practice";
+import { diagnose } from "@/server/services/diagnosis";
+import { PRACTICE_AI_DAILY_CALLS, generatePracticeAiQuestions, planAiShortfall, type PracticeAiNotice } from "@/server/services/practice-ai";
 import { selectPracticeQuestions } from "@/server/services/practice-selection";
 import { buildReviewItem } from "@/server/services/review";
 import { scoreQuestion } from "@/server/services/scoring";
 
 type Result<T> = ({ ok: true } & T) | { ok: false; error: string };
 
-export async function startPracticeSession(userId: number, targets: number[], count: number): Promise<Result<{ sessionId: number }>> {
+const NOTICE_ERROR: Record<Exclude<PracticeAiNotice["kind"], "added" | "failed">, string> = {
+  no_key: "Belum ada soal di bank untuk subdomain ini. Simpan API key Gemini-mu di Pengaturan supaya AI bisa membuatkan soal latihan.",
+  limit: `Belum ada soal di bank, dan batas Latihan AI hari ini (${PRACTICE_AI_DAILY_CALLS} panggilan / 24 jam) sudah tercapai. Coba lagi besok.`,
+};
+
+/**
+ * Susun sesi: soal bank dulu; bila kurang, soal Latihan AI (key Gemini siswa)
+ * menambal kekurangannya. `notice` menjelaskan hasil bagian AI ke UI.
+ */
+export async function startPracticeSession(
+  userId: number,
+  targets: number[],
+  count: number,
+): Promise<Result<{ sessionId: number; notice: PracticeAiNotice | null }>> {
   const existing = await db.select({ id: subtopics.id }).from(subtopics).where(inArray(subtopics.id, targets));
   if (existing.length !== targets.length) return { ok: false, error: "Subdomain tidak ditemukan." };
 
   const candidates = await listPracticeCandidates(targets);
   const lastSeen = await lastSeenByQuestion(userId, candidates.map((c) => c.id));
   const questionIds = selectPracticeQuestions(targets, candidates, lastSeen, count);
-  if (questionIds.length === 0) {
+
+  let aiIds: number[] = [];
+  let notice: PracticeAiNotice | null = null;
+  const shortfall = count - questionIds.length;
+  if (shortfall > 0) {
+    const subtopicOf = new Map(candidates.map((c) => [c.id, c.subtopicId]));
+    const picked = new Map<number, number>();
+    for (const id of questionIds) picked.set(subtopicOf.get(id)!, (picked.get(subtopicOf.get(id)!) ?? 0) + 1);
+    const accuracy = new Map(diagnose(await loadDiagnosisRecords(userId)).map((d) => [d.subtopicId, d.accuracy]));
+    const ai = await generatePracticeAiQuestions(userId, planAiShortfall(targets, picked, shortfall), accuracy);
+    aiIds = ai.ids;
+    notice = ai.notice;
+  }
+
+  if (questionIds.length + aiIds.length === 0) {
+    if (notice && notice.kind !== "added") {
+      return { ok: false, error: notice.kind === "failed" ? `Belum ada soal di bank, dan AI gagal membuat soal: ${notice.message}` : NOTICE_ERROR[notice.kind] };
+    }
     return { ok: false, error: "Belum ada soal tayang di subdomain yang dipilih. Pilih subdomain lain atau coba lagi nanti." };
   }
 
@@ -32,12 +64,15 @@ export async function startPracticeSession(userId: number, targets: number[], co
       .where(and(eq(practiceSessions.userId, userId), eq(practiceSessions.status, "in_progress")));
     const [{ id }] = await tx
       .insert(practiceSessions)
-      .values({ userId, targetSubtopicIds: targets, questionCount: questionIds.length })
+      .values({ userId, targetSubtopicIds: targets, questionCount: questionIds.length + aiIds.length })
       .$returningId();
-    await tx.insert(practiceSessionItems).values(questionIds.map((questionId, order) => ({ sessionId: id, order, questionId })));
+    await tx.insert(practiceSessionItems).values([
+      ...questionIds.map((questionId, order) => ({ sessionId: id, order, questionId })),
+      ...aiIds.map((practiceQuestionId, i) => ({ sessionId: id, order: questionIds.length + i, practiceQuestionId })),
+    ]);
     return id;
   });
-  return { ok: true, sessionId };
+  return { ok: true, sessionId, notice };
 }
 
 async function ownedActiveSession(userId: number, sessionId: number) {
@@ -63,7 +98,7 @@ export async function answerPracticeItem(
     .where(and(eq(practiceSessionItems.id, itemId), eq(practiceSessionItems.sessionId, sessionId)));
   if (!item) return { ok: false, error: "Soal tidak ditemukan di sesi ini." };
 
-  const q = (await loadQuestionsWithKeys([item.questionId])).get(item.questionId);
+  const q = (await loadItemQuestions([item]))(item);
   if (!q) return { ok: false, error: "Soal tidak ditemukan." };
 
   if (item.answeredAt) {

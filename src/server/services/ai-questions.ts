@@ -4,7 +4,7 @@
 
 import katex from "katex";
 import { z } from "zod";
-import { CATEGORY_PAIRS, OPTION_LABELS, type Difficulty, type QuestionType } from "@/lib/validation/enums";
+import { CATEGORY_PAIRS, OPTION_LABELS, QUESTION_TYPES, type Difficulty, type QuestionType } from "@/lib/validation/enums";
 import { questionInput, type QuestionInput } from "@/lib/validation/question";
 
 const aiOption = z.object({
@@ -14,6 +14,8 @@ const aiOption = z.object({
 });
 
 const aiQuestion = z.object({
+  /** Wajib bila bentuk "campuran". */
+  type: z.enum(QUESTION_TYPES).optional(),
   questionText: z.string(),
   options: z.array(aiOption),
   categoryLabels: z.array(z.string()).optional(),
@@ -22,8 +24,11 @@ const aiQuestion = z.object({
 
 export const aiOutputEnvelope = z.object({ questions: z.array(z.unknown()) });
 
+/** Bentuk yang diminta ke AI; "campuran" = tiap soal menyebut `type`-nya sendiri. */
+export type AiForm = QuestionType | "campuran";
+
 export type AiMappingContext = {
-  type: QuestionType;
+  type: AiForm;
   subtopicId: number;
   difficulty: Difficulty;
   cognitiveLevel: string | null;
@@ -76,23 +81,25 @@ export function mapAiQuestions(raw: unknown, ctx: AiMappingContext): AiMappingRe
     const parsed = aiQuestion.safeParse(item);
     if (!parsed.success) return rejected.push(`${n}: struktur tidak lengkap.`);
     const q = parsed.data;
+    const type: QuestionType | undefined = ctx.type === "campuran" ? q.type : ctx.type;
+    if (!type) return rejected.push(`${n}: bentuk soal tidak disebutkan.`);
 
-    const pair = ctx.type === "pgk_kategori" ? matchPair(q.categoryLabels) : null;
-    if (ctx.type === "pgk_kategori" && !pair) return rejected.push(`${n}: pasangan kategori tidak sah.`);
+    const pair = type === "pgk_kategori" ? matchPair(q.categoryLabels) : null;
+    if (type === "pgk_kategori" && !pair) return rejected.push(`${n}: pasangan kategori tidak sah.`);
 
     const options = q.options.map((o, k) => {
       const category = pair ? pair.find((p) => p.toLowerCase() === o.category?.trim().toLowerCase()) ?? null : null;
       return {
         label: OPTION_LABELS[k] ?? "E",
         optionText: o.text.trim(),
-        isCorrect: ctx.type === "pgk_kategori" ? false : Boolean(o.isCorrect),
+        isCorrect: type === "pgk_kategori" ? false : Boolean(o.isCorrect),
         correctCategory: category,
       };
     });
     if (q.options.length > OPTION_LABELS.length) return rejected.push(`${n}: opsi terlalu banyak.`);
 
     const input = questionInput.safeParse({
-      type: ctx.type,
+      type,
       subtopicId: ctx.subtopicId,
       questionText: q.questionText.trim(),
       imageUrl: ctx.imageUrl ?? null,
@@ -121,4 +128,13 @@ export function mapAiQuestions(raw: unknown, ctx: AiMappingContext): AiMappingRe
   });
 
   return { valid, rejected };
+}
+
+const aiStimulus = z.object({ title: z.string().trim().min(3).max(255), content: z.string().trim().min(80).max(8000) });
+
+/** Bacaan buatan AI (mode grup): `{ stimulus: { title, content } }`. `null` bila tidak sah. */
+export function parseAiStimulus(raw: unknown): { title: string; content: string } | null {
+  const parsed = z.object({ stimulus: aiStimulus }).safeParse(raw);
+  if (!parsed.success || !mathRenders(parsed.data.stimulus.content)) return null;
+  return parsed.data.stimulus;
 }

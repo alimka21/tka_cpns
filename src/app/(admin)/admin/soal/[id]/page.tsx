@@ -18,7 +18,7 @@ export default async function AdminEditSoalPage({ params }: PageProps<"/admin/so
   const question = await getQuestionForEdit(id);
   if (!question) notFound();
 
-  const deletable = question.usage.answers === 0 && question.usage.packages === 0;
+  const deletable = question.usage.answers === 0 && question.usage.packages === 0 && question.usage.practiceItems === 0;
 
   return (
     <div className="flex flex-col gap-8">
@@ -40,7 +40,9 @@ export default async function AdminEditSoalPage({ params }: PageProps<"/admin/so
                 ? null
                 : question.usage.answers > 0
                   ? "Sudah dijawab siswa — jadikan draft saja."
-                  : `Masih dipakai di ${question.usage.packages} paket tes.`
+                  : question.usage.packages > 0
+                    ? `Masih dipakai di ${question.usage.packages} paket tes.`
+                    : "Pernah dipakai di latihan siswa — jadikan draft saja."
             }
           />
         }

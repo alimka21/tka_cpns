@@ -94,6 +94,12 @@ Skema Drizzle sama persis, tinggal jalankan migrasi ke database baru.
 6. `npm run db:seed:asesmen` — isi jenjang, mata uji, domain, subdomain
    dari `asesmen/*.json`.
 7. `npm run db:check` lagi — pastikan tabel & migrasi tercatat.
+   **Jumlah migrasi harus = jumlah file `.sql`.** Kalau kurang padahal
+   tabel baru sudah ada, migrasi gagal di tengah (DDL MariaDB tidak bisa
+   di-rollback): cari statement yang belum jalan, jalankan manual, lalu
+   catat `sha256(isi file)` + `when` dari `meta/_journal.json` ke
+   `__drizzle_migrations` (contoh: migrasi 0012, DECISIONS 2026-09-30).
+   Nama constraint/FK maks 64 karakter.
 
 Saat aplikasi nanti jalan di Node.js hosting Hostinger, `DATABASE_URL`
 di environment hosting memakai host yang ditunjukkan hPanel untuk

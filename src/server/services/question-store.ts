@@ -6,6 +6,7 @@ import { and, eq, inArray, ne, sql } from "drizzle-orm";
 import type { db as Db } from "@/server/db";
 import {
   attemptAnswers,
+  practiceSessionItems,
   questionExplanations,
   questionOptions,
   questions,
@@ -83,7 +84,11 @@ export async function stimulusOrderTaken(tx: Executor, stimulusId: number, order
   return Boolean(row);
 }
 
-/** Seberapa jauh soal sudah dipakai — menentukan bagian mana yang boleh diubah/dihapus. */
+/**
+ * Seberapa jauh soal sudah dipakai — menentukan bagian mana yang boleh diubah/dihapus.
+ * `answers` = jawaban tes + jawaban latihan (id opsi tersimpan → kunci dikunci);
+ * `practiceItems` = semua item latihan yang merujuk soal ini (FK → tidak bisa dihapus).
+ */
 export async function questionUsage(tx: Executor, questionId: number) {
   const [pkg] = await tx
     .select({ n: sql<number>`count(*)` })
@@ -93,7 +98,18 @@ export async function questionUsage(tx: Executor, questionId: number) {
     .select({ n: sql<number>`count(*)` })
     .from(attemptAnswers)
     .where(eq(attemptAnswers.questionId, questionId));
-  return { packages: Number(pkg?.n ?? 0), answers: Number(ans?.n ?? 0) };
+  const [practice] = await tx
+    .select({
+      n: sql<number>`count(*)`,
+      answered: sql<number>`sum(case when ${practiceSessionItems.answeredAt} is not null then 1 else 0 end)`,
+    })
+    .from(practiceSessionItems)
+    .where(eq(practiceSessionItems.questionId, questionId));
+  return {
+    packages: Number(pkg?.n ?? 0),
+    answers: Number(ans?.n ?? 0) + Number(practice?.answered ?? 0),
+    practiceItems: Number(practice?.n ?? 0),
+  };
 }
 
 /**

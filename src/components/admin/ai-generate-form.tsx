@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CircleAlert, CircleCheck, ImageIcon, LoaderCircle, Pencil, Sparkles, Wand2 } from "lucide-react";
+import { BookOpenText, CircleAlert, CircleCheck, ImageIcon, LoaderCircle, Pencil, Sparkles, Wand2 } from "lucide-react";
 import { RichHtml } from "@/components/tes/rich-html";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -14,7 +14,8 @@ import { DIFFICULTIES, QUESTION_TYPES, type Difficulty, type QuestionType } from
 import { generateAiQuestionsAction } from "@/server/actions/ai-generate";
 import type { SubdomainOption } from "./question-form";
 
-type Mode = "baru" | "variasi" | "gambar";
+type Mode = "baru" | "variasi" | "gambar" | "grup";
+type Form = QuestionType | "campuran";
 
 export type AiSourceQuestion = {
   id: number;
@@ -29,11 +30,13 @@ export type AiSourceQuestion = {
 };
 
 export type AiImageOption = { id: number; title: string };
+export type AiStimulusOption = { id: number; code: string; title: string; questionCount: number };
 
 const MODES: { id: Mode; label: string; icon: typeof Sparkles; hint: string }[] = [
   { id: "baru", label: "Soal baru", icon: Sparkles, hint: "AI menulis soal baru sesuai cakupan & batasan subtopik di kerangka asesmen." },
   { id: "variasi", label: "Variasi soal", icon: Wand2, hint: "AI memodifikasi soal yang sudah ada di bank (angka, konteks, atau tingkat kesulitan)." },
   { id: "gambar", label: "Dari gambar", icon: ImageIcon, hint: "AI membaca satu gambar dari galeri lalu membuat beberapa soal berbeda darinya." },
+  { id: "grup", label: "Soal grup (bacaan)", icon: BookOpenText, hint: "AI menulis 1 bacaan/stimulus + beberapa soal, atau menambah soal ke stimulus yang ada." },
 ];
 
 const VARIATIONS = [
@@ -55,14 +58,16 @@ type Props = {
   source: AiSourceQuestion | null;
   images: AiImageOption[];
   initialImageId: number | null;
+  stimuli: AiStimulusOption[];
 };
 
-export function AiGenerateForm({ initialMode, subdomains, source, images, initialImageId }: Props) {
+export function AiGenerateForm({ initialMode, subdomains, source, images, initialImageId, stimuli }: Props) {
   const router = useRouter();
   const [mode, setMode] = useState<Mode>(initialMode);
   const [subdomainCode, setSubdomainCode] = useState(source?.subdomainCode ?? "");
   const [cognitiveLevel, setCognitiveLevel] = useState(source?.cognitiveLevel ?? "");
-  const [form, setForm] = useState<QuestionType>(source?.type ?? "pg");
+  const [form, setForm] = useState<Form>(source?.type ?? "pg");
+  const [stimulusId, setStimulusId] = useState<number | null>(null);
   const [difficulty, setDifficulty] = useState<Difficulty>(source?.difficulty ?? "medium");
   const [count, setCount] = useState(mode === "gambar" ? 3 : 5);
   const [variation, setVariation] = useState<(typeof VARIATIONS)[number]["id"]>("bebas");
@@ -99,6 +104,7 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
         sourceQuestionId: mode === "variasi" ? source?.id : null,
         variation: mode === "variasi" ? variation : undefined,
         imageId: mode === "gambar" ? imageId : null,
+        stimulusId: mode === "grup" ? stimulusId : null,
         extraInstruction: extra || null,
       }).catch(() => ({ ok: false as const, error: "Koneksi terputus atau server terlalu lama merespons." }));
       setResult(r);
@@ -109,7 +115,7 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_24rem]">
       <div className="flex flex-col gap-6">
-        <div role="tablist" aria-label="Cara membuat soal" className="grid gap-3 md:grid-cols-3">
+        <div role="tablist" aria-label="Cara membuat soal" className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
           {MODES.map((m) => (
             <button
               key={m.id}
@@ -119,6 +125,8 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
               onClick={() => {
                 setMode(m.id);
                 setResult(null);
+                if (m.id !== "grup" && form === "campuran") setForm("pg");
+                if (m.id === "grup") setForm("campuran");
               }}
               className={cn(
                 "flex flex-col gap-1 rounded-xl border bg-card p-4 text-left transition-colors hover:border-primary/40",
@@ -215,6 +223,49 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
           </section>
         )}
 
+        {mode === "grup" && (
+          <section className="surface-card flex flex-col gap-3 p-6">
+            <h2 className="font-bold">Bacaan / stimulus</h2>
+            <div role="radiogroup" aria-label="Sumber bacaan" className="flex flex-col gap-2">
+              <label className={cn("flex cursor-pointer items-start gap-3 rounded-xl border p-3", stimulusId == null && "border-primary bg-primary-soft")}>
+                <input type="radio" className="mt-1 accent-[var(--primary)]" checked={stimulusId == null} onChange={() => setStimulusId(null)} />
+                <span>
+                  <span className="block font-semibold">AI menulis bacaan baru</span>
+                  <span className="text-xs text-muted-foreground">
+                    Tersimpan sebagai stimulus Draft (kode AI-…) — periksa & terbitkan di halaman Stimulus.
+                  </span>
+                </span>
+              </label>
+              <label className={cn("flex items-start gap-3 rounded-xl border p-3", stimulusId != null && "border-primary bg-primary-soft")}>
+                <input
+                  type="radio"
+                  className="mt-1 accent-[var(--primary)]"
+                  checked={stimulusId != null}
+                  disabled={stimuli.length === 0}
+                  onChange={() => setStimulusId(stimuli[0]?.id ?? null)}
+                />
+                <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+                  <span className="font-semibold">Tambah soal ke stimulus yang ada</span>
+                  <select
+                    aria-label="Stimulus"
+                    className={selectClass}
+                    disabled={stimuli.length === 0}
+                    value={stimulusId ?? ""}
+                    onChange={(e) => setStimulusId(e.target.value ? Number(e.target.value) : null)}
+                  >
+                    <option value="">{stimuli.length === 0 ? "Belum ada stimulus" : "Pilih stimulus…"}</option>
+                    {stimuli.map((st) => (
+                      <option key={st.id} value={st.id}>
+                        {st.code} — {st.title} ({st.questionCount} soal)
+                      </option>
+                    ))}
+                  </select>
+                </span>
+              </label>
+            </div>
+          </section>
+        )}
+
         <section className="surface-card flex flex-col gap-4 p-6">
           <h2 className="font-bold">Pengaturan soal</h2>
           <div className="flex flex-col gap-1.5">
@@ -250,7 +301,8 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
               <Label htmlFor="ai-form" className="font-semibold">
                 Bentuk soal
               </Label>
-              <select id="ai-form" className={selectClass} value={form} onChange={(e) => setForm(e.target.value as QuestionType)}>
+              <select id="ai-form" className={selectClass} value={form} onChange={(e) => setForm(e.target.value as Form)}>
+                {mode === "grup" && <option value="campuran">Campuran (PG, PGK MCMA, PGK Kategori)</option>}
                 {QUESTION_TYPES.map((t) => (
                   <option key={t} value={t}>
                     {QUESTION_TYPE_META[t].label}
@@ -355,6 +407,11 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
             <div className="flex items-center gap-2 font-semibold text-success-strong">
               <CircleCheck className="size-4" aria-hidden /> {result.created.length} soal dibuat — menunggu review
             </div>
+            {result.stimulus && (
+              <Link href="/admin/soal/stimulus" className="flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+                <BookOpenText className="size-3.5" aria-hidden /> Bacaan {result.stimulus.code}: {result.stimulus.title}
+              </Link>
+            )}
             <ul className="flex flex-col gap-2">
               {result.created.map((q) => (
                 <li key={q.id} className="flex items-start gap-2 rounded-lg bg-card p-2">

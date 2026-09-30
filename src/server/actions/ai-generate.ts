@@ -17,13 +17,14 @@ const id = z.number().int().positive();
 const input = z.object({
   mode: z.enum(AI_GENERATION_MODES),
   subdomainCode: frameworkCode,
-  form: z.enum(QUESTION_TYPES),
+  form: z.enum([...QUESTION_TYPES, "campuran"]),
   count: z.number().int().min(1).max(10),
   difficulty: z.enum(DIFFICULTIES),
   cognitiveLevel: z.string().regex(/^L\d$/).nullable(),
   sourceQuestionId: id.nullish(),
   variation: z.enum(Object.keys(VARIATION_STYLES) as [VariationStyle, ...VariationStyle[]]).optional(),
   imageId: id.nullish(),
+  stimulusId: id.nullish(),
   extraInstruction: z.string().trim().max(500).nullish(),
 });
 

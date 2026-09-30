@@ -17,6 +17,8 @@ export type ReviewSourceQuestion = {
   categoryLabels: [string, string] | null;
   stimulusId: number | null;
   options: { id: number; label: string; optionText: string; isCorrect: boolean; correctCategory: string | null }[];
+  /** Soal Latihan AI privat. */
+  aiPracticeId?: number | null;
 };
 
 export function buildReviewItem(
@@ -51,6 +53,7 @@ export function buildReviewItem(
     imageUrl: q.imageUrl,
     subtopicId: q.subtopicId,
     subtopic: subtopicName,
+    aiPracticeId: q.aiPracticeId ?? null,
     categoryLabels: q.type === "pgk_kategori" ? q.categoryLabels : null,
     stimulusId: q.stimulusId,
     options: q.options.map((o) => ({

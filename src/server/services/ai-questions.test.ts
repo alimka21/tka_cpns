@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapAiQuestions, mathRenders, normalizeText, type AiMappingContext } from "./ai-questions";
+import { mapAiQuestions, mathRenders, normalizeText, parseAiStimulus, type AiMappingContext } from "./ai-questions";
 
 const ctx = (p: Partial<AiMappingContext> = {}): AiMappingContext => ({
   type: "pg",
@@ -95,5 +95,34 @@ describe("helper", () => {
     expect(normalizeText("  Berapa  hasil 2+3? ")).toBe("berapa hasil 2 3");
     expect(mathRenders("ok $x^2$ dan $$\\frac{1}{2}$$")).toBe(true);
     expect(mathRenders("rusak $\\frac{1}{$")).toBe(false);
+  });
+});
+
+describe("bentuk campuran & bacaan", () => {
+  it("campuran: tiap soal memakai type-nya sendiri; tanpa type ditolak", () => {
+    const r = mapAiQuestions(
+      {
+        questions: [
+          { ...pg("Soal PG dalam grup bacaan"), type: "pg" },
+          {
+            type: "pgk_kategori",
+            questionText: "Tentukan kesesuaian pernyataan dengan bacaan.",
+            categoryLabels: ["Sesuai", "Tidak Sesuai"],
+            explanation: "Lihat paragraf 2.",
+            options: [{ text: "a satu", category: "Sesuai" }, { text: "b dua", category: "Tidak Sesuai" }, { text: "c tiga", category: "Sesuai" }],
+          },
+          pg("Soal tanpa type harus ditolak"),
+        ],
+      },
+      ctx({ type: "campuran" }),
+    );
+    expect(r.valid.map((v) => v.type)).toEqual(["pg", "pgk_kategori"]);
+    expect(r.rejected[0]).toMatch(/bentuk soal/);
+  });
+
+  it("parseAiStimulus", () => {
+    expect(parseAiStimulus({ stimulus: { title: "Hutan Mangrove", content: "x".repeat(100) } })).toEqual({ title: "Hutan Mangrove", content: "x".repeat(100) });
+    expect(parseAiStimulus({ stimulus: { title: "Pendek", content: "terlalu pendek" } })).toBeNull();
+    expect(parseAiStimulus({ questions: [] })).toBeNull();
   });
 });

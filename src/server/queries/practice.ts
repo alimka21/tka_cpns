@@ -9,6 +9,7 @@ import {
   attemptAnswers,
   attempts,
   attemptSubtopicScores,
+  practiceQuestions,
   practiceSessionItems,
   practiceSessions,
   questionExplanations,
@@ -43,16 +44,18 @@ export async function loadDiagnosisRecords(userId: number): Promise<SourcedRecor
     db
       .select({
         sourceId: practiceSessions.id,
-        subtopicId: questions.subtopicId,
+        // Soal bank atau soal Latihan AI — subdomain dari salah satunya.
+        subtopicId: sql<number>`coalesce(${questions.subtopicId}, ${practiceQuestions.subtopicId})`,
         correct: sql<number>`sum(case when ${practiceSessionItems.isCorrect} then 1 else 0 end)`,
         total: count(),
         at: max(practiceSessionItems.answeredAt),
       })
       .from(practiceSessionItems)
       .innerJoin(practiceSessions, eq(practiceSessions.id, practiceSessionItems.sessionId))
-      .innerJoin(questions, eq(questions.id, practiceSessionItems.questionId))
+      .leftJoin(questions, eq(questions.id, practiceSessionItems.questionId))
+      .leftJoin(practiceQuestions, eq(practiceQuestions.id, practiceSessionItems.practiceQuestionId))
       .where(and(eq(practiceSessions.userId, userId), isNotNull(practiceSessionItems.answeredAt)))
-      .groupBy(practiceSessions.id, questions.subtopicId),
+      .groupBy(practiceSessions.id, sql`coalesce(${questions.subtopicId}, ${practiceQuestions.subtopicId})`),
   ]);
   return [
     ...testRows.map((r) => ({
@@ -66,7 +69,7 @@ export async function loadDiagnosisRecords(userId: number): Promise<SourcedRecor
     ...practiceRows.map((r) => ({
       source: "practice" as const,
       sourceId: r.sourceId,
-      subtopicId: r.subtopicId,
+      subtopicId: Number(r.subtopicId),
       correct: Number(r.correct),
       total: Number(r.total),
       at: r.at ?? new Date(0),
@@ -118,7 +121,7 @@ export async function lastSeenByQuestion(userId: number, questionIds: number[]):
   ]);
   const result = new Map<number, Date>();
   for (const r of [...fromTests, ...fromPractice]) {
-    if (!r.at) continue;
+    if (!r.at || r.questionId == null) continue;
     const prev = result.get(r.questionId);
     if (!prev || prev < r.at) result.set(r.questionId, r.at);
   }
@@ -137,6 +140,49 @@ export async function countPublishedBySubtopic(subtopicIds: number[]): Promise<M
 }
 
 export type QuestionWithKeys = ReviewSourceQuestion & { explanation: string | null; subtopicName: string; stimulusOrder: number | null };
+
+/**
+ * Soal Latihan AI privat dalam bentuk yang sama dengan soal bank — SERVER-ONLY.
+ * `id` dibuat negatif (−practice_questions.id) supaya tidak bentrok dengan id
+ * soal bank di satu sesi; id opsi = 1..n.
+ */
+export async function loadPracticeAiQuestions(ids: number[]): Promise<Map<number, QuestionWithKeys>> {
+  if (ids.length === 0) return new Map();
+  const rows = await db
+    .select({ q: practiceQuestions, subtopicName: subtopics.name })
+    .from(practiceQuestions)
+    .innerJoin(subtopics, eq(subtopics.id, practiceQuestions.subtopicId))
+    .where(inArray(practiceQuestions.id, ids));
+  return new Map(
+    rows.map(({ q, subtopicName }) => [
+      q.id,
+      {
+        id: -q.id,
+        aiPracticeId: q.id,
+        type: q.type,
+        questionText: q.questionText,
+        imageUrl: null,
+        subtopicId: q.subtopicId,
+        categoryLabels: q.categoryLabels,
+        stimulusId: null,
+        stimulusOrder: null,
+        explanation: q.explanation,
+        subtopicName,
+        options: q.options.map((o, i) => ({ id: i + 1, label: o.label, optionText: o.text, isCorrect: o.isCorrect, correctCategory: o.correctCategory })),
+      },
+    ]),
+  );
+}
+
+/** Ambil soal untuk satu item sesi latihan (bank atau AI). */
+export async function loadItemQuestions(items: { questionId: number | null; practiceQuestionId: number | null }[]) {
+  const [bank, ai] = await Promise.all([
+    loadQuestionsWithKeys(items.flatMap((i) => (i.questionId != null ? [i.questionId] : []))),
+    loadPracticeAiQuestions(items.flatMap((i) => (i.practiceQuestionId != null ? [i.practiceQuestionId] : []))),
+  ]);
+  return (item: { questionId: number | null; practiceQuestionId: number | null }) =>
+    item.questionId != null ? bank.get(item.questionId) : item.practiceQuestionId != null ? ai.get(item.practiceQuestionId) : undefined;
+}
 
 /** Soal lengkap dengan kunci — SERVER-ONLY. */
 export async function loadQuestionsWithKeys(ids: number[]): Promise<Map<number, QuestionWithKeys>> {
@@ -175,6 +221,8 @@ export type PracticeItemView = {
   itemId: number;
   number: number;
   subtopic: string;
+  /** Soal "Latihan AI" (bukan soal bank resmi). */
+  isAi: boolean;
   /** Tanpa kunci — untuk soal yang belum dijawab. */
   question: ExamQuestion;
   /** Terisi setelah dijawab (kunci + pembahasan). */
@@ -203,20 +251,22 @@ export async function getPracticeSession(sessionId: number, userId: number): Pro
     .from(practiceSessionItems)
     .where(eq(practiceSessionItems.sessionId, sessionId))
     .orderBy(asc(practiceSessionItems.order));
-  const questionMap = await loadQuestionsWithKeys(items.map((i) => i.questionId));
-  const stimulusIds = [...new Set([...questionMap.values()].map((q) => q.stimulusId).filter((id): id is number => id != null))];
+  const questionFor = await loadItemQuestions(items);
+  const loaded = items.map((i) => questionFor(i));
+  const stimulusIds = [...new Set(loaded.map((q) => q?.stimulusId).filter((id): id is number => id != null))];
   const stimulusRows = stimulusIds.length
     ? await db.select({ id: stimuli.id, title: stimuli.title, content: stimuli.content, imageUrl: stimuli.imageUrl }).from(stimuli).where(inArray(stimuli.id, stimulusIds))
     : [];
 
   const views: PracticeItemView[] = [];
   for (const [i, item] of items.entries()) {
-    const q = questionMap.get(item.questionId);
+    const q = loaded[i];
     if (!q) continue;
     views.push({
       itemId: item.id,
       number: i + 1,
       subtopic: q.subtopicName,
+      isAi: item.practiceQuestionId != null,
       question: toExamQuestion({
         id: q.id,
         type: q.type,

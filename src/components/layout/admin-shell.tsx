@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  Flag,
   ImageIcon,
   Settings,
   BookOpenText,
@@ -34,6 +35,7 @@ const navItems: NavItem[] = [
   { href: "/admin/soal/import", label: "Import Soal", icon: FileUp },
   { href: "/admin/soal/generate-ai", label: "Generate AI", icon: Sparkles },
   { href: "/admin/paket-tes", label: "Paket Tes", icon: Package },
+  { href: "/admin/laporan", label: "Laporan Soal", icon: Flag },
   { href: "/pengaturan", label: "Pengaturan & API Key", icon: Settings },
 ];
 
@@ -45,9 +47,14 @@ function activeHref(pathname: string) {
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
 }
 
-type Props = { children: React.ReactNode; user: { name: string; email: string } };
+type Props = {
+  children: React.ReactNode;
+  user: { name: string; email: string };
+  /** Angka dinamis per menu, mis. { "/admin/laporan": 3 } (laporan terbuka). */
+  counts?: Record<string, number>;
+};
 
-export function AdminShell({ children, user }: Props) {
+export function AdminShell({ children, user, counts = {} }: Props) {
   const pathname = usePathname();
   // Menu mobile terbuka untuk path tertentu saja — otomatis tertutup saat pindah halaman.
   const [openOn, setOpenOn] = useState<string | null>(null);
@@ -71,6 +78,9 @@ export function AdminShell({ children, user }: Props) {
           >
             <Icon className="size-[18px] shrink-0" aria-hidden />
             <span className="flex-1">{label}</span>
+            {(counts[href] ?? 0) > 0 && (
+              <span className="rounded-full bg-destructive px-2 py-0.5 text-[10px] font-bold text-white tabular-nums">{counts[href]}</span>
+            )}
             {badge && (
               <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-bold tracking-wide text-muted-foreground uppercase">
                 {badge}

@@ -27,11 +27,13 @@ export type GenerationRequest = {
   count: number;
   /** Wajib untuk mata uji yang punya level kognitif; dilarang untuk mata uji bahasa. */
   cognitiveLevel?: string | null;
-  /** Bentuk soal; default PG sederhana. */
-  form?: QuestionType;
+  /** Bentuk soal; default PG sederhana. "campuran" = AI memilih per soal. */
+  form?: QuestionType | "campuran";
 };
 
-const FORM_SENTENCE: Record<QuestionType, string> = {
+const FORM_SENTENCE: Record<QuestionType | "campuran", string> = {
+  campuran:
+    "soal dengan bentuk campuran — boleh pilihan ganda sederhana, PG kompleks multi jawaban, dan PG kompleks kategori (Benar/Salah atau Sesuai/Tidak Sesuai); usahakan ada lebih dari satu bentuk",
   pg: "soal pilihan ganda sederhana (tepat 1 jawaban benar, 4–5 opsi A–E)",
   pgk_mcma: "soal pilihan ganda kompleks multi jawaban (4–5 opsi, jawaban benar lebih dari satu tetapi tidak semua opsi)",
   pgk_kategori:
@@ -110,7 +112,8 @@ export function buildGenerationContext(req: GenerationRequest): GenerationContex
 
 // ── Prompt Gemini lengkap per mode (docs/AI_GENERATION.md §3) ─────────────
 
-const OUTPUT_EXAMPLE: Record<QuestionType, string> = {
+const OUTPUT_EXAMPLE: Record<QuestionType | "campuran", string> = {
+  campuran: `{"questions":[{"type":"pg","questionText":"...","options":[{"text":"...","isCorrect":true},{"text":"...","isCorrect":false},{"text":"...","isCorrect":false},{"text":"...","isCorrect":false}],"explanation":"..."},{"type":"pgk_mcma","questionText":"... (Jawaban bisa lebih dari satu.)","options":[{"text":"...","isCorrect":true},{"text":"...","isCorrect":true},{"text":"...","isCorrect":false},{"text":"...","isCorrect":false}],"explanation":"..."},{"type":"pgk_kategori","questionText":"...","categoryLabels":["Sesuai","Tidak Sesuai"],"options":[{"text":"...","category":"Sesuai"},{"text":"...","category":"Tidak Sesuai"},{"text":"...","category":"Sesuai"}],"explanation":"..."}]}`,
   pg: `{"questions":[{"questionText":"...","options":[{"text":"...","isCorrect":false},{"text":"...","isCorrect":true},{"text":"...","isCorrect":false},{"text":"...","isCorrect":false}],"explanation":"..."}]}`,
   pgk_mcma: `{"questions":[{"questionText":"... (Jawaban bisa lebih dari satu.)","options":[{"text":"...","isCorrect":true},{"text":"...","isCorrect":false},{"text":"...","isCorrect":true},{"text":"...","isCorrect":false}],"explanation":"..."}]}`,
   pgk_kategori: `{"questions":[{"questionText":"Tentukan benar atau salah setiap pernyataan berikut.","categoryLabels":["Benar","Salah"],"options":[{"text":"pernyataan 1","category":"Benar"},{"text":"pernyataan 2","category":"Salah"},{"text":"pernyataan 3","category":"Benar"}],"explanation":"..."}]}`,
@@ -134,8 +137,10 @@ export const VARIATION_STYLES = {
 export type VariationStyle = keyof typeof VARIATION_STYLES;
 
 export type AiPromptRequest = GenerationRequest & {
-  form: QuestionType;
-  mode: "baru" | "variasi" | "gambar";
+  form: QuestionType | "campuran";
+  mode: "baru" | "variasi" | "gambar" | "grup";
+  /** Mode grup: bacaan yang sudah ada (null = AI menulis bacaan baru). */
+  stimulus?: { title: string; content: string } | null;
   source?: SourceQuestionForPrompt;
   variation?: VariationStyle;
   /** Catatan admin tentang gambar (opsional). */
@@ -175,7 +180,21 @@ export function buildAiPrompt(req: AiPromptRequest): GenerationContext {
           "### Soal asal",
           describeSource(req.source),
         ].join("\n")
-      : req.mode === "gambar"
+      : req.mode === "grup"
+        ? req.stimulus
+          ? [
+              "## Mode: soal grup berbasis bacaan/stimulus yang sudah ada",
+              `Buat ${req.count} soal yang SEMUANYA hanya bisa dijawab dengan membaca stimulus di bawah (informasi tersurat, tersirat, atau penalaran dari isinya). Soal harus beragam dan tidak saling membocorkan jawaban.`,
+              `### Stimulus: ${req.stimulus.title}`,
+              req.stimulus.content,
+            ].join("\n")
+          : [
+              "## Mode: soal grup — tulis bacaan/stimulus baru",
+              "Tulis SATU stimulus orisinal (judul + isi) yang sesuai karakteristik mata uji di atas: teks bacaan 150–400 kata, atau data/tabel (tulis tabel sebagai teks rapi) bila mata ujinya numerik. Bahasa sesuai jenjang.",
+              `Lalu buat ${req.count} soal yang SEMUANYA mengacu ke stimulus itu dan hanya bisa dijawab dengan membacanya. Soal harus beragam dan tidak saling membocorkan jawaban.`,
+              'Tambahkan field "stimulus": {"title":"...","content":"..."} di tingkat teratas JSON, sejajar dengan "questions". Paragraf dipisah baris kosong (\\n\\n).',
+            ].join("\n")
+        : req.mode === "gambar"
         ? [
             "## Mode: soal berbasis gambar",
             `Gambar terlampir. Buat ${req.count} soal yang BERBEDA satu sama lain dan semuanya HANYA bisa dijawab dengan membaca/mengamati gambar tersebut (data, bentuk, label, atau situasi di gambar).`,
@@ -192,7 +211,9 @@ export function buildAiPrompt(req: AiPromptRequest): GenerationContext {
     "Balas HANYA dengan JSON valid (tanpa teks lain, tanpa markdown) persis dengan struktur berikut:",
     OUTPUT_EXAMPLE[req.form],
     `Jumlah elemen "questions" tepat ${req.count}. Opsi TANPA huruf label (label A–E diberikan sistem).`,
-    req.form === "pgk_kategori" ? 'Gunakan "categoryLabels" ["Benar","Salah"] atau ["Sesuai","Tidak Sesuai"].' : null,
+    req.form === "pgk_kategori" || req.form === "campuran" ? 'PGK Kategori memakai "categoryLabels" ["Benar","Salah"] atau ["Sesuai","Tidak Sesuai"].' : null,
+    req.form === "campuran" ? 'Setiap soal WAJIB punya field "type": "pg" | "pgk_mcma" | "pgk_kategori".' : null,
+    req.mode === "grup" && !req.stimulus ? 'Contoh tingkat teratas: {"stimulus":{"title":"...","content":"..."},"questions":[...]}' : null,
   ]
     .filter(Boolean)
     .join("\n");

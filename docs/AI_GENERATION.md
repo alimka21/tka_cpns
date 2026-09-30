@@ -34,7 +34,10 @@ tetap hanya memakai soal bank yang sudah tayang.
   `services/ai-generate.ts` (alur + retry + log),
   `asesmen/generation-context.ts` (`buildAiPrompt`).
 - Key: `/pengaturan` (`services/ai-key.ts`, `crypto.ts`).
-- Belum: mode grup stimulus (1 bacaan + N soal), Jalur B langkah 6–7.
+- Mode **grup** (1 bacaan + N soal, bentuk campuran) — admin.
+- **Jalur B selesai**: Latihan AI saat bank kurang
+  (`services/practice-ai.ts`), Laporkan soal + `/admin/laporan`
+  (`services/question-reports.ts`). Model default `gemini-3-flash-preview`.
 
 ## 1. Fondasi yang sudah ada
 

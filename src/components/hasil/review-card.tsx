@@ -1,14 +1,16 @@
 // Kartu pembahasan satu soal: jawaban siswa vs kunci + pembahasan.
 // Server component (tanpa state) — dipakai pembahasan attempt & hasil demo.
 
-import { Check, Minus, X } from "lucide-react";
+import { Check, Minus, Sparkles, X } from "lucide-react";
 import { RichHtml } from "@/components/tes/rich-html";
 import { Badge } from "@/components/ui/badge";
 import { QUESTION_TYPE_META } from "@/lib/question-forms";
 import { reviewStatus, type ReviewItem, type ReviewOption } from "@/lib/review";
 import { cn } from "@/lib/utils";
 
-export function ReviewCard({ item }: { item: ReviewItem }) {
+/** `footer`: mis. tombol Laporkan soal (client component dari halaman). */
+/** `keyOnly`: tampilan admin — hanya soal & kunci, tanpa nomor/status jawaban siswa. */
+export function ReviewCard({ item, footer, keyOnly = false }: { item: ReviewItem; footer?: React.ReactNode; keyOnly?: boolean }) {
   const status = reviewStatus(item);
   const badge =
     status === "benar"
@@ -19,15 +21,22 @@ export function ReviewCard({ item }: { item: ReviewItem }) {
   const Icon = badge.icon;
 
   return (
-    <article aria-labelledby={`soal-${item.number}`} className="surface-card flex flex-col gap-5 p-5 sm:p-6">
+    <article aria-labelledby={`soal-${item.questionId}`} className="surface-card flex flex-col gap-5 p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
-        <h2 id={`soal-${item.number}`} className="text-base font-bold">
-          Soal {item.number}
+        <h2 id={`soal-${item.questionId}`} className="text-base font-bold">
+          {keyOnly ? "Soal & kunci" : `Soal ${item.number}`}
         </h2>
-        <Badge variant={badge.variant}>
-          <Icon aria-hidden /> {badge.label}
-        </Badge>
+        {!keyOnly && (
+          <Badge variant={badge.variant}>
+            <Icon aria-hidden /> {badge.label}
+          </Badge>
+        )}
         <Badge variant="outline">{QUESTION_TYPE_META[item.type].short}</Badge>
+        {item.aiPracticeId != null && (
+          <Badge variant="info" title="Soal dibuat AI khusus untukmu — tidak direview admin, tidak dihitung ke tes resmi">
+            <Sparkles aria-hidden /> Latihan AI
+          </Badge>
+        )}
         {item.subtopic && <span className="text-xs text-muted-foreground">{item.subtopic}</span>}
       </div>
 
@@ -51,6 +60,7 @@ export function ReviewCard({ item }: { item: ReviewItem }) {
           <p className="mt-2 text-sm text-muted-foreground">Pembahasan untuk soal ini belum tersedia.</p>
         )}
       </div>
+      {footer}
     </article>
   );
 }

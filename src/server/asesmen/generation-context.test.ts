@@ -76,3 +76,20 @@ describe("buildAiPrompt", () => {
     expect(buildAiPrompt({ ...base, cognitiveLevel: null, form: "pg", mode: "baru" }).ok).toBe(false);
   });
 });
+
+describe("buildAiPrompt mode grup", () => {
+  const base = { subdomainCode: "SMP-BIND-D1-S3", difficulty: "medium" as const, count: 4, cognitiveLevel: null };
+  it("bacaan baru: minta field stimulus & type campuran", () => {
+    const r = buildAiPrompt({ ...base, form: "campuran", mode: "grup" });
+    if (!r.ok) throw new Error(r.error);
+    expect(r.prompt).toContain("tulis bacaan/stimulus baru");
+    expect(r.prompt).toContain('"stimulus"');
+    expect(r.prompt).toContain('field "type"');
+  });
+  it("stimulus yang ada: isi bacaan disertakan", () => {
+    const r = buildAiPrompt({ ...base, form: "pg", mode: "grup", stimulus: { title: "Hutan Bakau", content: "Hutan bakau melindungi pantai dari abrasi." } });
+    if (!r.ok) throw new Error(r.error);
+    expect(r.prompt).toContain("Hutan bakau melindungi pantai");
+    expect(r.prompt).not.toContain("tulis bacaan/stimulus baru");
+  });
+});

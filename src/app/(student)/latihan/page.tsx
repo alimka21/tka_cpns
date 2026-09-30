@@ -9,6 +9,7 @@ import { MAX_PRACTICE_TARGETS } from "@/lib/practice";
 import { requireUser } from "@/server/auth/session";
 import { countPublishedBySubtopic, listPracticeHistory } from "@/server/queries/practice";
 import { getStudentProgress } from "@/server/queries/progress";
+import { getMaskedGeminiKey } from "@/server/services/ai-key";
 
 export const metadata: Metadata = { title: "Latihan Kelemahan" };
 export const dynamic = "force-dynamic";
@@ -19,7 +20,12 @@ const STATUS_ORDER = { perlu_latihan: 0, cukup: 1, insufficient: 2, baik: 3 } as
 export default async function LatihanPage({ searchParams }: PageProps<"/latihan">) {
   const { user } = await requireUser("/latihan");
   const userId = Number(user.id);
-  const [progress, history] = await Promise.all([getStudentProgress(userId), listPracticeHistory(userId, 20)]);
+  const [progress, history, maskedKey] = await Promise.all([
+    getStudentProgress(userId),
+    listPracticeHistory(userId, 20),
+    getMaskedGeminiKey(userId),
+  ]);
+  const hasKey = maskedKey != null;
 
   const diagnosed = progress.subjects.flatMap((subject) =>
     subject.domains.flatMap((domain) =>
@@ -43,10 +49,11 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
   // Pilihan awal: ?sub=ID (dari tombol di dashboard/progres), atau prioritas diagnosa.
   const { sub } = await searchParams;
   const requested = Number(sub);
-  const withBank = (id: number) => (counts.get(id) ?? 0) > 0;
+  // Dengan key Gemini, subdomain tanpa soal bank tetap bisa dilatih (Latihan AI).
+  const withBank = (id: number) => hasKey || (counts.get(id) ?? 0) > 0;
   const fromPriorities = progress.priorities.map((p) => p.subtopicId).filter(withBank);
   // Belum ada prioritas (mis. soal per subdomain masih < 3) → ambil yang akurasinya terendah.
-  const fallback = options.filter((o) => o.available > 0 && o.status !== "baik").map((o) => o.subtopicId);
+  const fallback = options.filter((o) => (hasKey || o.available > 0) && o.status !== "baik").map((o) => o.subtopicId);
   const preselected =
     Number.isInteger(requested) && withBank(requested)
       ? [requested]
@@ -68,6 +75,14 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
             progres kemampuanmu
           </Link>
           , tapi tidak mengubah skor tes resmi.
+        </p>
+        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+          {hasKey
+            ? "Kalau soal di bank kurang, AI membuatkan soal tambahan berlabel “Latihan AI” memakai key Gemini-mu."
+            : "Punya API key Gemini? Simpan di Pengaturan supaya AI bisa menambah soal saat bank kurang."}{" "}
+          <Link href="/pengaturan" className="font-semibold text-primary hover:underline">
+            Pengaturan
+          </Link>
         </p>
       </header>
 
@@ -106,7 +121,7 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
               {active && " Memulai latihan baru akan menutup latihan yang sedang berjalan."}
             </p>
             <div className="mt-5">
-              <PracticeStartForm options={options} preselected={preselected} />
+              <PracticeStartForm options={options} preselected={preselected} hasKey={hasKey} />
             </div>
           </>
         )}

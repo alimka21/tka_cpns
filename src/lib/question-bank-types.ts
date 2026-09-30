@@ -64,6 +64,7 @@ export type StimulusListItem = {
   code: string;
   title: string;
   content: string;
+  imageUrl: string | null;
   status: "draft" | "published";
   createdAt: string;
   questions: { id: number; order: number | null; type: QuestionType; text: string; subtopic: string }[];
@@ -85,5 +86,5 @@ export type QuestionEditData = {
   explanationText: string;
   options: { text: string; isCorrect: boolean; correctCategory: string | null }[];
   /** Jumlah paket yang memakai soal & jumlah jawaban siswa tersimpan. */
-  usage: { packages: number; answers: number };
+  usage: { packages: number; answers: number; practiceItems: number };
 };

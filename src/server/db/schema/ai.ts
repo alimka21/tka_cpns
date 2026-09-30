@@ -29,7 +29,7 @@ export const questionImages = mysqlTable("question_images", {
   createdAt: timestamp("created_at").notNull().defaultNow(),
 });
 
-export const AI_GENERATION_MODES = ["baru", "variasi", "gambar"] as const;
+export const AI_GENERATION_MODES = ["baru", "variasi", "gambar", "grup"] as const;
 export type AiGenerationMode = (typeof AI_GENERATION_MODES)[number];
 
 /** Audit & pembatasan panggilan Gemini — TANPA isi API key. */

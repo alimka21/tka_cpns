@@ -85,6 +85,13 @@
       "when": 1790779393151,
       "tag": "0011_ai_gambar_soal",
       "breakpoints": true
+    },
+    {
+      "idx": 12,
+      "version": "5",
+      "when": 1790781929138,
+      "tag": "0012_latihan_ai_laporan",
+      "breakpoints": true
     }
   ]
 }

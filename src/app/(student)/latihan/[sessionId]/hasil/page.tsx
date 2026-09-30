@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowRight, BookOpenText, ChevronRight, Dumbbell, PlayCircle } from "lucide-react";
+import { ReportQuestionButton, reportTargetOf } from "@/components/hasil/report-question-button";
 import { ReviewCard } from "@/components/hasil/review-card";
 import { RichHtml } from "@/components/tes/rich-html";
 import { Badge } from "@/components/ui/badge";
@@ -100,7 +101,7 @@ export default async function LatihanHasilPage({ params }: PageProps<"/latihan/[
               const stimulus = item.stimulusId != null ? stimuli.get(item.stimulusId) : undefined;
               const showStimulus = stimulus && reviews[idx - 1]?.stimulusId !== item.stimulusId;
               return (
-                <li key={item.questionId} className="flex flex-col gap-3">
+                <li key={`${item.questionId}-${idx}`} className="flex flex-col gap-3">
                   {showStimulus && (
                     <details className="surface-card group p-5">
                       <summary className="flex cursor-pointer items-center gap-2 font-semibold">
@@ -111,7 +112,7 @@ export default async function LatihanHasilPage({ params }: PageProps<"/latihan/[
                       </div>
                     </details>
                   )}
-                  <ReviewCard item={item} />
+                  <ReviewCard item={item} footer={<ReportQuestionButton target={reportTargetOf(item)} />} />
                 </li>
               );
             })}

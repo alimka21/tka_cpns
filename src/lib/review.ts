@@ -25,6 +25,8 @@ export type ReviewItem = {
   imageUrl: string | null;
   subtopicId: number;
   subtopic: string;
+  /** Terisi bila soal ini soal "Latihan AI" privat (practice_questions.id). */
+  aiPracticeId: number | null;
   categoryLabels: [string, string] | null;
   stimulusId: number | null;
   options: ReviewOption[];

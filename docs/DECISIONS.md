@@ -12,6 +12,22 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-30 — Latihan AI, laporan soal, mode grup, nama FK ≤ 64
+Keputusan: (1) Latihan AI dibuat saat sesi dimulai bila bank kurang,
+memakai key siswa, maks 10 soal/sesi & 10 panggilan Gemini/24 jam; soal
+disimpan privat (`practice_questions`), ikut diagnosa, tidak ikut skor
+resmi. (2) Laporan soal satu tabel untuk soal bank & Latihan AI; soal
+Latihan AI hanya bisa dilaporkan pemiliknya. (3) Mode grup: bentuk
+"campuran" hanya untuk grup; bacaan AI disimpan sebagai stimulus Draft
+(kode `AI-yymmdd-xxxxx`), percobaan ulang memakai bacaan yang sama.
+(4) Semua FK harus bernama ≤ 64 karakter — bila nama otomatis Drizzle
+terlalu panjang, pakai `foreignKey({ name })` (migrasi 0012 sempat gagal).
+(5) Gemini 3: temperature dibiarkan default model.
+Alasan: sesuai AI_GENERATION.md §5–7; MariaDB tidak transaksional untuk
+DDL, jadi migrasi gagal di tengah harus diselesaikan manual.
+Alternatif yang ditolak: soal AI latihan di bank resmi (tanpa review →
+berisiko untuk tes resmi); limit per sesi saja (kuota key siswa bisa habis).
+
 ## 2026-09-30 — AI admin: 3 mode, gambar di DB, Gemini via REST
 Keputusan: generate soal admin punya 3 mode — soal baru dari subdomain,
 variasi (modifikasi soal bank; subdomain ikut soal asal, soal asal +

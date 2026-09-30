@@ -64,6 +64,7 @@ export async function listStimuli(): Promise<StimulusListItem[]> {
     code: s.code,
     title: s.title,
     content: s.content,
+    imageUrl: s.imageUrl,
     status: s.status,
     createdAt: s.createdAt.toISOString(),
     questions: questionRows

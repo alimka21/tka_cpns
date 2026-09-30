@@ -11,7 +11,7 @@ import { requireAdmin } from "@/server/auth/session";
 import { getQuestionForEdit, searchQuestions } from "@/server/queries/question-bank";
 import { getMaskedGeminiKey } from "@/server/services/ai-key";
 import { listQuestionImages } from "@/server/services/question-images";
-import { subdomainOptions } from "../form-options";
+import { stimulusOptions, subdomainOptions } from "../form-options";
 
 export const metadata: Metadata = { title: "Generate Soal AI" };
 export const dynamic = "force-dynamic";
@@ -19,14 +19,15 @@ export const dynamic = "force-dynamic";
 export default async function AdminGenerateAiPage({ searchParams }: PageProps<"/admin/soal/generate-ai">) {
   const { user } = await requireAdmin("/admin/soal/generate-ai");
   const { mode: modeParam, dari, gambar } = await searchParams;
-  const mode = modeParam === "variasi" || modeParam === "gambar" ? modeParam : "baru";
+  const mode = modeParam === "variasi" || modeParam === "gambar" || modeParam === "grup" ? modeParam : "baru";
 
   const sourceId = Number(dari);
-  const [masked, sourceRow, images, pendingAi] = await Promise.all([
+  const [masked, sourceRow, images, pendingAi, stimuli] = await Promise.all([
     getMaskedGeminiKey(Number(user.id)),
     Number.isInteger(sourceId) && sourceId > 0 ? getQuestionForEdit(sourceId) : undefined,
     listQuestionImages(),
     searchQuestions({ sumber: "ai", status: "pending_review" }),
+    stimulusOptions(),
   ]);
   const source: AiSourceQuestion | null = sourceRow
     ? {
@@ -46,7 +47,7 @@ export default async function AdminGenerateAiPage({ searchParams }: PageProps<"/
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Generate Soal AI"
-        description="Buat draf soal dengan Gemini API milikmu sendiri — soal baru, variasi soal yang ada, atau beberapa soal dari satu gambar. Hasilnya selalu masuk antrean review sebelum tayang."
+        description="Buat draf soal dengan Gemini API milikmu sendiri — soal baru, variasi soal yang ada, beberapa soal dari satu gambar, atau soal grup berbasis bacaan. Hasilnya selalu masuk antrean review sebelum tayang."
       />
 
       {!masked ? (
@@ -71,6 +72,7 @@ export default async function AdminGenerateAiPage({ searchParams }: PageProps<"/
           source={source}
           images={images.map((i) => ({ id: i.id, title: i.title }))}
           initialImageId={Number.isInteger(imageId) && images.some((i) => i.id === imageId) ? imageId : null}
+          stimuli={stimuli}
         />
       )}
 

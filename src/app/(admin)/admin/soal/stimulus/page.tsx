@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/format";
 import { QUESTION_TYPE_META } from "@/lib/question-forms";
 
 export const metadata: Metadata = { title: "Stimulus" };
+export const dynamic = "force-dynamic";
 
 export default async function AdminStimulusPage() {
   const stimuli = await listStimuli();
@@ -47,8 +48,16 @@ export default async function AdminStimulusPage() {
               </div>
               <div>
                 <h2 className="text-lg font-bold">{st.title}</h2>
-                <p className="mt-1 line-clamp-3 text-sm text-muted-foreground">{st.content}</p>
+                <p className="mt-1 line-clamp-3 text-sm whitespace-pre-line text-muted-foreground">{st.content}</p>
               </div>
+              <details className="group rounded-xl border">
+                <summary className="cursor-pointer px-4 py-2 text-sm font-semibold text-primary">Edit / terbitkan stimulus</summary>
+                <div className="border-t p-4">
+                  <StimulusForm
+                    initial={{ id: st.id, code: st.code, title: st.title, content: st.content, imageUrl: st.imageUrl, status: st.status }}
+                  />
+                </div>
+              </details>
               <div className="rounded-xl border">
                 <div className="border-b bg-muted/40 px-4 py-2 text-xs font-semibold text-muted-foreground uppercase">
                   {questions.length} soal di grup ini

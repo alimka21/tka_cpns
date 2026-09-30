@@ -10,6 +10,7 @@ import { MAX_PRACTICE_TARGETS, PRACTICE_SIZES } from "@/lib/practice";
 import type { ReviewItem } from "@/lib/review";
 import { getSession } from "@/server/auth/session";
 import { answerPracticeItem, finishPracticeSession, startPracticeSession } from "@/server/services/practice";
+import type { PracticeAiNotice } from "@/server/services/practice-ai-plan";
 
 const id = z.number().int().positive();
 
@@ -21,7 +22,10 @@ const startInput = z.object({
 
 const NOT_LOGGED_IN = { ok: false as const, error: "Sesi berakhir. Silakan masuk lagi." };
 
-export async function startPracticeAction(input: { subtopicIds: number[]; count: number }): Promise<{ ok: true; sessionId: number } | { ok: false; error: string }> {
+export async function startPracticeAction(input: {
+  subtopicIds: number[];
+  count: number;
+}): Promise<{ ok: true; sessionId: number; notice: PracticeAiNotice | null } | { ok: false; error: string }> {
   const session = await getSession();
   if (!session) return NOT_LOGGED_IN;
   const parsed = startInput.safeParse(input);

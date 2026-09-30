@@ -20,7 +20,7 @@ export type PracticeOption = {
   available: number;
 };
 
-export function PracticeStartForm({ options, preselected }: { options: PracticeOption[]; preselected: number[] }) {
+export function PracticeStartForm({ options, preselected, hasKey }: { options: PracticeOption[]; preselected: number[]; hasKey: boolean }) {
   const router = useRouter();
   const [selected, setSelected] = useState<number[]>(preselected);
   const [size, setSize] = useState<number>(DEFAULT_PRACTICE_SIZE);
@@ -40,7 +40,10 @@ export function PracticeStartForm({ options, preselected }: { options: PracticeO
     startTransition(async () => {
       const result = await startPracticeAction({ subtopicIds: selected, count: size });
       if (!result.ok) setError(result.error);
-      else router.push(`/latihan/${result.sessionId}`);
+      else {
+        const n = result.notice;
+        router.push(`/latihan/${result.sessionId}${n && n.kind !== "added" ? `?ai=${n.kind}` : ""}`);
+      }
     });
   }
 
@@ -52,7 +55,7 @@ export function PracticeStartForm({ options, preselected }: { options: PracticeO
         </legend>
         {options.map((o) => {
           const checked = selected.includes(o.subtopicId);
-          const disabled = o.available === 0 || (!checked && selected.length >= MAX_PRACTICE_TARGETS);
+          const disabled = (o.available === 0 && !hasKey) || (!checked && selected.length >= MAX_PRACTICE_TARGETS);
           const meta = DIAGNOSIS_STATUS[o.status];
           return (
             <label
@@ -74,7 +77,11 @@ export function PracticeStartForm({ options, preselected }: { options: PracticeO
                 <span className="block font-semibold">{o.name}</span>
                 <span className="block text-xs text-muted-foreground">{o.context}</span>
                 <span className="mt-1 block text-xs text-muted-foreground">
-                  {o.available > 0 ? `${o.available} soal tersedia di bank` : "Belum ada soal di bank untuk subdomain ini"}
+                  {o.available > 0
+                    ? `${o.available} soal tersedia di bank`
+                    : hasKey
+                      ? "Belum ada soal di bank — AI akan membuatkan soal latihan"
+                      : "Belum ada soal di bank untuk subdomain ini"}
                 </span>
               </span>
               <span className="flex shrink-0 flex-col items-end gap-1">
@@ -107,7 +114,9 @@ export function PracticeStartForm({ options, preselected }: { options: PracticeO
         </div>
         {selected.length > 0 && available < size && (
           <p className="text-xs text-muted-foreground">
-            Bank baru punya {available} soal untuk pilihanmu — sesi akan berisi soal yang tersedia saja.
+            {hasKey
+              ? `Bank baru punya ${available} soal untuk pilihanmu — sisanya dibuatkan AI (Latihan AI) memakai key Gemini-mu.`
+              : `Bank baru punya ${available} soal untuk pilihanmu — sesi akan berisi soal yang tersedia saja. Simpan key Gemini di Pengaturan supaya AI bisa menambah soal.`}
           </p>
         )}
       </div>
@@ -118,9 +127,10 @@ export function PracticeStartForm({ options, preselected }: { options: PracticeO
         </p>
       )}
 
-      <Button size="lg" disabled={pending || selected.length === 0 || available === 0} onClick={start}>
+      <Button size="lg" disabled={pending || selected.length === 0 || (available === 0 && !hasKey)} onClick={start}>
         {pending ? <LoaderCircle className="animate-spin" aria-hidden /> : null}
-        Mulai latihan <ArrowRight aria-hidden />
+        {pending ? (available < size && hasKey ? "Menyiapkan soal (AI bisa 10–40 detik)…" : "Menyiapkan soal…") : "Mulai latihan"}
+        {!pending && <ArrowRight aria-hidden />}
       </Button>
     </div>
   );

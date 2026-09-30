@@ -25,6 +25,11 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-09-30 (4):** model default `gemini-3-flash-preview`; mode AI soal
+grup (bacaan); Latihan AI siswa saat bank kurang; Laporkan soal + antrean
+`/admin/laporan`; stimulus bisa diedit & diterbitkan. Migrasi 0012 sudah
+dijalankan (sempat gagal di FK bernama > 64 karakter — lihat DECISIONS).
+**Fase 2 & 2.5 selesai** (belum diuji dengan key Gemini asli).
 **2026-09-30 (3):** Fase 2 (AI admin) selesai: key Gemini per user,
 generate soal baru / variasi / dari gambar, galeri gambar di DB, bank
 soal berjenjang. Migrasi 0011 sudah dijalankan. Belum diuji dengan key
@@ -229,7 +234,7 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
 
 ### 1.5e AI (menyambung Fase 2)
 - [x] `buildGenerationContext`/`buildAiPrompt` menerima bentuk soal +
-      format output JSON per bentuk — [ ] mode grup (1 stimulus + N soal)
+      format output JSON per bentuk + mode grup (1 stimulus + N soal)
 - [x] Skema Zod output AI per bentuk (`services/ai-questions.ts`)
 
 ## Fase 2 — AI generate soal
@@ -243,7 +248,9 @@ Rancangan: `docs/AI_GENERATION.md` (Jalur A + fondasi §2–3).
       (modifikasi soal bank, tombol "Variasi AI"), **dari gambar**
       (beberapa soal dari 1 gambar galeri, Gemini multimodal)
 - [x] Generate AI untuk semua bentuk soal (PG, PGK MCMA, PGK Kategori)
-      — [ ] soal grup berbasis stimulus (1 stimulus + N soal) belum
+      — soal grup berbasis stimulus: mode "Soal grup (bacaan)" (AI tulis
+      bacaan baru → stimulus Draft, atau tambah soal ke stimulus yang ada;
+      bentuk campuran)
 - [x] Validasi output AI dengan Zod per soal (+ opsi ganda, KaTeX,
       duplikat bank), retry sekali untuk kekurangannya
 - [x] Admin: antrian review soal AI — hasil `pending_review`; antrean di
@@ -276,9 +283,12 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       `/latihan/[id]/hasil` (perubahan diagnosa sebelum → sesudah);
       riwayat latihan di `/riwayat?jenis=latihan`. Migrasi 0010 sudah
       dijalankan ke DB (2026-09-30)
-- [ ] Tabel `practice_questions` + generate AI saat bank kurang (key
-      siswa), label "Latihan AI", batas panggilan per hari
-- [ ] Laporkan soal AI (siswa) + antrian laporan (admin)
+- [x] Tabel `practice_questions` + generate AI saat bank kurang (key
+      siswa), label "Latihan AI", batas 10 panggilan / 24 jam —
+      `services/practice-ai.ts`; kesulitan & level ikut akurasi siswa
+- [x] Laporkan soal (siswa) + antrian laporan (admin) — tombol
+      "Laporkan soal" di pembahasan tes & latihan (soal bank maupun
+      Latihan AI), `/admin/laporan` dengan badge jumlah di menu
 
 ## Fase 3 — Monetisasi (nanti, belum sekarang)
 

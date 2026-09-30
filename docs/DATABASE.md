@@ -174,7 +174,21 @@ alur di `src/server/services/practice.ts`)
 - unique (session_id, order) & (session_id, question_id)
 - Sekali dijawab tidak bisa diubah (update `WHERE answered_at IS NULL`);
   kunci + pembahasan baru dikirim ke client setelah soal itu dijawab.
-- Soal AI privat (`practice_questions`) menyusul di Fase 2.5 langkah 6.
+- `question_id` (soal bank) **atau** `practice_question_id` (soal Latihan
+  AI) — tepat satu terisi. FK kedua bernama pendek `psi_practice_question_fk`
+  (nama otomatis Drizzle 68 karakter ditolak MariaDB, maks 64).
+
+**practice_questions** — soal Latihan AI privat milik satu siswa
+- id, owner_user_id (fk, cascade), subtopic_id, type, question_text,
+  category_labels (JSON), options (JSON `{label,text,isCorrect,correctCategory}[]`,
+  id opsi = urutan 1..n), explanation, difficulty, cognitive_level, model,
+  created_at. Tidak masuk bank & tes resmi; di UI id soalnya negatif.
+
+**question_reports** — laporan soal dari siswa
+- id, user_id (fk, cascade), question_id **atau** practice_question_id
+  (fk, cascade), reason (`kunci_salah`|`soal_ambigu`|`di_luar_materi`|
+  `salah_ketik`|`lainnya`), note, status (`open`|`resolved`), resolved_by,
+  resolved_at, created_at. Unique (user, soal) — lapor ulang = update.
 
 **Diagnosa** (`loadDiagnosisRecords`): ringkasan per attempt tes resmi
 (`attempt_subtopic_scores`) + per sesi latihan (item terjawab,

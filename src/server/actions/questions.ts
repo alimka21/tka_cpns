@@ -142,6 +142,7 @@ export async function deleteQuestionAction(input: number): Promise<ActionResult>
     const usage = await questionUsage(tx, id.data);
     if (usage.answers > 0) return { error: "Soal sudah pernah dijawab siswa — tidak bisa dihapus. Jadikan draft saja." };
     if (usage.packages > 0) return { error: `Soal masih dipakai di ${usage.packages} paket tes — keluarkan dari paket dulu.` };
+    if (usage.practiceItems > 0) return { error: "Soal pernah dipakai di latihan siswa — tidak bisa dihapus. Jadikan draft saja." };
     await deleteQuestion(tx, id.data);
     return {};
   });
@@ -191,4 +192,21 @@ export async function createStimulusAction(input: unknown): Promise<ActionResult
     if (isDuplicate(error)) return { ok: false, errors: [`Kode ${parsed.data.code} sudah dipakai stimulus lain.`] };
     throw error;
   }
+}
+
+const stimulusUpdateInput = stimulusInput.omit({ code: true }).extend({ id: z.number().int().positive() });
+
+/** Ubah stimulus (judul, isi, gambar, status). Kode tidak bisa diubah — dipakai import Excel. */
+export async function updateStimulusAction(input: unknown): Promise<ActionResult> {
+  const session = await getAdminSession();
+  if (!session) return NOT_ADMIN;
+  const parsed = stimulusUpdateInput.safeParse(input);
+  if (!parsed.success) return { ok: false, errors: parsed.error.issues.map((i) => i.message) };
+  const { id, ...values } = parsed.data;
+  await db
+    .update(stimuli)
+    .set({ ...values, imageUrl: values.imageUrl ?? null })
+    .where(eq(stimuli.id, id));
+  revalidatePath("/admin/soal/stimulus");
+  return { ok: true };
 }

@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import { BookOpenText, ChevronRight } from "lucide-react";
+import { ReportQuestionButton, reportTargetOf } from "@/components/hasil/report-question-button";
 import { ReviewCard } from "@/components/hasil/review-card";
 import { RichHtml } from "@/components/tes/rich-html";
 import { cn } from "@/lib/utils";
@@ -106,7 +107,7 @@ export default async function PembahasanPage({ params, searchParams }: PageProps
                     </div>
                   </details>
                 )}
-                <ReviewCard item={item} />
+                <ReviewCard item={item} footer={<ReportQuestionButton target={reportTargetOf(item)} />} />
               </li>
             );
           })}

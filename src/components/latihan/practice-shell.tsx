@@ -3,7 +3,8 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, Check, CircleCheck, Dumbbell, LoaderCircle, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, CircleCheck, Dumbbell, LoaderCircle, Sparkles, X } from "lucide-react";
+import { ReportQuestionButton, reportTargetOf } from "@/components/hasil/report-question-button";
 import { ReviewCard } from "@/components/hasil/review-card";
 import { QuestionView } from "@/components/tes/question-view";
 import { StimulusPanel } from "@/components/tes/stimulus-panel";
@@ -26,6 +27,7 @@ import { cn } from "@/lib/utils";
 export type PracticeShellItem = {
   itemId: number;
   subtopic: string;
+  isAi: boolean;
   question: ExamQuestion;
   review: ReviewItem | null;
 };
@@ -35,13 +37,15 @@ type Props = {
   stimuli: ExamStimulus[];
   answer: (input: { itemId: number; response: AnswerResponse }) => Promise<{ ok: true; review: ReviewItem } | { ok: false; error: string }>;
   finish: () => Promise<{ ok: true; redirectTo: string } | { ok: false; error: string }>;
+  /** Info hasil penambahan soal Latihan AI saat sesi dibuat. */
+  notice?: { tone: "info" | "warning"; text: string } | null;
 };
 
 /**
  * Mode latihan: tanpa timer; setiap soal langsung dinilai & menampilkan
  * kunci + pembahasan setelah siswa menekan "Periksa jawaban".
  */
-export function PracticeShell({ items, stimuli, answer, finish }: Props) {
+export function PracticeShell({ items, stimuli, answer, finish, notice }: Props) {
   const router = useRouter();
   const [reviews, setReviews] = useState<Record<number, ReviewItem>>(() =>
     Object.fromEntries(items.filter((i) => i.review).map((i) => [i.itemId, i.review!])),
@@ -117,6 +121,17 @@ export function PracticeShell({ items, stimuli, answer, finish }: Props) {
       </header>
 
       <main className="mx-auto flex w-full max-w-5xl flex-1 flex-col gap-4 px-4 py-6 sm:px-6">
+        {notice && (
+          <p
+            role="status"
+            className={cn(
+              "flex items-start gap-2 rounded-lg border px-4 py-3 text-sm",
+              notice.tone === "info" ? "border-primary/30 bg-primary-soft text-primary" : "border-warning/40 bg-warning-soft text-warning-strong",
+            )}
+          >
+            <Sparkles className="mt-0.5 size-4 shrink-0" aria-hidden /> {notice.text}
+          </p>
+        )}
         <nav aria-label="Nomor soal" className="flex flex-wrap gap-2">
           {items.map((it, i) => {
             const r = reviews[it.itemId];
@@ -144,7 +159,7 @@ export function PracticeShell({ items, stimuli, answer, finish }: Props) {
         {stimulus && <StimulusPanel key={stimulus.id} stimulus={stimulus} questionNumbers={stimulusNumbers} />}
 
         {review ? (
-          <ReviewCard item={{ ...review, number: index + 1 }} />
+          <ReviewCard item={{ ...review, number: index + 1 }} footer={<ReportQuestionButton key={item.itemId} target={reportTargetOf(review)} />} />
         ) : (
           <section aria-label={`Soal ${index + 1}`} className="surface-card flex flex-col gap-6 p-5 sm:p-8">
             <div className="flex flex-wrap items-center gap-2 border-b pb-4">
@@ -152,6 +167,11 @@ export function PracticeShell({ items, stimuli, answer, finish }: Props) {
                 Soal {index + 1}
               </span>
               <span className="text-sm text-muted-foreground">dari {items.length}</span>
+              {item.isAi && (
+                <Badge variant="info" title="Soal dibuat AI khusus untukmu — tidak direview admin, tidak dihitung ke tes resmi">
+                  <Sparkles aria-hidden /> Latihan AI
+                </Badge>
+              )}
               <Badge variant="outline" className="ml-auto max-w-full truncate">
                 {item.subtopic}
               </Badge>

@@ -19,6 +19,7 @@ export type QuestionListRow = {
   createdAt: string;
   stimulusCode: string | null;
   stimulusOrder: number | null;
+  hasImage: boolean;
 };
 
 /** Pohon filter: jenjang → mata uji → subdomain yang punya soal. */

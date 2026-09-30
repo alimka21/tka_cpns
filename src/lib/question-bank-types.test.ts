@@ -16,6 +16,7 @@ const row = (p: Partial<QuestionListRow>): QuestionListRow => ({
   createdAt: "2026-09-26",
   stimulusCode: null,
   stimulusOrder: null,
+  hasImage: false,
   ...p,
 });
 

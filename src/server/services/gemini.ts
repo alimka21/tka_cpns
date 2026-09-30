@@ -73,7 +73,8 @@ export async function generateJson(opts: {
       method: "POST",
       body: JSON.stringify({
         contents: [{ role: "user", parts }],
-        generationConfig: { responseMimeType: "application/json", temperature: opts.temperature ?? 0.8 },
+        // Gemini 3: biarkan temperature default model kecuali diminta eksplisit.
+        generationConfig: { responseMimeType: "application/json", ...(opts.temperature != null && { temperature: opts.temperature }) },
       }),
     },
     opts.timeoutMs ?? 90_000,

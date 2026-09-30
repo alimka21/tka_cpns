@@ -49,6 +49,7 @@ export function buildReviewItem(
     type: q.type,
     html: renderMathToHtml(q.questionText),
     imageUrl: q.imageUrl,
+    subtopicId: q.subtopicId,
     subtopic: subtopicName,
     categoryLabels: q.type === "pgk_kategori" ? q.categoryLabels : null,
     stimulusId: q.stimulusId,

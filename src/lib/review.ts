@@ -23,6 +23,7 @@ export type ReviewItem = {
   type: QuestionType;
   html: string;
   imageUrl: string | null;
+  subtopicId: number;
   subtopic: string;
   categoryLabels: [string, string] | null;
   stimulusId: number | null;

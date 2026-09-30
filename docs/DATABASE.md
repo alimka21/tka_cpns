@@ -155,6 +155,31 @@ tersimpan dimuat ulang); yang sudah lewat `ends_at` tapi belum pernah
 di-submit (tab ditutup) di-finalize otomatis sebagai `expired` sebelum
 attempt baru dibuat — jawaban yang sempat ter-autosave tetap dinilai.
 
+## Grup: Latihan Kelemahan — **implementasi selesai (bank-only)**
+(`src/server/db/schema/practice.ts`, migrasi `0010_latihan_kelemahan`,
+alur di `src/server/services/practice.ts`)
+
+**practice_sessions**
+- id, user_id (fk, cascade), target_subtopic_ids (JSON `number[]`),
+  question_count, status (`in_progress`|`completed`|`abandoned`),
+  started_at, completed_at, total_score (= benar), max_score (= soal
+  yang dijawab) — keduanya diisi saat selesai
+- Satu sesi `in_progress` per siswa: memulai sesi baru menandai yang lama
+  `abandoned`. Selesai tanpa satu pun jawaban → `abandoned`.
+
+**practice_session_items**
+- id, session_id (fk, cascade), order, question_id (fk soal bank),
+  response (JSON `answerResponse`, nullable), is_correct, answered_at
+- unique (session_id, order) & (session_id, question_id)
+- Sekali dijawab tidak bisa diubah (update `WHERE answered_at IS NULL`);
+  kunci + pembahasan baru dikirim ke client setelah soal itu dijawab.
+- Soal AI privat (`practice_questions`) menyusul di Fase 2.5 langkah 6.
+
+**Diagnosa** (`loadDiagnosisRecords`): ringkasan per attempt tes resmi
+(`attempt_subtopic_scores`) + per sesi latihan (item terjawab,
+dikelompokkan per subdomain) → `diagnose()`. Latihan **tidak** mengubah
+skor tes resmi.
+
 ## Enum penting
 
 - Aturan skor (satu-satunya, semua bentuk): benar penuh = +1 atau

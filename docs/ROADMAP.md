@@ -25,6 +25,10 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-09-30 (2):** Latihan Kelemahan bank-only selesai (Fase 2.5
+langkah 5) + migrasi 0010 dijalankan. Berikutnya: Fase 2 (key Gemini
+siswa di Pengaturan + client Gemini) lalu langkah 6 (soal AI saat bank
+kurang).
 **2026-09-30:** demo publik `/tes/demo` jadi 10 soal + halaman hasil
 `/tes/demo/hasil` (skor, radar subdomain, rencana belajar, pembahasan, CTA
 daftar); pop-up tengah saat mengumpulkan tes; panel stimulus di atas soal.
@@ -249,8 +253,12 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       `/riwayat` (filter jenjang) — `queries/progress.ts`. Tren per
       subdomain baru berupa naik/turun vs sebelum tes terakhir (belum
       grafik garis per subdomain). Filter tes/latihan menunggu tabel latihan.
-- [ ] Tabel `practice_sessions` & `practice_session_items`; latihan
-      kelemahan **bank-only** dengan pembahasan langsung per soal
+- [x] Tabel `practice_sessions` & `practice_session_items`; latihan
+      kelemahan **bank-only** dengan pembahasan langsung per soal —
+      `/latihan` (pilih ≤3 subdomain, 5–20 soal), `/latihan/[id]`,
+      `/latihan/[id]/hasil` (perubahan diagnosa sebelum → sesudah);
+      riwayat latihan di `/riwayat?jenis=latihan`. Migrasi 0010 sudah
+      dijalankan ke DB (2026-09-30)
 - [ ] Tabel `practice_questions` + generate AI saat bank kurang (key
       siswa), label "Latihan AI", batas panggilan per hari
 - [ ] Laporkan soal AI (siswa) + antrian laporan (admin)

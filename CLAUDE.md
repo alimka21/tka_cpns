@@ -29,7 +29,7 @@ tugas saat ini. Urutan baca yang disarankan:
 |---|---|---|
 | `docs/SRS.md` | Kebutuhan fungsional & non-fungsional, scope fase 1 | Saat merancang fitur baru / cek scope |
 | `docs/ARCHITECTURE.md` | Struktur folder, stack, alur request, keputusan teknis | Saat menambah modul/lapisan baru |
-| `docs/DATABASE.md` | Skema tabel, relasi, enum, aturan skor | Saat kerja apa pun yang menyentuh data |
+| `docs/DATABASE.md` | Skema tabel, relasi, enum, aturan skor (termasuk latihan) | Saat kerja apa pun yang menyentuh data |
 | `docs/ROADMAP.md` | Fase MVP, urutan pengerjaan | Saat menentukan "kerjakan apa selanjutnya" |
 | `docs/WORKFLOW.md` | Alur Git, cara deploy ke Hostinger, cara testing | Saat setup, deploy, atau troubleshooting env |
 | `docs/DECISIONS.md` | Log keputusan (ADR ringkas), ditambah seiring waktu | Saat butuh alasan kenapa sesuatu dibuat begitu |

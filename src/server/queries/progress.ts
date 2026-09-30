@@ -1,11 +1,13 @@
 // Data halaman /progres & kartu prioritas di dashboard: diagnosa per
-// subdomain (service `diagnose`) dipetakan ke hierarki mata uji → domain →
+// subdomain (service `diagnose`, dari tes resmi + latihan) dipetakan ke
+// hierarki mata uji → domain →
 // subdomain. Subdomain yang belum pernah diujikan ikut tampil ("Belum diuji")
 // untuk mata uji yang sudah pernah dikerjakan siswa.
 
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/server/db";
-import { attemptSubtopicScores, attempts, categories, subjects, subtopics, testPackages, topics } from "@/server/db/schema";
+import { attempts, categories, subjects, subtopics, testPackages, topics } from "@/server/db/schema";
+import { loadDiagnosisRecords } from "./practice";
 import { diagnose, practicePriorities, type SubtopicDiagnosis } from "@/server/services/diagnosis";
 
 export type ProgressSubdomain = {
@@ -41,6 +43,8 @@ export type StudentProgress = {
   /** Skor per tes (0–100), lama → baru, maks 20 terakhir. */
   scoreTrend: { label: string; score: number; title: string }[];
   testCount: number;
+  /** Sesi latihan yang punya minimal 1 soal terjawab. */
+  practiceCount: number;
 };
 
 const trendLabel = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
@@ -49,17 +53,7 @@ export async function getStudentProgress(userId: number): Promise<StudentProgres
   const finished = and(eq(attempts.userId, userId), ne(attempts.status, "in_progress"));
 
   const [records, attemptRows] = await Promise.all([
-    db
-      .select({
-        subtopicId: attemptSubtopicScores.subtopicId,
-        correct: attemptSubtopicScores.correctCount,
-        total: attemptSubtopicScores.totalCount,
-        submittedAt: attempts.submittedAt,
-        startedAt: attempts.startedAt,
-      })
-      .from(attemptSubtopicScores)
-      .innerJoin(attempts, eq(attempts.id, attemptSubtopicScores.attemptId))
-      .where(finished),
+    loadDiagnosisRecords(userId),
     db
       .select({
         submittedAt: attempts.submittedAt,
@@ -74,7 +68,8 @@ export async function getStudentProgress(userId: number): Promise<StudentProgres
       .orderBy(asc(attempts.startedAt)),
   ]);
 
-  const diagnoses = diagnose(records.map((r) => ({ subtopicId: r.subtopicId, correct: r.correct, total: r.total, at: r.submittedAt ?? r.startedAt })));
+  const diagnoses = diagnose(records);
+  const practiceCount = new Set(records.filter((r) => r.source === "practice").map((r) => r.sourceId)).size;
   const byId = new Map(diagnoses.map((d) => [d.subtopicId, d]));
 
   const scoreTrend = attemptRows
@@ -86,7 +81,9 @@ export async function getStudentProgress(userId: number): Promise<StudentProgres
       title: a.title,
     }));
 
-  if (diagnoses.length === 0) return { subjects: [], priorities: [], strongest: null, scoreTrend, testCount: attemptRows.length };
+  if (diagnoses.length === 0) {
+    return { subjects: [], priorities: [], strongest: null, scoreTrend, testCount: attemptRows.length, practiceCount };
+  }
 
   // Mata uji yang pernah diujikan → semua subdomainnya (termasuk yang belum diuji).
   const testedSubjects = await db
@@ -147,5 +144,6 @@ export async function getStudentProgress(userId: number): Promise<StudentProgres
     strongest: strongestDiag ? withInfo(strongestDiag) : null,
     scoreTrend,
     testCount: attemptRows.length,
+    practiceCount,
   };
 }

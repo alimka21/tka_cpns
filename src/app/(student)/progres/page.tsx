@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowDown, ArrowRight, ArrowUp, ChevronDown, TriangleAlert } from "lucide-react";
+import { ArrowDown, ArrowRight, ArrowUp, ChevronDown, Dumbbell, TriangleAlert } from "lucide-react";
 import { ScoreTrend } from "@/components/analytics/score-trend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -68,14 +68,17 @@ export default async function ProgresPage() {
                   <StatusBadge status={p.diagnosis.status} />
                   <Delta diagnosis={p.diagnosis} />
                 </div>
+                <Button size="sm" variant="outline" className="mt-2" nativeButton={false} render={<Link href={`/latihan?sub=${p.subtopicId}`} />}>
+                  <Dumbbell aria-hidden /> Latih subdomain ini
+                </Button>
               </li>
             ))}
           </ol>
-          <p className="text-sm text-muted-foreground">
-            Mode <span className="font-semibold text-foreground">Latihan Kelemahan</span> (soal khusus subdomain ini, lengkap
-            dengan pembahasan langsung) sedang disiapkan. Sementara itu, kerjakan paket yang memuat subdomain di atas lalu buka
-            pembahasannya.
-          </p>
+          <div>
+            <Button nativeButton={false} render={<Link href="/latihan" />}>
+              <Dumbbell aria-hidden /> Latihan ketiganya sekaligus
+            </Button>
+          </div>
         </section>
       )}
 
@@ -122,7 +125,7 @@ function Header() {
     <header>
       <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Progres Kemampuan</h1>
       <p className="mt-1 text-muted-foreground">
-        Diagnosa kekuatan dan kelemahanmu per subdomain dari seluruh tes yang sudah kamu kerjakan.{" "}
+        Diagnosa kekuatan dan kelemahanmu per subdomain dari seluruh tes dan latihan yang sudah kamu kerjakan.{" "}
         <Link href="/riwayat" className="font-semibold text-primary hover:underline">
           Lihat riwayat tes
         </Link>
@@ -131,13 +134,24 @@ function Header() {
   );
 }
 
-function Summary({ progress }: { progress: { priorities: PrioritySubdomain[]; strongest: PrioritySubdomain | null; testCount: number } }) {
+function Summary({
+  progress,
+}: {
+  progress: { priorities: PrioritySubdomain[]; strongest: PrioritySubdomain | null; testCount: number; practiceCount: number };
+}) {
   const weakest = progress.priorities[0];
   const strong = progress.strongest;
   const change = weakest?.diagnosis.previousAccuracy != null ? weakest.diagnosis.accuracy - weakest.diagnosis.previousAccuracy : null;
   return (
     <p>
-      Dari <strong>{progress.testCount} tes</strong> yang sudah kamu kerjakan
+      Dari <strong>{progress.testCount} tes</strong>
+      {progress.practiceCount > 0 && (
+        <>
+          {" "}
+          dan <strong>{progress.practiceCount} latihan</strong>
+        </>
+      )}{" "}
+      yang sudah kamu kerjakan
       {strong ? (
         <>
           , kamu paling kuat di <strong>{strong.name}</strong> ({strong.diagnosis.accuracy}%)

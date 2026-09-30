@@ -71,6 +71,13 @@
       "when": 1790664386104,
       "tag": "0009_paket_tes_attempt",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "5",
+      "when": 1790778325166,
+      "tag": "0010_latihan_kelemahan",
+      "breakpoints": true
     }
   ]
 }

@@ -134,21 +134,21 @@ function WeakestCard({ weakest: w }: { weakest: PrioritySubdomain }) {
           </h2>
           <p className="mt-2 text-sm text-white/80">
             {w.subject} → {w.domain}. Ini subdomain dengan akurasi terendah dari {w.diagnosis.windowQuestions} soal
-            terbarumu di sana. Cari paket yang membahasnya untuk menutup celahnya.
+            terbarumu di sana. Latih khusus subdomain ini dengan pembahasan langsung.
           </p>
         </div>
         <div className="flex flex-col gap-2 sm:flex-row lg:flex-col">
-          <Button size="lg" variant="cta" nativeButton={false} render={<Link href="/progres" />}>
-            Lihat progres lengkap <ArrowRight aria-hidden />
+          <Button size="lg" variant="cta" nativeButton={false} render={<Link href={`/latihan?sub=${w.subtopicId}`} />}>
+            Latihan subdomain ini <ArrowRight aria-hidden />
           </Button>
           <Button
             size="lg"
             variant="outline"
             className="border-white/30 bg-transparent text-primary-foreground hover:bg-white/10 hover:text-primary-foreground"
             nativeButton={false}
-            render={<Link href="#paket-heading" />}
+            render={<Link href="/progres" />}
           >
-            Lihat paket latihan
+            Lihat progres lengkap
           </Button>
         </div>
       </div>

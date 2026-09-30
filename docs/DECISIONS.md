@@ -12,6 +12,20 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-30 — Latihan Kelemahan bank-only: aturan sesi & pemilihan soal
+Keputusan: pemilihan soal = soal bank tayang di subdomain target, belum
+pernah dikerjakan dulu (acak) lalu yang paling lama; bergiliran antar
+subdomain; grup stimulus utuh (boleh membawa soal subdomain lain, tidak
+dipotong). Satu sesi aktif per siswa. Jawaban dinilai per soal & terkunci
+setelah diperiksa. Hasil latihan ikut diagnosa (satu record per sesi per
+subdomain), tidak ikut skor tes resmi. Tanpa prioritas (soal per
+subdomain < 3) → pilihan awal = subdomain berakurasi terendah yang ada
+soalnya.
+Alasan: sesuai rancangan AI_GENERATION.md §5; kunci terkunci mencegah
+"coba-coba" jawaban yang membuat diagnosa palsu.
+Alternatif yang ditolak: boleh ganti jawaban setelah melihat kunci;
+banyak sesi paralel (membingungkan & membebani diagnosa).
+
 ## 2026-09-30 — Hasil demo dinilai di server via cookie; stimulus di atas soal
 Keputusan: `/tes/demo` (10 soal, 5 subdomain asli SMP) mengirim semua
 jawaban saat dikumpulkan → divalidasi Zod → disimpan di cookie httpOnly

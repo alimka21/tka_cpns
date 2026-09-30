@@ -20,7 +20,8 @@ dikirim inline ke Gemini). Semua hasil `pending_review`. Gambar disimpan
 di MariaDB (MEDIUMBLOB, dikompres WebP ≤1600 px ±≤900 KB, dedup SHA-256),
 disajikan `/gambar/[id]` hanya untuk user login. Gemini dipanggil via REST
 (`fetch`, tanpa SDK), model dari env `GEMINI_MODEL` (default
-`gemini-2.5-flash`), key milik admin sendiri dari `/pengaturan`.
+`gemini-3-flash-preview` sejak 2026-09-30 — gemini-2.5-flash ditutup Google
+untuk pengguna baru), key milik admin sendiri dari `/pengaturan`.
 Alasan: pilihan user (gambar di DB: aman dari redeploy Hostinger, ikut
 backup, tanpa akun storage tambahan); REST cukup untuk 1 endpoint & tidak
 menambah dependensi.

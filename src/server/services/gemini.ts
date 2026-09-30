@@ -7,7 +7,7 @@ const API_BASE = process.env.GEMINI_API_BASE?.trim() || "https://generativelangu
 
 /** Model dari env supaya bisa diganti tanpa ubah kode (docs/AI_GENERATION.md §2). */
 export function geminiModel() {
-  return process.env.GEMINI_MODEL?.trim() || "gemini-2.5-flash";
+  return process.env.GEMINI_MODEL?.trim() || "gemini-3-flash-preview";
 }
 
 export class GeminiError extends Error {

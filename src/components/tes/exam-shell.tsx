@@ -27,7 +27,7 @@ import { cn } from "@/lib/utils";
 import { ExamTimer } from "./exam-timer";
 import { QuestionNavigator } from "./question-navigator";
 import { QuestionView } from "./question-view";
-import { StimulusAside, StimulusCollapsible } from "./stimulus-panel";
+import { StimulusPanel } from "./stimulus-panel";
 
 const AUTOSAVE_DEBOUNCE_MS = 400;
 const AUTOSAVE_RETRY_MS = 3000;
@@ -57,6 +57,8 @@ type Props = {
    * `redirectTo` (mis. mode demo tanpa database).
    */
   doneWithoutResult?: { title: string; message: string; actions: { href: string; label: string }[] };
+  /** Kirim semua jawaban saat mengumpulkan (mode demo tanpa autosave ke DB). */
+  sendAnswersOnSubmit?: boolean;
 };
 
 export function ExamShell({
@@ -69,9 +71,15 @@ export function ExamShell({
   saveAnswer,
   submitAttempt,
   doneWithoutResult,
+  sendAnswersOnSubmit = false,
 }: Props) {
   const router = useRouter();
   const [answers, setAnswers] = useState(initialAnswers);
+  // Salinan terbaru untuk submit (timer habis bisa memanggil submit dari closure lama).
+  const answersRef = useRef(answers);
+  useEffect(() => {
+    answersRef.current = answers;
+  }, [answers]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -178,7 +186,10 @@ export function ExamShell({
     setPhase("submitting");
     setSubmitError(null);
     await flushSaves();
-    const result = await submitAttempt().catch(() => ({
+    const snapshot = sendAnswersOnSubmit
+      ? Object.fromEntries(Object.entries(answersRef.current).map(([id, a]) => [id, a.response]))
+      : undefined;
+    const result = await submitAttempt(snapshot).catch(() => ({
       ok: false,
       error: "Koneksi terputus.",
       redirectTo: undefined,
@@ -194,7 +205,7 @@ export function ExamShell({
       setResultHref(result.redirectTo);
       router.push(result.redirectTo);
     }
-  }, [flushSaves, submitAttempt, router]);
+  }, [flushSaves, submitAttempt, router, sendAnswersOnSubmit]);
 
   const question = questions[currentIndex];
   const answer = answers[question.id];
@@ -246,14 +257,21 @@ export function ExamShell({
       </header>
 
       <div className="mx-auto grid w-full max-w-[96rem] flex-1 gap-6 px-4 py-6 pb-28 sm:px-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8 lg:pb-8">
-        {/* Soal grup: stimulus di kiri (xl ke atas), soal di kanan. */}
-        <div className={cn("grid min-w-0 gap-6", stimulus && "xl:grid-cols-2 xl:items-start")}>
-        {stimulus && <StimulusAside stimulus={stimulus} questionNumbers={stimulusNumbers} />}
+        {/* Soal grup: panel bacaan di atas, soal & pilihan jawaban di bawah. */}
         <div className="flex min-w-0 flex-col gap-4">
           {submitError && (
             <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive-soft px-4 py-3 text-sm text-destructive">
               {submitError} Coba kumpulkan lagi.
             </p>
+          )}
+
+          {stimulus && (
+            <StimulusPanel
+              key={stimulus.id}
+              stimulus={stimulus}
+              questionNumbers={stimulusNumbers}
+              textClass={FONT_SCALES.find((f) => f.id === fontScale)?.textClass}
+            />
           )}
 
           <section aria-label={`Soal ${currentIndex + 1}`} className="surface-card flex flex-col gap-6 p-5 sm:p-8">
@@ -290,7 +308,6 @@ export function ExamShell({
             </div>
 
             <div className={cn("flex flex-col gap-6", FONT_SCALES.find((f) => f.id === fontScale)?.textClass)}>
-              {stimulus && <StimulusCollapsible stimulus={stimulus} questionNumbers={stimulusNumbers} />}
               <QuestionView
                 number={currentIndex + 1}
                 question={question}
@@ -333,8 +350,6 @@ export function ExamShell({
               </Button>
             )}
           </div>
-        </div>
-
         </div>
 
         {/* Palet nomor soal — desktop */}

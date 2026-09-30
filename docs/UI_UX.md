@@ -99,7 +99,7 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 | **Opsi jawaban** | Resting: border tipis + badge huruf bulat abu. Terpilih: border 2px `primary`, latar `primary-soft`, badge huruf solid biru |
 | **Opsi PGK MCMA** | Sama dengan opsi PG, tapi badge huruf kotak (bukan bulat) berisi centang saat dipilih; petunjuk "Jawaban benar bisa lebih dari satu" + penghitung "n opsi dipilih" |
 | **Pernyataan PGK Kategori** | Desktop: tabel pernyataan × 2 kolom kategori (tombol segmen). HP: kartu per pernyataan dengan 2 tombol penuh lebar. Klik kategori yang sama = kosongkan; penghitung "n dari m pernyataan dijawab" |
-| **Panel stimulus (soal grup)** | ≥1280px: kolom kiri sticky, scroll sendiri, judul + "Stimulus untuk soal 4–5". Di bawahnya: bagian yang bisa dilipat (default terbuka) di atas soal |
+| **Panel stimulus (soal grup)** | Semua ukuran layar: panel **di atas** kartu soal (bukan kiri-kanan), judul + "Bacaan untuk soal 4–5", bisa dilipat (default terbuka), isi scroll sendiri maks 40–45% tinggi layar, ikut ukuran teks A/A/A |
 | **Kategori skor** | `scoreTone()` di `src/lib/format.ts`: ≥75% Baik (hijau), 50–74% Cukup (amber), <50% Perlu latihan (merah) |
 | **Input/Form** | Border `neutral-border`, radius 8px, focus ring warna `primary` |
 | **Tabel (admin)** | Header sticky, baris zebra tipis opsional, aksi di kolom kanan (ikon edit/toggle), hover row highlight ringan |

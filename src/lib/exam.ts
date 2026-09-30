@@ -54,7 +54,13 @@ export type SaveAnswerFn = (input: {
   isFlagged: boolean;
 }) => Promise<{ ok: boolean; error?: string }>;
 
-export type SubmitAttemptFn = () => Promise<{ ok: boolean; error?: string; redirectTo?: string }>;
+/**
+ * `answers` hanya dikirim bila ExamShell diberi `sendAnswersOnSubmit` (demo
+ * tanpa DB). Attempt asli mengabaikannya — jawaban sudah tersimpan via autosave.
+ */
+export type SubmitAttemptFn = (
+  answers?: Record<number, AnswerResponse | null>,
+) => Promise<{ ok: boolean; error?: string; redirectTo?: string }>;
 
 export function remainingMs(endsAtMs: number, nowMs: number) {
   return Math.max(0, endsAtMs - nowMs);

@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-30 — Hasil demo dinilai di server via cookie; stimulus di atas soal
+Keputusan: `/tes/demo` (10 soal, 5 subdomain asli SMP) mengirim semua
+jawaban saat dikumpulkan → divalidasi Zod → disimpan di cookie httpOnly
+(`path=/tes/demo`, 1 hari) → `/tes/demo/hasil` menilai ulang di server
+(kunci di `src/server/demo/demo-test.ts`) dan menampilkan skor, radar per
+subdomain, rencana belajar, pembahasan, dan ajakan daftar. Panel stimulus
+soal grup dipindah ke atas soal di semua ukuran layar (permintaan user).
+Alasan: demo adalah alat pemasaran — pengunjung harus merasakan analisis
+kelemahan; tanpa DB & tanpa akun, cookie cukup dan kunci tetap di server.
+Alternatif yang ditolak: simpan attempt demo di DB (butuh user/cleanup);
+kirim kunci ke client & nilai di browser (bocor kunci, skor bisa diubah).
+
 ## 2026-09-29 — Edit/hapus soal yang sudah dipakai dikunci sebagian
 Keputusan: soal yang **sudah dijawab siswa** hanya boleh diubah teks,
 opsi (teksnya), pembahasan, kesulitan, level — bentuk, jumlah opsi, kunci,

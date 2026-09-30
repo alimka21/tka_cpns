@@ -25,6 +25,9 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-09-30:** demo publik `/tes/demo` jadi 10 soal + halaman hasil
+`/tes/demo/hasil` (skor, radar subdomain, rencana belajar, pembahasan, CTA
+daftar); pop-up tengah saat mengumpulkan tes; panel stimulus di atas soal.
 
 **Database 2026-09-25:** tersambung ke Hostinger (MariaDB 11.8, via
 Remote MySQL; `npm run db:check`). Migrasi 0000–0006 **sudah

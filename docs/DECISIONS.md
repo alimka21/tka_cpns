@@ -12,6 +12,22 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-09-30 — AI admin: 3 mode, gambar di DB, Gemini via REST
+Keputusan: generate soal admin punya 3 mode — soal baru dari subdomain,
+variasi (modifikasi soal bank; subdomain ikut soal asal, soal asal +
+kuncinya masuk prompt), dan dari gambar (1 gambar galeri → beberapa soal,
+dikirim inline ke Gemini). Semua hasil `pending_review`. Gambar disimpan
+di MariaDB (MEDIUMBLOB, dikompres WebP ≤1600 px ±≤900 KB, dedup SHA-256),
+disajikan `/gambar/[id]` hanya untuk user login. Gemini dipanggil via REST
+(`fetch`, tanpa SDK), model dari env `GEMINI_MODEL` (default
+`gemini-2.5-flash`), key milik admin sendiri dari `/pengaturan`.
+Alasan: pilihan user (gambar di DB: aman dari redeploy Hostinger, ikut
+backup, tanpa akun storage tambahan); REST cukup untuk 1 endpoint & tidak
+menambah dependensi.
+Alternatif yang ditolak: simpan file di disk hosting (hilang saat
+redeploy); cloud storage (butuh akun & key tambahan); key Gemini di env
+server (bertentangan dengan SRS — key per user).
+
 ## 2026-09-30 — Latihan Kelemahan bank-only: aturan sesi & pemilihan soal
 Keputusan: pemilihan soal = soal bank tayang di subdomain target, belum
 pernah dikerjakan dulu (acak) lalu yang paling lama; bergiliran antar

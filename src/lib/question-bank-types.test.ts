@@ -4,6 +4,7 @@ import { buildTopicTree, type QuestionListRow } from "./question-bank-types";
 const row = (p: Partial<QuestionListRow>): QuestionListRow => ({
   id: 1,
   text: "",
+  html: "",
   jenjang: "SMP",
   topic: "Matematika",
   subtopicId: 1,

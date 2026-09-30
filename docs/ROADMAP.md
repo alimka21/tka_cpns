@@ -25,6 +25,11 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-09-30 (3):** Fase 2 (AI admin) selesai: key Gemini per user,
+generate soal baru / variasi / dari gambar, galeri gambar di DB, bank
+soal berjenjang. Migrasi 0011 sudah dijalankan. Belum diuji dengan key
+Gemini asli. Berikutnya: Fase 2.5 langkah 6 (soal AI latihan siswa saat
+bank kurang) & 7 (laporkan soal).
 **2026-09-30 (2):** Latihan Kelemahan bank-only selesai (Fase 2.5
 langkah 5) + migrasi 0010 dijalankan. Berikutnya: Fase 2 (key Gemini
 siswa di Pengaturan + client Gemini) lalu langkah 6 (soal AI saat bank
@@ -223,22 +228,34 @@ atau Sesuai/Tidak Sesuai; stimulus boleh lintas subdomain.
 - [x] Template & petunjuk import diperbarui + test parser per bentuk
 
 ### 1.5e AI (menyambung Fase 2)
-- [ ] `buildGenerationContext` menerima bentuk soal & mode grup
-      (1 stimulus + N soal), dengan format output JSON per bentuk
-- [ ] Skema Zod output AI per bentuk (validasi sebelum masuk antrian
-      review)
+- [x] `buildGenerationContext`/`buildAiPrompt` menerima bentuk soal +
+      format output JSON per bentuk — [ ] mode grup (1 stimulus + N soal)
+- [x] Skema Zod output AI per bentuk (`services/ai-questions.ts`)
 
 ## Fase 2 — AI generate soal
 
 Rancangan: `docs/AI_GENERATION.md` (Jalur A + fondasi §2–3).
 
-- [ ] Halaman pengaturan: simpan Gemini API key user (terenkripsi)
-- [ ] Server action generate soal by subdomain/jumlah/kesulitan/level
-      — ✅ konteks prompt dari kerangka (`buildGenerationContext`) siap
-- [ ] Generate AI untuk semua bentuk soal (PG, PGK MCMA, PGK Kategori)
-      dan soal grup berbasis stimulus — butuh Fase 1.5 selesai
-- [ ] Validasi output AI dengan Zod, retry sekali kalau gagal parse
-- [ ] Admin: antrian review soal AI (approve/edit/reject)
+- [x] Halaman pengaturan: simpan Gemini API key user (terenkripsi) —
+      `/pengaturan`, diuji ke Gemini dulu, AES-256-GCM (`crypto.ts`)
+- [x] Server action generate soal by subdomain/jumlah/kesulitan/level —
+      `/admin/soal/generate-ai`, 3 mode: **soal baru**, **variasi soal**
+      (modifikasi soal bank, tombol "Variasi AI"), **dari gambar**
+      (beberapa soal dari 1 gambar galeri, Gemini multimodal)
+- [x] Generate AI untuk semua bentuk soal (PG, PGK MCMA, PGK Kategori)
+      — [ ] soal grup berbasis stimulus (1 stimulus + N soal) belum
+- [x] Validasi output AI dengan Zod per soal (+ opsi ganda, KaTeX,
+      duplikat bank), retry sekali untuk kekurangannya
+- [x] Admin: antrian review soal AI — hasil `pending_review`; antrean di
+      halaman Generate AI & filter Bank Soal (sumber AI); approve =
+      Terbitkan, edit = `/admin/soal/[id]`, reject = hapus
+- [x] Galeri gambar soal `/admin/soal/gambar` (unggah banyak, disimpan di
+      DB terkompres WebP, disajikan `/gambar/[id]`), pemilih gambar di
+      form soal
+- [x] Bank soal berjenjang: jenjang → mapel → topik → subtopik dengan
+      hitungan per level, filter & paginasi di server
+- [ ] Uji dengan API key Gemini asli di produksi (sejauh ini diuji
+      dengan server Gemini tiruan)
 
 ## Fase 2.5 — Diagnosa & latihan adaptif per siswa
 

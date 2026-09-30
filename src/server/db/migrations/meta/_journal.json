@@ -78,6 +78,13 @@
       "when": 1790778325166,
       "tag": "0010_latihan_kelemahan",
       "breakpoints": true
+    },
+    {
+      "idx": 11,
+      "version": "5",
+      "when": 1790779393151,
+      "tag": "0011_ai_gambar_soal",
+      "breakpoints": true
     }
   ]
 }

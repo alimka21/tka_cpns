@@ -102,6 +102,8 @@ export const questions = mysqlTable("questions", {
     .notNull()
     .default("manual"),
   sourceUserId: int("source_user_id").references(() => users.id),
+  /** Soal AI mode "variasi": soal bank asal yang dimodifikasi (tanpa FK — asal boleh dihapus). */
+  sourceQuestionId: int("source_question_id"),
   createdBy: int("created_by")
     .notNull()
     .references(() => users.id),

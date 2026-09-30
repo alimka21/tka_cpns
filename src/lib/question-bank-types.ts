@@ -5,6 +5,8 @@ import type { Difficulty, QuestionType } from "@/lib/validation/enums";
 export type QuestionListRow = {
   id: number;
   text: string;
+  /** `text` yang sudah dirender KaTeX (server) — untuk tampilan. */
+  html: string;
   jenjang: string;
   /** Nama mata uji. */
   topic: string;

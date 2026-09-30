@@ -6,6 +6,7 @@ import type { BankFilters } from "@/lib/bank-filters";
 import { db } from "@/server/db";
 import { categories, questionExplanations, questionOptions, questions, stimuli, subjects, subtopics, topics } from "@/server/db/schema";
 import type { QuestionEditData, QuestionListRow, StimulusListItem } from "@/lib/question-bank-types";
+import { renderMathToHtml } from "@/lib/math-html";
 import { questionUsage } from "@/server/services/question-store";
 
 /** Batas sementara sebelum ada paginasi server. */
@@ -38,7 +39,7 @@ export async function listQuestions(): Promise<QuestionListRow[]> {
     .leftJoin(stimuli, eq(stimuli.id, questions.stimulusId))
     .orderBy(desc(questions.createdAt), desc(questions.id))
     .limit(LIST_LIMIT);
-  return rows.map((r) => ({ ...r, hasImage: Boolean(Number(r.hasImage)), createdAt: r.createdAt.toISOString() }));
+  return rows.map((r) => ({ ...r, html: renderMathToHtml(r.text), hasImage: Boolean(Number(r.hasImage)), createdAt: r.createdAt.toISOString() }));
 }
 
 export async function listStimuli(): Promise<StimulusListItem[]> {
@@ -213,5 +214,5 @@ export async function searchQuestions(f: BankFilters): Promise<{ rows: QuestionL
       .innerJoin(categories, eq(categories.id, subjects.categoryId))
       .where(where),
   ]);
-  return { rows: rows.map((r) => ({ ...r, hasImage: Boolean(Number(r.hasImage)), createdAt: r.createdAt.toISOString() })), total: Number(n) };
+  return { rows: rows.map((r) => ({ ...r, html: renderMathToHtml(r.text), hasImage: Boolean(Number(r.hasImage)), createdAt: r.createdAt.toISOString() })), total: Number(n) };
 }

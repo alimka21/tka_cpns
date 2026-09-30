@@ -28,10 +28,13 @@ const categoryPair = z
     `Pasangan kategori harus ${CATEGORY_PAIRS.map((p) => p.join("/")).join(" atau ")}`,
   );
 
+/** URL gambar: tautan luar (https) atau gambar galeri internal `/gambar/<id>`. */
+export const imageUrlInput = z.union([z.url("URL gambar tidak valid").max(2048), z.string().regex(/^\/gambar\/\d+$/, "URL gambar tidak valid")]);
+
 const common = {
   subtopicId: z.coerce.number().int().positive(),
   questionText: z.string().trim().min(1, "Pertanyaan wajib diisi"),
-  imageUrl: z.url("URL gambar tidak valid").max(2048).nullish(),
+  imageUrl: imageUrlInput.nullish(),
   difficulty: z.enum(DIFFICULTIES),
   // Kecocokan level dengan mata uji dicek di server lewat kerangka asesmen.
   cognitiveLevel: z.string().regex(/^L\d$/, "Level kognitif harus L1, L2, atau L3").nullish(),
@@ -124,7 +127,7 @@ export const stimulusInput = z.object({
     .max(32),
   title: z.string().trim().min(1, "Judul wajib diisi").max(255),
   content: z.string().trim().min(1, "Isi stimulus wajib diisi"),
-  imageUrl: z.url("URL gambar tidak valid").max(2048).nullish(),
+  imageUrl: imageUrlInput.nullish(),
   status: z.enum(STIMULUS_STATUSES).default("draft"),
 });
 

@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { BookOpenText, FileUp, ImageIcon, Pencil, Search, Send, Sparkles, Undo2, UserPen, Wand2 } from "lucide-react";
+import { RichHtml } from "@/components/tes/rich-html";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -167,7 +168,7 @@ export function QuestionList({ questions }: { questions: QuestionListRow[] }) {
                 <BookOpenText className="size-3.5" aria-hidden /> Soal grup {row.stimulusCode} · urutan {row.stimulusOrder}
               </Link>
             )}
-            <p className="line-clamp-3 leading-relaxed">{row.text}</p>
+            <RichHtml html={row.html} className="line-clamp-3 block leading-relaxed" />
             <div className="flex flex-wrap items-center justify-between gap-2 border-t pt-3 text-xs text-muted-foreground">
               <span>
                 {row.jenjang} · {row.topic} · {row.subtopic} · {formatDate(row.createdAt)}

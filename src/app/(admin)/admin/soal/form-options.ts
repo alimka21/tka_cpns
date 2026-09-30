@@ -1,9 +1,10 @@
 // Pilihan dropdown form soal (Tambah & Edit): subdomain dari kerangka
 // asesmen (sumber kebenaran) + daftar stimulus di DB.
 
-import type { StimulusOption, SubdomainOption } from "@/components/admin/question-form";
+import type { ImageOption, StimulusOption, SubdomainOption } from "@/components/admin/question-form";
 import { FRAMEWORKS } from "@/server/asesmen";
 import { listStimuli } from "@/server/queries/question-bank";
+import { listQuestionImages } from "@/server/services/question-images";
 
 export function subdomainOptions(): SubdomainOption[] {
   return Object.values(FRAMEWORKS).flatMap((fw) =>
@@ -27,4 +28,8 @@ export async function stimulusOptions(): Promise<StimulusOption[]> {
     title: st.title,
     questionCount: st.questions.length,
   }));
+}
+
+export async function imageOptions(): Promise<ImageOption[]> {
+  return (await listQuestionImages()).map((img) => ({ id: img.id, title: img.title }));
 }

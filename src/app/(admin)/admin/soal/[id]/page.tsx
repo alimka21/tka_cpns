@@ -6,7 +6,7 @@ import { DeleteQuestionButton } from "@/components/admin/delete-question-button"
 import { QuestionForm } from "@/components/admin/question-form";
 import { PageHeader } from "@/components/layout/page-header";
 import { getQuestionForEdit } from "@/server/queries/question-bank";
-import { stimulusOptions, subdomainOptions } from "../form-options";
+import { imageOptions, stimulusOptions, subdomainOptions } from "../form-options";
 
 export const metadata: Metadata = { title: "Edit Soal" };
 export const dynamic = "force-dynamic";
@@ -45,7 +45,7 @@ export default async function AdminEditSoalPage({ params }: PageProps<"/admin/so
           />
         }
       />
-      <QuestionForm key={id} subdomains={subdomainOptions()} stimuli={await stimulusOptions()} initial={question} />
+      <QuestionForm key={id} subdomains={subdomainOptions()} stimuli={await stimulusOptions()} images={await imageOptions()} initial={question} />
     </div>
   );
 }

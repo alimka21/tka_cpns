@@ -78,11 +78,13 @@ export const verifications = mysqlTable(
   (t) => [index("verifications_identifier_idx").on(t.identifier)],
 );
 
+/** Satu baris per user: Gemini API key terenkripsi (services/crypto.ts). */
 export const userAiSettings = mysqlTable("user_ai_settings", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("user_id")
     .notNull()
-    .references(() => users.id),
+    .unique()
+    .references(() => users.id, { onDelete: "cascade" }),
   geminiApiKeyEncrypted: text("gemini_api_key_encrypted").notNull(),
   geminiKeyMasked: varchar("gemini_key_masked", { length: 50 }).notNull(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),

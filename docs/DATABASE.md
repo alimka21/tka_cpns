@@ -22,8 +22,9 @@ ip_address, user_agent, created_at, updated_at
 updated_at
 
 **user_ai_settings**
-- id (pk), user_id (fk users), gemini_api_key_encrypted, gemini_key_masked
-  (mis. `AIza...ab12`, untuk ditampilkan di UI), updated_at
+- id (pk), user_id (fk users, **unique**, cascade), gemini_api_key_encrypted
+  (`v1.<iv>.<tag>.<data>`, AES-256-GCM dari `ENCRYPTION_SECRET`),
+  gemini_key_masked (mis. `AIza…ab12`, untuk UI), updated_at
 
 > **Server produksi: MariaDB 11.8 (Hostinger).** Kolom `json` di MariaDB
 > disimpan sebagai `longtext` — mysql2 mengembalikannya sebagai string,
@@ -179,6 +180,23 @@ alur di `src/server/services/practice.ts`)
 (`attempt_subtopic_scores`) + per sesi latihan (item terjawab,
 dikelompokkan per subdomain) → `diagnose()`. Latihan **tidak** mengubah
 skor tes resmi.
+
+## Grup: AI & media soal — **implementasi selesai** (`schema/ai.ts`, migrasi 0011)
+
+**question_images** — galeri gambar soal, disimpan di DB (bukan disk)
+- id, title, mime (`image/webp`), width, height, size_bytes, sha256
+  (unique — unggahan identik tidak dobel), data (MEDIUMBLOB), uploaded_by
+  (fk users), created_at
+- Dirujuk soal lewat `questions.image_url = "/gambar/<id>"` (tanpa FK);
+  gambar yang masih dirujuk soal tidak bisa dihapus.
+
+**ai_generation_logs** — audit panggilan Gemini (tanpa isi key)
+- id, user_id (fk, cascade), purpose (`bank_admin`|`practice`), mode
+  (`baru`|`variasi`|`gambar`), subtopic_code, source_question_id,
+  image_id, requested, valid_count, model, error, duration_ms, created_at
+
+**questions.source_question_id** (baru) — soal AI mode variasi: id soal
+asal (tanpa FK; soal asal boleh dihapus).
 
 ## Enum penting
 

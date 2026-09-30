@@ -50,14 +50,18 @@ const emptyOptions = (n: number): OptionDraft[] =>
 const selectClass =
   "h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15 focus-visible:outline-none";
 
+export type ImageOption = { id: number; title: string };
+
 type Props = {
   subdomains: SubdomainOption[];
   stimuli: StimulusOption[];
+  /** Galeri gambar soal (/admin/soal/gambar). */
+  images: ImageOption[];
   /** Diisi = mode edit. */
   initial?: QuestionEditData;
 };
 
-export function QuestionForm({ subdomains, stimuli, initial }: Props) {
+export function QuestionForm({ subdomains, stimuli, images, initial }: Props) {
   const [type, setType] = useState<QuestionType>(initial?.type ?? "pg");
   const [subdomainCode, setSubdomainCode] = useState(initial?.subdomainCode ?? "");
   const [questionText, setQuestionText] = useState(initial?.questionText ?? "");
@@ -70,6 +74,7 @@ export function QuestionForm({ subdomains, stimuli, initial }: Props) {
   const [options, setOptions] = useState<OptionDraft[]>(initial?.options ?? emptyOptions(4));
   const [stimulusId, setStimulusId] = useState(initial?.stimulusId ? String(initial.stimulusId) : "");
   const [stimulusOrder, setStimulusOrder] = useState(String(initial?.stimulusOrder ?? 1));
+  const [imageUrl, setImageUrl] = useState<string | null>(initial?.imageUrl ?? null);
   const [errors, setErrors] = useState<string[]>([]);
   const [saved, setSaved] = useState<number | null>(null);
   const [saving, startSaving] = useTransition();
@@ -119,7 +124,7 @@ export function QuestionForm({ subdomains, stimuli, initial }: Props) {
       difficulty,
       cognitiveLevel: cognitiveLevel || null,
       explanationText: explanation || null,
-      imageUrl: initial?.imageUrl ?? null,
+      imageUrl,
       categoryLabels: type === "pgk_kategori" ? [...pair] : undefined,
       stimulusId: stimulusId ? Number(stimulusId) : null,
       stimulusOrder: stimulusId ? Number(stimulusOrder) : null,
@@ -349,6 +354,7 @@ export function QuestionForm({ subdomains, stimuli, initial }: Props) {
           options={options}
           explanation={explanation}
           categoryLabels={type === "pgk_kategori" ? pair : null}
+          imageUrl={imageUrl}
         />
       </div>
 
@@ -422,6 +428,34 @@ export function QuestionForm({ subdomains, stimuli, initial }: Props) {
               ))}
             </div>
           </div>
+        </section>
+
+        <section className="surface-card flex flex-col gap-3 p-6">
+          <h2 className="font-bold">Gambar soal (opsional)</h2>
+          <select
+            aria-label="Gambar soal"
+            value={imageUrl ?? ""}
+            onChange={(e) => {
+              setImageUrl(e.target.value || null);
+              setSaved(null);
+            }}
+            className={selectClass}
+          >
+            <option value="">Tanpa gambar</option>
+            {imageUrl && !imageUrl.startsWith("/gambar/") && <option value={imageUrl}>Gambar tautan saat ini</option>}
+            {images.map((img) => (
+              <option key={img.id} value={`/gambar/${img.id}`}>
+                #{img.id} — {img.title}
+              </option>
+            ))}
+          </select>
+          {imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element -- gambar dari route /gambar (DB) atau tautan admin
+            <img src={imageUrl} alt="Pratinjau gambar soal" className="max-h-48 w-full rounded-lg border bg-muted object-contain" />
+          )}
+          <Link href="/admin/soal/gambar" className="text-xs font-semibold text-primary hover:underline">
+            Unggah gambar baru di galeri
+          </Link>
         </section>
 
         <section className="surface-card flex flex-col gap-4 p-6">
@@ -500,12 +534,14 @@ function QuestionPreview({
   options,
   explanation,
   categoryLabels,
+  imageUrl,
 }: {
   type: QuestionType;
   questionText: string;
   options: OptionDraft[];
   explanation: string;
   categoryLabels: readonly string[] | null;
+  imageUrl: string | null;
 }) {
   // Ditunda supaya mengetik tetap lancar walau rumus panjang.
   const deferred = useDeferredValue({ questionText, options, explanation });
@@ -528,6 +564,10 @@ function QuestionPreview({
       ) : (
         <>
           <RichHtml html={html.question} className="leading-relaxed" />
+          {imageUrl && (
+            // eslint-disable-next-line @next/next/no-img-element -- gambar dari route /gambar (DB) atau tautan admin
+            <img src={imageUrl} alt="Gambar soal" className="max-h-72 rounded-lg border" />
+          )}
           <ul className="flex flex-col gap-2">
             {deferred.options.map((o, i) => (
               <li key={i} className="flex items-start gap-3 rounded-lg border p-3 text-sm">

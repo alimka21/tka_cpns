@@ -1,5 +1,4 @@
 import type { Metadata } from "next";
-import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
@@ -10,12 +9,16 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
+import { GeminiKeyForm } from "@/components/pengaturan/gemini-key-form";
+import { getMaskedGeminiKey } from "@/server/services/ai-key";
 import { requireUser } from "@/server/auth/session";
 
 export const metadata: Metadata = { title: "Pengaturan" };
+export const dynamic = "force-dynamic";
 
 export default async function PengaturanPage() {
   const { user } = await requireUser("/pengaturan");
+  const masked = await getMaskedGeminiKey(Number(user.id));
   return (
     <div className="flex max-w-3xl flex-col gap-6">
       <PageHeader title="Pengaturan" description="Kelola profil dan API key Gemini milikmu." />
@@ -46,19 +49,26 @@ export default async function PengaturanPage() {
         <CardHeader>
           <CardTitle>Gemini API Key</CardTitle>
           <CardDescription>
-            Dipakai server-side untuk generate soal AI atas nama akunmu
-            sendiri. Tersimpan terenkripsi, tidak pernah ditampilkan penuh
-            setelah disimpan. Fitur ini aktif di Fase 2.
+            Dipakai untuk membuat soal dengan AI atas nama akunmu sendiri. Key diuji ke Google dulu, lalu disimpan
+            terenkripsi dan hanya dipakai di server — tidak pernah ditampilkan penuh lagi.
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 sm:max-w-sm">
-          <div className="flex flex-col gap-1.5">
-            <Label htmlFor="gemini-key">API Key</Label>
-            <Input id="gemini-key" placeholder="AIza..." disabled />
-          </div>
-          <Button disabled className="w-fit">
-            Simpan (segera hadir)
-          </Button>
+        <CardContent className="flex flex-col gap-4">
+          <GeminiKeyForm masked={masked} />
+          <details className="text-sm text-muted-foreground">
+            <summary className="cursor-pointer font-semibold text-foreground">Cara membuat API key (gratis)</summary>
+            <ol className="mt-2 list-decimal space-y-1 pl-5">
+              <li>
+                Buka{" "}
+                <a href="https://aistudio.google.com/apikey" target="_blank" rel="noreferrer" className="font-semibold text-primary underline">
+                  Google AI Studio → API keys
+                </a>{" "}
+                dan masuk dengan akun Google.
+              </li>
+              <li>Klik &ldquo;Create API key&rdquo;, lalu salin key yang diawali &ldquo;AIza&rdquo;.</li>
+              <li>Tempel di kolom di atas, lalu klik &ldquo;Uji &amp; simpan&rdquo;.</li>
+            </ol>
+          </details>
         </CardContent>
       </Card>
     </div>

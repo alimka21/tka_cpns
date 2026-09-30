@@ -4,6 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  ImageIcon,
+  Settings,
   BookOpenText,
   FileUp,
   FolderTree,
@@ -28,9 +30,11 @@ const navItems: NavItem[] = [
   { href: "/admin/topik", label: "Kerangka Asesmen", icon: FolderTree },
   { href: "/admin/soal", label: "Bank Soal", icon: Library },
   { href: "/admin/soal/stimulus", label: "Stimulus", icon: BookOpenText },
+  { href: "/admin/soal/gambar", label: "Gambar Soal", icon: ImageIcon },
   { href: "/admin/soal/import", label: "Import Soal", icon: FileUp },
-  { href: "/admin/soal/generate-ai", label: "Generate AI", icon: Sparkles, badge: "Fase 2" },
+  { href: "/admin/soal/generate-ai", label: "Generate AI", icon: Sparkles },
   { href: "/admin/paket-tes", label: "Paket Tes", icon: Package },
+  { href: "/pengaturan", label: "Pengaturan & API Key", icon: Settings },
 ];
 
 // Item aktif = prefix terpanjang yang cocok, supaya /admin/soal/import tidak

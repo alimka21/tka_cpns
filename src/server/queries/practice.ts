@@ -136,7 +136,7 @@ export async function countPublishedBySubtopic(subtopicIds: number[]): Promise<M
   return new Map(rows.map((r) => [r.subtopicId, Number(r.n)]));
 }
 
-type QuestionWithKeys = ReviewSourceQuestion & { explanation: string | null; subtopicName: string; stimulusOrder: number | null };
+export type QuestionWithKeys = ReviewSourceQuestion & { explanation: string | null; subtopicName: string; stimulusOrder: number | null };
 
 /** Soal lengkap dengan kunci — SERVER-ONLY. */
 export async function loadQuestionsWithKeys(ids: number[]): Promise<Map<number, QuestionWithKeys>> {

@@ -24,6 +24,18 @@ tetap hanya memakai soal bank yang sudah tayang.
 
 ---
 
+## 0. Status implementasi (2026-09-30)
+
+- **Jalur A selesai** — `/admin/soal/generate-ai` dengan 3 mode: soal
+  baru, **variasi soal bank** (modifikasi: ganti angka / konteks / lebih
+  sulit / lebih mudah / campuran), dan **dari gambar** (galeri
+  `/admin/soal/gambar`, satu gambar → beberapa soal). Kode:
+  `services/gemini.ts` (REST), `services/ai-questions.ts` (validasi),
+  `services/ai-generate.ts` (alur + retry + log),
+  `asesmen/generation-context.ts` (`buildAiPrompt`).
+- Key: `/pengaturan` (`services/ai-key.ts`, `crypto.ts`).
+- Belum: mode grup stimulus (1 bacaan + N soal), Jalur B langkah 6–7.
+
 ## 1. Fondasi yang sudah ada
 
 - `src/server/asesmen/generation-context.ts` — `buildGenerationContext()`

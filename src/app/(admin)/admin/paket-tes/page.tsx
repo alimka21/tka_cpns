@@ -4,14 +4,24 @@ import { BookOpenCheck, Clock, FileQuestion, Package, Plus } from "lucide-react"
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { listPackagesAdmin } from "@/server/queries/packages";
+import { parseBankFilters } from "@/lib/bank-filters";
+import { listCategories, listPackagesAdmin, listSubjects } from "@/server/queries/packages";
 import { PackageStatusButton, DeletePackageButton } from "@/components/admin/package-list-actions";
+import { PackageFilterBar, type PackageFilterJenjang } from "@/components/admin/package-filter-bar";
 
 export const metadata: Metadata = { title: "Paket Tes" };
 export const dynamic = "force-dynamic";
 
-export default async function AdminPaketTesPage() {
-  const packages = await listPackagesAdmin();
+export default async function AdminPaketTesPage({ searchParams }: PageProps<"/admin/paket-tes">) {
+  // Aturan konsistensi jenjang ⊃ mapel sama dengan filter Bank Soal.
+  const { jenjang, mapel } = parseBankFilters(await searchParams);
+  const [packages, categories, subjects] = await Promise.all([listPackagesAdmin({ jenjang, mapel }), listCategories(), listSubjects()]);
+  const filterOptions: PackageFilterJenjang[] = categories.map((c) => ({
+    code: c.code,
+    name: c.name,
+    subjects: subjects.filter((s) => s.categoryId === c.id).map((s) => ({ code: s.code, name: s.name })),
+  }));
+  const filtered = Boolean(jenjang || mapel);
 
   return (
     <div className="flex flex-col gap-8">
@@ -25,7 +35,16 @@ export default async function AdminPaketTesPage() {
         }
       />
 
-      {packages.length === 0 ? (
+      <PackageFilterBar options={filterOptions} jenjang={jenjang} mapel={mapel} />
+
+      {packages.length === 0 && filtered ? (
+        <div className="surface-card flex flex-col items-center gap-3 px-6 py-12 text-center">
+          <p className="text-sm text-muted-foreground">Tidak ada paket untuk filter ini.</p>
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href="/admin/paket-tes" />}>
+            Tampilkan semua paket
+          </Button>
+        </div>
+      ) : packages.length === 0 ? (
         <div className="surface-card flex flex-col items-center gap-4 px-6 py-16 text-center">
           <span className="flex size-14 items-center justify-center rounded-2xl bg-primary-soft text-primary">
             <Package className="size-7" aria-hidden />
@@ -47,6 +66,7 @@ export default async function AdminPaketTesPage() {
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <Badge variant="info">{pkg.categoryCode}</Badge>
+                  {pkg.subjectName && <Badge variant="muted">{pkg.subjectName}</Badge>}
                   <Badge variant={pkg.status === "published" ? "success" : "muted"}>{pkg.status === "published" ? "Tayang" : "Draft"}</Badge>
                   {pkg.isPremium && <Badge variant="warning">Premium</Badge>}
                 </div>

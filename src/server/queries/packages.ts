@@ -177,6 +177,9 @@ export type AdminPackageRow = {
   id: number;
   title: string;
   categoryCode: string;
+  /** Null = paket lama tanpa mata pelajaran. */
+  subjectCode: string | null;
+  subjectName: string | null;
   durationMinutes: number;
   isPremium: boolean;
   status: "draft" | "published";
@@ -184,12 +187,15 @@ export type AdminPackageRow = {
   createdAt: string;
 };
 
-export async function listPackagesAdmin(): Promise<AdminPackageRow[]> {
+/** Daftar paket admin; filter opsional jenjang (kode kategori) & mata pelajaran (kode subject). */
+export async function listPackagesAdmin(filters: { jenjang?: string; mapel?: string } = {}): Promise<AdminPackageRow[]> {
   const rows = await db
     .select({
       id: testPackages.id,
       title: testPackages.title,
       categoryCode: categories.code,
+      subjectCode: subjects.code,
+      subjectName: subjects.name,
       durationMinutes: testPackages.durationMinutes,
       isPremium: testPackages.isPremium,
       status: testPackages.status,
@@ -198,8 +204,10 @@ export async function listPackagesAdmin(): Promise<AdminPackageRow[]> {
     })
     .from(testPackages)
     .innerJoin(categories, eq(categories.id, testPackages.categoryId))
+    .leftJoin(subjects, eq(subjects.id, testPackages.subjectId))
     .leftJoin(testPackageQuestions, eq(testPackageQuestions.testPackageId, testPackages.id))
-    .groupBy(testPackages.id, categories.code)
+    .where(and(filters.jenjang ? eq(categories.code, filters.jenjang) : undefined, filters.mapel ? eq(subjects.code, filters.mapel) : undefined))
+    .groupBy(testPackages.id, categories.code, subjects.code, subjects.name)
     .orderBy(desc(testPackages.createdAt));
   return rows.map((r) => ({ ...r, questionCount: Number(r.questionCount), createdAt: r.createdAt.toISOString() }));
 }

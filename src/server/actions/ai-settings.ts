@@ -11,7 +11,9 @@ import { GeminiError } from "@/server/services/gemini";
 const keyInput = z
   .string()
   .trim()
-  .regex(/^[A-Za-z0-9_-]{20,120}$/, "Format API key tidak valid. Salin ulang dari Google AI Studio.");
+  // Format lama "AIza…" maupun format baru Google AI Studio "AQ.Ab…" (mengandung titik).
+  // Validasi sebenarnya dilakukan Google lewat verifyGeminiKey.
+  .regex(/^[A-Za-z0-9._-]{20,200}$/, "Format API key tidak valid. Salin ulang dari Google AI Studio (tanpa spasi).");
 
 type Result = { ok: true; masked?: string } | { ok: false; error: string };
 

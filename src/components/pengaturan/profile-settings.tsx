@@ -64,7 +64,7 @@ export function ProfileSettings({ user, masked }: Props) {
               </a>{" "}
               dan masuk dengan akun Google.
             </li>
-            <li>Klik &ldquo;Create API key&rdquo;, lalu salin key yang diawali &ldquo;AIza&rdquo;.</li>
+            <li>Klik &ldquo;Create API key&rdquo;, lalu salin key-nya (diawali &ldquo;AIza&rdquo; atau &ldquo;AQ.&rdquo;).</li>
             <li>Tempel di kolom di atas, lalu klik &ldquo;Uji &amp; simpan&rdquo;.</li>
           </ol>
         </details>

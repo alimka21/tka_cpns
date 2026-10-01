@@ -7,6 +7,7 @@ import { nextCookies } from "better-auth/next-js";
 import { db } from "@/server/db";
 import { accounts, sessions, users, verifications } from "@/server/db/schema";
 import { SITE_NAME } from "@/lib/site";
+import { getSetting } from "@/server/services/app-settings";
 
 export const ROLES = ["student", "admin"] as const;
 export type Role = (typeof ROLES)[number];
@@ -33,6 +34,21 @@ export const auth = betterAuth({
       // input: false → tidak bisa diisi dari form daftar; admin ditetapkan
       // lewat `npm run user:role -- <email> admin`.
       role: { type: ["student", "admin"], required: false, defaultValue: "student", input: false },
+      // Dipilih siswa saat daftar (wajib di form); bisa diganti di Pengaturan.
+      jenjang: { type: ["SD", "SMP", "SMA"], required: false, input: true },
+      // Diatur sistem/admin saja (lihat databaseHooks & /admin/users).
+      status: { type: ["active", "pending", "rejected"], required: false, defaultValue: "active", input: false },
+    },
+  },
+  databaseHooks: {
+    user: {
+      create: {
+        // Bila admin mewajibkan konfirmasi, pendaftar baru menunggu persetujuan.
+        before: async (user) => {
+          const requireApproval = await getSetting("registration.requireApproval");
+          return { data: { ...user, status: requireApproval ? "pending" : "active" } };
+        },
+      },
     },
   },
   session: {

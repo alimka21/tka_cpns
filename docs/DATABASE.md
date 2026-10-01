@@ -21,6 +21,19 @@ ip_address, user_agent, created_at, updated_at
 **verifications** — id, identifier, value, expires_at, created_at,
 updated_at
 
+**users** (tambahan 2026-10-01, migrasi 0013)
+- `jenjang` enum(`SD`,`SMP`,`SMA`) nullable — dipilih saat daftar (wajib di
+  form), NULL = akun lama → diminta memilih di `/pilih-jenjang`. Menyaring
+  paket tes (`listPackagesForStudent`), menolak paket jenjang lain
+  (`startOrResumeAttempt`), dan pilihan Latihan.
+- `status` enum(`active`,`pending`,`rejected`) default `active` — `pending`
+  bila pengaturan `registration.requireApproval` aktif saat daftar
+  (Better Auth `databaseHooks.user.create.before`).
+
+**app_settings** — key (pk, varchar 64), value (JSON), updated_by, updated_at.
+Daftar key + default + skema Zod di `services/app-settings.ts`
+(`registration.requireApproval`: boolean, default false).
+
 **user_ai_settings**
 - id (pk), user_id (fk users, **unique**, cascade), gemini_api_key_encrypted
   (`v1.<iv>.<tag>.<data>`, AES-256-GCM dari `ENCRYPTION_SECRET`),

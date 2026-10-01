@@ -7,6 +7,8 @@ export type AdminUserRow = {
   name: string;
   email: string;
   role: "student" | "admin";
+  jenjang: "SD" | "SMP" | "SMA" | null;
+  status: "active" | "pending" | "rejected";
   createdAt: string;
   premiumCount: number;
 };
@@ -18,6 +20,8 @@ export async function listUsersAdmin(): Promise<AdminUserRow[]> {
       name: users.name,
       email: users.email,
       role: users.role,
+      jenjang: users.jenjang,
+      status: users.status,
       createdAt: users.createdAt,
       premiumCount: sql<number>`count(distinct ${entitlements.id})`,
     })
@@ -34,5 +38,11 @@ export async function countPublishedPremiumPackages() {
     .select({ n: sql<number>`count(*)` })
     .from(testPackages)
     .where(eq(testPackages.isPremium, true));
+  return Number(row?.n ?? 0);
+}
+
+/** Jumlah pendaftar yang menunggu konfirmasi (badge menu admin). */
+export async function countPendingUsers() {
+  const [row] = await db.select({ n: sql<number>`count(*)` }).from(users).where(eq(users.status, "pending"));
   return Number(row?.n ?? 0);
 }

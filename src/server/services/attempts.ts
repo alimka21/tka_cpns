@@ -71,9 +71,13 @@ export type StartAttemptResult = { ok: true; attemptId: number } | { ok: false; 
  * di-finalize otomatis sebagai `expired` sebelum attempt baru dibuat —
  * jawaban yang sempat ter-autosave tetap dinilai (NFR ketahanan koneksi).
  */
-export async function startOrResumeAttempt(userId: number, testPackageId: number): Promise<StartAttemptResult> {
+/** `jenjang`: jenjang siswa — paket jenjang lain ditolak (admin: null = bebas). */
+export async function startOrResumeAttempt(userId: number, testPackageId: number, jenjang: string | null): Promise<StartAttemptResult> {
   const pkg = await getPackageDetail(testPackageId);
   if (!pkg || pkg.status !== "published") return { ok: false, error: "Paket tes tidak ditemukan." };
+  if (jenjang && pkg.categoryCode !== jenjang) {
+    return { ok: false, error: `Paket ini untuk TKA ${pkg.categoryCode}, sedangkan akunmu jenjang ${jenjang}. Ganti jenjang di Pengaturan bila keliru.` };
+  }
   if (pkg.questions.length === 0) return { ok: false, error: "Paket tes ini belum berisi soal." };
   if (pkg.isPremium && !(await hasEntitlement(userId, testPackageId))) {
     return { ok: false, error: "Kamu belum punya akses ke paket premium ini. Hubungi admin untuk membuka akses." };

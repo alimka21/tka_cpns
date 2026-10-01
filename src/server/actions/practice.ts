@@ -8,7 +8,7 @@ import { z } from "zod";
 import { answerResponse } from "@/lib/validation/attempt";
 import { MAX_PRACTICE_TARGETS, PRACTICE_SIZES } from "@/lib/practice";
 import type { ReviewItem } from "@/lib/review";
-import { getSession } from "@/server/auth/session";
+import { getActiveSession } from "@/server/auth/session";
 import { answerPracticeItem, finishPracticeSession, startPracticeSession } from "@/server/services/practice";
 import type { PracticeAiNotice } from "@/server/services/practice-ai-plan";
 
@@ -26,7 +26,7 @@ export async function startPracticeAction(input: {
   subtopicIds: number[];
   count: number;
 }): Promise<{ ok: true; sessionId: number; notice: PracticeAiNotice | null } | { ok: false; error: string }> {
-  const session = await getSession();
+  const session = await getActiveSession();
   if (!session) return NOT_LOGGED_IN;
   const parsed = startInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
@@ -39,7 +39,7 @@ export async function answerPracticeAction(
   sessionId: number,
   input: { itemId: number; response: unknown },
 ): Promise<{ ok: true; review: ReviewItem } | { ok: false; error: string }> {
-  const session = await getSession();
+  const session = await getActiveSession();
   if (!session) return NOT_LOGGED_IN;
   const parsed = z.object({ sessionId: id, itemId: id, response: answerResponse }).safeParse({ sessionId, ...input });
   if (!parsed.success) return { ok: false, error: "Jawaban tidak valid." };
@@ -47,7 +47,7 @@ export async function answerPracticeAction(
 }
 
 export async function finishPracticeAction(sessionId: number): Promise<{ ok: true; redirectTo: string } | { ok: false; error: string }> {
-  const session = await getSession();
+  const session = await getActiveSession();
   if (!session) return NOT_LOGGED_IN;
   const parsed = id.safeParse(sessionId);
   if (!parsed.success) return { ok: false, error: "Sesi tidak valid." };

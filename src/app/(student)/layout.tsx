@@ -9,7 +9,7 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireUser("/dashboard");
-  const subtitle = user.role === "admin" ? "Admin" : "Siswa";
+  const subtitle = user.role === "admin" ? "Admin" : `Siswa · ${user.jenjang ?? "-"}`;
   return (
     <div className="flex flex-1 flex-col">
       <StudentHeader name={user.name} subtitle={subtitle} isAdmin={user.role === "admin"} />

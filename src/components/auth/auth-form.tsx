@@ -5,12 +5,14 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, Eye, EyeOff, Info, Lock, Mail, User, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
+import { JenjangPicker } from "@/components/profile/jenjang-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { authClient } from "@/lib/auth-client";
 import { safeRedirectPath } from "@/lib/redirect";
 import { signInInput, signUpInput } from "@/lib/validation/auth";
+import type { Jenjang } from "@/lib/jenjang";
 import { cn } from "@/lib/utils";
 
 type Mode = "signin" | "signup";
@@ -51,6 +53,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [jenjang, setJenjang] = useState<Jenjang | null>(null);
   const c = copy[mode];
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -73,7 +76,7 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
     setPending(true);
     const { email, password } = parsed.data;
     const { data, error } = signUp?.success
-      ? await authClient.signUp.email({ name: signUp.data.name, email, password })
+      ? await authClient.signUp.email({ name: signUp.data.name, email, password, jenjang: signUp.data.jenjang })
       : await authClient.signIn.email({ email, password });
     if (error) {
       setPending(false);
@@ -83,7 +86,14 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
       );
       return;
     }
-    const home = data?.user && "role" in data.user && data.user.role === "admin" ? "/admin" : "/dashboard";
+    const user = data?.user as { role?: string; status?: string } | undefined;
+    // Akun yang menunggu konfirmasi admin langsung ke halaman tunggu.
+    if (user?.status && user.status !== "active" && user.role !== "admin") {
+      router.replace("/menunggu-konfirmasi");
+      router.refresh();
+      return;
+    }
+    const home = user?.role === "admin" ? "/admin" : "/dashboard";
     router.replace(safeRedirectPath(next, home));
     router.refresh();
   }
@@ -103,6 +113,17 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
           <Field id="name" label="Nama lengkap" icon={User} error={errors.name}>
             <Input id="name" name="name" autoComplete="name" placeholder="Contoh: Rina Kartika" className="pl-10" aria-invalid={!!errors.name} aria-describedby={errors.name ? "name-error" : undefined} />
           </Field>
+        )}
+        {mode === "signup" && (
+          <div className="flex flex-col gap-1.5">
+            <span className="text-sm font-semibold">Jenjang</span>
+            <JenjangPicker value={jenjang} onChange={setJenjang} name="jenjang" invalid={!!errors.jenjang} />
+            {errors.jenjang ? (
+              <p className="text-xs font-medium text-destructive">{errors.jenjang}</p>
+            ) : (
+              <p className="text-xs text-muted-foreground">Menentukan paket tes & soal yang kamu kerjakan.</p>
+            )}
+          </div>
         )}
         <Field id="email" label="Alamat email" icon={Mail} error={errors.email}>
           <Input id="email" name="email" type="email" autoComplete="email" placeholder="nama@email.com" className="pl-10" aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} />

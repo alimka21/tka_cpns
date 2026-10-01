@@ -4,7 +4,7 @@
 
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { getSession } from "@/server/auth/session";
+import { getActiveSession } from "@/server/auth/session";
 import { deleteGeminiKey, saveGeminiKey } from "@/server/services/ai-key";
 import { GeminiError } from "@/server/services/gemini";
 
@@ -16,7 +16,7 @@ const keyInput = z
 type Result = { ok: true; masked?: string } | { ok: false; error: string };
 
 export async function saveGeminiKeyAction(apiKey: string): Promise<Result> {
-  const session = await getSession();
+  const session = await getActiveSession();
   if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
   const parsed = keyInput.safeParse(apiKey);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
@@ -34,7 +34,7 @@ export async function saveGeminiKeyAction(apiKey: string): Promise<Result> {
 }
 
 export async function deleteGeminiKeyAction(): Promise<Result> {
-  const session = await getSession();
+  const session = await getActiveSession();
   if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
   await deleteGeminiKey(Number(session.user.id));
   revalidatePath("/pengaturan");

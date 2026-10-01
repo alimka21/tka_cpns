@@ -25,7 +25,7 @@ export default async function TesPackagePage({ params }: PageProps<"/tes/[packag
   const pkg = await getPackageDetail(packageId);
   if (!pkg) notFound();
 
-  const started = await startOrResumeAttempt(userId, packageId);
+  const started = await startOrResumeAttempt(userId, packageId, user.role === "admin" ? null : (user.jenjang ?? null));
   if (!started.ok) {
     return (
       <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center justify-center gap-3 px-6 text-center">

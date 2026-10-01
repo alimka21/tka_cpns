@@ -12,6 +12,22 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-01 — Jenjang per akun & konfirmasi pendaftar
+Keputusan: setiap siswa punya `users.jenjang` (wajib saat daftar; akun lama
+dipaksa memilih di `/pilih-jenjang`). Siswa hanya melihat & bisa mengerjakan
+paket jenjangnya; admin melihat semua. Jenjang bisa diganti siswa di
+Pengaturan atau oleh admin. Konfirmasi pendaftar opsional lewat pengaturan
+sistem (`/admin/pengaturan`): bila aktif, akun siswa baru `pending` →
+`/menunggu-konfirmasi` sampai disetujui di `/admin/users`; ditolak = sesi
+dihapus. Pemeriksaan ada di `requireUser` (halaman) & `getActiveSession`
+(server action siswa). Pembayaran otomatis belum dibangun — rencana: payment
+gateway → webhook → entitlement `granted_by = purchase` (lihat ROADMAP Fase 3).
+Alasan: soal & kerangka asesmen berbeda per jenjang; sekolah/penyelenggara
+perlu menyaring pendaftar.
+Alternatif yang ditolak: jenjang per paket saja tanpa di akun (siswa bisa
+salah pilih paket); blokir login pending di Better Auth (pesan error kurang
+jelas dibanding halaman tunggu).
+
 ## 2026-09-30 — Latihan AI, laporan soal, mode grup, nama FK ≤ 64
 Keputusan: (1) Latihan AI dibuat saat sesi dimulai bila bank kurang,
 memakai key siswa, maks 10 soal/sesi & 10 panggilan Gemini/24 jam; soal

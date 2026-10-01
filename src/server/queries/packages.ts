@@ -167,7 +167,8 @@ export type StudentPackageRow = {
 };
 
 /** Paket tayang untuk siswa, dengan status akses & skor terakhir milik user itu. */
-export async function listPackagesForStudent(userId: number): Promise<StudentPackageRow[]> {
+/** Paket tayang untuk siswa; `jenjang` terisi = hanya paket jenjang itu (admin: null = semua). */
+export async function listPackagesForStudent(userId: number, jenjang: string | null): Promise<StudentPackageRow[]> {
   const rows = await db
     .select({
       id: testPackages.id,
@@ -183,7 +184,7 @@ export async function listPackagesForStudent(userId: number): Promise<StudentPac
     .innerJoin(categories, eq(categories.id, testPackages.categoryId))
     .leftJoin(testPackageQuestions, eq(testPackageQuestions.testPackageId, testPackages.id))
     .leftJoin(entitlements, and(eq(entitlements.testPackageId, testPackages.id), eq(entitlements.userId, userId)))
-    .where(eq(testPackages.status, "published"))
+    .where(and(eq(testPackages.status, "published"), jenjang ? eq(categories.code, jenjang) : undefined))
     .groupBy(testPackages.id, categories.code)
     .orderBy(desc(testPackages.id));
 

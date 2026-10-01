@@ -12,6 +12,7 @@ export const signInInput = z.object({
 export const signUpInput = z
   .object({
     name: z.string().trim().min(2, "Nama minimal 2 karakter.").max(255),
+    jenjang: z.enum(["SD", "SMP", "SMA"], "Pilih jenjangmu."),
     email,
     password: z
       .string()

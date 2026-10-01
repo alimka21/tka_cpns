@@ -20,7 +20,7 @@ export default async function DashboardPage() {
   const firstName = user.name.split(" ")[0];
 
   const [packages, history, progress] = await Promise.all([
-    listPackagesForStudent(userId),
+    listPackagesForStudent(userId, user.role === "admin" ? null : (user.jenjang ?? null)),
     listStudentHistory(userId, 10),
     getStudentProgress(userId),
   ]);
@@ -55,9 +55,10 @@ export default async function DashboardPage() {
       <section aria-labelledby="paket-heading" className="flex flex-col gap-5">
         <div>
           <h2 id="paket-heading" className="text-xl font-bold">
-            Paket Latihan TKA
+            Paket Latihan TKA{user.role !== "admin" && user.jenjang ? ` ${user.jenjang}` : ""}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
+            {user.role === "admin" ? "Semua jenjang (tampilan admin). " : "Sesuai jenjangmu — ganti di Pengaturan bila keliru. "}
             Paket gratis bisa langsung dikerjakan. Paket premium dibuka manual oleh admin.
           </p>
         </div>

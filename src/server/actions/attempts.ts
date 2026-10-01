@@ -9,13 +9,13 @@ import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { saveAnswerInput, submitAttemptInput } from "@/lib/validation/attempt";
-import { getSession } from "@/server/auth/session";
+import { getActiveSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { attemptAnswers, attempts, testPackageQuestions } from "@/server/db/schema";
 import { finalizeAttempt } from "@/server/services/attempts";
 
 async function loadOwnedAttempt(attemptId: number) {
-  const session = await getSession();
+  const session = await getActiveSession();
   if (!session) return { error: "Sesi berakhir. Silakan masuk lagi." };
   const [attempt] = await db.select().from(attempts).where(eq(attempts.id, attemptId));
   if (!attempt || attempt.userId !== Number(session.user.id)) return { error: "Percobaan tidak ditemukan." };

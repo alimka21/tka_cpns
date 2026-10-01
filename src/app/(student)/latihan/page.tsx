@@ -27,7 +27,9 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
   ]);
   const hasKey = maskedKey != null;
 
-  const diagnosed = progress.subjects.flatMap((subject) =>
+  // Hanya mata uji jenjang siswa saat ini (riwayat jenjang lain tetap terlihat di /progres).
+  const myJenjang = user.role === "admin" ? null : user.jenjang;
+  const diagnosed = progress.subjects.filter((s) => !myJenjang || s.jenjang === myJenjang).flatMap((subject) =>
     subject.domains.flatMap((domain) =>
       domain.subdomains.flatMap((s) =>
         s.diagnosis ? [{ subtopicId: s.id, name: s.name, context: `${subject.jenjang} · ${subject.name} · ${domain.name}`, diagnosis: s.diagnosis }] : [],

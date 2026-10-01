@@ -25,6 +25,11 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-01:** jenjang wajib per akun (paket & latihan disaring per
+jenjang), konfirmasi pendaftar opsional (`/admin/pengaturan`,
+`/admin/users` dengan tab status, setujui/tolak, ubah jenjang), halaman
+Pengaturan di tengah. Migrasi 0013 sudah dijalankan. Akun lama akan diminta
+memilih jenjang saat login berikutnya. Berikutnya: Fase 3 pembayaran.
 **2026-09-30 (4):** model default `gemini-3-flash-preview`; mode AI soal
 grup (bacaan); Latihan AI siswa saat bank kurang; Laporkan soal + antrean
 `/admin/laporan`; stimulus bisa diedit & diterbitkan. Migrasi 0012 sudah
@@ -292,7 +297,8 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
 
 ## Fase 3 — Monetisasi (nanti, belum sekarang)
 
-- [ ] Payment gateway Indonesia (Midtrans/Xendit/Duitku)
+- [ ] Payment gateway Indonesia (rekomendasi: Midtrans Snap; alternatif
+      Xendit, Duitku/Tripay) — butuh akun merchant user dulu
 - [ ] Alur checkout → isi `entitlements` otomatis
 - [ ] Halaman riwayat transaksi user
 

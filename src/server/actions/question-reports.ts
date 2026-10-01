@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { REPORT_REASONS } from "@/server/db/schema";
-import { getAdminSession, getSession } from "@/server/auth/session";
+import { getActiveSession, getAdminSession } from "@/server/auth/session";
 import { resolveReports, submitReport } from "@/server/services/question-reports";
 
 const id = z.number().int().positive();
@@ -12,7 +12,7 @@ const target = z.union([z.object({ questionId: id }).strict(), z.object({ practi
 type Result = { ok: true } | { ok: false; error: string };
 
 export async function reportQuestionAction(input: { target: unknown; reason: string; note?: string }): Promise<Result> {
-  const session = await getSession();
+  const session = await getActiveSession();
   if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
   const parsed = z
     .object({ target, reason: z.enum(REPORT_REASONS), note: z.string().trim().max(500).optional() })

@@ -9,6 +9,11 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 
+export const JENJANG_CODES = ["SD", "SMP", "SMA"] as const;
+export type JenjangCode = (typeof JENJANG_CODES)[number];
+export const USER_STATUSES = ["active", "pending", "rejected"] as const;
+export type UserStatus = (typeof USER_STATUSES)[number];
+
 // Tabel auth mengikuti skema Better Auth (src/server/auth) dengan
 // `generateId: "serial"` — id tetap INT auto-increment supaya FK lain
 // (questions.created_by, dst.) tidak berubah. Password TIDAK disimpan di
@@ -21,6 +26,13 @@ export const users = mysqlTable("users", {
   emailVerified: boolean("email_verified").notNull().default(false),
   image: text("image"),
   role: mysqlEnum("role", ["student", "admin"]).notNull().default("student"),
+  /** Jenjang siswa — menentukan paket tes, soal & kurikulum. NULL = belum memilih (akun lama). */
+  jenjang: mysqlEnum("jenjang", JENJANG_CODES),
+  /**
+   * active = boleh memakai aplikasi; pending = menunggu konfirmasi admin
+   * (bila pengaturan `registration.requireApproval` aktif); rejected = ditolak.
+   */
+  status: mysqlEnum("status", USER_STATUSES).notNull().default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 });

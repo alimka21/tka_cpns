@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Crown, GraduationCap, Search, ShieldCheck, Terminal, Trash2, Users } from "lucide-react";
+import { Check, Clock, Crown, GraduationCap, Search, Settings, Terminal, Trash2, Users, X } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,18 +27,42 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/format";
-import { deleteUserAction } from "@/server/actions/users";
+import { cn } from "@/lib/utils";
+import { approveAllPendingAction, deleteUserAction, setUserJenjangAction, setUserStatusAction } from "@/server/actions/users";
 import type { AdminUserRow } from "@/server/queries/users";
 
 type Role = AdminUserRow["role"];
 type RoleFilter = "all" | Role;
 type AccessFilter = "all" | "premium" | "free";
+type Status = AdminUserRow["status"];
+type StatusTab = "all" | Status;
+type JenjangFilter = "all" | "none" | "SD" | "SMP" | "SMA";
+
+const statusMeta: Record<Status, { label: string; variant: "success" | "warning" | "danger" }> = {
+  active: { label: "Aktif", variant: "success" },
+  pending: { label: "Menunggu", variant: "warning" },
+  rejected: { label: "Ditolak", variant: "danger" },
+};
+const jenjangFilterItems: Record<JenjangFilter, string> = { all: "Semua jenjang", SD: "SD", SMP: "SMP", SMA: "SMA", none: "Belum memilih" };
 
 const roleLabel: Record<Role, string> = { student: "Siswa", admin: "Admin" };
 const roleFilterItems: Record<RoleFilter, string> = { all: "Semua role", ...roleLabel };
 const accessFilterItems: Record<AccessFilter, string> = { all: "Semua akses", premium: "Premium", free: "Gratis" };
 
-export function UsersTable({ users, currentUserId }: { users: AdminUserRow[]; currentUserId: number }) {
+export function UsersTable({
+  users,
+  currentUserId,
+  requireApproval,
+}: {
+  users: AdminUserRow[];
+  currentUserId: number;
+  requireApproval: boolean;
+}) {
+  const router = useRouter();
+  const pendingCount = users.filter((u) => u.status === "pending").length;
+  const [tab, setTab] = useState<StatusTab>(pendingCount > 0 ? "pending" : "all");
+  const [jenjangFilter, setJenjangFilter] = useState<JenjangFilter>("all");
+  const [bulkPending, startBulk] = useTransition();
   const [query, setQuery] = useState("");
   const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [accessFilter, setAccessFilter] = useState<AccessFilter>("all");
@@ -48,6 +72,8 @@ export function UsersTable({ users, currentUserId }: { users: AdminUserRow[]; cu
     (u) =>
       (q === "" || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
       (roleFilter === "all" || u.role === roleFilter) &&
+      (tab === "all" || u.status === tab) &&
+      (jenjangFilter === "all" || (jenjangFilter === "none" ? u.jenjang == null : u.jenjang === jenjangFilter)) &&
       (accessFilter === "all" || (accessFilter === "premium") === u.premiumCount > 0),
   );
 
@@ -57,10 +83,59 @@ export function UsersTable({ users, currentUserId }: { users: AdminUserRow[]; cu
         <StatCard label="Total user" value={String(users.length)} icon={Users} />
         <StatCard label="Siswa" value={String(users.filter((u) => u.role === "student").length)} icon={GraduationCap} tone="muted" />
         <StatCard label="Punya akses premium" value={String(users.filter((u) => u.premiumCount > 0).length)} icon={Crown} tone="cta" />
-        <StatCard label="Admin" value={String(users.filter((u) => u.role === "admin").length)} icon={ShieldCheck} tone="success" />
+        <StatCard label="Menunggu konfirmasi" value={String(pendingCount)} icon={Clock} tone="success" />
       </div>
 
+      {pendingCount > 0 && (
+        <div className="flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
+          <p className="flex items-center gap-2 text-sm font-semibold text-warning-strong">
+            <Clock className="size-4" aria-hidden /> {pendingCount} pendaftar baru menunggu konfirmasi.
+          </p>
+          <Button
+            size="sm"
+            disabled={bulkPending}
+            onClick={() =>
+              startBulk(async () => {
+                if (!window.confirm(`Setujui semua ${pendingCount} pendaftar?`)) return;
+                await approveAllPendingAction();
+                router.refresh();
+              })
+            }
+          >
+            <Check aria-hidden /> Setujui semua
+          </Button>
+        </div>
+      )}
+
+      <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+        <Settings className="size-4" aria-hidden />
+        Konfirmasi pendaftar baru:{" "}
+        <strong className={requireApproval ? "text-warning-strong" : "text-success-strong"}>{requireApproval ? "wajib (manual)" : "otomatis aktif"}</strong>
+        <Link href="/admin/pengaturan" className="font-semibold text-primary hover:underline">
+          Ubah
+        </Link>
+      </p>
+
       <section className="surface-card overflow-hidden">
+        <nav aria-label="Status akun" className="flex gap-1 overflow-x-auto border-b px-4 pt-2 sm:px-5">
+          {(["all", "pending", "active", "rejected"] as StatusTab[]).map((t) => {
+            const n = t === "all" ? users.length : users.filter((u) => u.status === t).length;
+            return (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={tab === t}
+                onClick={() => setTab(t)}
+                className={cn(
+                  "-mb-px border-b-2 px-3 py-2 text-sm font-semibold whitespace-nowrap",
+                  tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t === "all" ? "Semua" : statusMeta[t].label} <span className="tabular-nums opacity-70">({n})</span>
+              </button>
+            );
+          })}
+        </nav>
         <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:p-5">
           <div className="relative flex-1">
             <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
@@ -82,6 +157,18 @@ export function UsersTable({ users, currentUserId }: { users: AdminUserRow[]; cu
                 <SelectItem value="all">Semua role</SelectItem>
                 <SelectItem value="student">Siswa</SelectItem>
                 <SelectItem value="admin">Admin</SelectItem>
+              </SelectContent>
+            </Select>
+            <Select items={jenjangFilterItems} value={jenjangFilter} onValueChange={(v) => setJenjangFilter(v as JenjangFilter)}>
+              <SelectTrigger className="w-full sm:w-40" aria-label="Filter jenjang">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {Object.entries(jenjangFilterItems).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Select items={accessFilterItems} value={accessFilter} onValueChange={(v) => setAccessFilter(v as AccessFilter)}>
@@ -113,6 +200,8 @@ export function UsersTable({ users, currentUserId }: { users: AdminUserRow[]; cu
             <thead className="sticky top-0 bg-muted/50 text-left text-xs font-semibold text-muted-foreground uppercase">
               <tr>
                 <th className="px-5 py-3">Nama</th>
+                <th className="px-5 py-3">Jenjang</th>
+                <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Role</th>
                 <th className="px-5 py-3">Terdaftar</th>
                 <th className="px-5 py-3">Akses premium</th>
@@ -124,6 +213,12 @@ export function UsersTable({ users, currentUserId }: { users: AdminUserRow[]; cu
                 <tr key={user.id} className="hover:bg-muted/40">
                   <td className="px-5 py-3.5">
                     <UserIdentity user={user} />
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <JenjangCell user={user} />
+                  </td>
+                  <td className="px-5 py-3.5">
+                    <StatusCell user={user} />
                   </td>
                   <td className="px-5 py-3.5">
                     <Badge variant={user.role === "admin" ? "info" : "muted"}>{roleLabel[user.role]}</Badge>
@@ -150,6 +245,8 @@ export function UsersTable({ users, currentUserId }: { users: AdminUserRow[]; cu
                 <DeleteUser user={user} disabled={user.id === currentUserId} />
               </div>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
+                <JenjangCell user={user} />
+                <StatusCell user={user} />
                 <Badge variant={user.role === "admin" ? "info" : "muted"}>{roleLabel[user.role]}</Badge>
                 <PremiumCount count={user.premiumCount} />
                 <span className="text-muted-foreground">{formatDate(user.createdAt)}</span>
@@ -246,5 +343,57 @@ function DeleteUser({ user, disabled }: { user: AdminUserRow; disabled?: boolean
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+function JenjangCell({ user }: { user: AdminUserRow }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  if (user.role === "admin") return <span className="text-muted-foreground">—</span>;
+  return (
+    <select
+      aria-label={`Jenjang ${user.name}`}
+      value={user.jenjang ?? ""}
+      disabled={pending}
+      onChange={(e) =>
+        startTransition(async () => {
+          await setUserJenjangAction({ userId: user.id, jenjang: e.target.value });
+          router.refresh();
+        })
+      }
+      className={cn("h-8 rounded-md border bg-card px-2 text-sm", !user.jenjang && "border-warning text-warning-strong")}
+    >
+      {!user.jenjang && <option value="">Belum memilih</option>}
+      <option value="SD">SD</option>
+      <option value="SMP">SMP</option>
+      <option value="SMA">SMA</option>
+    </select>
+  );
+}
+
+function StatusCell({ user }: { user: AdminUserRow }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const set = (status: Status) =>
+    startTransition(async () => {
+      await setUserStatusAction({ userIds: [user.id], status });
+      router.refresh();
+    });
+  const meta = statusMeta[user.status];
+  if (user.role === "admin") return <Badge variant="success">Aktif</Badge>;
+  return (
+    <span className="flex flex-wrap items-center gap-1.5">
+      <Badge variant={meta.variant}>{meta.label}</Badge>
+      {user.status !== "active" && (
+        <Button size="xs" disabled={pending} onClick={() => set("active")}>
+          <Check aria-hidden /> Setujui
+        </Button>
+      )}
+      {user.status === "pending" && (
+        <Button size="xs" variant="outline" disabled={pending} onClick={() => set("rejected")}>
+          <X aria-hidden /> Tolak
+        </Button>
+      )}
+    </span>
   );
 }

@@ -92,6 +92,13 @@
       "when": 1790781929138,
       "tag": "0012_latihan_ai_laporan",
       "breakpoints": true
+    },
+    {
+      "idx": 13,
+      "version": "5",
+      "when": 1790817533796,
+      "tag": "0013_jenjang_status_pengaturan",
+      "breakpoints": true
     }
   ]
 }

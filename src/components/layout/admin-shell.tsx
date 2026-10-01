@@ -7,6 +7,7 @@ import {
   Flag,
   ImageIcon,
   Settings,
+  SlidersHorizontal,
   BookOpenText,
   FileUp,
   FolderTree,
@@ -36,7 +37,8 @@ const navItems: NavItem[] = [
   { href: "/admin/soal/generate-ai", label: "Generate AI", icon: Sparkles },
   { href: "/admin/paket-tes", label: "Paket Tes", icon: Package },
   { href: "/admin/laporan", label: "Laporan Soal", icon: Flag },
-  { href: "/pengaturan", label: "Pengaturan & API Key", icon: Settings },
+  { href: "/admin/pengaturan", label: "Pengaturan Sistem", icon: SlidersHorizontal },
+  { href: "/pengaturan", label: "Profil & API Key", icon: Settings },
 ];
 
 // Item aktif = prefix terpanjang yang cocok, supaya /admin/soal/import tidak

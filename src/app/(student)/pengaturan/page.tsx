@@ -10,6 +10,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { PageHeader } from "@/components/layout/page-header";
 import { GeminiKeyForm } from "@/components/pengaturan/gemini-key-form";
+import { JenjangForm } from "@/components/profile/jenjang-form";
+import type { Jenjang } from "@/lib/jenjang";
 import { getMaskedGeminiKey } from "@/server/services/ai-key";
 import { requireUser } from "@/server/auth/session";
 
@@ -20,7 +22,7 @@ export default async function PengaturanPage() {
   const { user } = await requireUser("/pengaturan");
   const masked = await getMaskedGeminiKey(Number(user.id));
   return (
-    <div className="flex max-w-3xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <PageHeader title="Pengaturan" description="Kelola profil dan API key Gemini milikmu." />
 
       <Card>
@@ -28,7 +30,7 @@ export default async function PengaturanPage() {
           <CardTitle>Profil</CardTitle>
           <CardDescription>Data akun dasar.</CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4 sm:max-w-sm">
+        <CardContent className="flex flex-col gap-4">
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="name">Nama</Label>
             <Input id="name" defaultValue={user.name} disabled />
@@ -42,6 +44,13 @@ export default async function PengaturanPage() {
               disabled
             />
           </div>
+          {user.role !== "admin" && (
+            <div className="flex flex-col gap-1.5">
+              <Label>Jenjang</Label>
+              <p className="text-xs text-muted-foreground">Menentukan paket tes, soal, dan latihan yang tampil untukmu.</p>
+              <JenjangForm current={(user.jenjang as Jenjang | null) ?? null} />
+            </div>
+          )}
         </CardContent>
       </Card>
 

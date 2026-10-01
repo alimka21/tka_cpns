@@ -114,8 +114,11 @@ export function PackageForm({
     durationMinutes: Number(durationMinutes),
     questions: selectedIds.flatMap((id) => {
       const row = byId.get(id);
-      return row ? [{ type: row.type, subjectCode: row.subjectCode, stimulusKey: row.stimulusCode, hasImage: row.hasImage }] : [];
+      return row
+        ? [{ type: row.type, subjectCode: row.subjectCode, subtopicCode: row.subtopicCode, stimulusKey: row.stimulusCode, hasImage: row.hasImage }]
+        : [];
     }),
+    outline: subject?.outline,
   });
 
   function changeSubject(value: string) {

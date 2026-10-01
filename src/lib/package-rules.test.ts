@@ -3,7 +3,7 @@ import { checkPackageRules, packageRuleFor, pgRange, ruleErrors, type RuleQuesti
 
 const make = (n: { pg: number; mcma: number; kat: number }, subjectCode: string, stim?: (i: number) => number | null): RuleQuestion[] => {
   const types = [...Array(n.pg).fill("pg"), ...Array(n.mcma).fill("pgk_mcma"), ...Array(n.kat).fill("pgk_kategori")];
-  return types.map((type, i) => ({ type, subjectCode, stimulusKey: stim ? stim(i) : null, hasImage: false }));
+  return types.map((type, i) => ({ type, subjectCode, subtopicCode: `${subjectCode}-D${(i % 3) + 1}-S1`, stimulusKey: stim ? stim(i) : null, hasImage: false }));
 };
 
 describe("packageRuleFor", () => {
@@ -63,5 +63,35 @@ describe("checkPackageRules", () => {
     });
     expect(sedikit.publishable).toBe(true);
     expect(sedikit.recommended.filter((c) => !c.ok).map((c) => c.label).join(" ")).toMatch(/Mayoritas.*3–5|3–5/);
+  });
+});
+
+describe("cakupan topik & subtopik", () => {
+  const outline = [
+    { code: "SD-MTK-D1", name: "Bilangan", subtopics: [{ code: "SD-MTK-D1-S1", name: "Bilangan Rasional" }] },
+    { code: "SD-MTK-D2", name: "Geometri dan Pengukuran", subtopics: [{ code: "SD-MTK-D2-S1", name: "Objek Geometri" }, { code: "SD-MTK-D2-S2", name: "Pengukuran" }] },
+    { code: "SD-MTK-D3", name: "Data", subtopics: [{ code: "SD-MTK-D3-S1", name: "Penyajian dan Penggunaan Data" }] },
+  ];
+  const base = { jenjang: "SD", subject: { code: "SD-MTK", type: "wajib" as const }, durationMinutes: 75, outline };
+  const withSub = (codes: string[]) =>
+    make({ pg: 17, mcma: 7, kat: 6 }, "SD-MTK").map((q, i) => ({ ...q, subtopicCode: codes[i % codes.length] }));
+
+  it("semua topik & subtopik ada → lolos tanpa peringatan cakupan", () => {
+    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D2-S2", "SD-MTK-D3-S1"]) });
+    expect(r.publishable).toBe(true);
+    expect(r.missing).toEqual({ topics: [], subtopics: [] });
+  });
+
+  it("topik Data belum ada → tidak bisa terbit, nama topik disebut", () => {
+    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D2-S2"]) });
+    expect(r.publishable).toBe(false);
+    expect(ruleErrors(r).join(" ")).toMatch(/Belum ada soal: Data/);
+  });
+
+  it("semua topik ada tapi subtopik Pengukuran kosong → tetap terbit, hanya saran", () => {
+    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D3-S1"]) });
+    expect(r.publishable).toBe(true);
+    expect(r.missing.subtopics).toEqual(["Pengukuran"]);
+    expect(r.recommended.find((c) => c.label.startsWith("Semua subtopik"))?.ok).toBe(false);
   });
 });

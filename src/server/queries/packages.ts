@@ -13,10 +13,13 @@ import {
   questions,
   stimuli,
   subjects,
+  subtopics,
   testPackageQuestions,
+  topics,
   testPackages,
   users,
 } from "@/server/db/schema";
+import type { SubjectOutline } from "@/lib/package-rules";
 import type { QuestionType } from "@/lib/validation/enums";
 
 export type CategoryOption = { id: number; code: string; name: string };
@@ -27,14 +30,48 @@ export async function listCategories(): Promise<CategoryOption[]> {
   return rows.sort((a, b) => order.indexOf(a.code) - order.indexOf(b.code));
 }
 
-export type SubjectOption = { id: number; categoryId: number; code: string; name: string; type: "wajib" | "pilihan" };
+export type SubjectOption = {
+  id: number;
+  categoryId: number;
+  code: string;
+  name: string;
+  type: "wajib" | "pilihan";
+  /** Topik → subtopik (untuk aturan cakupan materi paket). */
+  outline: SubjectOutline;
+};
 
-/** Mata pelajaran (mata uji) untuk pilihan paket, urut sesuai kerangka. */
+/** Mata pelajaran (mata uji) untuk pilihan paket, urut sesuai kerangka, beserta topik & subtopiknya. */
 export async function listSubjects(): Promise<SubjectOption[]> {
-  return db
-    .select({ id: subjects.id, categoryId: subjects.categoryId, code: subjects.code, name: subjects.name, type: subjects.type })
-    .from(subjects)
-    .orderBy(asc(subjects.order));
+  const [subs, outlines] = await Promise.all([
+    db
+      .select({ id: subjects.id, categoryId: subjects.categoryId, code: subjects.code, name: subjects.name, type: subjects.type })
+      .from(subjects)
+      .orderBy(asc(subjects.order)),
+    loadSubjectOutlines(),
+  ]);
+  return subs.map((s) => ({ ...s, outline: outlines.get(s.id) ?? [] }));
+}
+
+/** subjectId → topik (urut) → subtopik (urut). */
+export async function loadSubjectOutlines(subjectIds?: number[]): Promise<Map<number, SubjectOutline>> {
+  const rows = await db
+    .select({ subjectId: topics.subjectId, topicCode: topics.code, topicName: topics.name, code: subtopics.code, name: subtopics.name })
+    .from(subtopics)
+    .innerJoin(topics, eq(topics.id, subtopics.topicId))
+    .where(subjectIds ? inArray(topics.subjectId, subjectIds) : undefined)
+    .orderBy(asc(topics.order), asc(subtopics.order));
+  const map = new Map<number, SubjectOutline>();
+  for (const r of rows) {
+    const outline = map.get(r.subjectId) ?? [];
+    let topic = outline.find((t) => t.code === r.topicCode);
+    if (!topic) {
+      topic = { code: r.topicCode, name: r.topicName, subtopics: [] };
+      outline.push(topic);
+    }
+    topic.subtopics.push({ code: r.code, name: r.name });
+    map.set(r.subjectId, outline);
+  }
+  return map;
 }
 
 export type PackageQuestionOption = {

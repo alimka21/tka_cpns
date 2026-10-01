@@ -5,6 +5,7 @@ import { eq, inArray } from "drizzle-orm";
 import { checkPackageRules, type PackageRuleReport } from "@/lib/package-rules";
 import { db } from "@/server/db";
 import { categories, questions, subjects, subtopics, topics } from "@/server/db/schema";
+import { loadSubjectOutlines } from "@/server/queries/packages";
 
 export async function packageRuleReport(p: {
   categoryId: number;
@@ -18,18 +19,27 @@ export async function packageRuleReport(p: {
     : [];
   const rows = p.questionIds.length
     ? await db
-        .select({ id: questions.id, type: questions.type, stimulusId: questions.stimulusId, imageUrl: questions.imageUrl, subjectCode: subjects.code })
+        .select({
+          id: questions.id,
+          type: questions.type,
+          stimulusId: questions.stimulusId,
+          imageUrl: questions.imageUrl,
+          subjectCode: subjects.code,
+          subtopicCode: subtopics.code,
+        })
         .from(questions)
         .innerJoin(subtopics, eq(subtopics.id, questions.subtopicId))
         .innerJoin(topics, eq(topics.id, subtopics.topicId))
         .innerJoin(subjects, eq(subjects.id, topics.subjectId))
         .where(inArray(questions.id, p.questionIds))
     : [];
+  const outline = p.subjectId ? ((await loadSubjectOutlines([p.subjectId])).get(p.subjectId) ?? []) : [];
   return checkPackageRules({
     jenjang: cat?.code ?? "",
     // Mapel dari jenjang lain dianggap tidak dipilih.
     subject: subject && subject.categoryId === p.categoryId ? { code: subject.code, type: subject.type } : null,
     durationMinutes: p.durationMinutes,
-    questions: rows.map((r) => ({ type: r.type, subjectCode: r.subjectCode, stimulusKey: r.stimulusId, hasImage: r.imageUrl != null })),
+    questions: rows.map((r) => ({ type: r.type, subjectCode: r.subjectCode, subtopicCode: r.subtopicCode, stimulusKey: r.stimulusId, hasImage: r.imageUrl != null })),
+    outline,
   });
 }

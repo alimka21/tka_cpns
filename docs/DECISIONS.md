@@ -20,6 +20,8 @@ jumlah soal & durasi per mapel, PG sederhana 50–60%, semua soal dari mapel
 paket; **disarankan** (peringatan): ada MCMA & Kategori, SMA mayoritas
 berbasis stimulus/gambar & grup 3–5 soal. Durasi terisi otomatis & terkunci
 sesuai aturan. Pasangan kategori **Ya/Tidak** ditambahkan (import: Y/T).
+Cakupan materi: semua **topik** mapel wajib punya ≥1 soal; semua
+**subtopik** disarankan (peringatan) — subtopik terbanyak 17 < 25 soal.
 Paket lama tanpa mapel tetap tampil, tetapi harus diberi mapel & memenuhi
 aturan sebelum bisa diterbitkan ulang.
 Alasan: permintaan pemilik produk — setiap paket harus sesuai format TKA resmi.

@@ -8,6 +8,9 @@ export type PackageRule = { questionCount: number; durationMinutes: number; labe
 
 export type SubjectInfo = { code: string; type: "wajib" | "pilihan" };
 
+/** Struktur mapel dari kerangka asesmen: topik (domain) → subtopik (subdomain). */
+export type SubjectOutline = { code: string; name: string; subtopics: { code: string; name: string }[] }[];
+
 /**
  * Jumlah soal & durasi per mata pelajaran:
  * - SD & SMP: Matematika 30 soal/75 menit, Bahasa Indonesia 30 soal/75 menit.
@@ -39,6 +42,8 @@ export function pgRange(total: number) {
 export type RuleQuestion = {
   type: QuestionType;
   subjectCode: string;
+  /** Kode subtopik soal, mis. SD-MTK-D1-S1. */
+  subtopicCode: string;
   /** Id atau kode stimulus (soal grup); null = soal tunggal. */
   stimulusKey: number | string | null;
   hasImage: boolean;
@@ -53,6 +58,8 @@ export type PackageRuleReport = {
   /** Disarankan — tidak memblokir. */
   recommended: RuleCheck[];
   stats: { total: number; pg: number; mcma: number; kategori: number; stimulusBased: number };
+  /** Topik & subtopik mapel yang belum punya soal di paket. */
+  missing: { topics: string[]; subtopics: string[] };
   publishable: boolean;
 };
 
@@ -61,6 +68,8 @@ export function checkPackageRules(input: {
   subject: SubjectInfo | null;
   durationMinutes: number;
   questions: RuleQuestion[];
+  /** Topik & subtopik mapel; tanpa outline, cakupan materi tidak dicek. */
+  outline?: SubjectOutline;
 }): PackageRuleReport {
   const qs = input.questions;
   const stats = {
@@ -104,11 +113,38 @@ export function checkPackageRules(input: {
     });
   }
 
+  // Cakupan materi: setiap topik (wajib) & subtopik (disarankan) minimal 1 soal.
+  const used = new Set(qs.map((q) => q.subtopicCode));
+  const outline = input.outline ?? [];
+  const missingTopics = outline.filter((t) => !t.subtopics.some((s) => used.has(s.code)));
+  const missingSubtopics = outline.flatMap((t) => t.subtopics.filter((s) => !used.has(s.code)));
+  if (rule && outline.length > 0) {
+    required.push({
+      ok: missingTopics.length === 0,
+      label: `Semua topik mapel masuk (${outline.length} topik)`,
+      detail:
+        missingTopics.length === 0
+          ? `${outline.length} dari ${outline.length} topik`
+          : `Belum ada soal: ${missingTopics.map((t) => t.name).join("; ")}`,
+    });
+  }
+
   recommended.push({
     ok: stats.mcma > 0 && stats.kategori > 0,
     label: "Ada PGK MCMA & PGK Kategori",
     detail: `${stats.mcma} MCMA · ${stats.kategori} Kategori`,
   });
+  if (rule && outline.length > 0) {
+    const totalSub = outline.reduce((n, t) => n + t.subtopics.length, 0);
+    recommended.push({
+      ok: missingSubtopics.length === 0,
+      label: `Semua subtopik terwakili (${totalSub} subtopik)`,
+      detail:
+        missingSubtopics.length === 0
+          ? `${totalSub} dari ${totalSub} subtopik`
+          : `Belum ada soal (${missingSubtopics.length}): ${missingSubtopics.map((s) => s.name).join("; ")}`,
+    });
+  }
   if (input.jenjang === "SMA") {
     recommended.push({
       ok: stats.total > 0 && stats.stimulusBased * 2 > stats.total,
@@ -125,7 +161,14 @@ export function checkPackageRules(input: {
     });
   }
 
-  return { rule, required, recommended, stats, publishable: required.every((c) => c.ok) };
+  return {
+    rule,
+    required,
+    recommended,
+    stats,
+    missing: { topics: missingTopics.map((t) => t.name), subtopics: missingSubtopics.map((s) => s.name) },
+    publishable: required.every((c) => c.ok),
+  };
 }
 
 /** Pesan error (untuk server) dari aturan wajib yang gagal. */

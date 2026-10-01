@@ -34,6 +34,14 @@ stimulus bacaan sesuai perkembangan kognitif.
   (disarankan keduanya ada). PG biasanya di soal tunggal atau awal stimulus.
 - **Semua soal paket** harus dari mata pelajaran paket itu (wajib).
 
+## Cakupan materi
+
+- **Wajib:** setiap **topik** (domain) mata pelajaran punya minimal 1 soal di
+  paket — paket tidak bisa terbit bila ada topik yang kosong (nama topiknya
+  ditampilkan).
+- **Disarankan:** setiap **subtopik** (subdomain) juga terwakili minimal 1
+  soal. Selalu memungkinkan: subtopik terbanyak per mapel 17, paket 25–30 soal.
+
 ## Karakteristik SMA/SMK (disarankan, tampil sebagai peringatan)
 
 - **Berbasis stimulus:** mayoritas soal diawali teks bacaan, grafik,

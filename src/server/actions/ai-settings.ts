@@ -8,12 +8,16 @@ import { getActiveSession } from "@/server/auth/session";
 import { deleteGeminiKey, saveGeminiKey } from "@/server/services/ai-key";
 import { GeminiError } from "@/server/services/gemini";
 
+// Tidak ada aturan format/awalan: keabsahan key ditentukan tes ping ke Google
+// (verifyGeminiKey). Di sini hanya pengaman teknis — key dikirim sebagai header
+// HTTP, jadi tidak boleh berisi spasi/baris baru.
 const keyInput = z
   .string()
   .trim()
-  // Format lama "AIza…" maupun format baru Google AI Studio "AQ.Ab…" (mengandung titik).
-  // Validasi sebenarnya dilakukan Google lewat verifyGeminiKey.
-  .regex(/^[A-Za-z0-9._-]{20,200}$/, "Format API key tidak valid. Salin ulang dari Google AI Studio (tanpa spasi).");
+  .min(10, "API key terlalu pendek — salin ulang selengkapnya.")
+  .max(500, "API key terlalu panjang.")
+  .refine((k) => !/\s/.test(k), "API key tidak boleh berisi spasi atau baris baru.")
+  .refine((k) => /^[\x21-\x7E]+$/.test(k), "API key berisi karakter yang tidak dikenal — salin ulang dari Google AI Studio.");
 
 type Result = { ok: true; masked?: string } | { ok: false; error: string };
 

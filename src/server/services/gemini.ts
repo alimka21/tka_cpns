@@ -19,12 +19,27 @@ export class GeminiError extends Error {
   }
 }
 
-function errorFor(status: number, body: string): GeminiError {
-  if (status === 400 && /API_KEY_INVALID|API key not valid/i.test(body)) return new GeminiError("API key Gemini tidak valid.", "invalid_key");
-  if (status === 401 || status === 403) return new GeminiError("API key Gemini ditolak (tidak punya akses ke model ini).", "invalid_key");
+/** Terjemahkan respons error Google (status HTTP + `error.details[].reason`) ke pesan Indonesia. */
+export function geminiErrorFor(status: number, body: string): GeminiError {
+  let reason = "";
+  try {
+    const details = (JSON.parse(body) as { error?: { details?: { reason?: string }[] } }).error?.details ?? [];
+    reason = details.map((d) => d.reason ?? "").find(Boolean) ?? "";
+  } catch {
+    // body bukan JSON — pakai status saja
+  }
+  if (reason === "API_KEY_INVALID" || /API key not valid/i.test(body) || status === 401) {
+    return new GeminiError("API key ditolak Google — key tidak valid, salah salin, atau sudah dihapus.", "invalid_key");
+  }
+  if (reason === "API_KEY_SERVICE_BLOCKED" || reason === "SERVICE_DISABLED" || reason === "API_KEY_HTTP_REFERRER_BLOCKED" || reason === "API_KEY_IP_ADDRESS_BLOCKED" || status === 403) {
+    return new GeminiError(
+      "API key valid tetapi tidak diizinkan memakai Gemini API (Generative Language API belum aktif atau key dibatasi). Periksa pengaturan key di Google AI Studio / Cloud Console.",
+      "invalid_key",
+    );
+  }
   if (status === 429) return new GeminiError("Kuota Gemini habis atau terlalu banyak permintaan. Coba lagi nanti.", "quota");
   if (status === 404) return new GeminiError(`Model ${geminiModel()} tidak ditemukan. Periksa env GEMINI_MODEL.`, "unavailable");
-  return new GeminiError(`Gemini sedang tidak tersedia (HTTP ${status}).`, "unavailable");
+  return new GeminiError(`Gemini sedang tidak tersedia (HTTP ${status}). Coba lagi nanti.`, "unavailable");
 }
 
 async function call(path: string, apiKey: string, init: RequestInit, timeoutMs: number) {
@@ -43,10 +58,14 @@ async function call(path: string, apiKey: string, init: RequestInit, timeoutMs: 
   }
 }
 
-/** Panggilan uji ringan saat user menyimpan key (tanpa memakai kuota generate). */
+/**
+ * Tes "ping" saat user menyimpan key: minta daftar model (tanpa memakai kuota
+ * generate & tidak bergantung pada satu model). Google sendiri yang menentukan
+ * key valid atau tidak — tidak ada aturan format/awalan di aplikasi.
+ */
 export async function verifyGeminiKey(apiKey: string): Promise<void> {
-  const res = await call(`/models/${encodeURIComponent(geminiModel())}`, apiKey, { method: "GET" }, 15_000);
-  if (!res.ok) throw errorFor(res.status, await res.text());
+  const res = await call("/models?pageSize=1", apiKey, { method: "GET" }, 15_000);
+  if (!res.ok) throw geminiErrorFor(res.status, await res.text());
 }
 
 export type GeminiImage = { mime: string; data: Buffer };
@@ -80,7 +99,7 @@ export async function generateJson(opts: {
     opts.timeoutMs ?? 90_000,
   );
   const body = await res.text();
-  if (!res.ok) throw errorFor(res.status, body);
+  if (!res.ok) throw geminiErrorFor(res.status, body);
 
   let json: { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[]; promptFeedback?: { blockReason?: string } };
   try {

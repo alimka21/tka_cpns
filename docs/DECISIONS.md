@@ -12,12 +12,15 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
-## 2026-10-01 — Format API key Gemini baru ("AQ.…")
-Keputusan: validasi format key di server dilonggarkan menjadi
-`[A-Za-z0-9._-]{20,200}` — Google AI Studio kini juga menerbitkan key
-berformat `AQ.Ab…` (berisi titik), selain `AIza…`. Keabsahan key tetap
-dipastikan oleh panggilan uji ke Gemini (`verifyGeminiKey`).
-Alasan: key asli user ditolak regex lama padahal diterima Google (HTTP 200).
+## 2026-10-01 — API key Gemini divalidasi dengan tes ping, bukan format
+Keputusan: tidak ada aturan format/awalan key (Google punya `AIza…` & `AQ.…`
+dan bisa berubah). Saat disimpan, key di-ping ke Google
+(`GET /v1beta/models?pageSize=1`, tanpa kuota generate, tidak bergantung
+model). Di aplikasi hanya pengaman teknis: trim, 10–500 karakter, tanpa
+spasi/baris baru/karakter tak terlihat (key dikirim sebagai header HTTP).
+Error Google dibaca dari `error.details[].reason` (400 API_KEY_INVALID /
+401 → key ditolak; 403 → API tidak aktif / key dibatasi; 429 → kuota).
+Alasan: key asli user format `AQ.` ditolak regex lama padahal diterima Google.
 
 ## 2026-10-01 — Login Google (Better Auth social provider)
 Keputusan: Google aktif hanya bila env `GOOGLE_CLIENT_ID`/`SECRET` diisi

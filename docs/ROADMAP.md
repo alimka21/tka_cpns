@@ -156,9 +156,11 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
       — `/admin/paket-tes/baru` & `/admin/paket-tes/[id]`, soal grup
       stimulus otomatis ikut utuh, validasi urutan di server; daftar
       paket bisa difilter jenjang & mapel (`?jenjang=&mapel=`)
+- [x] Admin: terbitkan paket beserta soal yang belum tayang sekaligus
+      (konfirmasi di daftar Paket Tes, satu transaksi)
 - [ ] Admin: halaman "Tinjau Paket" (paket utuh + kunci + pembahasan,
-      edit per soal) & tombol terbitkan paket beserta semua soalnya;
-      Bank Soal: filter per paket + terbitkan massal (usulan 2026-10-01)
+      edit per soal); Bank Soal: filter per paket + terbitkan massal
+      (usulan 2026-10-01)
 - [x] Admin: entitlement manual (kasih akses paket premium ke user) —
       per paket di `/admin/paket-tes/[id]` (cari user → beri/cabut akses)
 - [x] Student: lihat daftar paket tes (gratis/premium, lock kalau belum

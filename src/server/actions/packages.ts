@@ -6,7 +6,7 @@
 // soal published di server).
 
 import { revalidatePath } from "next/cache";
-import { and, eq } from "drizzle-orm";
+import { and, eq, inArray } from "drizzle-orm";
 import { getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { entitlements, questions, testPackageQuestions, testPackages } from "@/server/db/schema";
@@ -31,6 +31,26 @@ async function publishedBank(): Promise<ComposableQuestion[]> {
     .where(eq(questions.status, "published"));
 }
 
+/**
+ * Bank untuk cek susunan paket: soal tayang + soal paket itu sendiri (status
+ * apa pun), supaya soal yang belum tayang dilaporkan sebagai "belum tayang",
+ * bukan "tidak ditemukan". Id yang benar-benar tidak ada tetap tidak muncul.
+ */
+async function compositionBank(questionIds: number[]) {
+  const [published, own] = await Promise.all([
+    publishedBank(),
+    questionIds.length
+      ? db
+          .select({ id: questions.id, stimulusId: questions.stimulusId, stimulusOrder: questions.stimulusOrder, status: questions.status })
+          .from(questions)
+          .where(inArray(questions.id, questionIds))
+      : Promise.resolve([]),
+  ]);
+  const bank = new Map<number, ComposableQuestion>(published.map((q) => [q.id, q]));
+  for (const q of own) bank.set(q.id, { id: q.id, stimulusId: q.stimulusId, stimulusOrder: q.stimulusOrder });
+  return { bank: [...bank.values()], unpublishedIds: own.filter((q) => q.status !== "published").map((q) => q.id) };
+}
+
 /** Simpan paket baru (id kosong) atau perbarui yang ada. */
 export async function savePackageAction(input: unknown & { id?: number }): Promise<ActionResult<{ id: number }>> {
   const session = await getAdminSession();
@@ -42,16 +62,17 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
   const id = typeof (input as { id?: unknown }).id === "number" ? (input as { id: number }).id : undefined;
 
   if (p.status === "published" && p.questions.length > 0) {
-    const bank = await publishedBank();
-    const orderErrors = validatePackageOrder(
-      p.questions.map((q) => q.questionId),
-      bank,
-    );
+    const ids = p.questions.map((q) => q.questionId);
+    const { bank, unpublishedIds } = await compositionBank(ids);
+    const orderErrors = validatePackageOrder(ids, bank);
     if (orderErrors.length > 0) return { ok: false, errors: orderErrors };
-    const publishedIds = new Set(bank.map((b) => b.id));
-    const notPublished = p.questions.filter((q) => !publishedIds.has(q.questionId));
-    if (notPublished.length > 0) {
-      return { ok: false, errors: [`${notPublished.length} soal belum berstatus tayang — terbitkan dulu di Bank Soal.`] };
+    if (unpublishedIds.length > 0) {
+      return {
+        ok: false,
+        errors: [
+          `${unpublishedIds.length} soal belum tayang (draf / menunggu tinjauan). Simpan sebagai draf, lalu pakai tombol "Terbitkan" di daftar Paket Tes untuk menerbitkan paket beserta soalnya.`,
+        ],
+      };
     }
   }
   if (p.status === "published") {
@@ -115,30 +136,53 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
   return { ok: true, id: savedId };
 }
 
-export async function updatePackageStatusAction(input: { id: number; status: "draft" | "published" }): Promise<ActionResult> {
+export type PackageStatusResult = { ok: true } | { ok: false; errors: string[]; /** Soal paket yang belum tayang — client bisa menawarkan terbit sekaligus. */ unpublishedCount?: number };
+
+/**
+ * Ubah status paket. Terbit: susunan & aturan paket dicek dulu. Soal yang belum
+ * tayang ditolak, kecuali `publishQuestions` — maka soal-soal itu ikut
+ * diterbitkan dalam transaksi yang sama dengan paketnya.
+ */
+export async function updatePackageStatusAction(input: {
+  id: number;
+  status: "draft" | "published";
+  publishQuestions?: boolean;
+}): Promise<PackageStatusResult> {
   if (!(await getAdminSession())) return NOT_ADMIN;
+  let toPublish: number[] = [];
   if (input.status === "published") {
     const rows = await db
       .select({ questionId: testPackageQuestions.questionId })
       .from(testPackageQuestions)
-      .where(eq(testPackageQuestions.testPackageId, input.id));
+      .where(eq(testPackageQuestions.testPackageId, input.id))
+      .orderBy(testPackageQuestions.order);
     if (rows.length === 0) return { ok: false, errors: ["Paket belum berisi soal — tidak bisa diterbitkan."] };
-    const bank = await publishedBank();
-    const orderErrors = validatePackageOrder(
-      rows.map((r) => r.questionId),
-      bank,
-    );
+    const ids = rows.map((r) => r.questionId);
+    const { bank, unpublishedIds } = await compositionBank(ids);
+    const orderErrors = validatePackageOrder(ids, bank);
     if (orderErrors.length > 0) return { ok: false, errors: orderErrors };
     const [pkg] = await db
       .select({ categoryId: testPackages.categoryId, subjectId: testPackages.subjectId, durationMinutes: testPackages.durationMinutes })
       .from(testPackages)
       .where(eq(testPackages.id, input.id));
     if (!pkg) return { ok: false, errors: ["Paket tidak ditemukan."] };
-    const report = await packageRuleReport({ ...pkg, questionIds: rows.map((r) => r.questionId) });
+    const report = await packageRuleReport({ ...pkg, questionIds: ids });
     if (!report.publishable) return { ok: false, errors: [...ruleErrors(report), "Buka paket untuk melengkapi sesuai aturan."] };
+    if (unpublishedIds.length > 0 && !input.publishQuestions) {
+      return {
+        ok: false,
+        errors: [`${unpublishedIds.length} soal di paket ini belum tayang (draf / menunggu tinjauan).`],
+        unpublishedCount: unpublishedIds.length,
+      };
+    }
+    toPublish = unpublishedIds;
   }
-  await db.update(testPackages).set({ status: input.status }).where(eq(testPackages.id, input.id));
+  await db.transaction(async (tx) => {
+    if (toPublish.length > 0) await tx.update(questions).set({ status: "published" }).where(inArray(questions.id, toPublish));
+    await tx.update(testPackages).set({ status: input.status }).where(eq(testPackages.id, input.id));
+  });
   revalidatePath("/admin/paket-tes");
+  if (toPublish.length > 0) revalidatePath("/admin/soal");
   return { ok: true };
 }
 

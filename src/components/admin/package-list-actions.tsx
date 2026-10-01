@@ -21,29 +21,57 @@ export function PackageStatusButton({ id, status }: { id: number; status: "draft
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  /** Jumlah soal belum tayang → tampilkan konfirmasi terbit sekaligus. */
+  const [unpublished, setUnpublished] = useState<number | null>(null);
   const next = status === "published" ? "draft" : "published";
+
+  const run = (publishQuestions: boolean) =>
+    startTransition(async () => {
+      const result = await updatePackageStatusAction({ id, status: next, publishQuestions });
+      if (result.ok) {
+        setError(null);
+        setUnpublished(null);
+        router.refresh();
+      } else if (result.unpublishedCount) {
+        setError(null);
+        setUnpublished(result.unpublishedCount);
+      } else {
+        setUnpublished(null);
+        setError(result.errors[0]);
+      }
+    });
 
   return (
     <span className="flex flex-col items-end gap-1">
-      <Button
-        variant={next === "published" ? "default" : "outline"}
-        size="sm"
-        disabled={pending}
-        onClick={() =>
-          startTransition(async () => {
-            const result = await updatePackageStatusAction({ id, status: next });
-            if (!result.ok) setError(result.errors[0]);
-            else {
-              setError(null);
-              router.refresh();
-            }
-          })
-        }
-      >
+      <Button variant={next === "published" ? "default" : "outline"} size="sm" disabled={pending} onClick={() => run(false)}>
         {next === "published" ? <Send aria-hidden /> : <Undo2 aria-hidden />}
         {pending ? "Menyimpan…" : next === "published" ? "Terbitkan" : "Jadikan draft"}
       </Button>
       {error && <span className="max-w-48 text-right text-xs text-destructive">{error}</span>}
+      <AlertDialog open={unpublished != null} onOpenChange={(open) => !open && setUnpublished(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Terbitkan paket beserta {unpublished} soalnya?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Paket ini sudah memenuhi aturan, tetapi {unpublished} soal di dalamnya belum tayang (draf atau menunggu
+              tinjauan). Soal-soal itu akan ikut diterbitkan sehingga bisa dikerjakan siswa. Pastikan kunci jawaban dan
+              pembahasannya sudah kamu periksa.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Batal</AlertDialogCancel>
+            <AlertDialogAction
+              disabled={pending}
+              onClick={(e) => {
+                e.preventDefault();
+                run(true);
+              }}
+            >
+              {pending ? "Menerbitkan…" : `Terbitkan paket + ${unpublished} soal`}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </span>
   );
 }

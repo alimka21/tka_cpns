@@ -9,7 +9,7 @@ import {
   varchar,
 } from "drizzle-orm/mysql-core";
 import { PACKAGE_STATUSES } from "@/lib/validation/enums";
-import { categories, questions } from "./content";
+import { categories, questions, subjects } from "./content";
 import { users } from "./users";
 
 // Grup: Paket Tes & Akses (docs/DATABASE.md §Grup: Paket Tes / Akses).
@@ -21,6 +21,8 @@ export const testPackages = mysqlTable("test_packages", {
   categoryId: int("category_id")
     .notNull()
     .references(() => categories.id),
+  /** Mata pelajaran paket (aturan jumlah soal & durasi, docs/ATURAN_PAKET.md). NULL = paket lama. */
+  subjectId: int("subject_id").references(() => subjects.id),
   durationMinutes: int("duration_minutes").notNull(),
   isPremium: boolean("is_premium").notNull().default(false),
   status: mysqlEnum("status", PACKAGE_STATUSES).notNull().default("draft"),

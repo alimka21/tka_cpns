@@ -20,12 +20,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { checkPackageRules, packageRuleFor, pgRange, type PackageRuleReport } from "@/lib/package-rules";
 import { QUESTION_TYPE_META } from "@/lib/question-forms";
 import type { QuestionListRow } from "@/lib/question-bank-types";
 import { testPackageInput } from "@/lib/validation/test-package";
 import { cn } from "@/lib/utils";
 import { savePackageAction, searchUsersAction, setEntitlementAction } from "@/server/actions/packages";
-import type { CategoryOption, EntitledUser, UserSearchResult } from "@/server/queries/packages";
+import type { CategoryOption, EntitledUser, SubjectOption, UserSearchResult } from "@/server/queries/packages";
 
 const selectClass =
   "h-10 w-full rounded-lg border border-input bg-card px-3 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15 focus-visible:outline-none";
@@ -35,6 +36,7 @@ type InitialPackage = {
   title: string;
   description: string | null;
   categoryId: number;
+  subjectId: number | null;
   durationMinutes: number;
   isPremium: boolean;
   status: "draft" | "published";
@@ -64,11 +66,13 @@ function blocksFromSelected(selectedIds: number[], byId: Map<number, QuestionLis
 
 export function PackageForm({
   categories,
+  subjects,
   bank,
   initial,
   entitledUsers,
 }: {
   categories: CategoryOption[];
+  subjects: SubjectOption[];
   bank: QuestionListRow[];
   initial?: InitialPackage;
   entitledUsers?: EntitledUser[];
@@ -77,7 +81,9 @@ export function PackageForm({
   const [title, setTitle] = useState(initial?.title ?? "");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [categoryId, setCategoryId] = useState(String(initial?.categoryId ?? categories[0]?.id ?? ""));
-  const [durationMinutes, setDurationMinutes] = useState(String(initial?.durationMinutes ?? 60));
+  const [subjectId, setSubjectId] = useState(initial?.subjectId ? String(initial.subjectId) : "");
+  const [durationMinutes, setDurationMinutes] = useState(String(initial?.durationMinutes ?? 75));
+  const [showAllSubjects, setShowAllSubjects] = useState(false);
   const [isPremium, setIsPremium] = useState(initial?.isPremium ?? false);
   const [status, setStatus] = useState<"draft" | "published">(initial?.status ?? "draft");
   const [selectedIds, setSelectedIds] = useState<number[]>(initial?.questionIds ?? []);
@@ -92,12 +98,34 @@ export function PackageForm({
 
   const byId = useMemo(() => new Map(bank.map((q) => [q.id, q])), [bank]);
   const category = categories.find((c) => String(c.id) === categoryId);
+  const subjectOptions = subjects.filter((s) => String(s.categoryId) === categoryId);
+  const subject = subjectOptions.find((s) => String(s.id) === subjectId) ?? null;
+  const rule = category && subject ? packageRuleFor(category.code, subject) : null;
   const q = query.trim().toLowerCase();
   const pickerRows = bank.filter(
     (row) =>
       (showAllJenjang || !category || row.jenjang === category.code) &&
+      (showAllSubjects || !subject || row.subjectCode === subject.code) &&
       (q === "" || row.text.toLowerCase().includes(q) || row.subtopic.toLowerCase().includes(q)),
   );
+  const report: PackageRuleReport = checkPackageRules({
+    jenjang: category?.code ?? "",
+    subject,
+    durationMinutes: Number(durationMinutes),
+    questions: selectedIds.flatMap((id) => {
+      const row = byId.get(id);
+      return row ? [{ type: row.type, subjectCode: row.subjectCode, stimulusKey: row.stimulusCode, hasImage: row.hasImage }] : [];
+    }),
+  });
+
+  function changeSubject(value: string) {
+    setSubjectId(value);
+    const s = subjectOptions.find((x) => String(x.id) === value);
+    const r = category && s ? packageRuleFor(category.code, s) : null;
+    // Durasi mengikuti aturan resmi mata pelajaran.
+    if (r) setDurationMinutes(String(r.durationMinutes));
+    setSaved(false);
+  }
   const blocks = blocksFromSelected(selectedIds, byId);
 
   function toggle(id: number) {
@@ -139,6 +167,7 @@ export function PackageForm({
       title,
       description: description || undefined,
       categoryId: Number(categoryId),
+      subjectId: subjectId ? Number(subjectId) : null,
       durationMinutes: Number(durationMinutes),
       isPremium,
       status,
@@ -151,6 +180,10 @@ export function PackageForm({
     const parsed = testPackageInput.safeParse(payload);
     if (!parsed.success) {
       setErrors([...new Set(parsed.error.issues.map((i) => i.message))]);
+      return;
+    }
+    if (status === "published" && !report.publishable) {
+      setErrors(report.required.filter((c) => !c.ok).map((c) => `Aturan paket belum terpenuhi — ${c.label}: ${c.detail}.`));
       return;
     }
     setErrors([]);
@@ -194,7 +227,15 @@ export function PackageForm({
               <Label htmlFor="pkg-category" className="font-semibold">
                 Jenjang
               </Label>
-              <select id="pkg-category" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} className={selectClass}>
+              <select
+                id="pkg-category"
+                value={categoryId}
+                onChange={(e) => {
+                  setCategoryId(e.target.value);
+                  setSubjectId("");
+                }}
+                className={selectClass}
+              >
                 {categories.map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.code} — {c.name}
@@ -203,10 +244,39 @@ export function PackageForm({
               </select>
             </div>
             <div className="flex flex-col gap-1.5">
+              <Label htmlFor="pkg-subject" className="font-semibold">
+                Mata pelajaran
+              </Label>
+              <select id="pkg-subject" value={subjectId} onChange={(e) => changeSubject(e.target.value)} className={selectClass}>
+                <option value="">Pilih mata pelajaran…</option>
+                {subjectOptions.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name}
+                    {s.type === "pilihan" ? " (pilihan)" : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1.5 sm:col-span-2">
               <Label htmlFor="pkg-duration" className="font-semibold">
                 Durasi (menit)
               </Label>
-              <Input id="pkg-duration" type="number" min={1} max={600} value={durationMinutes} onChange={(e) => setDurationMinutes(e.target.value)} />
+              <Input
+                id="pkg-duration"
+                type="number"
+                min={1}
+                max={600}
+                value={durationMinutes}
+                readOnly={rule != null}
+                onChange={(e) => setDurationMinutes(e.target.value)}
+                className={rule ? "bg-muted" : undefined}
+              />
+              {rule && (
+                <p className="text-xs text-muted-foreground">
+                  Aturan {category?.code} {rule.label}: <strong>{rule.questionCount} soal</strong>, <strong>{rule.durationMinutes} menit</strong>, PG
+                  sederhana {pgRange(rule.questionCount).min}–{pgRange(rule.questionCount).max} soal (50–60%).
+                </p>
+              )}
             </div>
           </div>
           <div className="flex items-center gap-3 rounded-lg border p-3">
@@ -228,6 +298,12 @@ export function PackageForm({
               <Search className="pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden />
               <Input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Cari teks soal atau subdomain…" className="pl-10" />
             </div>
+            {subject && (
+              <label className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
+                <input type="checkbox" checked={showAllSubjects} onChange={(e) => setShowAllSubjects(e.target.checked)} />
+                Tampilkan mapel lain
+              </label>
+            )}
             {category && (
               <label className="flex shrink-0 items-center gap-2 text-sm text-muted-foreground">
                 <input type="checkbox" checked={showAllJenjang} onChange={(e) => setShowAllJenjang(e.target.checked)} />
@@ -345,6 +421,7 @@ export function PackageForm({
       </div>
 
       <aside className="flex flex-col gap-6">
+        <RulesPanel report={report} />
         <section className="surface-card flex flex-col gap-4 p-6">
           <h2 className="font-bold">Status</h2>
           <div role="radiogroup" aria-label="Status paket" className="grid grid-cols-2 gap-2">
@@ -485,6 +562,49 @@ function EntitlementPanel({ testPackageId, initialUsers }: { testPackageId: numb
           ))}
         </ul>
       </div>
+    </section>
+  );
+}
+
+/** Checklist aturan paket (docs/ATURAN_PAKET.md): wajib memblokir penerbitan, saran tidak. */
+function RulesPanel({ report }: { report: PackageRuleReport }) {
+  const { stats } = report;
+  return (
+    <section aria-labelledby="rules-heading" className="surface-card flex flex-col gap-3 p-5">
+      <h2 id="rules-heading" className="flex items-center justify-between font-bold">
+        Aturan paket
+        <Badge variant={report.publishable ? "success" : "warning"}>{report.publishable ? "Siap terbit" : "Belum lengkap"}</Badge>
+      </h2>
+      <ul className="flex flex-col gap-2 text-sm">
+        {report.required.map((c) => (
+          <li key={c.label} className="flex items-start gap-2">
+            {c.ok ? <CircleCheck className="mt-0.5 size-4 shrink-0 text-success-strong" aria-label="Terpenuhi" /> : <CircleAlert className="mt-0.5 size-4 shrink-0 text-destructive" aria-label="Belum terpenuhi" />}
+            <span>
+              <span className="font-medium">{c.label}</span>
+              <span className="block text-xs text-muted-foreground">{c.detail}</span>
+            </span>
+          </li>
+        ))}
+      </ul>
+      {report.recommended.length > 0 && (
+        <>
+          <p className="border-t pt-2 text-xs font-semibold text-muted-foreground uppercase">Disarankan</p>
+          <ul className="flex flex-col gap-2 text-sm">
+            {report.recommended.map((c) => (
+              <li key={c.label} className="flex items-start gap-2">
+                {c.ok ? <Check className="mt-0.5 size-4 shrink-0 text-success-strong" aria-label="Terpenuhi" /> : <span className="mt-0.5 text-xs font-bold text-warning-strong" aria-label="Saran">!</span>}
+                <span>
+                  {c.label}
+                  <span className="block text-xs text-muted-foreground">{c.detail}</span>
+                </span>
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <p className="border-t pt-2 text-xs text-muted-foreground tabular-nums">
+        {stats.total} soal · {stats.pg} PG · {stats.mcma} MCMA · {stats.kategori} Kategori · {stats.stimulusBased} berbasis stimulus/gambar
+      </p>
     </section>
   );
 }

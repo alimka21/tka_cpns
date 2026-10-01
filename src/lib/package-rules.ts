@@ -1,0 +1,134 @@
+// Aturan resmi penyusunan paket tes TKA per jenjang & mata pelajaran
+// (docs/ATURAN_PAKET.md). Fungsi murni — dipakai form admin (cek langsung)
+// dan server (wajib lolos sebelum paket diterbitkan).
+
+import type { QuestionType } from "@/lib/validation/enums";
+
+export type PackageRule = { questionCount: number; durationMinutes: number; label: string };
+
+export type SubjectInfo = { code: string; type: "wajib" | "pilihan" };
+
+/**
+ * Jumlah soal & durasi per mata pelajaran:
+ * - SD & SMP: Matematika 30 soal/75 menit, Bahasa Indonesia 30 soal/75 menit.
+ * - SMA/SMK: Bahasa Indonesia 30/75, Bahasa Inggris 30/75,
+ *   Matematika (& Numerasi) 25/75, mapel pilihan masing-masing 25/60.
+ */
+export function packageRuleFor(jenjang: string, subject: SubjectInfo): PackageRule | null {
+  const code = subject.code;
+  if (jenjang === "SD" || jenjang === "SMP") {
+    if (code.endsWith("-MTK")) return { questionCount: 30, durationMinutes: 75, label: "Matematika" };
+    if (code.endsWith("-BIND")) return { questionCount: 30, durationMinutes: 75, label: "Bahasa Indonesia" };
+    return null;
+  }
+  if (jenjang === "SMA") {
+    if (subject.type === "pilihan") return { questionCount: 25, durationMinutes: 60, label: "Mata pelajaran pilihan" };
+    if (code === "SMA-BIND") return { questionCount: 30, durationMinutes: 75, label: "Bahasa Indonesia" };
+    if (code === "SMA-BING") return { questionCount: 30, durationMinutes: 75, label: "Bahasa Inggris" };
+    if (code === "SMA-MTK") return { questionCount: 25, durationMinutes: 75, label: "Matematika & Numerasi" };
+    return null;
+  }
+  return null;
+}
+
+/** PG sederhana 50–60% dari total soal (dibulatkan ke rentang bilangan bulat yang masih di dalamnya). */
+export function pgRange(total: number) {
+  return { min: Math.ceil(total * 0.5), max: Math.floor(total * 0.6) };
+}
+
+export type RuleQuestion = {
+  type: QuestionType;
+  subjectCode: string;
+  /** Id atau kode stimulus (soal grup); null = soal tunggal. */
+  stimulusKey: number | string | null;
+  hasImage: boolean;
+};
+
+export type RuleCheck = { ok: boolean; label: string; detail: string };
+
+export type PackageRuleReport = {
+  rule: PackageRule | null;
+  /** Wajib — paket tidak bisa diterbitkan bila ada yang gagal. */
+  required: RuleCheck[];
+  /** Disarankan — tidak memblokir. */
+  recommended: RuleCheck[];
+  stats: { total: number; pg: number; mcma: number; kategori: number; stimulusBased: number };
+  publishable: boolean;
+};
+
+export function checkPackageRules(input: {
+  jenjang: string;
+  subject: SubjectInfo | null;
+  durationMinutes: number;
+  questions: RuleQuestion[];
+}): PackageRuleReport {
+  const qs = input.questions;
+  const stats = {
+    total: qs.length,
+    pg: qs.filter((q) => q.type === "pg").length,
+    mcma: qs.filter((q) => q.type === "pgk_mcma").length,
+    kategori: qs.filter((q) => q.type === "pgk_kategori").length,
+    stimulusBased: qs.filter((q) => q.stimulusKey != null || q.hasImage).length,
+  };
+  const rule = input.subject ? packageRuleFor(input.jenjang, input.subject) : null;
+  const required: RuleCheck[] = [];
+  const recommended: RuleCheck[] = [];
+
+  required.push({
+    ok: rule != null,
+    label: "Mata pelajaran dipilih",
+    detail: input.subject ? (rule ? rule.label : `${input.subject.code} belum punya aturan paket`) : "Pilih mata pelajaran paket",
+  });
+  if (rule) {
+    required.push({
+      ok: stats.total === rule.questionCount,
+      label: `Jumlah soal tepat ${rule.questionCount}`,
+      detail: `${stats.total} dari ${rule.questionCount} soal`,
+    });
+    required.push({
+      ok: input.durationMinutes === rule.durationMinutes,
+      label: `Durasi ${rule.durationMinutes} menit`,
+      detail: `${input.durationMinutes} menit`,
+    });
+    const range = pgRange(rule.questionCount);
+    required.push({
+      ok: stats.pg >= range.min && stats.pg <= range.max,
+      label: `PG sederhana 50–60% (${range.min}–${range.max} soal)`,
+      detail: `${stats.pg} soal PG`,
+    });
+    const foreign = qs.filter((q) => q.subjectCode !== input.subject!.code).length;
+    required.push({
+      ok: foreign === 0,
+      label: "Semua soal dari mata pelajaran ini",
+      detail: foreign === 0 ? "Sesuai" : `${foreign} soal dari mata pelajaran lain`,
+    });
+  }
+
+  recommended.push({
+    ok: stats.mcma > 0 && stats.kategori > 0,
+    label: "Ada PGK MCMA & PGK Kategori",
+    detail: `${stats.mcma} MCMA · ${stats.kategori} Kategori`,
+  });
+  if (input.jenjang === "SMA") {
+    recommended.push({
+      ok: stats.total > 0 && stats.stimulusBased * 2 > stats.total,
+      label: "Mayoritas soal berbasis stimulus (bacaan, grafik, tabel, gambar)",
+      detail: `${stats.stimulusBased} dari ${stats.total} soal`,
+    });
+    const groupSizes = new Map<number | string, number>();
+    for (const q of qs) if (q.stimulusKey != null) groupSizes.set(q.stimulusKey, (groupSizes.get(q.stimulusKey) ?? 0) + 1);
+    const off = [...groupSizes.values()].filter((n) => n < 3 || n > 5).length;
+    recommended.push({
+      ok: groupSizes.size > 0 && off === 0,
+      label: "Soal grup: 1 stimulus untuk 3–5 soal",
+      detail: groupSizes.size === 0 ? "Belum ada soal grup" : off === 0 ? `${groupSizes.size} grup sesuai` : `${off} grup di luar 3–5 soal`,
+    });
+  }
+
+  return { rule, required, recommended, stats, publishable: required.every((c) => c.ok) };
+}
+
+/** Pesan error (untuk server) dari aturan wajib yang gagal. */
+export function ruleErrors(report: PackageRuleReport) {
+  return report.required.filter((c) => !c.ok).map((c) => `Aturan paket belum terpenuhi — ${c.label}: ${c.detail}.`);
+}

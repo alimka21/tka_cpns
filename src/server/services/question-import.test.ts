@@ -153,6 +153,12 @@ describe("parseImportFile — PGK Kategori", () => {
     expect(result.valid[0].options.map((o) => o.correctCategory)).toEqual(["Tidak Sesuai", "Sesuai", "Tidak Sesuai"]);
   });
 
+  it("pasangan Ya/Tidak memakai Y/T", async () => {
+    const result = await parse([{ ...kategori, kategori: "Ya/Tidak", kunci: "Y,T,Tidak" }]);
+    expect(result.valid[0]).toMatchObject({ categoryLabels: ["Ya", "Tidak"] });
+    expect(result.valid[0].options.map((o) => o.correctCategory)).toEqual(["Ya", "Tidak", "Tidak"]);
+  });
+
   it("wajib kolom kategori & jumlah kunci sama dengan jumlah pernyataan", async () => {
     const result = await parse([
       { ...kategori, kategori: "" },

@@ -7,6 +7,7 @@ const row = (p: Partial<QuestionListRow>): QuestionListRow => ({
   html: "",
   jenjang: "SMP",
   topic: "Matematika",
+  subjectCode: "SMP-MTK",
   subtopicId: 1,
   subtopicCode: "SMP-MTK-D1-S1",
   subtopic: "Bilangan Real",

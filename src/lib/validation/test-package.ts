@@ -12,6 +12,8 @@ export const testPackageInput = z
     title: z.string().trim().min(1, "Judul wajib diisi").max(255),
     description: z.string().trim().nullish(),
     categoryId: z.coerce.number().int().positive(),
+    /** Mata pelajaran — wajib saat diterbitkan (aturan paket, docs/ATURAN_PAKET.md). */
+    subjectId: z.coerce.number().int().positive().nullish(),
     durationMinutes: z.coerce
       .number()
       .int()

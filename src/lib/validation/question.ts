@@ -11,7 +11,7 @@ import {
 // - pg           : 4–5 opsi, tepat 1 kunci.
 // - pgk_mcma     : 4–5 opsi, kunci 1 s.d. (jumlah opsi − 1).
 // - pgk_kategori : 3–5 pernyataan, tiap pernyataan punya kategori kunci
-//                  dari satu pasangan (Benar/Salah atau Sesuai/Tidak Sesuai).
+//                  dari satu pasangan (Benar/Salah, Sesuai/Tidak Sesuai, atau Ya/Tidak).
 
 export const questionOptionInput = z.object({
   label: z.enum(OPTION_LABELS),

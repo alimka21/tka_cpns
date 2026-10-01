@@ -1,0 +1,2 @@
+ALTER TABLE `test_packages` ADD `subject_id` int;--> statement-breakpoint
+ALTER TABLE `test_packages` ADD CONSTRAINT `test_packages_subject_id_subjects_id_fk` FOREIGN KEY (`subject_id`) REFERENCES `subjects`(`id`) ON DELETE no action ON UPDATE no action;

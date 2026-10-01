@@ -12,6 +12,7 @@ import {
   questionOptions,
   questions,
   stimuli,
+  subjects,
   testPackageQuestions,
   testPackages,
   users,
@@ -24,6 +25,16 @@ export async function listCategories(): Promise<CategoryOption[]> {
   const rows = await db.select({ id: categories.id, code: categories.code, name: categories.name }).from(categories);
   const order = ["SD", "SMP", "SMA"];
   return rows.sort((a, b) => order.indexOf(a.code) - order.indexOf(b.code));
+}
+
+export type SubjectOption = { id: number; categoryId: number; code: string; name: string; type: "wajib" | "pilihan" };
+
+/** Mata pelajaran (mata uji) untuk pilihan paket, urut sesuai kerangka. */
+export async function listSubjects(): Promise<SubjectOption[]> {
+  return db
+    .select({ id: subjects.id, categoryId: subjects.categoryId, code: subjects.code, name: subjects.name, type: subjects.type })
+    .from(subjects)
+    .orderBy(asc(subjects.order));
 }
 
 export type PackageQuestionOption = {
@@ -54,6 +65,7 @@ export type PackageDetail = {
   description: string | null;
   categoryId: number;
   categoryCode: string;
+  subjectId: number | null;
   durationMinutes: number;
   isPremium: boolean;
   status: "draft" | "published";
@@ -70,6 +82,7 @@ export async function getPackageDetail(testPackageId: number): Promise<PackageDe
       description: testPackages.description,
       categoryId: testPackages.categoryId,
       categoryCode: categories.code,
+      subjectId: testPackages.subjectId,
       durationMinutes: testPackages.durationMinutes,
       isPremium: testPackages.isPremium,
       status: testPackages.status,

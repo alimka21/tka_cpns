@@ -10,6 +10,8 @@ export type QuestionListRow = {
   jenjang: string;
   /** Nama mata uji. */
   topic: string;
+  /** Kode mata uji, mis. SMP-MTK. */
+  subjectCode: string;
   subtopicId: number;
   subtopicCode: string;
   /** Nama subdomain. */

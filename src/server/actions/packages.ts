@@ -12,7 +12,9 @@ import { db } from "@/server/db";
 import { entitlements, questions, testPackageQuestions, testPackages } from "@/server/db/schema";
 import { searchUsers as searchUsersQuery } from "@/server/queries/packages";
 import { validatePackageOrder, type ComposableQuestion } from "@/server/services/package-composition";
+import { ruleErrors } from "@/lib/package-rules";
 import { testPackageInput } from "@/lib/validation/test-package";
+import { packageRuleReport } from "@/server/services/package-rules-check";
 
 export type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; errors: string[] };
 
@@ -52,6 +54,16 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
       return { ok: false, errors: [`${notPublished.length} soal belum berstatus tayang — terbitkan dulu di Bank Soal.`] };
     }
   }
+  if (p.status === "published") {
+    // Aturan resmi paket (jumlah soal, durasi, rasio PG, mapel) — wajib lolos.
+    const report = await packageRuleReport({
+      categoryId: p.categoryId,
+      subjectId: p.subjectId,
+      durationMinutes: p.durationMinutes,
+      questionIds: p.questions.map((q) => q.questionId),
+    });
+    if (!report.publishable) return { ok: false, errors: ruleErrors(report) };
+  }
 
   const savedId = await db.transaction(async (tx) => {
     let packageId = id;
@@ -62,6 +74,7 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
           title: p.title,
           description: p.description ?? null,
           categoryId: p.categoryId,
+          subjectId: p.subjectId ?? null,
           durationMinutes: p.durationMinutes,
           isPremium: p.isPremium,
           status: p.status,
@@ -75,6 +88,7 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
           title: p.title,
           description: p.description ?? null,
           categoryId: p.categoryId,
+          subjectId: p.subjectId ?? null,
           durationMinutes: p.durationMinutes,
           isPremium: p.isPremium,
           status: p.status,
@@ -115,6 +129,13 @@ export async function updatePackageStatusAction(input: { id: number; status: "dr
       bank,
     );
     if (orderErrors.length > 0) return { ok: false, errors: orderErrors };
+    const [pkg] = await db
+      .select({ categoryId: testPackages.categoryId, subjectId: testPackages.subjectId, durationMinutes: testPackages.durationMinutes })
+      .from(testPackages)
+      .where(eq(testPackages.id, input.id));
+    if (!pkg) return { ok: false, errors: ["Paket tidak ditemukan."] };
+    const report = await packageRuleReport({ ...pkg, questionIds: rows.map((r) => r.questionId) });
+    if (!report.publishable) return { ok: false, errors: [...ruleErrors(report), "Buka paket untuk melengkapi sesuai aturan."] };
   }
   await db.update(testPackages).set({ status: input.status }).where(eq(testPackages.id, input.id));
   revalidatePath("/admin/paket-tes");

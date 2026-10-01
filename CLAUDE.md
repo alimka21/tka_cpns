@@ -34,6 +34,7 @@ tugas saat ini. Urutan baca yang disarankan:
 | `docs/WORKFLOW.md` | Alur Git, cara deploy ke Hostinger, cara testing | Saat setup, deploy, atau troubleshooting env |
 | `docs/DECISIONS.md` | Log keputusan (ADR ringkas), ditambah seiring waktu | Saat butuh alasan kenapa sesuatu dibuat begitu |
 | `docs/AI_GENERATION.md` | Generate soal AI (admin) & latihan adaptif per siswa (diagnosa, progres) | Saat kerja fitur AI, Gemini, diagnosa kelemahan, latihan |
+| `docs/ATURAN_PAKET.md` | Aturan resmi paket tes: jumlah soal, durasi, rasio bentuk soal per jenjang & mapel | Saat membuat/menyusun paket tes atau soal |
 | `docs/UI_UX.md` | Design tokens, komponen, peta layar Stitch → kode | Sebelum membuat/mengubah UI |
 | `asesmen/README.md` | Kerangka asesmen TKA (JSON) = sumber hierarki konten & kode subdomain | Saat kerja soal, import, AI generate, analisis |
 

@@ -21,6 +21,23 @@ const SUBJECT_CONTEXT_KEYS = [
   "catatan_stimulus",
 ] as const;
 
+/** Karakteristik soal per jenjang (docs/ATURAN_PAKET.md). */
+const JENJANG_CHARACTER: Record<string, string> = {
+  SMA: bullets([
+    "Mayoritas soal berbasis stimulus: diawali teks bacaan, grafik, infografis, tabel, atau studi kasus nyata — bukan hafalan rumus langsung.",
+    "Menguji penalaran: literasi, numerasi, analisis data, dan pemecahan masalah.",
+    "Tidak ada soal esai; hanya PG, PGK MCMA, dan PGK Kategori.",
+  ]),
+  SMP: bullets([
+    "Struktur sama dengan SD; kompleksitas materi dan panjang stimulus bacaan disesuaikan perkembangan kognitif siswa SMP.",
+    "Tidak ada soal esai; hanya PG, PGK MCMA, dan PGK Kategori.",
+  ]),
+  SD: bullets([
+    "Bahasa sederhana dan konteks dekat dengan kehidupan anak; stimulus bacaan pendek sesuai perkembangan kognitif siswa SD.",
+    "Tidak ada soal esai; hanya PG, PGK MCMA, dan PGK Kategori.",
+  ]),
+};
+
 export type GenerationRequest = {
   subdomainCode: string;
   difficulty: Difficulty;
@@ -33,11 +50,11 @@ export type GenerationRequest = {
 
 const FORM_SENTENCE: Record<QuestionType | "campuran", string> = {
   campuran:
-    "soal dengan bentuk campuran — boleh pilihan ganda sederhana, PG kompleks multi jawaban, dan PG kompleks kategori (Benar/Salah atau Sesuai/Tidak Sesuai); usahakan ada lebih dari satu bentuk",
+    "soal dengan bentuk campuran — boleh pilihan ganda sederhana, PG kompleks multi jawaban, dan PG kompleks kategori (Benar/Salah, Sesuai/Tidak Sesuai, atau Ya/Tidak); usahakan ada lebih dari satu bentuk",
   pg: "soal pilihan ganda sederhana (tepat 1 jawaban benar, 4–5 opsi A–E)",
   pgk_mcma: "soal pilihan ganda kompleks multi jawaban (4–5 opsi, jawaban benar lebih dari satu tetapi tidak semua opsi)",
   pgk_kategori:
-    "soal pilihan ganda kompleks kategori (3–5 pernyataan; tiap pernyataan diberi kategori Benar/Salah atau Sesuai/Tidak Sesuai)",
+    "soal pilihan ganda kompleks kategori (3–5 pernyataan; tiap pernyataan diberi kategori Benar/Salah, Sesuai/Tidak Sesuai, atau Ya/Tidak)",
 };
 
 export type GenerationContext =
@@ -95,6 +112,7 @@ export function buildGenerationContext(req: GenerationRequest): GenerationContex
         .join("\n"),
     Object.keys(subjectContext).length > 0 &&
       `## Karakteristik mata uji (ikuti untuk stimulus, teks, dan konteks)\n${JSON.stringify(subjectContext, null, 1)}`,
+    JENJANG_CHARACTER[framework.jenjang] && `## Karakteristik soal TKA ${framework.jenjang}\n${JENJANG_CHARACTER[framework.jenjang]}`,
     [
       "## Aturan penulisan",
       bullets([
@@ -211,7 +229,7 @@ export function buildAiPrompt(req: AiPromptRequest): GenerationContext {
     "Balas HANYA dengan JSON valid (tanpa teks lain, tanpa markdown) persis dengan struktur berikut:",
     OUTPUT_EXAMPLE[req.form],
     `Jumlah elemen "questions" tepat ${req.count}. Opsi TANPA huruf label (label A–E diberikan sistem).`,
-    req.form === "pgk_kategori" || req.form === "campuran" ? 'PGK Kategori memakai "categoryLabels" ["Benar","Salah"] atau ["Sesuai","Tidak Sesuai"].' : null,
+    req.form === "pgk_kategori" || req.form === "campuran" ? 'PGK Kategori memakai "categoryLabels" ["Benar","Salah"], ["Sesuai","Tidak Sesuai"], atau ["Ya","Tidak"].' : null,
     req.form === "campuran" ? 'Setiap soal WAJIB punya field "type": "pg" | "pgk_mcma" | "pgk_kategori".' : null,
     req.mode === "grup" && !req.stimulus ? 'Contoh tingkat teratas: {"stimulus":{"title":"...","content":"..."},"questions":[...]}' : null,
   ]

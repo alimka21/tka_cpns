@@ -12,6 +12,20 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-01 — Aturan paket TKA ditegakkan sistem
+Keputusan: setiap paket = 1 jenjang + 1 mata pelajaran (`test_packages.subject_id`,
+migrasi 0015). Aturan di `docs/ATURAN_PAKET.md` / `lib/package-rules.ts`:
+**wajib** (memblokir penerbitan, dicek ulang di server dengan data DB):
+jumlah soal & durasi per mapel, PG sederhana 50–60%, semua soal dari mapel
+paket; **disarankan** (peringatan): ada MCMA & Kategori, SMA mayoritas
+berbasis stimulus/gambar & grup 3–5 soal. Durasi terisi otomatis & terkunci
+sesuai aturan. Pasangan kategori **Ya/Tidak** ditambahkan (import: Y/T).
+Paket lama tanpa mapel tetap tampil, tetapi harus diberi mapel & memenuhi
+aturan sebelum bisa diterbitkan ulang.
+Alasan: permintaan pemilik produk — setiap paket harus sesuai format TKA resmi.
+Alternatif yang ditolak: aturan hanya sebagai dokumen/peringatan (admin bisa
+lupa); simpan aturan di DB (belum perlu diubah-ubah, cukup kode + dokumen).
+
 ## 2026-10-01 — API key Gemini divalidasi dengan tes ping, bukan format
 Keputusan: tidak ada aturan format/awalan key (Google punya `AIza…` & `AQ.…`
 dan bisa berubah). Saat disimpan, key di-ping ke Google

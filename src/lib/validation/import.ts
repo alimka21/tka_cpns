@@ -72,6 +72,7 @@ const TYPE_ALIASES: Record<string, QuestionType> = {
 const CATEGORY_KEY_ALIASES: Record<string, Record<string, string>> = {
   "Benar/Salah": { B: "Benar", BENAR: "Benar", S: "Salah", SALAH: "Salah" },
   "Sesuai/Tidak Sesuai": { S: "Sesuai", SESUAI: "Sesuai", TS: "Tidak Sesuai", "TIDAK SESUAI": "Tidak Sesuai" },
+  "Ya/Tidak": { Y: "Ya", YA: "Ya", T: "Tidak", TIDAK: "Tidak" },
 };
 
 const required = (label: string) => z.string().trim().min(1, `${label} wajib diisi`);
@@ -173,7 +174,7 @@ function buildRow(r: z.output<typeof rawRowSchema>): { row: ImportRow } | { erro
       const tokens = r.kunci.split(/\s*[,;]\s*/).map((t) => t.trim().toUpperCase());
       categories = tokens.map((t) => aliases[t] ?? "");
       if (tokens.length !== optionTexts.length) {
-        errors.push(`Kunci PGK Kategori harus ${optionTexts.length} nilai (satu per pernyataan), mis. ${categoryLabels[0] === "Benar" ? "B,S,B" : "S,TS,S"}`);
+        errors.push(`Kunci PGK Kategori harus ${optionTexts.length} nilai (satu per pernyataan), mis. ${categoryLabels[0] === "Benar" ? "B,S,B" : categoryLabels[0] === "Ya" ? "Y,T,Y" : "S,TS,S"}`);
       } else if (categories.some((c) => c === "")) {
         errors.push(`Kunci PGK Kategori hanya boleh ${Object.keys(aliases).join("/")}`);
       }

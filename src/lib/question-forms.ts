@@ -16,6 +16,6 @@ export const QUESTION_TYPE_META: Record<QuestionType, { short: string; label: st
   pgk_kategori: {
     short: "PGK Kategori",
     label: "PG Kompleks — Kategori",
-    description: "3–5 pernyataan, masing-masing diberi kategori Benar/Salah atau Sesuai/Tidak Sesuai.",
+    description: "3–5 pernyataan, masing-masing diberi kategori Benar/Salah, Sesuai/Tidak Sesuai, atau Ya/Tidak.",
   },
 };

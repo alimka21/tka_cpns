@@ -10,6 +10,7 @@ export type QuestionType = (typeof QUESTION_TYPES)[number];
 export const CATEGORY_PAIRS = [
   ["Benar", "Salah"],
   ["Sesuai", "Tidak Sesuai"],
+  ["Ya", "Tidak"],
 ] as const;
 export type CategoryPair = (typeof CATEGORY_PAIRS)[number];
 export const DIFFICULTIES = ["easy", "medium", "hard"] as const;

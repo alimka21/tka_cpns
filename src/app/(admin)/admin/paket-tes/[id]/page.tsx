@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { PackageForm } from "@/components/admin/package-form";
 import { PageHeader } from "@/components/layout/page-header";
-import { getPackageDetail, listCategories, listEntitledUsers } from "@/server/queries/packages";
+import { getPackageDetail, listCategories, listEntitledUsers, listSubjects } from "@/server/queries/packages";
 import { listQuestions } from "@/server/queries/question-bank";
 
 export const metadata: Metadata = { title: "Kelola Paket Tes" };
@@ -13,7 +13,7 @@ export default async function AdminPaketEditPage({ params }: PageProps<"/admin/p
   const id = Number(idParam);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const [pkg, categories, allQuestions] = await Promise.all([getPackageDetail(id), listCategories(), listQuestions()]);
+  const [pkg, categories, subjects, allQuestions] = await Promise.all([getPackageDetail(id), listCategories(), listSubjects(), listQuestions()]);
   if (!pkg) notFound();
 
   const bank = allQuestions.filter((q) => q.status === "published" || pkg.questions.some((pq) => pq.id === q.id));
@@ -24,6 +24,7 @@ export default async function AdminPaketEditPage({ params }: PageProps<"/admin/p
       <PageHeader title={pkg.title} description="Ubah metadata, susunan soal, dan akses premium paket ini." />
       <PackageForm
         categories={categories}
+        subjects={subjects}
         bank={bank}
         entitledUsers={entitledUsers}
         initial={{
@@ -31,6 +32,7 @@ export default async function AdminPaketEditPage({ params }: PageProps<"/admin/p
           title: pkg.title,
           description: pkg.description,
           categoryId: pkg.categoryId,
+          subjectId: pkg.subjectId,
           durationMinutes: pkg.durationMinutes,
           isPremium: pkg.isPremium,
           status: pkg.status,

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GeminiKeyForm } from "@/components/pengaturan/gemini-key-form";
 import { JenjangForm } from "@/components/profile/jenjang-form";
+import { NameForm } from "@/components/profile/name-form";
 import type { Jenjang } from "@/lib/jenjang";
 
 type Props = {
@@ -22,10 +23,7 @@ export function ProfileSettings({ user, masked }: Props) {
         <CardDescription>Data akun dasar.</CardDescription>
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
-        <div className="flex flex-col gap-1.5">
-          <Label htmlFor="name">Nama</Label>
-          <Input id="name" defaultValue={user.name} disabled />
-        </div>
+        <NameForm current={user.name} />
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -34,6 +32,7 @@ export function ProfileSettings({ user, masked }: Props) {
             defaultValue={user.email}
             disabled
           />
+          <p className="text-xs text-muted-foreground">Email dipakai untuk masuk dan tidak bisa diubah.</p>
         </div>
         {user.role !== "admin" && (
           <div className="flex flex-col gap-1.5">

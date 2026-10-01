@@ -17,7 +17,11 @@ async function main() {
     console.log(`${user.name} <${email}> sudah ${role}.`);
     return;
   }
-  await db.update(users).set({ role: role as Role }).where(eq(users.id, user.id));
+  // Admin selalu aktif (tidak ikut antrean konfirmasi pendaftar).
+  await db
+    .update(users)
+    .set(role === "admin" ? { role: role as Role, status: "active" } : { role: role as Role })
+    .where(eq(users.id, user.id));
   // Paksa login ulang supaya role baru langsung berlaku di semua perangkat.
   await db.delete(sessions).where(eq(sessions.userId, user.id));
   console.log(`✓ ${user.name} <${email}>: ${user.role} → ${role}. Sesi lama dihapus, silakan masuk lagi.`);

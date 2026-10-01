@@ -61,7 +61,7 @@ export default async function AdminGenerateAiPage({ searchParams }: PageProps<"/
               Key milikmu sendiri (gratis dari Google AI Studio), disimpan terenkripsi dan hanya dipakai di server.
             </p>
           </div>
-          <Button nativeButton={false} render={<Link href="/pengaturan" />}>
+          <Button nativeButton={false} render={<Link href="/admin/profil" />}>
             <KeyRound aria-hidden /> Atur API key
           </Button>
         </div>

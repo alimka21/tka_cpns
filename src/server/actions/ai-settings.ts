@@ -23,6 +23,7 @@ export async function saveGeminiKeyAction(apiKey: string): Promise<Result> {
   try {
     const masked = await saveGeminiKey(Number(session.user.id), parsed.data);
     revalidatePath("/pengaturan");
+    revalidatePath("/admin/profil");
     return { ok: true, masked };
   } catch (error) {
     if (error instanceof GeminiError) return { ok: false, error: error.message };
@@ -38,5 +39,6 @@ export async function deleteGeminiKeyAction(): Promise<Result> {
   if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
   await deleteGeminiKey(Number(session.user.id));
   revalidatePath("/pengaturan");
+    revalidatePath("/admin/profil");
   return { ok: true };
 }

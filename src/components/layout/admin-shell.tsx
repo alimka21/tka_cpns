@@ -40,7 +40,7 @@ const navItems: NavItem[] = [
   { href: "/admin/laporan", label: "Laporan Soal", icon: Flag },
   { href: "/admin/langganan", label: "Langganan & Pembayaran", icon: CreditCard },
   { href: "/admin/pengaturan", label: "Pengaturan Sistem", icon: SlidersHorizontal },
-  { href: "/pengaturan", label: "Profil & API Key", icon: Settings },
+  { href: "/admin/profil", label: "Profil & API Key", icon: Settings },
 ];
 
 // Item aktif = prefix terpanjang yang cocok, supaya /admin/soal/import tidak

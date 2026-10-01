@@ -4,6 +4,7 @@ import { Check, Info } from "lucide-react";
 import type { AnswerResponse, ExamOption, ExamQuestion } from "@/lib/exam";
 import { cn } from "@/lib/utils";
 import { RichHtml } from "./rich-html";
+import { QuestionImage } from "./question-image";
 
 type Props = {
   number: number;
@@ -33,15 +34,7 @@ export function QuestionView({ number, question, response, disabled, onChange }:
     <div className="flex flex-col gap-6">
       <div className="leading-relaxed">
         <RichHtml html={question.html} />
-        {question.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- URL gambar bebas dari admin
-          <img
-            src={question.imageUrl}
-            alt={`Gambar soal ${number}`}
-            decoding="async"
-            className="mt-4 max-h-80 rounded-lg border"
-          />
-        )}
+        {question.imageUrl && <QuestionImage src={question.imageUrl} alt={`Gambar soal ${number}`} className="mt-4" />}
       </div>
 
       {hint && (

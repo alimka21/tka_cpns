@@ -3,6 +3,7 @@
 
 import { Check, Minus, Sparkles, X } from "lucide-react";
 import { RichHtml } from "@/components/tes/rich-html";
+import { QuestionImage } from "@/components/tes/question-image";
 import { Badge } from "@/components/ui/badge";
 import { QUESTION_TYPE_META } from "@/lib/question-forms";
 import { reviewStatus, type ReviewItem, type ReviewOption } from "@/lib/review";
@@ -42,10 +43,7 @@ export function ReviewCard({ item, footer, keyOnly = false }: { item: ReviewItem
 
       <div className="leading-relaxed">
         <RichHtml html={item.html} />
-        {item.imageUrl && (
-          // eslint-disable-next-line @next/next/no-img-element -- URL gambar bebas dari admin
-          <img src={item.imageUrl} alt={`Gambar soal ${item.number}`} className="mt-4 max-h-80 rounded-lg border" />
-        )}
+        {item.imageUrl && <QuestionImage src={item.imageUrl} alt={`Gambar soal ${item.number}`} className="mt-4" />}
       </div>
 
       {item.type === "pgk_kategori" ? <CategoryTable item={item} /> : <OptionList options={item.options} />}

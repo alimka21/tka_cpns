@@ -3,6 +3,7 @@
 import { BookOpenText, ChevronDown } from "lucide-react";
 import type { ExamStimulus } from "@/lib/exam";
 import { RichHtml } from "./rich-html";
+import { QuestionImage } from "./question-image";
 
 type Props = {
   stimulus: ExamStimulus;
@@ -21,15 +22,7 @@ function Body({ stimulus }: { stimulus: ExamStimulus }) {
   return (
     <div className="leading-relaxed">
       <RichHtml html={stimulus.html} />
-      {stimulus.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element -- URL gambar bebas dari admin
-        <img
-          src={stimulus.imageUrl}
-          alt={`Gambar stimulus: ${stimulus.title}`}
-          decoding="async"
-          className="mt-4 max-h-96 rounded-lg border"
-        />
-      )}
+      {stimulus.imageUrl && <QuestionImage src={stimulus.imageUrl} alt={`Gambar stimulus: ${stimulus.title}`} className="mt-4" />}
     </div>
   );
 }

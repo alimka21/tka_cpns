@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, CircleAlert, CircleCheck, Eye, Lock, Minus, Plus, X } from "lucide-react";
 import { RichHtml } from "@/components/tes/rich-html";
+import { QuestionImage } from "@/components/tes/question-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -564,10 +565,7 @@ function QuestionPreview({
       ) : (
         <>
           <RichHtml html={html.question} className="leading-relaxed" />
-          {imageUrl && (
-            // eslint-disable-next-line @next/next/no-img-element -- gambar dari route /gambar (DB) atau tautan admin
-            <img src={imageUrl} alt="Gambar soal" className="max-h-72 rounded-lg border" />
-          )}
+          {imageUrl && <QuestionImage src={imageUrl} alt="Gambar soal" />}
           <ul className="flex flex-col gap-2">
             {deferred.options.map((o, i) => (
               <li key={i} className="flex items-start gap-3 rounded-lg border p-3 text-sm">

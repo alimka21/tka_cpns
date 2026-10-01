@@ -6,6 +6,7 @@ import { BookOpenText, ChevronRight } from "lucide-react";
 import { ReportQuestionButton, reportTargetOf } from "@/components/hasil/report-question-button";
 import { ReviewCard } from "@/components/hasil/review-card";
 import { RichHtml } from "@/components/tes/rich-html";
+import { QuestionImage } from "@/components/tes/question-image";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -100,10 +101,7 @@ export default async function PembahasanPage({ params, searchParams }: PageProps
                     </summary>
                     <div className="mt-3 leading-relaxed">
                       <RichHtml html={stimulus.html} />
-                      {stimulus.imageUrl && (
-                        // eslint-disable-next-line @next/next/no-img-element -- URL gambar bebas dari admin
-                        <img src={stimulus.imageUrl} alt={`Gambar stimulus ${stimulus.title}`} className="mt-4 max-h-80 rounded-lg border" />
-                      )}
+                      {stimulus.imageUrl && <QuestionImage src={stimulus.imageUrl} alt={`Gambar stimulus ${stimulus.title}`} className="mt-4" />}
                     </div>
                   </details>
                 )}

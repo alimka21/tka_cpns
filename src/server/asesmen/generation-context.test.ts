@@ -93,3 +93,19 @@ describe("buildAiPrompt mode grup", () => {
     expect(r.prompt).not.toContain("tulis bacaan/stimulus baru");
   });
 });
+
+describe("buildAiPrompt grup multi-subtopik", () => {
+  const base = { subdomainCode: "SMP-BIND-D1-S3", difficulty: "medium" as const, count: 4, cognitiveLevel: null, form: "campuran" as const, mode: "grup" as const };
+  it("mencantumkan semua subtopik (lintas topik, mapel sama) & mewajibkan subtopicCode", () => {
+    const r = buildAiPrompt({ ...base, extraSubdomainCodes: ["SMP-BIND-D2-S1", "SMP-BIND-D3-S1"] });
+    if (!r.ok) throw new Error(r.error);
+    expect(r.prompt).toContain("## Subtopik yang dicakup grup ini");
+    for (const c of ["SMP-BIND-D1-S3", "SMP-BIND-D2-S1", "SMP-BIND-D3-S1"]) expect(r.prompt).toContain(`- ${c} — `);
+    expect(r.prompt).toContain('field "subtopicCode"');
+  });
+  it("subtopik dari mapel lain ditolak", () => {
+    const r = buildAiPrompt({ ...base, extraSubdomainCodes: ["SMP-MTK-D1-S1"] });
+    expect(r.ok).toBe(false);
+    if (!r.ok) expect(r.error).toMatch(/mata uji yang sama/);
+  });
+});

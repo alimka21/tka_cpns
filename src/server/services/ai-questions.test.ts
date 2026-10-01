@@ -126,3 +126,21 @@ describe("bentuk campuran & bacaan", () => {
     expect(parseAiStimulus({ questions: [] })).toBeNull();
   });
 });
+
+describe("grup multi-subtopik", () => {
+  it("subtopicCode dipetakan ke id; tanpa kode = subtopik utama; kode asing ditolak", () => {
+    const r = mapAiQuestions(
+      {
+        questions: [
+          { ...pg("Soal untuk informasi tersurat"), subtopicCode: "SMP-BIND-D1-S3" },
+          { ...pg("Soal untuk inferensi bacaan"), subtopicCode: "smp-bind-d2-s1" },
+          pg("Soal tanpa kode subtopik"),
+          { ...pg("Soal subtopik nyasar"), subtopicCode: "SMP-MTK-D1-S1" },
+        ],
+      },
+      ctx({ subtopicId: 11, subtopicByCode: { "SMP-BIND-D1-S3": 11, "SMP-BIND-D2-S1": 22 } }),
+    );
+    expect(r.valid.map((v) => v.subtopicId)).toEqual([11, 22, 11]);
+    expect(r.rejected[0]).toMatch(/di luar pilihan/);
+  });
+});

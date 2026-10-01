@@ -16,6 +16,8 @@ const aiOption = z.object({
 const aiQuestion = z.object({
   /** Wajib bila bentuk "campuran". */
   type: z.enum(QUESTION_TYPES).optional(),
+  /** Grup multi-subtopik: kode subtopik soal ini. */
+  subtopicCode: z.string().optional(),
   questionText: z.string(),
   options: z.array(aiOption),
   categoryLabels: z.array(z.string()).optional(),
@@ -30,6 +32,8 @@ export type AiForm = QuestionType | "campuran";
 export type AiMappingContext = {
   type: AiForm;
   subtopicId: number;
+  /** Grup multi-subtopik: kode → id subtopik yang diizinkan (tanpa kode = subtopik utama). */
+  subtopicByCode?: Record<string, number>;
   difficulty: Difficulty;
   cognitiveLevel: string | null;
   imageUrl?: string | null;
@@ -84,6 +88,13 @@ export function mapAiQuestions(raw: unknown, ctx: AiMappingContext): AiMappingRe
     const type: QuestionType | undefined = ctx.type === "campuran" ? q.type : ctx.type;
     if (!type) return rejected.push(`${n}: bentuk soal tidak disebutkan.`);
 
+    let subtopicId = ctx.subtopicId;
+    if (ctx.subtopicByCode && q.subtopicCode) {
+      const found = ctx.subtopicByCode[q.subtopicCode.trim().toUpperCase()];
+      if (!found) return rejected.push(`${n}: subtopik ${q.subtopicCode} di luar pilihan.`);
+      subtopicId = found;
+    }
+
     const pair = type === "pgk_kategori" ? matchPair(q.categoryLabels) : null;
     if (type === "pgk_kategori" && !pair) return rejected.push(`${n}: pasangan kategori tidak sah.`);
 
@@ -100,7 +111,7 @@ export function mapAiQuestions(raw: unknown, ctx: AiMappingContext): AiMappingRe
 
     const input = questionInput.safeParse({
       type,
-      subtopicId: ctx.subtopicId,
+      subtopicId,
       questionText: q.questionText.trim(),
       imageUrl: ctx.imageUrl ?? null,
       difficulty: ctx.difficulty,

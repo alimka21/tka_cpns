@@ -34,7 +34,8 @@ tetap hanya memakai soal bank yang sudah tayang.
   `services/ai-generate.ts` (alur + retry + log),
   `asesmen/generation-context.ts` (`buildAiPrompt`).
 - Key: `/pengaturan` (`services/ai-key.ts`, `crypto.ts`).
-- Mode **grup** (1 bacaan + N soal, bentuk campuran) — admin.
+- Mode **grup** (1 bacaan + N soal, bentuk campuran) — admin; bisa
+  **multi-subtopik** dalam mata uji yang sama (tiap soal `subtopicCode`).
 - **Jalur B selesai**: Latihan AI saat bank kurang
   (`services/practice-ai.ts`), Laporkan soal + `/admin/laporan`
   (`services/question-reports.ts`). Model default `gemini-3-flash-preview`.

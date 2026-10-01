@@ -39,8 +39,18 @@ stimulus bacaan sesuai perkembangan kognitif.
 - **Wajib:** setiap **topik** (domain) mata pelajaran punya minimal 1 soal di
   paket — paket tidak bisa terbit bila ada topik yang kosong (nama topiknya
   ditampilkan).
-- **Subtopik tidak diatur** — boleh ada subtopik yang tidak masuk paket
-  (keputusan pemilik produk 2026-10-01).
+- **Wajib:** subtopik (subdomain) terwakili **minimal 80%** (dibulatkan ke
+  bawah; mis. Antropologi 13 dari 17, SD Matematika 3 dari 4).
+- **Disarankan:** 100% subtopik terwakili (subtopik yang kosong ditampilkan).
+- **Disarankan, mapel berkuota sempit** (< 2 soal per subtopik, mis.
+  Antropologi, Sejarah, Fisika, B. Inggris SMA): soal dalam **satu stimulus
+  dari subtopik berbeda** — grup satu-subtopik menghabiskan slot cakupan dan
+  membuat diagnosa bias (satu salah paham bacaan = beberapa soal salah).
+- Alasan: diagnosa & Latihan Kelemahan butuh data per subtopik; subtopik
+  yang terlewat di satu paket tertutup oleh paket lain karena diagnosa
+  menggabungkan riwayat semua tes.
+- Generate AI mode **Soal grup** bisa memilih **beberapa subtopik** (mapel
+  sama) untuk satu bacaan; tiap soal AI menyebut subtopiknya.
 
 ## Karakteristik SMA/SMK (disarankan, tampil sebagai peringatan)
 

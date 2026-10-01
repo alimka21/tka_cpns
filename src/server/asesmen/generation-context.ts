@@ -159,6 +159,11 @@ export type AiPromptRequest = GenerationRequest & {
   mode: "baru" | "variasi" | "gambar" | "grup";
   /** Mode grup: bacaan yang sudah ada (null = AI menulis bacaan baru). */
   stimulus?: { title: string; content: string } | null;
+  /**
+   * Mode grup: subtopik tambahan (mapel yang sama) — satu bacaan dipakai untuk
+   * beberapa subtopik; tiap soal menyebut `subtopicCode`-nya.
+   */
+  extraSubdomainCodes?: string[];
   source?: SourceQuestionForPrompt;
   variation?: VariationStyle;
   /** Catatan admin tentang gambar (opsional). */
@@ -224,6 +229,28 @@ export function buildAiPrompt(req: AiPromptRequest): GenerationContext {
             .join("\n")
         : null;
 
+  // Grup multi-subtopik: daftar subtopik yang boleh dipakai + cakupan/batasannya.
+  let multiSection: string | null = null;
+  const extraCodes = [...new Set((req.extraSubdomainCodes ?? []).filter((c) => c !== req.subdomainCode))];
+  if (req.mode === "grup" && extraCodes.length > 0) {
+    const refs = [base.ref, ...extraCodes.map((c) => findSubdomain(c))];
+    const bad = extraCodes.filter((_, i) => !refs[i + 1] || refs[i + 1]!.subject.code !== base.ref.subject.code);
+    if (bad.length > 0) return { ok: false, error: `Subtopik tambahan harus dari mata uji yang sama: ${bad.join(", ")}.` };
+    multiSection = [
+      "## Subtopik yang dicakup grup ini",
+      'Setiap soal WAJIB mengukur tepat satu subtopik berikut dan menuliskan kodenya di field "subtopicCode". Sebarkan soal ke subtopik yang BERBEDA — usahakan setiap subtopik minimal 1 soal.',
+      ...refs.map((r) =>
+        [
+          `- ${r!.subdomain.code} — ${r!.subdomain.name} (topik: ${r!.domain.name})`,
+          r!.subdomain.scope.length ? `  Cakupan: ${r!.subdomain.scope.join("; ")}` : null,
+          r!.subdomain.limits ? `  Batasan: ${r!.subdomain.limits}` : null,
+        ]
+          .filter(Boolean)
+          .join("\n"),
+      ),
+    ].join("\n");
+  }
+
   const output = [
     "## Format output (WAJIB)",
     "Balas HANYA dengan JSON valid (tanpa teks lain, tanpa markdown) persis dengan struktur berikut:",
@@ -232,11 +259,14 @@ export function buildAiPrompt(req: AiPromptRequest): GenerationContext {
     req.form === "pgk_kategori" || req.form === "campuran" ? 'PGK Kategori memakai "categoryLabels" ["Benar","Salah"], ["Sesuai","Tidak Sesuai"], atau ["Ya","Tidak"].' : null,
     req.form === "campuran" ? 'Setiap soal WAJIB punya field "type": "pg" | "pgk_mcma" | "pgk_kategori".' : null,
     req.mode === "grup" && !req.stimulus ? 'Contoh tingkat teratas: {"stimulus":{"title":"...","content":"..."},"questions":[...]}' : null,
+    multiSection ? 'Setiap soal WAJIB punya field "subtopicCode" berisi salah satu kode subtopik di atas.' : null,
   ]
     .filter(Boolean)
     .join("\n");
 
   const extra = req.extraInstruction?.trim() ? `## Instruksi tambahan dari admin\n${req.extraInstruction.trim().slice(0, 500)}` : null;
 
-  return { ...base, prompt: [base.prompt, modeSection, extra, output].filter(Boolean).join("\n\n") };
+
+
+  return { ...base, prompt: [base.prompt, modeSection, multiSection, extra, output].filter(Boolean).join("\n\n") };
 }

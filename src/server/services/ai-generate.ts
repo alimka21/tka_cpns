@@ -5,7 +5,7 @@
 // - `runAiGeneration` (inti: prompt → Gemini → validasi → ulang sekali untuk
 //   kekurangan) juga dipakai Latihan AI siswa (services/practice-ai.ts).
 
-import { eq, max } from "drizzle-orm";
+import { eq, inArray, max } from "drizzle-orm";
 import { renderMathToHtml } from "@/lib/math-html";
 import type { Difficulty } from "@/lib/validation/enums";
 import type { QuestionInput } from "@/lib/validation/question";
@@ -31,6 +31,8 @@ export type RunAiInput = {
   imageUrl?: string | null;
   images?: GeminiImage[];
   existingTexts: string[];
+  /** Grup multi-subtopik: kode → id subtopik yang diizinkan. */
+  subtopicByCode?: Record<string, number>;
   /** Mode grup tanpa stimulus: AI menulis bacaan di percobaan pertama. */
   wantsNewStimulus?: boolean;
   /** Prompt untuk `need` soal; `stimulus` terisi setelah AI menulis bacaan. */
@@ -60,6 +62,7 @@ export async function runAiGeneration(input: RunAiInput): Promise<RunAiOutput> {
       const mapped = mapAiQuestions(raw, {
         type: input.form,
         subtopicId: input.subtopicId,
+        subtopicByCode: input.subtopicByCode,
         difficulty: input.difficulty,
         cognitiveLevel: input.cognitiveLevel,
         imageUrl: input.imageUrl,
@@ -86,6 +89,8 @@ export type AiGenerateRequest = {
   imageId?: number | null;
   /** Mode grup: stimulus yang sudah ada; kosong = AI menulis bacaan baru. */
   stimulusId?: number | null;
+  /** Mode grup: subtopik tambahan di mata uji yang sama (satu bacaan, beberapa subtopik). */
+  extraSubdomainCodes?: string[] | null;
   extraInstruction?: string | null;
 };
 
@@ -145,7 +150,16 @@ export async function generateAiQuestions(userId: number, req: AiGenerateRequest
   const subtopicId = (await subtopicIdsByCode(db, [subdomainCode])).get(subdomainCode);
   if (!subtopicId) return { ok: false, error: "Subdomain belum ada di database — jalankan npm run db:seed:asesmen." };
 
-  const existing = await db.select({ text: questions.questionText }).from(questions).where(eq(questions.subtopicId, subtopicId));
+  const extraCodes = req.mode === "grup" ? [...new Set((req.extraSubdomainCodes ?? []).filter((c) => c !== subdomainCode))] : [];
+  let subtopicByCode: Record<string, number> | undefined;
+  if (extraCodes.length > 0) {
+    const ids = await subtopicIdsByCode(db, extraCodes);
+    const missing = extraCodes.filter((c) => !ids.has(c));
+    if (missing.length) return { ok: false, error: `Subtopik belum ada di database: ${missing.join(", ")}.` };
+    subtopicByCode = Object.fromEntries([[subdomainCode, subtopicId], ...ids]);
+  }
+  const allSubtopicIds = subtopicByCode ? Object.values(subtopicByCode) : [subtopicId];
+  const existing = await db.select({ text: questions.questionText }).from(questions).where(inArray(questions.subtopicId, allSubtopicIds));
   const started = Date.now();
   const run = await runAiGeneration({
     apiKey,
@@ -157,6 +171,7 @@ export async function generateAiQuestions(userId: number, req: AiGenerateRequest
     imageUrl,
     images,
     existingTexts: [...existing.map((e) => e.text), ...(source ? [source.questionText] : [])],
+    subtopicByCode,
     wantsNewStimulus: req.mode === "grup" && !existingStimulus,
     prompt: (need, avoid, aiStimulus) =>
       buildAiPrompt({
@@ -170,6 +185,7 @@ export async function generateAiQuestions(userId: number, req: AiGenerateRequest
         imageNote,
         // Setelah AI menulis bacaan, percobaan ulang memakai bacaan yang sama.
         stimulus: existingStimulus ?? aiStimulus,
+        extraSubdomainCodes: extraCodes,
         extraInstruction:
           [req.extraInstruction, avoid.length ? `Jangan mengulang soal berikut:\n${avoid.map((t) => `- ${t.slice(0, 160)}`).join("\n")}` : null]
             .filter(Boolean)

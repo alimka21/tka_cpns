@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkPackageRules, packageRuleFor, pgRange, ruleErrors, type RuleQuestion } from "./package-rules";
+import { checkPackageRules, packageRuleFor, pgRange, requiredSubtopicCount, ruleErrors, type RuleQuestion } from "./package-rules";
 
 const make = (n: { pg: number; mcma: number; kat: number }, subjectCode: string, stim?: (i: number) => number | null): RuleQuestion[] => {
   const types = [...Array(n.pg).fill("pg"), ...Array(n.mcma).fill("pgk_mcma"), ...Array(n.kat).fill("pgk_kategori")];
@@ -66,7 +66,7 @@ describe("checkPackageRules", () => {
   });
 });
 
-describe("cakupan topik", () => {
+describe("cakupan topik & subtopik (opsi B)", () => {
   const outline = [
     { code: "SD-MTK-D1", name: "Bilangan", subtopics: [{ code: "SD-MTK-D1-S1", name: "Bilangan Rasional" }] },
     { code: "SD-MTK-D2", name: "Geometri dan Pengukuran", subtopics: [{ code: "SD-MTK-D2-S1", name: "Objek Geometri" }, { code: "SD-MTK-D2-S2", name: "Pengukuran" }] },
@@ -76,17 +76,56 @@ describe("cakupan topik", () => {
   const withSub = (codes: string[]) =>
     make({ pg: 17, mcma: 7, kat: 6 }, "SD-MTK").map((q, i) => ({ ...q, subtopicCode: codes[i % codes.length] }));
 
-  it("semua topik ada (subtopik Pengukuran kosong pun tidak masalah) → lolos tanpa peringatan", () => {
-    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D3-S1"]) });
-    expect(r.publishable).toBe(true);
-    expect(r.missingTopics).toEqual([]);
-    expect(r.recommended.some((c) => /subtopik/i.test(c.label))).toBe(false);
+  it("ambang 80% dibulatkan ke bawah & tidak melebihi jumlah soal", () => {
+    expect(requiredSubtopicCount(17, 25)).toBe(13);
+    expect(requiredSubtopicCount(4, 30)).toBe(3);
+    expect(requiredSubtopicCount(40, 25)).toBe(25);
   });
 
-  it("topik Data belum ada → tidak bisa terbit, nama topik disebut", () => {
+  it("semua lengkap → lolos tanpa peringatan cakupan", () => {
+    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D2-S2", "SD-MTK-D3-S1"]) });
+    expect(r.publishable).toBe(true);
+    expect(r.missingSubtopics).toEqual([]);
+  });
+
+  it("3 dari 4 subtopik (≥80%) & semua topik → terbit, 100% jadi saran", () => {
+    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D3-S1"]) });
+    expect(r.publishable).toBe(true);
+    expect(r.missingSubtopics).toEqual(["Pengukuran"]);
+    expect(r.recommended.find((c) => c.label.startsWith("Semua subtopik"))?.ok).toBe(false);
+  });
+
+  it("topik Data belum ada → tidak bisa terbit", () => {
     const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D2-S2"]) });
     expect(r.publishable).toBe(false);
-    expect(r.missingTopics).toEqual(["Data"]);
     expect(ruleErrors(r).join(" ")).toMatch(/Belum ada soal: Data/);
+  });
+
+  it("subtopik di bawah 80% → tidak bisa terbit", () => {
+    const wide = Array.from({ length: 5 }, (_, t) => ({
+      code: `SMA-ANT-D${t + 1}`,
+      name: `Topik ${t + 1}`,
+      subtopics: Array.from({ length: t < 2 ? 4 : 3 }, (_, s) => ({ code: `SMA-ANT-D${t + 1}-S${s + 1}`, name: `Sub ${t + 1}.${s + 1}` })),
+    })); // 17 subtopik
+    const codes = wide.flatMap((t) => t.subtopics.map((s) => s.code)).slice(0, 12); // 12 < 13
+    const qs = make({ pg: 14, mcma: 6, kat: 5 }, "SMA-ANT").map((q, i) => ({ ...q, subtopicCode: codes[i % codes.length] }));
+    const r = checkPackageRules({ jenjang: "SMA", subject: { code: "SMA-ANT", type: "pilihan" }, durationMinutes: 60, questions: qs, outline: wide });
+    expect(r.publishable).toBe(false);
+    expect(ruleErrors(r).join(" ")).toMatch(/minimal 80% \(13 dari 17\).*12 subtopik/);
+  });
+
+  it("kuota sempit: grup satu-subtopik diberi saran, grup campuran tidak", () => {
+    const wide = Array.from({ length: 5 }, (_, t) => ({
+      code: `SMA-ANT-D${t + 1}`,
+      name: `Topik ${t + 1}`,
+      subtopics: Array.from({ length: t < 2 ? 4 : 3 }, (_, s) => ({ code: `SMA-ANT-D${t + 1}-S${s + 1}`, name: `Sub ${t + 1}.${s + 1}` })),
+    }));
+    const codes = wide.flatMap((t) => t.subtopics.map((s) => s.code));
+    const qs = make({ pg: 14, mcma: 6, kat: 5 }, "SMA-ANT").map((q, i) => ({ ...q, subtopicCode: codes[i % codes.length], stimulusKey: i < 4 ? "G1" : null }));
+    const mixed = checkPackageRules({ jenjang: "SMA", subject: { code: "SMA-ANT", type: "pilihan" }, durationMinutes: 60, questions: qs, outline: wide });
+    expect(mixed.recommended.find((c) => c.label.includes("subtopik berbeda"))?.ok).toBe(true);
+    const single = qs.map((q, i) => (i < 4 ? { ...q, subtopicCode: codes[0] } : q));
+    const r = checkPackageRules({ jenjang: "SMA", subject: { code: "SMA-ANT", type: "pilihan" }, durationMinutes: 60, questions: single, outline: wide });
+    expect(r.recommended.find((c) => c.label.includes("subtopik berbeda"))?.ok).toBe(false);
   });
 });

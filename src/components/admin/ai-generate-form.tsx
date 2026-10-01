@@ -68,6 +68,7 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
   const [cognitiveLevel, setCognitiveLevel] = useState(source?.cognitiveLevel ?? "");
   const [form, setForm] = useState<Form>(source?.type ?? "pg");
   const [stimulusId, setStimulusId] = useState<number | null>(null);
+  const [extraCodes, setExtraCodes] = useState<string[]>([]);
   const [difficulty, setDifficulty] = useState<Difficulty>(source?.difficulty ?? "medium");
   const [count, setCount] = useState(mode === "gambar" ? 3 : 5);
   const [variation, setVariation] = useState<(typeof VARIATIONS)[number]["id"]>("bebas");
@@ -105,6 +106,7 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
         variation: mode === "variasi" ? variation : undefined,
         imageId: mode === "gambar" ? imageId : null,
         stimulusId: mode === "grup" ? stimulusId : null,
+        extraSubdomainCodes: mode === "grup" ? extraCodes : null,
         extraInstruction: extra || null,
       }).catch(() => ({ ok: false as const, error: "Koneksi terputus atau server terlalu lama merespons." }));
       setResult(r);
@@ -280,6 +282,7 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
               onChange={(e) => {
                 setSubdomainCode(e.target.value);
                 setCognitiveLevel("");
+                setExtraCodes([]);
               }}
             >
               <option value="">Pilih subtopik…</option>
@@ -296,6 +299,40 @@ export function AiGenerateForm({ initialMode, subdomains, source, images, initia
               ))}
             </select>
           </div>
+          {mode === "grup" && subdomain && (
+            <fieldset className="flex flex-col gap-2 rounded-lg border p-3">
+              <legend className="px-1 text-sm font-semibold">
+                Subtopik lain untuk bacaan ini <span className="font-normal text-muted-foreground">(opsional)</span>
+              </legend>
+              <p className="text-xs text-muted-foreground">
+                Satu bacaan bisa menguji beberapa subtopik — soal disebar ke subtopik berbeda. Disarankan untuk mapel dengan
+                banyak subtopik supaya aturan cakupan subtopik paket mudah terpenuhi.
+              </p>
+              <div className="grid max-h-56 gap-1 overflow-y-auto sm:grid-cols-2">
+                {subdomains
+                  .filter((s) => s.group === subdomain.group && s.code !== subdomain.code)
+                  .map((s) => (
+                    <label key={s.code} className="flex items-start gap-2 rounded-md px-2 py-1 text-xs hover:bg-muted">
+                      <input
+                        type="checkbox"
+                        className="mt-0.5"
+                        checked={extraCodes.includes(s.code)}
+                        disabled={!extraCodes.includes(s.code) && extraCodes.length >= 8}
+                        onChange={(e) =>
+                          setExtraCodes((prev) => (e.target.checked ? [...prev, s.code] : prev.filter((c) => c !== s.code)))
+                        }
+                      />
+                      <span>
+                        <span className="font-mono text-muted-foreground">{s.code}</span> {s.name.length > 70 ? `${s.name.slice(0, 70)}…` : s.name}
+                      </span>
+                    </label>
+                  ))}
+              </div>
+              {extraCodes.length > 0 && (
+                <p className="text-xs font-semibold text-primary">{extraCodes.length + 1} subtopik dalam satu bacaan</p>
+              )}
+            </fieldset>
+          )}
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="flex flex-col gap-1.5">
               <Label htmlFor="ai-form" className="font-semibold">

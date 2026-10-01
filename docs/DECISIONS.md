@@ -20,8 +20,12 @@ jumlah soal & durasi per mapel, PG sederhana 50–60%, semua soal dari mapel
 paket; **disarankan** (peringatan): ada MCMA & Kategori, SMA mayoritas
 berbasis stimulus/gambar & grup 3–5 soal. Durasi terisi otomatis & terkunci
 sesuai aturan. Pasangan kategori **Ya/Tidak** ditambahkan (import: Y/T).
-Cakupan materi: semua **topik** mapel wajib punya ≥1 soal; subtopik tidak
-diatur (tidak wajib & tidak diperingatkan) — keputusan pemilik produk.
+Cakupan materi (opsi B, dipilih pemilik produk setelah analisa): semua
+**topik** wajib ≥1 soal; **subtopik wajib ≥80%** (100% disarankan); untuk
+mapel < 2 soal/subtopik disarankan satu stimulus berisi subtopik berbeda.
+Wajib 100% ditolak karena bertabrakan dengan grup stimulus 3–5 soal di
+mapel padat (Antropologi 25 soal/17 subtopik). Mode AI grup kini bisa
+multi-subtopik (`extraSubdomainCodes`, tiap soal `subtopicCode`).
 Paket lama tanpa mapel tetap tampil, tetapi harus diberi mapel & memenuhi
 aturan sebelum bisa diterbitkan ulang.
 Alasan: permintaan pemilik produk — setiap paket harus sesuai format TKA resmi.

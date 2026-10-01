@@ -25,6 +25,7 @@ const input = z.object({
   variation: z.enum(Object.keys(VARIATION_STYLES) as [VariationStyle, ...VariationStyle[]]).optional(),
   imageId: id.nullish(),
   stimulusId: id.nullish(),
+  extraSubdomainCodes: z.array(frameworkCode).max(8).nullish(),
   extraInstruction: z.string().trim().max(500).nullish(),
 });
 

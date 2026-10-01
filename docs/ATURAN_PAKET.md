@@ -39,8 +39,8 @@ stimulus bacaan sesuai perkembangan kognitif.
 - **Wajib:** setiap **topik** (domain) mata pelajaran punya minimal 1 soal di
   paket — paket tidak bisa terbit bila ada topik yang kosong (nama topiknya
   ditampilkan).
-- **Disarankan:** setiap **subtopik** (subdomain) juga terwakili minimal 1
-  soal. Selalu memungkinkan: subtopik terbanyak per mapel 17, paket 25–30 soal.
+- **Subtopik tidak diatur** — boleh ada subtopik yang tidak masuk paket
+  (keputusan pemilik produk 2026-10-01).
 
 ## Karakteristik SMA/SMK (disarankan, tampil sebagai peringatan)
 

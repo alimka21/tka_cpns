@@ -66,7 +66,7 @@ describe("checkPackageRules", () => {
   });
 });
 
-describe("cakupan topik & subtopik", () => {
+describe("cakupan topik", () => {
   const outline = [
     { code: "SD-MTK-D1", name: "Bilangan", subtopics: [{ code: "SD-MTK-D1-S1", name: "Bilangan Rasional" }] },
     { code: "SD-MTK-D2", name: "Geometri dan Pengukuran", subtopics: [{ code: "SD-MTK-D2-S1", name: "Objek Geometri" }, { code: "SD-MTK-D2-S2", name: "Pengukuran" }] },
@@ -76,22 +76,17 @@ describe("cakupan topik & subtopik", () => {
   const withSub = (codes: string[]) =>
     make({ pg: 17, mcma: 7, kat: 6 }, "SD-MTK").map((q, i) => ({ ...q, subtopicCode: codes[i % codes.length] }));
 
-  it("semua topik & subtopik ada → lolos tanpa peringatan cakupan", () => {
-    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D2-S2", "SD-MTK-D3-S1"]) });
+  it("semua topik ada (subtopik Pengukuran kosong pun tidak masalah) → lolos tanpa peringatan", () => {
+    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D3-S1"]) });
     expect(r.publishable).toBe(true);
-    expect(r.missing).toEqual({ topics: [], subtopics: [] });
+    expect(r.missingTopics).toEqual([]);
+    expect(r.recommended.some((c) => /subtopik/i.test(c.label))).toBe(false);
   });
 
   it("topik Data belum ada → tidak bisa terbit, nama topik disebut", () => {
     const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D2-S2"]) });
     expect(r.publishable).toBe(false);
+    expect(r.missingTopics).toEqual(["Data"]);
     expect(ruleErrors(r).join(" ")).toMatch(/Belum ada soal: Data/);
-  });
-
-  it("semua topik ada tapi subtopik Pengukuran kosong → tetap terbit, hanya saran", () => {
-    const r = checkPackageRules({ ...base, questions: withSub(["SD-MTK-D1-S1", "SD-MTK-D2-S1", "SD-MTK-D3-S1"]) });
-    expect(r.publishable).toBe(true);
-    expect(r.missing.subtopics).toEqual(["Pengukuran"]);
-    expect(r.recommended.find((c) => c.label.startsWith("Semua subtopik"))?.ok).toBe(false);
   });
 });

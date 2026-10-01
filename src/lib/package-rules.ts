@@ -58,8 +58,8 @@ export type PackageRuleReport = {
   /** Disarankan — tidak memblokir. */
   recommended: RuleCheck[];
   stats: { total: number; pg: number; mcma: number; kategori: number; stimulusBased: number };
-  /** Topik & subtopik mapel yang belum punya soal di paket. */
-  missing: { topics: string[]; subtopics: string[] };
+  /** Topik mapel yang belum punya soal di paket. */
+  missingTopics: string[];
   publishable: boolean;
 };
 
@@ -68,7 +68,7 @@ export function checkPackageRules(input: {
   subject: SubjectInfo | null;
   durationMinutes: number;
   questions: RuleQuestion[];
-  /** Topik & subtopik mapel; tanpa outline, cakupan materi tidak dicek. */
+  /** Topik mapel (beserta subtopiknya); tanpa outline, cakupan topik tidak dicek. */
   outline?: SubjectOutline;
 }): PackageRuleReport {
   const qs = input.questions;
@@ -113,11 +113,10 @@ export function checkPackageRules(input: {
     });
   }
 
-  // Cakupan materi: setiap topik (wajib) & subtopik (disarankan) minimal 1 soal.
+  // Cakupan materi: setiap topik mapel wajib punya minimal 1 soal (subtopik bebas).
   const used = new Set(qs.map((q) => q.subtopicCode));
   const outline = input.outline ?? [];
   const missingTopics = outline.filter((t) => !t.subtopics.some((s) => used.has(s.code)));
-  const missingSubtopics = outline.flatMap((t) => t.subtopics.filter((s) => !used.has(s.code)));
   if (rule && outline.length > 0) {
     required.push({
       ok: missingTopics.length === 0,
@@ -134,17 +133,6 @@ export function checkPackageRules(input: {
     label: "Ada PGK MCMA & PGK Kategori",
     detail: `${stats.mcma} MCMA · ${stats.kategori} Kategori`,
   });
-  if (rule && outline.length > 0) {
-    const totalSub = outline.reduce((n, t) => n + t.subtopics.length, 0);
-    recommended.push({
-      ok: missingSubtopics.length === 0,
-      label: `Semua subtopik terwakili (${totalSub} subtopik)`,
-      detail:
-        missingSubtopics.length === 0
-          ? `${totalSub} dari ${totalSub} subtopik`
-          : `Belum ada soal (${missingSubtopics.length}): ${missingSubtopics.map((s) => s.name).join("; ")}`,
-    });
-  }
   if (input.jenjang === "SMA") {
     recommended.push({
       ok: stats.total > 0 && stats.stimulusBased * 2 > stats.total,
@@ -166,7 +154,7 @@ export function checkPackageRules(input: {
     required,
     recommended,
     stats,
-    missing: { topics: missingTopics.map((t) => t.name), subtopics: missingSubtopics.map((s) => s.name) },
+    missingTopics: missingTopics.map((t) => t.name),
     publishable: required.every((c) => c.ok),
   };
 }

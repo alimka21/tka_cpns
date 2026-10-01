@@ -99,6 +99,13 @@
       "when": 1790817533796,
       "tag": "0013_jenjang_status_pengaturan",
       "breakpoints": true
+    },
+    {
+      "idx": 14,
+      "version": "5",
+      "when": 1790819013451,
+      "tag": "0014_langganan_midtrans",
+      "breakpoints": true
     }
   ]
 }

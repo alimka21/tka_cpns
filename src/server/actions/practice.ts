@@ -9,6 +9,7 @@ import { answerResponse } from "@/lib/validation/attempt";
 import { MAX_PRACTICE_TARGETS, PRACTICE_SIZES } from "@/lib/practice";
 import type { ReviewItem } from "@/lib/review";
 import { getActiveSession } from "@/server/auth/session";
+import { hasPremium } from "@/server/services/billing";
 import { answerPracticeItem, finishPracticeSession, startPracticeSession } from "@/server/services/practice";
 import type { PracticeAiNotice } from "@/server/services/practice-ai-plan";
 
@@ -30,6 +31,9 @@ export async function startPracticeAction(input: {
   if (!session) return NOT_LOGGED_IN;
   const parsed = startInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  if (!(await hasPremium({ id: Number(session.user.id), role: session.user.role }, session.user.jenjang ?? null))) {
+    return { ok: false, error: "Latihan Kelemahan khusus Premium. Buka Premium di menu Langganan." };
+  }
   const result = await startPracticeSession(Number(session.user.id), parsed.data.subtopicIds, parsed.data.count);
   if (result.ok) revalidatePath("/latihan");
   return result;

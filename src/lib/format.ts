@@ -46,3 +46,19 @@ export const DIAGNOSIS_STATUS: Record<DiagnosisStatusKey, { label: string; varia
   insufficient: { label: "Data belum cukup", variant: "outline" },
   untested: { label: "Belum diuji", variant: "muted" },
 };
+
+const rupiah = new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 });
+
+/** Rp 49.000 */
+export function formatRupiah(amount: number) {
+  return rupiah.format(amount);
+}
+
+export const ORDER_STATUS_META: Record<string, { label: string; variant: "success" | "warning" | "danger" | "muted" }> = {
+  pending: { label: "Menunggu pembayaran", variant: "warning" },
+  paid: { label: "Lunas", variant: "success" },
+  expired: { label: "Kedaluwarsa", variant: "muted" },
+  failed: { label: "Gagal", variant: "danger" },
+  cancelled: { label: "Dibatalkan", variant: "muted" },
+  refunded: { label: "Dikembalikan", variant: "muted" },
+};

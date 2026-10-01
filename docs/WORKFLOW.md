@@ -131,3 +131,20 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
   dan gagal. Kalau sudah mulai pakai cara manual, tetap pakai cara manual
   untuk migrasi selanjutnya juga (generate SQL-nya, bersihkan penanda,
   paste ke phpMyAdmin).
+
+## 8. Pembayaran Midtrans (Premium)
+
+1. Dashboard Midtrans (mulai mode **Sandbox**) → Settings → Access Keys →
+   salin **Server Key** (`SB-Mid-server-…`).
+2. hPanel → env: `MIDTRANS_SERVER_KEY=<server key>`,
+   `MIDTRANS_IS_PRODUCTION=false`, pastikan `SITE_URL=https://<domain>`.
+   Redeploy.
+3. Dashboard Midtrans → Settings → Payment → **Notification URL**:
+   `https://<domain>/api/midtrans/notification` (finish redirect sudah
+   dikirim otomatis per transaksi).
+4. Admin → `/admin/langganan` → buat paket langganan (harga, durasi,
+   jenjang). Tandai paket tes gratis (`is_premium = false`) di Paket Tes.
+5. Uji: akun siswa → Premium → Bayar → bayar dengan simulator Sandbox
+   Midtrans → kembali ke `/langganan/selesai` → Premium aktif.
+6. Go-live: ganti ke Server Key **Production**, `MIDTRANS_IS_PRODUCTION=true`,
+   ulangi langkah 3 di dashboard Production.

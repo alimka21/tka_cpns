@@ -6,3 +6,4 @@ export * from "./practice";
 export * from "./ai";
 export * from "./reports";
 export * from "./settings";
+export * from "./billing";

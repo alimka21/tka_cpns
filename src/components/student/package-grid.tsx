@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Clock, FileQuestion, Lock, Play } from "lucide-react";
+import { Clock, Crown, FileQuestion, Lock, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import type { StudentPackageRow } from "@/server/queries/packages";
@@ -91,8 +91,8 @@ function PackageCard({ pkg }: { pkg: StudentPackageRow }) {
         )}
       </dl>
       {locked ? (
-        <Button variant="outline" disabled className="w-full">
-          <Lock aria-hidden /> Minta akses premium ke admin
+        <Button variant="cta" className="w-full" nativeButton={false} render={<Link href="/langganan" />}>
+          <Crown aria-hidden /> Buka dengan Premium
         </Button>
       ) : (
         <Button nativeButton={false} className="w-full" render={<Link href={`/tes/${pkg.id}`} />}>

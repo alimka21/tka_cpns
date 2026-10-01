@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
+  CreditCard,
   Flag,
   ImageIcon,
   Settings,
@@ -37,6 +38,7 @@ const navItems: NavItem[] = [
   { href: "/admin/soal/generate-ai", label: "Generate AI", icon: Sparkles },
   { href: "/admin/paket-tes", label: "Paket Tes", icon: Package },
   { href: "/admin/laporan", label: "Laporan Soal", icon: Flag },
+  { href: "/admin/langganan", label: "Langganan & Pembayaran", icon: CreditCard },
   { href: "/admin/pengaturan", label: "Pengaturan Sistem", icon: SlidersHorizontal },
   { href: "/pengaturan", label: "Profil & API Key", icon: Settings },
 ];

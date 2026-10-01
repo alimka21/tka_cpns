@@ -167,8 +167,11 @@ export type StudentPackageRow = {
 };
 
 /** Paket tayang untuk siswa, dengan status akses & skor terakhir milik user itu. */
-/** Paket tayang untuk siswa; `jenjang` terisi = hanya paket jenjang itu (admin: null = semua). */
-export async function listPackagesForStudent(userId: number, jenjang: string | null): Promise<StudentPackageRow[]> {
+/**
+ * Paket tayang untuk siswa; `jenjang` terisi = hanya paket jenjang itu (admin: null = semua).
+ * `premium` = membership aktif → semua paket premium terbuka.
+ */
+export async function listPackagesForStudent(userId: number, jenjang: string | null, premium: boolean): Promise<StudentPackageRow[]> {
   const rows = await db
     .select({
       id: testPackages.id,
@@ -208,7 +211,7 @@ export async function listPackagesForStudent(userId: number, jenjang: string | n
     durationMinutes: r.durationMinutes,
     isPremium: r.isPremium,
     questionCount: Number(r.questionCount),
-    unlocked: !r.isPremium || r.entitlementId != null,
+    unlocked: !r.isPremium || premium || r.entitlementId != null,
     lastScore: lastScoreByPackage.get(r.id) ?? null,
   }));
 }

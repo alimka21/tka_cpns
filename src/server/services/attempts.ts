@@ -7,6 +7,7 @@ import type { AnswerResponse } from "@/lib/validation/attempt";
 import { db } from "@/server/db";
 import { attemptAnswers, attemptSubtopicScores, attempts } from "@/server/db/schema";
 import { getPackageDetail, hasEntitlement, type PackageDetail } from "@/server/queries/packages";
+import { getActiveMembership } from "@/server/services/billing";
 import { summarizeBySubtopic } from "./analytics";
 import { scoreAttempt, type AnswerMap, type ScorableQuestion } from "./scoring";
 
@@ -72,15 +73,20 @@ export type StartAttemptResult = { ok: true; attemptId: number } | { ok: false; 
  * jawaban yang sempat ter-autosave tetap dinilai (NFR ketahanan koneksi).
  */
 /** `jenjang`: jenjang siswa — paket jenjang lain ditolak (admin: null = bebas). */
-export async function startOrResumeAttempt(userId: number, testPackageId: number, jenjang: string | null): Promise<StartAttemptResult> {
+export async function startOrResumeAttempt(
+  userId: number,
+  testPackageId: number,
+  jenjang: string | null,
+  isAdmin = false,
+): Promise<StartAttemptResult> {
   const pkg = await getPackageDetail(testPackageId);
   if (!pkg || pkg.status !== "published") return { ok: false, error: "Paket tes tidak ditemukan." };
   if (jenjang && pkg.categoryCode !== jenjang) {
     return { ok: false, error: `Paket ini untuk TKA ${pkg.categoryCode}, sedangkan akunmu jenjang ${jenjang}. Ganti jenjang di Pengaturan bila keliru.` };
   }
   if (pkg.questions.length === 0) return { ok: false, error: "Paket tes ini belum berisi soal." };
-  if (pkg.isPremium && !(await hasEntitlement(userId, testPackageId))) {
-    return { ok: false, error: "Kamu belum punya akses ke paket premium ini. Hubungi admin untuk membuka akses." };
+  if (pkg.isPremium && !isAdmin && !(await hasEntitlement(userId, testPackageId)) && !(await getActiveMembership(userId, pkg.categoryCode))) {
+    return { ok: false, error: "Paket ini khusus Premium. Buka Premium di menu Langganan untuk mengerjakannya." };
   }
 
   const [existing] = await db

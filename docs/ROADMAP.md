@@ -25,6 +25,9 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-01 (2):** Fase 3 pembayaran Midtrans selesai (diuji dengan
+server Midtrans tiruan; belum dengan key Sandbox asli). Migrasi 0014
+sudah dijalankan. Pool MySQL diberi pengaman koneksi idle.
 **2026-10-01:** jenjang wajib per akun (paket & latihan disaring per
 jenjang), konfirmasi pendaftar opsional (`/admin/pengaturan`,
 `/admin/users` dengan tab status, setujui/tolak, ubah jenjang), halaman
@@ -295,12 +298,19 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       "Laporkan soal" di pembahasan tes & latihan (soal bank maupun
       Latihan AI), `/admin/laporan` dengan badge jumlah di menu
 
-## Fase 3 — Monetisasi (nanti, belum sekarang)
+## Fase 3 — Monetisasi
 
-- [ ] Payment gateway Indonesia (rekomendasi: Midtrans Snap; alternatif
-      Xendit, Duitku/Tripay) — butuh akun merchant user dulu
-- [ ] Alur checkout → isi `entitlements` otomatis
-- [ ] Halaman riwayat transaksi user
+- [x] Payment gateway: **Midtrans Snap** (redirect) — `services/midtrans.ts`,
+      webhook `/api/midtrans/notification` (signature + cek ulang Status API)
+- [x] Alur checkout → Premium aktif otomatis (`memberships`, bukan
+      entitlement per paket): `/langganan` → bayar → webhook →
+      `applyMidtransStatus` (idempoten, perpanjang masa aktif)
+- [x] Halaman riwayat transaksi user (`/langganan`) & admin
+      (`/admin/langganan`: paket langganan, anggota, beri/cabut manual)
+- [x] Gating: akun gratis = paket `is_premium=false`; Premium = semua paket
+      premium jenjangnya + Latihan Kelemahan
+- [ ] Uji dengan Sandbox Midtrans asli (key user) lalu pindah Production
+- [ ] Email/WA notifikasi pembayaran (opsional)
 
 ## Fase 4 — Pengerasan (sebelum ramai dipakai)
 

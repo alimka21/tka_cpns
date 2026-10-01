@@ -9,6 +9,7 @@ import { formatDateTime, scoreTone } from "@/lib/format";
 import { requireUser } from "@/server/auth/session";
 import { listStudentHistory } from "@/server/queries/attempts";
 import { listPackagesForStudent } from "@/server/queries/packages";
+import { hasPremium } from "@/server/services/billing";
 import { getStudentProgress, type PrioritySubdomain } from "@/server/queries/progress";
 
 export const metadata: Metadata = { title: "Dashboard" };
@@ -19,8 +20,10 @@ export default async function DashboardPage() {
   const userId = Number(user.id);
   const firstName = user.name.split(" ")[0];
 
+  const jenjang = user.role === "admin" ? null : (user.jenjang ?? null);
+  const premium = await hasPremium({ id: userId, role: user.role }, jenjang);
   const [packages, history, progress] = await Promise.all([
-    listPackagesForStudent(userId, user.role === "admin" ? null : (user.jenjang ?? null)),
+    listPackagesForStudent(userId, jenjang, premium),
     listStudentHistory(userId, 10),
     getStudentProgress(userId),
   ]);
@@ -59,7 +62,7 @@ export default async function DashboardPage() {
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {user.role === "admin" ? "Semua jenjang (tampilan admin). " : "Sesuai jenjangmu — ganti di Pengaturan bila keliru. "}
-            Paket gratis bisa langsung dikerjakan. Paket premium dibuka manual oleh admin.
+            Paket gratis bisa langsung dikerjakan; paket premium terbuka dengan langganan Premium.
           </p>
         </div>
         <PackageGrid packages={packages} />

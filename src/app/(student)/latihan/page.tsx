@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, ChevronRight, Dumbbell, PlayCircle } from "lucide-react";
+import { ArrowRight, ChevronRight, Crown, Dumbbell, Lock, PlayCircle } from "lucide-react";
 import { PracticeStartForm, type PracticeOption } from "@/components/latihan/practice-start-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,7 @@ import { requireUser } from "@/server/auth/session";
 import { countPublishedBySubtopic, listPracticeHistory } from "@/server/queries/practice";
 import { getStudentProgress } from "@/server/queries/progress";
 import { getMaskedGeminiKey } from "@/server/services/ai-key";
+import { hasPremium } from "@/server/services/billing";
 
 export const metadata: Metadata = { title: "Latihan Kelemahan" };
 export const dynamic = "force-dynamic";
@@ -26,16 +27,28 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
     getMaskedGeminiKey(userId),
   ]);
   const hasKey = maskedKey != null;
+  const premium = await hasPremium({ id: userId, role: user.role }, user.role === "admin" ? null : (user.jenjang ?? null));
 
   // Hanya mata uji jenjang siswa saat ini (riwayat jenjang lain tetap terlihat di /progres).
   const myJenjang = user.role === "admin" ? null : user.jenjang;
-  const diagnosed = progress.subjects.filter((s) => !myJenjang || s.jenjang === myJenjang).flatMap((subject) =>
-    subject.domains.flatMap((domain) =>
-      domain.subdomains.flatMap((s) =>
-        s.diagnosis ? [{ subtopicId: s.id, name: s.name, context: `${subject.jenjang} · ${subject.name} · ${domain.name}`, diagnosis: s.diagnosis }] : [],
+  const diagnosed = progress.subjects
+    .filter((s) => !myJenjang || s.jenjang === myJenjang)
+    .flatMap((subject) =>
+      subject.domains.flatMap((domain) =>
+        domain.subdomains.flatMap((s) =>
+          s.diagnosis
+            ? [
+                {
+                  subtopicId: s.id,
+                  name: s.name,
+                  context: `${subject.jenjang} · ${subject.name} · ${domain.name}`,
+                  diagnosis: s.diagnosis,
+                },
+              ]
+            : [],
+        ),
       ),
-    ),
-  );
+    );
   const counts = await countPublishedBySubtopic(diagnosed.map((d) => d.subtopicId));
   const options: PracticeOption[] = diagnosed
     .map((d) => ({
@@ -46,7 +59,11 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
       status: d.diagnosis.status,
       available: counts.get(d.subtopicId) ?? 0,
     }))
-    .sort((a, b) => STATUS_ORDER[a.status as keyof typeof STATUS_ORDER] - STATUS_ORDER[b.status as keyof typeof STATUS_ORDER] || a.accuracy - b.accuracy);
+    .sort(
+      (a, b) =>
+        STATUS_ORDER[a.status as keyof typeof STATUS_ORDER] - STATUS_ORDER[b.status as keyof typeof STATUS_ORDER] ||
+        a.accuracy - b.accuracy,
+    );
 
   // Pilihan awal: ?sub=ID (dari tombol di dashboard/progres), atau prioritas diagnosa.
   const { sub } = await searchParams;
@@ -71,8 +88,8 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
           <Dumbbell className="size-7 text-primary" aria-hidden /> Latihan Kelemahan
         </h1>
         <p className="mt-1 max-w-3xl text-muted-foreground">
-          Latihan singkat yang hanya berisi soal dari subdomain yang paling perlu kamu perkuat. Tanpa batas waktu, dan
-          setiap soal langsung menampilkan benar/salah beserta pembahasannya. Hasilnya ikut memperbarui{" "}
+          Latihan singkat yang hanya berisi soal dari subdomain yang paling perlu kamu perkuat. Tanpa batas waktu, dan setiap soal
+          langsung menampilkan benar/salah beserta pembahasannya. Hasilnya ikut memperbarui{" "}
           <Link href="/progres" className="font-semibold text-primary hover:underline">
             progres kemampuanmu
           </Link>
@@ -103,31 +120,54 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
         </section>
       )}
 
-      <section aria-labelledby="mulai-heading" className="surface-card p-6">
-        <h2 id="mulai-heading" className="text-lg font-bold">
-          {active ? "Atau mulai latihan baru" : "Mulai latihan baru"}
-        </h2>
-        {options.length === 0 ? (
-          <div className="mt-4 flex flex-col items-start gap-3">
-            <p className="text-sm text-muted-foreground">
-              Kerjakan minimal satu paket tes dulu supaya sistem tahu subdomain mana yang perlu kamu latih.
-            </p>
-            <Button nativeButton={false} render={<Link href="/dashboard#paket-heading" />}>
-              Pilih paket tes <ArrowRight aria-hidden />
+      {!premium ? (
+        <section className="relative overflow-hidden rounded-2xl bg-primary p-6 text-primary-foreground shadow-md sm:p-8">
+          <div className="relative flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div className="max-w-2xl">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-white/15 px-3 py-1 text-xs font-semibold">
+                <Lock className="size-3.5 text-cta" aria-hidden /> Fitur Premium
+              </span>
+              <h2 className="mt-3 text-2xl font-bold tracking-tight">Latihan khusus kelemahanmu terkunci</h2>
+              <p className="mt-2 text-sm text-white/80">
+                {options.length > 0
+                  ? `Diagnosamu sudah menemukan ${options.filter((o) => o.status === "perlu_latihan" || o.status === "cukup").length || options.length} subdomain yang bisa dilatih. `
+                  : ""}
+                Buka Premium untuk latihan tanpa batas waktu yang hanya berisi soal subdomain terlemahmu, lengkap dengan
+                pembahasan langsung — plus semua paket tes premium.
+              </p>
+            </div>
+            <Button size="lg" variant="cta" nativeButton={false} render={<Link href="/langganan" />}>
+              <Crown aria-hidden /> Buka Premium
             </Button>
           </div>
-        ) : (
-          <>
-            <p className="mt-1 text-sm text-muted-foreground">
-              Sudah dipilihkan dari diagnosamu. Boleh diganti.
-              {active && " Memulai latihan baru akan menutup latihan yang sedang berjalan."}
-            </p>
-            <div className="mt-5">
-              <PracticeStartForm options={options} preselected={preselected} hasKey={hasKey} />
+        </section>
+      ) : (
+        <section aria-labelledby="mulai-heading" className="surface-card p-6">
+          <h2 id="mulai-heading" className="text-lg font-bold">
+            {active ? "Atau mulai latihan baru" : "Mulai latihan baru"}
+          </h2>
+          {options.length === 0 ? (
+            <div className="mt-4 flex flex-col items-start gap-3">
+              <p className="text-sm text-muted-foreground">
+                Kerjakan minimal satu paket tes dulu supaya sistem tahu subdomain mana yang perlu kamu latih.
+              </p>
+              <Button nativeButton={false} render={<Link href="/dashboard#paket-heading" />}>
+                Pilih paket tes <ArrowRight aria-hidden />
+              </Button>
             </div>
-          </>
-        )}
-      </section>
+          ) : (
+            <>
+              <p className="mt-1 text-sm text-muted-foreground">
+                Sudah dipilihkan dari diagnosamu. Boleh diganti.
+                {active && " Memulai latihan baru akan menutup latihan yang sedang berjalan."}
+              </p>
+              <div className="mt-5">
+                <PracticeStartForm options={options} preselected={preselected} hasKey={hasKey} />
+              </div>
+            </>
+          )}
+        </section>
+      )}
 
       {past.length > 0 && (
         <section aria-labelledby="riwayat-latihan-heading" className="flex flex-col gap-4">
@@ -137,10 +177,7 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
           <ul className="surface-card divide-y">
             {past.map((h) => (
               <li key={h.id}>
-                <Link
-                  href={`/latihan/${h.id}/hasil`}
-                  className="flex items-center gap-4 p-5 transition-colors hover:bg-muted/50"
-                >
+                <Link href={`/latihan/${h.id}/hasil`} className="flex items-center gap-4 p-5 transition-colors hover:bg-muted/50">
                   <div className="min-w-0 flex-1">
                     <div className="text-xs text-muted-foreground">
                       {formatDateTime(h.completedAt ?? h.startedAt)}

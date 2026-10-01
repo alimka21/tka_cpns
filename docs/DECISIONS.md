@@ -12,6 +12,26 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-01 — Premium via Midtrans Snap (membership, bukan per paket)
+Keputusan: model akses = akun gratis (paket `is_premium = false`) vs
+Premium (membership per jenjang dengan masa aktif) yang membuka semua paket
+premium jenjangnya + Latihan Kelemahan. Paket langganan (harga/durasi/
+jenjang) diatur admin di `/admin/langganan`. Pembayaran: Midtrans Snap
+**redirect** (tanpa snap.js → tanpa client key & masalah CSP). Order dibuat
+di DB dulu, lalu transaksi Snap. Webhook `/api/midtrans/notification`:
+verifikasi signature SHA-512, lalu **ambil ulang status dari Status API**
+(payload palsu/nominal diubah tidak berpengaruh), terapkan idempoten
+(unique `memberships.order_id`); status final tidak mundur. Halaman finish
+`/langganan/selesai` juga menyinkronkan status (cadangan bila webhook
+telat). Server Key hanya di env (`MIDTRANS_SERVER_KEY`,
+`MIDTRANS_IS_PRODUCTION`). Pool MySQL: idleTimeout 10 dtk + keep-alive
+(wait_timeout Hostinger 20 dtk; ECONNRESET terlihat saat uji).
+Alasan: sesuai konsep user ("bayar → semua terbuka otomatis"); redirect
+paling sederhana & aman.
+Alternatif yang ditolak: entitlement per paket per pembelian (tidak
+membuka Latihan Kelemahan, rumit saat paket baru ditambah); Snap popup
+(butuh client key + skrip pihak ketiga).
+
 ## 2026-10-01 — Jenjang per akun & konfirmasi pendaftar
 Keputusan: setiap siswa punya `users.jenjang` (wajib saat daftar; akun lama
 dipaksa memilih di `/pilih-jenjang`). Siswa hanya melihat & bisa mengerjakan

@@ -13,6 +13,7 @@ const baseNav = [
   { href: "/latihan", label: "Latihan" },
   { href: "/progres", label: "Progres" },
   { href: "/riwayat", label: "Riwayat" },
+  { href: "/langganan", label: "Premium" },
   { href: "/pengaturan", label: "Pengaturan" },
 ];
 

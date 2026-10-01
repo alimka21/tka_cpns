@@ -30,6 +30,22 @@ updated_at
   bila pengaturan `registration.requireApproval` aktif saat daftar
   (Better Auth `databaseHooks.user.create.before`).
 
+**plans** — paket langganan Premium (admin): name, description, jenjang
+(NULL = semua), price (Rupiah), duration_days (NULL = selamanya),
+is_active, sort_order.
+
+**orders** — satu pembelian = satu order Midtrans: order_code (unique, =
+`order_id` Midtrans, `WTP-<userId>-<waktu>-<acak>`), user_id, plan_id +
+salinan plan_name/jenjang/duration_days/amount, status (`pending`|`paid`|
+`expired`|`failed`|`cancelled`|`refunded`), snap_token, redirect_url,
+payment_type, transaction_id, paid_at, last_payload (JSON audit).
+
+**memberships** — masa Premium: user_id, order_id (unique, NULL = manual),
+jenjang (NULL = semua), starts_at, ends_at (NULL = selamanya), granted_by
+(`purchase`|`admin_manual`), revoked_at. Aktif = belum dicabut & ends_at
+NULL/masa depan. Pembelian baru memperpanjang dari ends_at yang masih
+berjalan. `entitlements` per paket tetap berlaku (akses manual satu paket).
+
 **app_settings** — key (pk, varchar 64), value (JSON), updated_by, updated_at.
 Daftar key + default + skema Zod di `services/app-settings.ts`
 (`registration.requireApproval`: boolean, default false).

@@ -12,6 +12,10 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-01 — Paket contoh TKA SMA Matematika 2025 (impor PDF)
+Keputusan: 25 soal PDF diimpor jadi paket draf #15 (soal 151–175, gambar galeri #6–#21, rumus KaTeX). Q6 (barisan aritmetika) & Q24 (peluang angpao) diubah PG → PGK Kategori supaya PG 15/25. Opsi Q14 yang berupa gambar titik ditulis sebagai koordinat; opsi ke-5 Q15 terpotong di PDF → diisi "15 m". Trigonometri dipetakan ke SMA-MTK-D4-S1 (PDF menaruhnya di Geometri).
+Alasan: PDF tanpa kunci; kunci & pembahasan dihitung Claude → `pending_review`. Paling perlu dicek: Q5 (komposisi fungsi, "pasti" = Dini), Q11 (dinding BCGF & ADHE), Q19 (Rp270.000 = lembar digabung).
+
 ## 2026-10-01 — Paket contoh TKA SMA Bahasa Indonesia 2025 (impor PDF)
 Keputusan: 33 soal dari PDF resmi-adaptasi diimpor jadi paket draf #13 (30 soal, 9 bacaan). Dibuang 3: "makna kata diunduh" (kata tidak ada di teks Interaksi Sosial), Tari Hudoq no. 21, Belis no. 23 (D2-S1 berlebih). 10 soal PG diubah jadi PGK (5 MCMA, 5 Kategori) memakai isi opsi asli supaya rasio PG 18/30 lolos aturan. Beberapa subtopik dipetakan menurut isi soal, bukan label PDF (hubungan antarparagraf → D2-S2; kesimpulan teks nonfiksi → D3-S3).
 Alasan: PDF tidak memuat kunci; kunci & pembahasan ditetapkan Claude, jadi soal berstatus `pending_review` sampai diverifikasi admin.

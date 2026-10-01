@@ -12,6 +12,11 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-01 — Paket contoh TKA SMA Bahasa Indonesia 2025 (impor PDF)
+Keputusan: 33 soal dari PDF resmi-adaptasi diimpor jadi paket draf #13 (30 soal, 9 bacaan). Dibuang 3: "makna kata diunduh" (kata tidak ada di teks Interaksi Sosial), Tari Hudoq no. 21, Belis no. 23 (D2-S1 berlebih). 10 soal PG diubah jadi PGK (5 MCMA, 5 Kategori) memakai isi opsi asli supaya rasio PG 18/30 lolos aturan. Beberapa subtopik dipetakan menurut isi soal, bukan label PDF (hubungan antarparagraf → D2-S2; kesimpulan teks nonfiksi → D3-S3).
+Alasan: PDF tidak memuat kunci; kunci & pembahasan ditetapkan Claude, jadi soal berstatus `pending_review` sampai diverifikasi admin.
+Alternatif yang ditolak: impor 100% PG apa adanya (paket tidak bisa terbit, 28 PG).
+
 ## 2026-10-01 — Aturan paket TKA ditegakkan sistem
 Keputusan: setiap paket = 1 jenjang + 1 mata pelajaran (`test_packages.subject_id`,
 migrasi 0015). Aturan di `docs/ATURAN_PAKET.md` / `lib/package-rules.ts`:

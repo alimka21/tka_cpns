@@ -25,6 +25,8 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-01 (3):** login/daftar dengan Google (aktif setelah env
+GOOGLE_CLIENT_ID/SECRET diisi; langkah di WORKFLOW §9).
 **2026-10-01 (2):** Fase 3 pembayaran Midtrans selesai (diuji dengan
 server Midtrans tiruan; belum dengan key Sandbox asli). Migrasi 0014
 sudah dijalankan. Pool MySQL diberi pengaman koneksi idle.

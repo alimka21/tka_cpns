@@ -1,5 +1,5 @@
-// Konfigurasi Better Auth — email/password dulu, Google menyusul
-// (docs/ARCHITECTURE.md). HANYA diimpor dari kode server.
+// Konfigurasi Better Auth — email/password + Google (aktif bila env
+// GOOGLE_CLIENT_ID & GOOGLE_CLIENT_SECRET diisi). HANYA diimpor dari kode server.
 
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -10,6 +10,12 @@ import { SITE_NAME } from "@/lib/site";
 import { getSetting } from "@/server/services/app-settings";
 
 export const ROLES = ["student", "admin"] as const;
+
+const googleClientId = process.env.GOOGLE_CLIENT_ID?.trim();
+const googleClientSecret = process.env.GOOGLE_CLIENT_SECRET?.trim();
+
+/** Tombol "Lanjutkan dengan Google" hanya tampil bila kredensial OAuth tersedia. */
+export const isGoogleEnabled = Boolean(googleClientId && googleClientSecret);
 export type Role = (typeof ROLES)[number];
 
 export const auth = betterAuth({
@@ -22,6 +28,21 @@ export const auth = betterAuth({
     // ID memakai INT auto-increment (FK lain sudah INT).
     database: { generateId: "serial" },
     cookiePrefix: "wtp",
+  },
+  socialProviders: isGoogleEnabled
+    ? {
+        google: {
+          clientId: googleClientId!,
+          clientSecret: googleClientSecret!,
+          // Selalu tampilkan pemilih akun (siswa sering berbagi perangkat).
+          prompt: "select_account",
+        },
+      }
+    : undefined,
+  account: {
+    // Email Google sudah terverifikasi → akun email/password dengan email yang
+    // sama otomatis tersambung (tidak membuat akun ganda).
+    accountLinking: { enabled: true, trustedProviders: ["google"] },
   },
   emailAndPassword: {
     enabled: true,

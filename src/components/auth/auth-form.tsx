@@ -28,6 +28,16 @@ const AUTH_ERRORS: Record<string, string> = {
   INVALID_EMAIL: "Format email tidak valid.",
 };
 
+// Kode error dari redirect OAuth Better Auth (?error=...).
+const OAUTH_ERRORS: Record<string, string> = {
+  access_denied: "Login Google dibatalkan.",
+  account_not_linked: "Email ini sudah terdaftar dengan cara lain. Masuk dengan email & kata sandi.",
+  unable_to_link_account: "Akun Google tidak bisa disambungkan ke akun yang sudah ada.",
+  email_not_found: "Akun Google tidak memberikan alamat email.",
+  state_mismatch: "Sesi login kedaluwarsa. Coba lagi.",
+  please_restart_the_process: "Sesi login kedaluwarsa. Coba lagi.",
+};
+
 const copy = {
   signin: {
     title: "Masuk ke Akun",
@@ -47,10 +57,39 @@ const copy = {
   },
 };
 
-export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
+export function AuthForm({
+  mode,
+  next,
+  googleEnabled = false,
+  oauthError,
+}: {
+  mode: Mode;
+  next?: string;
+  googleEnabled?: boolean;
+  oauthError?: string;
+}) {
   const router = useRouter();
   const [errors, setErrors] = useState<Errors>({});
-  const [notice, setNotice] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(
+    oauthError ? (OAUTH_ERRORS[oauthError] ?? "Login Google gagal. Coba lagi atau gunakan email.") : null,
+  );
+  const [googlePending, setGooglePending] = useState(false);
+
+  async function signInWithGoogle() {
+    setGooglePending(true);
+    setNotice(null);
+    // Setelah Google, kembali ke /masuk yang mengarahkan sesuai role/status;
+    // akun baru tanpa jenjang otomatis diminta memilih jenjang.
+    const { error } = await authClient.signIn.social({
+      provider: "google",
+      callbackURL: `/masuk${next ? `?next=${encodeURIComponent(next)}` : ""}`,
+      errorCallbackURL: mode === "signup" ? "/daftar" : "/masuk",
+    });
+    if (error) {
+      setGooglePending(false);
+      setNotice("Tidak bisa membuka login Google. Coba lagi.");
+    }
+  }
   const [pending, setPending] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [jenjang, setJenjang] = useState<Jenjang | null>(null);
@@ -108,7 +147,21 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
         </div>
       </div>
 
-      <form noValidate onSubmit={handleSubmit} className="mt-8 flex flex-col gap-5">
+      {googleEnabled && (
+        <>
+          <Button variant="outline" size="lg" className="mt-8 w-full" disabled={googlePending || pending} onClick={signInWithGoogle}>
+            <GoogleIcon /> {googlePending ? "Membuka Google…" : `${mode === "signin" ? "Masuk" : "Daftar"} dengan Google`}
+          </Button>
+          {mode === "signup" && (
+            <p className="mt-2 text-center text-xs text-muted-foreground">Tanpa kata sandi — jenjang dipilih setelah masuk.</p>
+          )}
+          <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground">
+            <span className="h-px flex-1 bg-border" /> atau dengan email <span className="h-px flex-1 bg-border" />
+          </div>
+        </>
+      )}
+
+      <form noValidate onSubmit={handleSubmit} className={cn("flex flex-col gap-5", googleEnabled ? "mt-6" : "mt-8")}>
         {mode === "signup" && (
           <Field id="name" label="Nama lengkap" icon={User} error={errors.name}>
             <Input id="name" name="name" autoComplete="name" placeholder="Contoh: Rina Kartika" className="pl-10" aria-invalid={!!errors.name} aria-describedby={errors.name ? "name-error" : undefined} />
@@ -175,17 +228,11 @@ export function AuthForm({ mode, next }: { mode: Mode; next?: string }) {
           </p>
         )}
 
-        <Button type="submit" size="lg" className="w-full" disabled={pending}>
+        <Button type="submit" size="lg" className="w-full" disabled={pending || googlePending}>
           {pending ? "Memproses…" : c.submit} {!pending && <ArrowRight aria-hidden />}
         </Button>
       </form>
 
-      <div className="my-6 flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="h-px flex-1 bg-border" /> atau <span className="h-px flex-1 bg-border" />
-      </div>
-      <Button variant="outline" size="lg" className="w-full" disabled title="Login Google menyusul setelah email/password">
-        <GoogleIcon /> {mode === "signin" ? "Masuk" : "Daftar"} dengan Google (segera)
-      </Button>
 
       {mode === "signup" && (
         <p className="mt-6 text-center text-xs text-muted-foreground">

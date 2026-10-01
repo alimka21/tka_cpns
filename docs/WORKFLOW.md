@@ -148,3 +148,21 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
    Midtrans → kembali ke `/langganan/selesai` → Premium aktif.
 6. Go-live: ganti ke Server Key **Production**, `MIDTRANS_IS_PRODUCTION=true`,
    ulangi langkah 3 di dashboard Production.
+
+## 9. Login & daftar dengan Google
+
+1. https://console.cloud.google.com → buat/pilih project.
+2. **APIs & Services → OAuth consent screen**: User type *External*, isi nama
+   aplikasi, email dukungan, logo (opsional), domain; scope cukup default
+   (email, profile, openid). Setelah siap, klik **Publish app** (mode
+   *Testing* hanya bisa dipakai akun yang didaftarkan sebagai test user).
+3. **APIs & Services → Credentials → Create credentials → OAuth client ID**
+   → *Web application*:
+   - Authorized JavaScript origins: `https://<domain>`
+   - Authorized redirect URIs: `https://<domain>/api/auth/callback/google`
+     (harus sama persis dengan `BETTER_AUTH_URL` + path itu).
+4. hPanel → env: `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` → redeploy.
+   Tombol "Masuk/Daftar dengan Google" muncul otomatis.
+5. Perilaku: akun baru dari Google diminta memilih jenjang
+   (`/pilih-jenjang`); bila konfirmasi pendaftar aktif, statusnya Menunggu.
+   Email yang sudah terdaftar dengan kata sandi otomatis tersambung ke Google.

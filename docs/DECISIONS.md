@@ -12,6 +12,15 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-01 — Login Google (Better Auth social provider)
+Keputusan: Google aktif hanya bila env `GOOGLE_CLIENT_ID`/`SECRET` diisi
+(tombol disembunyikan bila tidak). `prompt=select_account`. Account linking
+otomatis untuk Google (email terverifikasi) supaya tidak ada akun ganda.
+Callback kembali ke `/masuk` yang mengarahkan sesuai role/status; akun baru
+tanpa jenjang → `/pilih-jenjang`. Hook konfirmasi pendaftar berlaku sama.
+Alasan: daftar lebih cepat untuk siswa; tetap memakai alur jenjang &
+konfirmasi yang sudah ada.
+
 ## 2026-10-01 — Premium via Midtrans Snap (membership, bukan per paket)
 Keputusan: model akses = akun gratis (paket `is_premium = false`) vs
 Premium (membership per jenjang dengan masa aktif) yang membuka semua paket

@@ -45,7 +45,7 @@ buat baru mengikuti gaya file lain, ringkas dan dalam poin-poin.
 - Next.js 15 (App Router) + TypeScript, deploy ke Hostinger Node.js hosting
 - Tailwind CSS + shadcn/ui
 - MySQL (Hostinger) + Drizzle ORM
-- Auth: Better Auth (email/password dulu, Google menyusul)
+- Auth: Better Auth (email/password + Google)
 - Validasi: Zod di setiap boundary (form, import, AI output)
 - AI: Gemini API — **API key disimpan per-user di database (terenkripsi),
   bukan di server/env**. Lihat `docs/SRS.md` §AI Generation.

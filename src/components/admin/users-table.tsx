@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Clock, Crown, GraduationCap, Search, Settings, Terminal, Trash2, Users, X } from "lucide-react";
+import { Check, Clock, Crown, GraduationCap, Search, Settings, Trash2, Users, X } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -183,16 +183,6 @@ export function UsersTable({
             </Select>
           </div>
         </div>
-
-        <p className="flex items-start gap-2 border-b bg-primary-soft/50 px-5 py-3 text-xs text-muted-foreground">
-          <Terminal className="mt-0.5 size-3.5 shrink-0" aria-hidden />
-          Akses premium diberikan per paket di halaman{" "}
-          <Link href="/admin/paket-tes" className="font-semibold text-primary underline">
-            Paket Tes
-          </Link>
-          . Role admin hanya bisa diubah lewat terminal:{" "}
-          <code className="rounded bg-muted px-1 py-0.5">npm run user:role -- email admin</code>.
-        </p>
 
         {/* Desktop: tabel */}
         <div className="hidden overflow-x-auto lg:block">

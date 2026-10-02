@@ -130,7 +130,7 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
       via Remote MySQL, cek dengan `npm run db:check`
 - [x] Setup Git + repo GitHub (`origin` sudah diatur ke
       `github.com/alimka21/tka_cpns`)
-- [ ] Push awal, sambungkan Hostinger auto-deploy dari `main`
+- [x] Push awal, sambungkan Hostinger auto-deploy dari `main` (deploy berhasil 2026-09-29)
       - Build produksi pakai `next build --webpack` (Turbopack crash di
         PostCSS saat build Hostinger — lihat DECISIONS 2026-09-29).
         Node 22 di hPanel; env: DATABASE_URL, BETTER_AUTH_SECRET,
@@ -327,6 +327,7 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       premium jenjangnya + Latihan Kelemahan
 - [ ] Uji dengan Sandbox Midtrans asli (key user) lalu pindah Production
 - [ ] Email/WA notifikasi pembayaran (opsional)
+- [ ] Lupa / ganti kata sandi (email reset — butuh layanan email, mis. Resend/SMTP Hostinger)
 
 ## Fase 4 — Pengerasan (sebelum ramai dipakai)
 

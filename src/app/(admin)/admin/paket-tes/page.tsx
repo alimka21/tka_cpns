@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenCheck, Clock, FileQuestion, Package, Plus } from "lucide-react";
+import { BookOpenCheck, Clock, FileQuestion, Package, Plus, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,9 +29,14 @@ export default async function AdminPaketTesPage({ searchParams }: PageProps<"/ad
         title="Paket Tes"
         description="Susun paket dari soal yang sudah tayang, atur durasi, dan tandai gratis atau premium."
         actions={
-          <Button nativeButton={false} render={<Link href="/admin/paket-tes/baru" />}>
-            <Plus aria-hidden /> Buat Paket
-          </Button>
+          <div className="flex flex-wrap gap-2">
+            <Button variant="outline" nativeButton={false} render={<Link href={jenjang ? `/admin/paket-tes/otomatis?jenjang=${jenjang}` : "/admin/paket-tes/otomatis"} />}>
+              <Sparkles aria-hidden /> Buat Paket Otomatis
+            </Button>
+            <Button nativeButton={false} render={<Link href="/admin/paket-tes/baru" />}>
+              <Plus aria-hidden /> Buat Paket
+            </Button>
+          </div>
         }
       />
 

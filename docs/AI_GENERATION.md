@@ -210,3 +210,11 @@ bergantung pada siswa punya key; AI (langkah 6) menambah variasi.
 - Pemetaan (`mapPdfExtraction`, murni & dites): soal rusak tetap tampil dengan `errors` (tidak bisa disimpan); rujukan bacaan hilang → soal tunggal; bacaan tak terpakai dibuang.
 - Gambar dipotong di browser dari render 2400 px; admin bisa mematikan potongan yang meleset lalu unggah manual saat edit soal. Server tidak butuh pustaka PDF native (aman untuk Hostinger).
 - Biaya: token Gemini milik admin, bukan Claude. Belum dicatat di `ai_generation_logs` (enum `mode` belum punya nilai `pdf`).
+
+## 11. Buat paket otomatis (admin, `/admin/paket-tes/otomatis`)
+
+- Pilih jenjang + mapel → `buildAutoPackagePreview`: soal mapel itu berstatus `published`/`pending_review` yang **belum masuk paket mana pun**; grup stimulus hanya dipakai bila semua anggotanya tersedia.
+- `planAutoPackage` (murni, dites): (1) blok yang menambah topik/subtopik baru terbanyak per soal, (2) isi sisa kuota mengarahkan PG ke ±55% & menyebar subtopik, tanpa pernah melewati batas PG 50–60%; (3) kekurangan → slot AI: subtopik belum terwakili dulu, bentuk soal dibagi berurutan per subtopik (sedikit batch), MCMA & Kategori diimbangkan.
+- Tiap batch (subtopik × bentuk, maks. 10 soal) = satu panggilan `generateAiQuestions`: mode `variasi` dari soal tunggal **tanpa gambar** di subtopik itu (acak, bentuk sama diutamakan), selain itu mode `baru`. Client menjalankan 3 batch bersamaan dengan progres; batch gagal bisa diulang, atau paket dibuat dari soal yang ada.
+- `createAutoPackage` memvalidasi ulang (soal masih belum terpakai, grup utuh, soal AI milik admin itu) → paket **draf** (durasi dari aturan). Soal AI `pending_review`; terbitkan lewat tombol Terbitkan paket (bisa sekaligus soalnya).
+

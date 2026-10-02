@@ -25,6 +25,10 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-02 (2):** Buat Paket Otomatis (`/admin/paket-tes/otomatis`): soal
+bank belum terpakai + AI menambal kekurangan (pratinjau dulu, batch paralel)
+→ paket draf. Diuji pratinjau & pembuatan dari bank; batch AI belum diuji
+dengan key Gemini asli.
 **2026-10-02:** ganti kata sandi (Pengaturan siswa & Profil admin, opsi
 keluarkan perangkat lain; akun Google-only bisa "Buat kata sandi"); diuji
 di browser. Berikutnya: lupa kata sandi via SMTP Hostinger (WORKFLOW §10).
@@ -164,6 +168,8 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
 - [x] Admin: Impor PDF dengan Gemini (`/admin/soal/import-pdf`) — PDF
       (termasuk scan) → bacaan, soal, kunci, potongan gambar → pratinjau →
       simpan `pending_review` + paket draf (docs/AI_GENERATION.md §10)
+- [x] Admin: Buat Paket Otomatis — bank belum terpakai + AI menambal
+      kekurangan per subtopik/bentuk (docs/AI_GENERATION.md §11)
 - [ ] Admin: halaman "Tinjau Paket" (paket utuh + kunci + pembahasan,
       edit per soal); Bank Soal: filter per paket + terbitkan massal
       (usulan 2026-10-01)

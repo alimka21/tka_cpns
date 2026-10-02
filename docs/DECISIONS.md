@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-02 — Buat paket otomatis: bank belum terpakai + AI menambal
+Keputusan (pemilik produk): soal hasil impor yang tidak memenuhi aturan tetap
+masuk bank; tombol "Buat Paket Otomatis" mengambil soal yang **belum masuk
+paket mana pun** (tayang + menunggu tinjauan), lalu AI menambal kekurangan
+per topik/subtopik/bentuk dengan memodifikasi soal bank (variasi) atau soal
+baru. Rencana dipratinjau dulu sebelum token Gemini terpakai.
+Alasan: tiap paket berisi soal segar; pratinjau mengontrol biaya. Batch
+dijalankan dari client (3 paralel) karena satu panggilan Gemini 30–60 dtk —
+satu server action panjang rawan timeout di Hostinger. Soal bergambar tidak
+dijadikan sumber variasi karena AI tidak melihat gambarnya.
+Alternatif yang ditolak: memakai ulang soal paket lain (hemat token tapi
+paket saling tumpang-tindih); AI langsung jalan tanpa pratinjau.
+
 ## 2026-10-02 — Ganti/buat kata sandi tanpa layanan email
 Keputusan: ganti kata sandi di Pengaturan (siswa) & Profil (admin) lewat
 server action `changeMyPasswordAction` → `auth.api.changePassword`

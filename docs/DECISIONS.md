@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-02 — Soal TKA SMP Matematika (impor PDF, bank saja)
+Keputusan: 30 soal PDF masuk bank sebagai `pending_review` (soal #255–#284,
+stimulus #37 "Hasil Panen Mangga" untuk no. 24–26), **tanpa paket draf**
+supaya bisa dipakai "Buat Paket Otomatis" (soal yang sudah di paket tidak
+diambil). Kunci PDF dicek ulang Claude — semua benar; pembahasan ditulis
+Claude. Komposisi PDF: 22 PG / 4 MCMA / 4 Kategori → melebihi batas PG 18,
+jadi tidak bisa jadi satu paket utuh. Pemetaan menurut isi, bukan judul bab
+PDF: no. 5 (sisi persegi → keliling) → Pengukuran; no. 8 (keliling bentuk
+aljabar) → Bentuk Aljabar; no. 22 (sifat segi empat) → Objek Geometri;
+no. 29 (diagram Venn, di luar cakupan kerangka) → Data. 9/10 subtopik
+terwakili (Transformasi Geometri kosong).
+
 ## 2026-10-02 — Buat paket otomatis: bank belum terpakai + AI menambal
 Keputusan (pemilik produk): soal hasil impor yang tidak memenuhi aturan tetap
 masuk bank; tombol "Buat Paket Otomatis" mengambil soal yang **belum masuk

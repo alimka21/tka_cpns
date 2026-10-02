@@ -12,6 +12,17 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-02 — Soal TKA SMP Bahasa Indonesia: diperiksa, tidak diimpor ulang
+PDF yang sama sudah diimpor lewat Impor PDF (stimulus #32–#36, soal
+#210–#239, paket draf #18) — tidak diimpor ulang agar tidak dobel. Diperiksa
+Claude: 30/30 kunci cocok dengan lembar kunci PDF, semua punya pembahasan.
+Dipindah subtopik: #228 "tertumbuk" (bahasa kias) D1-S1 → D2-S4; #233 "jauh
+lebih erat daripada biasanya" (respons emosional) D3-S1 → D3-S3 → cakupan
+8/11 subtopik (wajib ≥8). Komposisi 20 PG / 5 MCMA / 5 Kategori melebihi
+batas PG 18, jadi paket #18 belum bisa terbit apa adanya. Catatan: opsi E
+no. 22 (warna kesukaan Ibu) kurang kuat sebagai bukti keinginan Ibu atas
+syal — kunci PDF dipertahankan.
+
 ## 2026-10-02 — Soal TKA SMP Matematika (impor PDF, bank saja)
 Keputusan: 30 soal PDF masuk bank sebagai `pending_review` (soal #255–#284,
 stimulus #37 "Hasil Panen Mangga" untuk no. 24–26), **tanpa paket draf**

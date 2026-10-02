@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-02 — Paket TKA SMP Matematika — Paket 1 (#20, draf, lolos aturan)
+"30 Soal Variasi" e-ujian (semua PG, kunci & pembahasan PDF dicek Claude —
+benar) diimpor sebagai soal #291–#320; 4 soal MCMA/Kategori buatan Claude
+(#321–#324, pembahasan diawali "[Soal tambahan]": translasi/pencerminan,
+bentuk aljabar, pola barisan, volume balok) karena gabungan PDF hanya punya
+8 non-PG sedangkan PG maksimal 18. Paket #20 = 16 PG variasi + 10 soal impor
+sebelumnya (8 non-PG + grup panen mangga no. 24–26) + 4 tambahan → 18 PG /
+6 MCMA / 6 Kategori, 4/4 topik, 10/10 subtopik — semua aturan wajib & saran
+lolos. PDF "Soal-TKA-SMP-Matematika-1" = PDF yang sudah diimpor (#255–#284),
+tidak diimpor ulang. V15 (sudut berpelurus 72°) hampir sama dengan #270 —
+sengaja tidak dimasukkan ke paket yang sama. V24 aslinya merujuk "diagram
+garis" tanpa gambar → kalimat diubah jadi "data jumlah buku".
+
 ## 2026-10-02 — Soal TKA SMP Bahasa Indonesia: diperiksa, tidak diimpor ulang
 PDF yang sama sudah diimpor lewat Impor PDF (stimulus #32–#36, soal
 #210–#239, paket draf #18) — tidak diimpor ulang agar tidak dobel. Diperiksa

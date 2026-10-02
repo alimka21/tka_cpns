@@ -158,6 +158,9 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
       paket bisa difilter jenjang & mapel (`?jenjang=&mapel=`)
 - [x] Admin: terbitkan paket beserta soal yang belum tayang sekaligus
       (konfirmasi di daftar Paket Tes, satu transaksi)
+- [x] Admin: Impor PDF dengan Gemini (`/admin/soal/import-pdf`) — PDF
+      (termasuk scan) → bacaan, soal, kunci, potongan gambar → pratinjau →
+      simpan `pending_review` + paket draf (docs/AI_GENERATION.md §10)
 - [ ] Admin: halaman "Tinjau Paket" (paket utuh + kunci + pembahasan,
       edit per soal); Bank Soal: filter per paket + terbitkan massal
       (usulan 2026-10-01)

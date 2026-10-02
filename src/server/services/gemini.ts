@@ -80,6 +80,8 @@ export async function generateJson(opts: {
   images?: GeminiImage[];
   temperature?: number;
   timeoutMs?: number;
+  /** Batas token output (dokumen panjang, mis. impor PDF). */
+  maxOutputTokens?: number;
 }): Promise<unknown> {
   const parts = [
     ...(opts.images ?? []).map((img) => ({ inline_data: { mime_type: img.mime, data: img.data.toString("base64") } })),
@@ -93,7 +95,11 @@ export async function generateJson(opts: {
       body: JSON.stringify({
         contents: [{ role: "user", parts }],
         // Gemini 3: biarkan temperature default model kecuali diminta eksplisit.
-        generationConfig: { responseMimeType: "application/json", ...(opts.temperature != null && { temperature: opts.temperature }) },
+        generationConfig: {
+          responseMimeType: "application/json",
+          ...(opts.temperature != null && { temperature: opts.temperature }),
+          ...(opts.maxOutputTokens != null && { maxOutputTokens: opts.maxOutputTokens }),
+        },
       }),
     },
     opts.timeoutMs ?? 90_000,
@@ -108,6 +114,9 @@ export async function generateJson(opts: {
     throw new GeminiError("Respons Gemini tidak bisa dibaca.", "bad_output");
   }
   if (json.promptFeedback?.blockReason) throw new GeminiError("Permintaan diblokir filter keamanan Gemini.", "blocked");
+  if (json.candidates?.[0]?.finishReason === "MAX_TOKENS") {
+    throw new GeminiError("Jawaban Gemini terpotong karena terlalu panjang. Coba dokumen yang lebih pendek.", "bad_output");
+  }
   const text = json.candidates?.[0]?.content?.parts?.map((p) => p.text ?? "").join("") ?? "";
   if (!text) throw new GeminiError("Gemini tidak mengembalikan jawaban.", "bad_output");
   try {

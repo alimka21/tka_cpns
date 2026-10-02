@@ -12,6 +12,11 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-02 — Impor PDF lewat Gemini, render halaman di browser
+Keputusan: PDF dirender jadi gambar di browser admin (pdf.js) lalu dikirim ke Gemini milik admin; potongan gambar juga dibuat di browser dari kotak 0–1000 yang dikembalikan Gemini, lalu diunggah ke galeri seperti unggahan biasa.
+Alasan: impor PDF lewat Claude memakan ±100–250 ribu token per paket; Gemini flash jauh lebih murah dan bisa dipakai admin kapan saja. Render di browser menghindari pustaka native (canvas/poppler) yang sulit di Hostinger, dan gambar halaman memberi kotak gambar yang lebih akurat daripada mengirim PDF mentah.
+Alternatif yang ditolak: kirim PDF langsung ke Gemini (kotak gambar kurang presisi & tetap butuh render untuk memotong); render di server (dependensi native).
+
 ## 2026-10-02 — Paket contoh TKA SMA Bahasa Inggris 2025 (impor PDF)
 Keputusan: 25 soal PDF (5 bacaan × 5) diimpor jadi paket draf #16 (soal 176–205, gambar galeri #22–#24: infografis, ilustrasi, tabel). Aturan BING = 30 soal & PG ≥15, PDF hanya 25 soal/10 PG → ditambah 5 soal PG buatan Claude (1 per bacaan, pembahasan diawali "[Soal tambahan]"), sehingga grup jadi 6 soal (saran 3–5 tidak terpenuhi, tidak memblokir). 2 soal Kategori (Time/Self Management, Short/Long-term) diubah ke pasangan Ya/Tidak karena pasangan aslinya tidak didukung. Subtopik dipetakan menurut isi soal agar 17/17 terwakili.
 Alasan: PDF tanpa kunci → kunci & pembahasan dari Claude, status `pending_review`.

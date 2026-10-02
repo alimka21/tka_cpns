@@ -202,3 +202,11 @@ bergantung pada siswa punya key; AI (langkah 6) menambah variasi.
   (sudah ada di `generation-context.ts`).
 - **Biaya & privasi** — data siswa yang dikirim ke Gemini hanya konteks
   kerangka & tingkat kesulitan; tidak ada nama/email siswa di prompt.
+
+## 10. Impor PDF (admin, `/admin/soal/import-pdf`)
+
+- Alur: admin pilih mapel + unggah PDF (maks. 40 halaman, 30 MB) → **browser** merender tiap halaman jadi JPEG (pdf.js, lebar 1240 px) → `extractPdfAction` mengirim semua halaman ke Gemini (key milik admin, `maxOutputTokens` 65.536, timeout 300 dtk) → draf bacaan & soal dipratinjau → admin pilih soal → potongan gambar diunggah ke galeri satu per satu → `savePdfImportAction` memvalidasi ULANG lalu menyimpan sebagai `pending_review` (+ opsional paket draf, durasi dari aturan paket).
+- Prompt (`buildPdfImportPrompt`): salin apa adanya, rumus KaTeX, tabel jadi baris teks, bacaan bersama → `stimuli`, gambar → `box_2d` [ymin,xmin,ymax,xmax] 0–1000 per halaman, pasangan kategori di luar Benar/Salah · Sesuai/Tidak Sesuai · Ya/Tidak diubah ke Ya/Tidak, kunci dari dokumen (`keyFromDocument`) atau dikerjakan Gemini.
+- Pemetaan (`mapPdfExtraction`, murni & dites): soal rusak tetap tampil dengan `errors` (tidak bisa disimpan); rujukan bacaan hilang → soal tunggal; bacaan tak terpakai dibuang.
+- Gambar dipotong di browser dari render 2400 px; admin bisa mematikan potongan yang meleset lalu unggah manual saat edit soal. Server tidak butuh pustaka PDF native (aman untuk Hostinger).
+- Biaya: token Gemini milik admin, bukan Claude. Belum dicatat di `ai_generation_logs` (enum `mode` belum punya nilai `pdf`).

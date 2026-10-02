@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-02 — Ganti/buat kata sandi tanpa layanan email
+Keputusan: ganti kata sandi di Pengaturan (siswa) & Profil (admin) lewat
+server action `changeMyPasswordAction` → `auth.api.changePassword`
+(wajib kata sandi lama, opsi keluarkan perangkat lain). Akun Google-only
+(tanpa baris `accounts` provider `credential`) mendapat "Buat kata sandi"
+lewat `auth.api.setPassword` (server-only). Lupa kata sandi (link reset
+via email) ditunda sampai SMTP diatur (WORKFLOW §10).
+Alasan: ganti kata sandi tidak butuh email sehingga bisa langsung jalan;
+`hasCredentialPassword` sengaja di `server/services`, bukan file
+`"use server"`, supaya tidak terbuka sebagai action publik.
+Alternatif yang ditolak: `authClient.changePassword` langsung dari client
+— konvensi proyek: mutasi lewat server action + Zod, pesan error Indonesia.
+
 ## 2026-10-02 — Impor PDF lewat Gemini, render halaman di browser
 Keputusan: PDF dirender jadi gambar di browser admin (pdf.js) lalu dikirim ke Gemini milik admin; potongan gambar juga dibuat di browser dari kotak 0–1000 yang dikembalikan Gemini, lalu diunggah ke galeri seperti unggahan biasa.
 Alasan: impor PDF lewat Claude memakan ±100–250 ribu token per paket; Gemini flash jauh lebih murah dan bisa dipakai admin kapan saja. Render di browser menghindari pustaka native (canvas/poppler) yang sulit di Hostinger, dan gambar halaman memberi kotak gambar yang lebih akurat daripada mengirim PDF mentah.

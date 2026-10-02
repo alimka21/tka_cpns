@@ -166,3 +166,38 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
 5. Perilaku: akun baru dari Google diminta memilih jenjang
    (`/pilih-jenjang`); bila konfirmasi pendaftar aktif, statusnya Menunggu.
    Email yang sudah terdaftar dengan kata sandi otomatis tersambung ke Google.
+
+## 10. Email SMTP Hostinger (untuk "Lupa kata sandi")
+
+Belum dipakai kode — siapkan dulu, fitur reset dibuat setelah env terisi.
+
+1. **Buat akun email** — hPanel → **Emails** → pilih domain → **Email
+   Accounts → Create email account**, mis. `noreply@<domain>`. Paket
+   Business/Cloud biasanya sudah termasuk email gratis; kalau belum,
+   aktifkan dulu paket email untuk domain tersebut.
+2. **Cek DNS** (agar email tidak masuk spam) — Emails → domain →
+   **DNS / Connect domain**: pastikan MX, SPF (`v=spf1 include:_spf.mail.hostinger.com ~all`),
+   DKIM, dan DMARC berstatus hijau. Kalau domain memakai nameserver
+   Hostinger, klik **Auto-configure**; kalau DNS di luar Hostinger
+   (mis. Cloudflare), salin record yang ditampilkan ke DNS tersebut.
+3. **Data SMTP** (hPanel → Emails → **Configuration / Connect apps & devices**):
+   - Host: `smtp.hostinger.com`
+   - Port: `465` (SSL) — alternatif `587` (STARTTLS)
+   - Username: alamat email lengkap (`noreply@<domain>`)
+   - Password: kata sandi akun email tersebut
+4. **Isi env** di hPanel (Node.js app → Environment variables) dan `.env` lokal:
+   ```
+   SMTP_HOST=smtp.hostinger.com
+   SMTP_PORT=465
+   SMTP_USER=noreply@<domain>
+   SMTP_PASS=<kata sandi email>
+   EMAIL_FROM="Web Tes Premium <noreply@<domain>>"
+   ```
+   Jangan commit `.env`. Redeploy setelah diisi.
+5. **Tes kirim** — login webmail (hPanel → Emails → Webmail) dengan akun
+   tadi, kirim ke Gmail sendiri; cek tidak masuk spam. Setelah itu minta
+   Claude membuat fitur "Lupa kata sandi" (Better Auth `sendResetPassword`
+   + nodemailer).
+6. **Batas kirim**: email hosting punya kuota kirim harian (lihat detail
+   paket di hPanel). Cukup untuk reset kata sandi; untuk email massal
+   pakai layanan khusus (Resend/Brevo).

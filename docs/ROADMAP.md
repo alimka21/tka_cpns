@@ -25,6 +25,9 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-02:** ganti kata sandi (Pengaturan siswa & Profil admin, opsi
+keluarkan perangkat lain; akun Google-only bisa "Buat kata sandi"); diuji
+di browser. Berikutnya: lupa kata sandi via SMTP Hostinger (WORKFLOW §10).
 **2026-10-01 (5):** cakupan subtopik paket wajib ≥80% (opsi B) + saran
 grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
@@ -327,7 +330,8 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       premium jenjangnya + Latihan Kelemahan
 - [ ] Uji dengan Sandbox Midtrans asli (key user) lalu pindah Production
 - [ ] Email/WA notifikasi pembayaran (opsional)
-- [ ] Lupa / ganti kata sandi (email reset — butuh layanan email, mis. Resend/SMTP Hostinger)
+- [x] Ganti kata sandi di Pengaturan/Profil (+ "Buat kata sandi" untuk akun Google-only) — 2026-10-02
+- [ ] Lupa kata sandi (link reset via email) — butuh SMTP Hostinger diisi di env (WORKFLOW §10)
 
 ## Fase 4 — Pengerasan (sebelum ramai dipakai)
 

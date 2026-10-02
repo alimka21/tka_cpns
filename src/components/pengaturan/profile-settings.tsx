@@ -7,14 +7,16 @@ import { Label } from "@/components/ui/label";
 import { GeminiKeyForm } from "@/components/pengaturan/gemini-key-form";
 import { JenjangForm } from "@/components/profile/jenjang-form";
 import { NameForm } from "@/components/profile/name-form";
+import { PasswordForm } from "@/components/profile/password-form";
 import type { Jenjang } from "@/lib/jenjang";
 
 type Props = {
   user: { name: string; email: string; role?: string | null; jenjang?: string | null };
   masked: string | null;
+  hasPassword: boolean;
 };
 
-export function ProfileSettings({ user, masked }: Props) {
+export function ProfileSettings({ user, masked, hasPassword }: Props) {
   return (
     <>
       <Card>
@@ -41,6 +43,16 @@ export function ProfileSettings({ user, masked }: Props) {
             <JenjangForm current={(user.jenjang as Jenjang | null) ?? null} />
           </div>
         )}
+      </CardContent>
+    </Card>
+
+    <Card>
+      <CardHeader>
+        <CardTitle>Kata Sandi</CardTitle>
+        <CardDescription>{hasPassword ? "Ganti kata sandi untuk masuk dengan email." : "Buat kata sandi untuk masuk dengan email."}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <PasswordForm hasPassword={hasPassword} />
       </CardContent>
     </Card>
 

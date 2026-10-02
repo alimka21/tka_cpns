@@ -12,6 +12,10 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-02 — Paket contoh TKA SMA Bahasa Inggris 2025 (impor PDF)
+Keputusan: 25 soal PDF (5 bacaan × 5) diimpor jadi paket draf #16 (soal 176–205, gambar galeri #22–#24: infografis, ilustrasi, tabel). Aturan BING = 30 soal & PG ≥15, PDF hanya 25 soal/10 PG → ditambah 5 soal PG buatan Claude (1 per bacaan, pembahasan diawali "[Soal tambahan]"), sehingga grup jadi 6 soal (saran 3–5 tidak terpenuhi, tidak memblokir). 2 soal Kategori (Time/Self Management, Short/Long-term) diubah ke pasangan Ya/Tidak karena pasangan aslinya tidak didukung. Subtopik dipetakan menurut isi soal agar 17/17 terwakili.
+Alasan: PDF tanpa kunci → kunci & pembahasan dari Claude, status `pending_review`.
+
 ## 2026-10-01 — Paket contoh TKA SMA Matematika 2025 (impor PDF)
 Keputusan: 25 soal PDF diimpor jadi paket draf #15 (soal 151–175, gambar galeri #6–#21, rumus KaTeX). Q6 (barisan aritmetika) & Q24 (peluang angpao) diubah PG → PGK Kategori supaya PG 15/25. Opsi Q14 yang berupa gambar titik ditulis sebagai koordinat; opsi ke-5 Q15 terpotong di PDF → diisi "15 m". Trigonometri dipetakan ke SMA-MTK-D4-S1 (PDF menaruhnya di Geometri).
 Alasan: PDF tanpa kunci; kunci & pembahasan dihitung Claude → `pending_review`. Paling perlu dicek: Q5 (komposisi fungsi, "pasti" = Dini), Q11 (dinding BCGF & ADHE), Q19 (Rp270.000 = lembar digabung).

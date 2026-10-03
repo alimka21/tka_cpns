@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { CreateUserForm } from "@/components/admin/create-user-form";
 import { UsersTable } from "@/components/admin/users-table";
 import { PageHeader } from "@/components/layout/page-header";
 import { requireAdmin } from "@/server/auth/session";
@@ -16,8 +17,9 @@ export default async function AdminUsersPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Manajemen User"
-        description="Kelola akun siswa & admin: konfirmasi pendaftar baru, jenjang, dan akses. Akses premium diatur per paket di halaman Paket Tes."
+        description="Kelola akun siswa & admin: tambah akun siswa, konfirmasi pendaftar baru, jenjang, dan akses. Akses premium diatur per paket di halaman Paket Tes."
       />
+      <CreateUserForm />
       <UsersTable users={users} currentUserId={Number(user.id)} requireApproval={requireApproval} />
     </div>
   );

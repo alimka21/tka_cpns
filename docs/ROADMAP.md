@@ -25,6 +25,7 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-03 (4):** admin bisa membuat akun siswa (Manajemen User → Tambah user).
 **2026-10-03 (3):** Fase 4 — load test (`npm run loadtest`) & index query
 panas (migrasi 0016 SUDAH dijalankan), cache detail paket di jalur ujian.
 **2026-10-03 (2):** halaman Pratinjau Paket (tombol "Pratinjau" di daftar

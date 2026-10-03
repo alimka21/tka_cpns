@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-03 — Admin bisa membuat akun siswa
+Keputusan: tombol "Tambah user" di Manajemen User (`createUserAction`): nama,
+email, jenjang, kata sandi awal (diketik admin atau "Buat acak"). Akun selalu
+role siswa, langsung `active`; kata sandi di-hash lewat
+`(await auth.$context).password.hash` dan disimpan sebagai akun `credential`
+(sama seperti daftar biasa). Kata sandi tampil sekali di layar admin setelah
+dibuat (dari isian form, tidak dari DB) untuk disalin ke siswa.
+Alasan: sekolah/guru sering mendaftarkan siswa sekaligus. Role admin tetap
+hanya lewat `npm run user:role` (DECISIONS 2026-09-25).
+Alternatif yang ditolak: `auth.api.signUpEmail` dari server action — plugin
+nextCookies akan memasang sesi akun baru di browser admin.
+
 ## 2026-10-03 — Index query panas + optimasi jalur ujian (Fase 4)
 Keputusan: migrasi 0016 menambah 12 index komposit sesuai pola query:
 attempts (user+paket+status, user+started_at, status+submitted_at), questions

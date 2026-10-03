@@ -1,4 +1,4 @@
-import { boolean, foreignKey, int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
+import { boolean, foreignKey, index, int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { DIFFICULTIES, QUESTION_TYPES } from "@/lib/validation/enums";
 import { questions, subtopics } from "./content";
@@ -25,7 +25,7 @@ export const practiceSessions = mysqlTable("practice_sessions", {
   /** Diisi saat sesi diselesaikan. */
   totalScore: int("total_score"),
   maxScore: int("max_score"),
-});
+}, (t) => [index("practice_sessions_user_started_idx").on(t.userId, t.startedAt)]);
 
 export type PracticeQuestionOption = { label: string; text: string; isCorrect: boolean; correctCategory: string | null };
 
@@ -52,7 +52,10 @@ export const practiceQuestions = mysqlTable("practice_questions", {
   cognitiveLevel: varchar("cognitive_level", { length: 4 }),
   model: varchar("model", { length: 64 }).notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  // Pakai ulang soal Latihan AI milik siswa per subtopik.
+  index("practice_questions_owner_subtopic_idx").on(t.ownerUserId, t.subtopicId),
+]);
 
 export const practiceSessionItems = mysqlTable(
   "practice_session_items",

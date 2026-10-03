@@ -12,6 +12,26 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-03 — Index query panas + optimasi jalur ujian (Fase 4)
+Keputusan: migrasi 0016 menambah 12 index komposit sesuai pola query:
+attempts (user+paket+status, user+started_at, status+submitted_at), questions
+(subtopik+status, created_at), users (status, created_at), question_reports
+(status+created_at), practice_sessions (user+started_at), practice_questions
+(owner+subtopik), ai_generation_logs (user+purpose+created_at), orders
+(created_at). Jalur ujian: autosave menggabungkan cek attempt + soal milik
+paket jadi 1 query (5 → 4 query), dan detail paket tayang di-cache di memori
+30 dtk (`getPackageDetailCached`, dikosongkan tiap mutasi paket/soal/stimulus).
+Hasil load test 150 siswa: buka ujian p50 3,7 → 0,46 dtk, submit 9,4 → 2,0 dtk,
+autosave 37 → 55/dtk, tanpa error.
+Alasan: data masih kecil, jadi index ditentukan dari pola akses (bukan
+EXPLAIN data nyata). Cache hanya untuk paket tayang & jalur siswa; admin
+selalu membaca langsung.
+Alternatif yang ditolak: `session.cookieCache` Better Auth (hemat 1–2 query
+per request) — jenjang/status user yang diubah langsung di DB (pilih jenjang,
+setujui pendaftar) bisa basi hingga TTL dan memicu redirect berulang.
+Menyusul: Manajemen User memuat semua user tanpa paginasi (GROUP BY
+entitlements) — perlu paginasi server sebelum ribuan siswa.
+
 ## 2026-10-03 — Halaman Pratinjau Paket sebelum terbit
 Keputusan: satu halaman `/admin/paket-tes/[id]/pratinjau` dengan dua mode —
 "Tinjau kunci & pembahasan" (ReviewCard `keyOnly` + metadata status/asal/

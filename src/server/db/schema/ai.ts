@@ -1,4 +1,4 @@
-import { customType, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { customType, index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
 import { users } from "./users";
 
 // Grup: AI & media soal (docs/AI_GENERATION.md, DECISIONS 2026-09-30).
@@ -49,4 +49,7 @@ export const aiGenerationLogs = mysqlTable("ai_generation_logs", {
   error: text("error"),
   durationMs: int("duration_ms").notNull().default(0),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  // Batas harian Latihan AI per siswa (user + purpose + sejak tanggal).
+  index("ai_logs_user_purpose_created_idx").on(t.userId, t.purpose, t.createdAt),
+]);

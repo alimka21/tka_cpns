@@ -25,6 +25,8 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-03 (3):** Fase 4 — load test (`npm run loadtest`) & index query
+panas (migrasi 0016 SUDAH dijalankan), cache detail paket di jalur ujian.
 **2026-10-03 (2):** halaman Pratinjau Paket (tombol "Pratinjau" di daftar
 Paket Tes & halaman Kelola) — cek kesiapan terbit, tinjau kunci/pembahasan,
 setujui per soal, dan tampilan siswa.
@@ -350,8 +352,11 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
 
 ## Fase 4 — Pengerasan (sebelum ramai dipakai)
 
-- [ ] Load test alur pengerjaan tes bersamaan
-- [ ] Review index database & query lambat
+- [x] Load test alur pengerjaan tes bersamaan — `npm run loadtest` (2026-10-03;
+      150 siswa stres tanpa error, WORKFLOW §11). Belum: uji HTTP ke produksi
+- [x] Review index database & query lambat — migrasi 0016 (12 index) + cache
+      detail paket + autosave 1 query lebih sedikit (DECISIONS 2026-10-03)
+- [ ] Manajemen User: paginasi server (sekarang memuat semua user sekaligus)
 - [ ] Rencana migrasi ke VPS Hostinger kalau trafik naik
 - [ ] Backup otomatis database
 

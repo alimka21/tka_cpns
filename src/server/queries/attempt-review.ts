@@ -9,7 +9,7 @@ import { attemptAnswers, attempts, questionExplanations, subtopics } from "@/ser
 import { renderMathToHtml } from "@/server/services/math-render";
 import { buildReviewItem } from "@/server/services/review";
 import type { ReviewItem } from "@/lib/review";
-import { getPackageDetail } from "./packages";
+import { getPackageDetailCached } from "./packages";
 
 export type { ReviewItem, ReviewOption } from "@/lib/review";
 
@@ -25,7 +25,7 @@ export async function getAttemptReview(attemptId: number, userId: number): Promi
   const [attempt] = await db.select().from(attempts).where(eq(attempts.id, attemptId));
   if (!attempt || attempt.userId !== userId || attempt.status === "in_progress") return null;
 
-  const pkg = await getPackageDetail(attempt.testPackageId);
+  const pkg = await getPackageDetailCached(attempt.testPackageId);
   if (!pkg) return null;
 
   const questionIds = pkg.questions.map((q) => q.id);

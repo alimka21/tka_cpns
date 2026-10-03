@@ -1,4 +1,4 @@
-import { int, mysqlEnum, mysqlTable, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
+import { index, int, mysqlEnum, mysqlTable, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 import { questions } from "./content";
 import { practiceQuestions } from "./practice";
 import { users } from "./users";
@@ -29,5 +29,7 @@ export const questionReports = mysqlTable(
   (t) => [
     uniqueIndex("question_reports_user_question_idx").on(t.userId, t.questionId),
     uniqueIndex("question_reports_user_practice_idx").on(t.userId, t.practiceQuestionId),
+    // Antrean laporan admin: status open, terbaru dulu.
+    index("question_reports_status_created_idx").on(t.status, t.createdAt),
   ],
 );

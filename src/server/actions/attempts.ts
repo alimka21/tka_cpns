@@ -26,29 +26,30 @@ export async function saveAnswerAction(
   attemptId: number,
   input: { questionId: number; response: AnswerResponse | null; isFlagged: boolean },
 ): Promise<{ ok: boolean; error?: string }> {
-  const owned = await loadOwnedAttempt(attemptId);
-  if ("error" in owned) return { ok: false, error: owned.error };
-  const { attempt } = owned;
+  const session = await getActiveSession();
+  if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
+  const parsed = saveAnswerInput.safeParse({ attemptId, ...input });
+  if (!parsed.success) return { ok: false, error: "Data jawaban tidak valid." };
+
+  // Jalur terpadat saat tryout: kepemilikan attempt + "soal ada di paket ini"
+  // dicek dalam SATU query (load test 2026-10-03, docs/WORKFLOW.md §11).
+  const [row] = await db
+    .select({ attempt: attempts, packageQuestionId: testPackageQuestions.id })
+    .from(attempts)
+    .leftJoin(
+      testPackageQuestions,
+      and(eq(testPackageQuestions.testPackageId, attempts.testPackageId), eq(testPackageQuestions.questionId, parsed.data.questionId)),
+    )
+    .where(eq(attempts.id, attemptId));
+  if (!row || row.attempt.userId !== Number(session.user.id)) return { ok: false, error: "Percobaan tidak ditemukan." };
+  const { attempt } = row;
 
   if (attempt.status !== "in_progress") return { ok: false, error: "Percobaan ini sudah selesai." };
   if (attempt.endsAt.getTime() <= Date.now()) {
     await finalizeAttempt(attemptId, "expired");
     return { ok: false, error: "Waktu sudah habis." };
   }
-
-  const parsed = saveAnswerInput.safeParse({ attemptId, ...input });
-  if (!parsed.success) return { ok: false, error: "Data jawaban tidak valid." };
-
-  const [belongs] = await db
-    .select({ id: testPackageQuestions.id })
-    .from(testPackageQuestions)
-    .where(
-      and(
-        eq(testPackageQuestions.testPackageId, attempt.testPackageId),
-        eq(testPackageQuestions.questionId, parsed.data.questionId),
-      ),
-    );
-  if (!belongs) return { ok: false, error: "Soal tidak ada di paket ini." };
+  if (row.packageQuestionId == null) return { ok: false, error: "Soal tidak ada di paket ini." };
 
   await db
     .insert(attemptAnswers)

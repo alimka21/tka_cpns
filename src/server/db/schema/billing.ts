@@ -53,7 +53,7 @@ export const orders = mysqlTable(
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
   },
-  (t) => [index("orders_user_idx").on(t.userId)],
+  (t) => [index("orders_user_idx").on(t.userId), index("orders_created_at_idx").on(t.createdAt)],
 );
 
 /** Masa Premium aktif. Dari pembelian (order_id) atau diberikan admin. */

@@ -7,7 +7,7 @@ import { saveAnswerAction, submitAttemptAction } from "@/server/actions/attempts
 import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { attemptAnswers, attempts } from "@/server/db/schema";
-import { getPackageDetail } from "@/server/queries/packages";
+import { getPackageDetailCached } from "@/server/queries/packages";
 import { startOrResumeAttempt } from "@/server/services/attempts";
 import { toExamQuestion, toExamStimulus } from "@/server/services/math-render";
 
@@ -22,7 +22,7 @@ export default async function TesPackagePage({ params }: PageProps<"/tes/[packag
   const { user } = await requireUser(`/tes/${packageId}`);
   const userId = Number(user.id);
 
-  const pkg = await getPackageDetail(packageId);
+  const pkg = await getPackageDetailCached(packageId);
   if (!pkg) notFound();
 
   const started = await startOrResumeAttempt(userId, packageId, user.role === "admin" ? null : (user.jenjang ?? null), user.role === "admin");

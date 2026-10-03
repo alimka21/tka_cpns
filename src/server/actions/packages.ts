@@ -6,6 +6,7 @@
 // soal published di server).
 
 import { revalidatePath } from "next/cache";
+import { invalidatePackageCache } from "@/server/queries/packages";
 import { and, eq, inArray } from "drizzle-orm";
 import { getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -131,6 +132,7 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
     return packageId!;
   });
 
+  invalidatePackageCache();
   revalidatePath("/admin/paket-tes");
   revalidatePath(`/admin/paket-tes/${savedId}`);
   return { ok: true, id: savedId };
@@ -181,6 +183,7 @@ export async function updatePackageStatusAction(input: {
     if (toPublish.length > 0) await tx.update(questions).set({ status: "published" }).where(inArray(questions.id, toPublish));
     await tx.update(testPackages).set({ status: input.status }).where(eq(testPackages.id, input.id));
   });
+  invalidatePackageCache();
   revalidatePath("/admin/paket-tes");
   if (toPublish.length > 0) revalidatePath("/admin/soal");
   return { ok: true };
@@ -196,6 +199,7 @@ export async function deletePackageAction(id: number): Promise<ActionResult> {
     }
     throw error;
   }
+  invalidatePackageCache();
   revalidatePath("/admin/paket-tes");
   return { ok: true };
 }
@@ -213,6 +217,7 @@ export async function setEntitlementAction(input: { userId: number; testPackageI
       .delete(entitlements)
       .where(and(eq(entitlements.userId, input.userId), eq(entitlements.testPackageId, input.testPackageId)));
   }
+  invalidatePackageCache();
   revalidatePath(`/admin/paket-tes/${input.testPackageId}`);
   revalidatePath("/admin/users");
   return { ok: true };

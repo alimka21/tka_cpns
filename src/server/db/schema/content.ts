@@ -1,5 +1,6 @@
 import {
   boolean,
+  index,
   int,
   mysqlEnum,
   mysqlTable,
@@ -110,7 +111,12 @@ export const questions = mysqlTable("questions", {
   reviewedBy: int("reviewed_by").references(() => users.id),
   reviewedAt: timestamp("reviewed_at"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
-});
+}, (t) => [
+  // Pemilihan soal latihan/paket: subtopik + status tayang.
+  index("questions_subtopic_status_idx").on(t.subtopicId, t.status),
+  // Bank Soal: urut terbaru + paginasi.
+  index("questions_created_at_idx").on(t.createdAt),
+]);
 
 export const questionOptions = mysqlTable("question_options", {
   id: int("id").autoincrement().primaryKey(),

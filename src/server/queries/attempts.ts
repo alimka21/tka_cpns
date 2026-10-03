@@ -15,7 +15,7 @@ import {
   testPackages,
   topics,
 } from "@/server/db/schema";
-import { getPackageDetail } from "./packages";
+import { getPackageDetailCached } from "./packages";
 import { scoreAttempt, type AnswerMap, type ScorableQuestion } from "@/server/services/scoring";
 
 function shortLabel(name: string, max = 18) {
@@ -54,7 +54,7 @@ export async function getAttemptResult(attemptId: number, userId: number): Promi
     .where(eq(testPackages.id, attempt.testPackageId));
   if (!pkgRow) return null;
 
-  const pkg = await getPackageDetail(attempt.testPackageId);
+  const pkg = await getPackageDetailCached(attempt.testPackageId);
   let correct = 0;
   let blank = 0;
   let total = 0;

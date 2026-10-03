@@ -1,6 +1,7 @@
 import {
   boolean,
   decimal,
+  index,
   int,
   mysqlEnum,
   mysqlTable,
@@ -33,7 +34,14 @@ export const attempts = mysqlTable("attempts", {
   /** Diisi saat finalize (submit atau auto-expire). */
   totalScore: int("total_score"),
   maxScore: int("max_score"),
-});
+}, (t) => [
+  // Lanjutkan attempt berjalan & riwayat per paket (user + paket + status).
+  index("attempts_user_pkg_status_idx").on(t.userId, t.testPackageId, t.status),
+  // Riwayat, progres & diagnosa siswa (urut started_at).
+  index("attempts_user_started_idx").on(t.userId, t.startedAt),
+  // Dashboard admin: tes selesai hari ini / 7 hari / terbaru.
+  index("attempts_status_submitted_idx").on(t.status, t.submittedAt),
+]);
 
 export const attemptAnswers = mysqlTable(
   "attempt_answers",

@@ -6,7 +6,7 @@ import { and, eq } from "drizzle-orm";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { db } from "@/server/db";
 import { attemptAnswers, attemptSubtopicScores, attempts } from "@/server/db/schema";
-import { getPackageDetail, hasEntitlement, type PackageDetail } from "@/server/queries/packages";
+import { getPackageDetailCached, hasEntitlement, type PackageDetail } from "@/server/queries/packages";
 import { getActiveMembership } from "@/server/services/billing";
 import { summarizeBySubtopic } from "./analytics";
 import { scoreAttempt, type AnswerMap, type ScorableQuestion } from "./scoring";
@@ -31,7 +31,7 @@ export async function finalizeAttempt(attemptId: number, status: "submitted" | "
   const [attempt] = await db.select().from(attempts).where(eq(attempts.id, attemptId));
   if (!attempt || attempt.status !== "in_progress") return;
 
-  const pkg = await getPackageDetail(attempt.testPackageId);
+  const pkg = await getPackageDetailCached(attempt.testPackageId);
   if (!pkg) return;
 
   const answerRows = await db
@@ -79,7 +79,7 @@ export async function startOrResumeAttempt(
   jenjang: string | null,
   isAdmin = false,
 ): Promise<StartAttemptResult> {
-  const pkg = await getPackageDetail(testPackageId);
+  const pkg = await getPackageDetailCached(testPackageId);
   if (!pkg || pkg.status !== "published") return { ok: false, error: "Paket tes tidak ditemukan." };
   if (jenjang && pkg.categoryCode !== jenjang) {
     return { ok: false, error: `Paket ini untuk TKA ${pkg.categoryCode}, sedangkan akunmu jenjang ${jenjang}. Ganti jenjang di Pengaturan bila keliru.` };

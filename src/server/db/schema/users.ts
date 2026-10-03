@@ -35,7 +35,11 @@ export const users = mysqlTable("users", {
   status: mysqlEnum("status", USER_STATUSES).notNull().default("active"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
-});
+}, (t) => [
+  // Badge "menunggu konfirmasi" di setiap halaman admin + tab status.
+  index("users_status_idx").on(t.status),
+  index("users_created_at_idx").on(t.createdAt),
+]);
 
 export const sessions = mysqlTable(
   "sessions",

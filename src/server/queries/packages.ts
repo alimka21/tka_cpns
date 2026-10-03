@@ -173,6 +173,27 @@ export async function getPackageDetail(testPackageId: number): Promise<PackageDe
   };
 }
 
+// Cache memori detail paket TAYANG untuk jalur ujian siswa (buka ujian, submit,
+// hasil). Saat tryout serentak semua siswa memuat paket yang sama — tanpa cache
+// tiap siswa = 4 query (load test 2026-10-03). TTL pendek + dikosongkan setiap
+// mutasi paket/soal/stimulus (invalidatePackageCache). Objek dibagi antar
+// request: pemanggil TIDAK boleh mengubahnya. Admin selalu pakai getPackageDetail.
+const PACKAGE_CACHE_TTL_MS = 30_000;
+const packageCache = new Map<number, { at: number; value: PackageDetail }>();
+
+export async function getPackageDetailCached(testPackageId: number): Promise<PackageDetail | undefined> {
+  const hit = packageCache.get(testPackageId);
+  if (hit && Date.now() - hit.at < PACKAGE_CACHE_TTL_MS) return hit.value;
+  const value = await getPackageDetail(testPackageId);
+  if (value?.status === "published") packageCache.set(testPackageId, { at: Date.now(), value });
+  else packageCache.delete(testPackageId);
+  return value;
+}
+
+export function invalidatePackageCache() {
+  packageCache.clear();
+}
+
 export type AdminPackageRow = {
   id: number;
   title: string;

@@ -201,3 +201,32 @@ Belum dipakai kode — siapkan dulu, fitur reset dibuat setelah env terisi.
 6. **Batas kirim**: email hosting punya kuota kirim harian (lihat detail
    paket di hPanel). Cukup untuk reset kata sandi; untuk email massal
    pakai layanan khusus (Resend/Brevo).
+
+## 11. Load test pengerjaan tes
+
+`npm run loadtest -- --students=150 --package=<id paket tayang>` — simulasi N
+siswa mengerjakan satu paket bersamaan dengan urutan query yang sama dengan
+aplikasi (buka ujian → autosave tiap jawaban → submit + `finalizeAttempt`
+asli), satu pool `db` (10 koneksi) = satu instance app. Akun uji
+`loadtest+…@example.invalid` dibuat sementara dan selalu dihapus (Ctrl+C juga
+membersihkan; sisa run terputus: `npm run loadtest -- --cleanup`).
+
+- Opsi: `--answers` (default semua soal), `--think` jeda antar-jawaban ms
+  (default 1500 ±50% = skenario stres ±50× siswa nyata), `--ramp` jeda mulai
+  antar-siswa (default 50 ms).
+- Membaca hasil: dari laptop setiap query ±40 ms (jaringan ke DB Hostinger);
+  di produksi app & DB berdekatan, jadi angka absolut jauh lebih kecil. Yang
+  dicari: **error** (mis. `ER_TOO_MANY_USER_CONNECTIONS`, batas
+  `max_user_connections` = 75) dan **antrean pool** yang terus naik.
+- Hasil 2026-10-03 (paket #13, 30 soal, setelah optimasi):
+
+  | Siswa | Autosave/dtk | Antrean pool | Buka ujian p95 | Autosave p95 | Submit p95 | Error |
+  |---|---|---|---|---|---|---|
+  | 50 | 25 | 8 | 1,0 dtk | 0,3 dtk | 0,6 dtk | 0 |
+  | 150 | 55 | 86 | 1,2 dtk | 1,4 dtk | 2,3 dtk | 0 |
+
+- Perkiraan kapasitas: siswa nyata ±1 autosave / 1–2,5 menit, jadi 55/dtk
+  (bahkan dengan latensi laptop) ≈ ribuan siswa bersamaan per instance. Yang
+  belum diukur: CPU/memori Node di Hostinger saat render halaman — uji HTTP
+  ke domain produksi (k6/autocannon) di jam sepi bila perlu.
+

@@ -4,6 +4,7 @@
 // sendiri dan memvalidasi ulang input dengan Zod (jangan percaya client).
 
 import { revalidatePath } from "next/cache";
+import { invalidatePackageCache } from "@/server/queries/packages";
 import { eq } from "drizzle-orm";
 import { z } from "zod";
 import { findSubdomain } from "@/server/asesmen";
@@ -81,6 +82,7 @@ export async function createQuestionAction(input: {
   });
   if ("error" in id) return { ok: false, errors: [id.error!] };
 
+  invalidatePackageCache();
   revalidatePath("/admin/soal");
   revalidatePath("/admin/soal/stimulus");
   return { ok: true, id: id.id };
@@ -125,6 +127,7 @@ export async function updateQuestionAction(input: {
   });
   if ("error" in result) return { ok: false, errors: [result.error!] };
 
+  invalidatePackageCache();
   revalidatePath("/admin/soal");
   revalidatePath(`/admin/soal/${id.data}`);
   revalidatePath("/admin/soal/stimulus");
@@ -148,6 +151,7 @@ export async function deleteQuestionAction(input: number): Promise<ActionResult>
   });
   if ("error" in result) return { ok: false, errors: [result.error!] };
 
+  invalidatePackageCache();
   revalidatePath("/admin/soal");
   revalidatePath("/admin/soal/stimulus");
   return { ok: true };
@@ -171,6 +175,7 @@ export async function updateQuestionStatusAction(input: { id: number; status: st
       reviewedAt: parsed.data.status === "published" ? now : null,
     })
     .where(eq(questions.id, parsed.data.id));
+  invalidatePackageCache();
   revalidatePath("/admin/soal");
   return { ok: true };
 }
@@ -186,6 +191,7 @@ export async function createStimulusAction(input: unknown): Promise<ActionResult
       .insert(stimuli)
       .values({ ...parsed.data, imageUrl: parsed.data.imageUrl ?? null, createdBy: Number(session.user.id) })
       .$returningId();
+    invalidatePackageCache();
     revalidatePath("/admin/soal/stimulus");
     return { ok: true, id };
   } catch (error) {
@@ -207,6 +213,7 @@ export async function updateStimulusAction(input: unknown): Promise<ActionResult
     .update(stimuli)
     .set({ ...values, imageUrl: values.imageUrl ?? null })
     .where(eq(stimuli.id, id));
+  invalidatePackageCache();
   revalidatePath("/admin/soal/stimulus");
   return { ok: true };
 }

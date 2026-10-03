@@ -6,10 +6,8 @@ import {
   Brain,
   Check,
   CircleCheck,
-  ClipboardList,
   Clock,
   Crosshair,
-  FileCheck2,
   Layers,
   ListChecks,
   Minus,
@@ -83,19 +81,9 @@ const kerangka: { icon: LucideIcon; title: string; text: string }[] = [
     text: "Pengetahuan & pemahaman, aplikasi, hingga penalaran. Paket disusun agar tidak didominasi soal mudah atau hafalan.",
   },
   {
-    icon: ClipboardList,
-    title: "Komposisi paket sesuai aturan",
-    text: "Jumlah soal & durasi per mapel (mis. 30 soal / 75 menit) dan porsi PG sederhana 50–60% dicek sistem sebelum paket diterbitkan.",
-  },
-  {
     icon: BookOpenCheck,
     title: "Pembahasan di setiap soal",
     text: "Setelah tes, lihat kunci dan pembahasan langkah demi langkah — termasuk kesalahan yang sering terjadi.",
-  },
-  {
-    icon: FileCheck2,
-    title: "Ditinjau sebelum tayang",
-    text: "Soal baru — termasuk yang dibuat dengan bantuan AI — dicek kunci & pembahasannya oleh admin sebelum bisa dikerjakan siswa.",
   },
 ];
 
@@ -269,7 +257,7 @@ export default async function LandingPage() {
               wide
               text="Mengacu Peraturan Kepala BSKAP Kemendikdasmen No. 047/H/AN/2025 (SD & SMP) dan No. 045/H/AN/2025 (SMA/SMK) — latihanmu sama bentuk dan cakupannya dengan ujian sesungguhnya."
             />
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
               {kerangka.map(({ icon: Icon, title, text }) => (
                 <article key={title} className="flex gap-4 rounded-2xl border bg-background p-5">
                   <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">

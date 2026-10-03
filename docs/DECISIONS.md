@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-03 — Landing page: kerangka asesmen, angka live, testimoni admin, FAQ
+Keputusan: section "Disusun mengikuti Kerangka Asesmen TKA" (BSKAP No.
+047/H/AN/2025 SD & SMP, No. 045/H/AN/2025 SMA/SMK; bentuk soal, subtopik ≥80%,
+level L1–L3, aturan komposisi, pembahasan, review admin) + angka live dari DB
+(soal tayang, paket tayang, mapel) dengan ISR 5 menit; FAQ jujur ("bukan soal
+resmi TKA"). Testimoni disimpan di `app_settings` key `landing.testimonials`
+(maks 12, dikelola di Pengaturan Sistem), section tersembunyi bila kosong.
+Alasan: aturan halaman — semua klaim harus faktual; testimoni karangan
+menyesatkan calon pembeli (UU Perlindungan Konsumen). Angka & testimoni hanya
+dari data asli; DB tidak tersedia → landing tetap tampil tanpa angka.
+Alternatif yang ditolak: testimoni contoh/dummy di kode.
+
 ## 2026-10-03 — Paket TKA SMA Biologi — Paket 1 (#23, draf, lolos aturan)
 PDF "SOAL TKA Biologi SMA 2025 Pilihan" berisi 27 soal (no. 25–27 belum ada)
 TANPA kunci → kunci & pembahasan ditentukan Claude. Diimpor sebagai soal

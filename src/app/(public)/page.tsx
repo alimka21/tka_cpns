@@ -2,12 +2,18 @@ import Link from "next/link";
 import {
   ArrowRight,
   BarChart3,
+  BookOpenCheck,
+  Brain,
   Check,
   CircleCheck,
+  ClipboardList,
   Clock,
   Crosshair,
+  FileCheck2,
   Layers,
+  ListChecks,
   Minus,
+  Quote,
   Save,
   ShieldCheck,
   Sparkles,
@@ -18,10 +24,16 @@ import { Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME } from "@/lib/site";
 import { cn } from "@/lib/utils";
+import { getLandingData } from "@/server/queries/landing";
+
+// Angka soal/paket & testimoni dibaca dari DB, diperbarui tiap 5 menit (dan
+// langsung saat admin menyimpan testimoni).
+export const revalidate = 300;
 
 // Struktur mengikuti docs/UI_UX.md §4.1 & layar Stitch "Landing Page".
 // Semua klaim di halaman ini harus faktual — jangan tambahkan angka pengguna,
-// tingkat kelulusan, atau testimoni sebelum datanya benar-benar ada.
+// tingkat kelulusan, atau testimoni karangan. Angka & testimoni hanya dari DB
+// (testimoni diisi admin di Pengaturan Sistem; section tersembunyi bila kosong).
 
 const highlights: { icon: LucideIcon; title: string; text: string }[] = [
   { icon: Layers, title: "SD · SMP · SMA", text: "Paket per jenjang & mapel" },
@@ -50,6 +62,63 @@ const features: { icon: LucideIcon; title: string; text: string }[] = [
     icon: Sparkles,
     title: "Latihan Terfokus",
     text: "Setelah tes, langsung lanjut ke latihan subtopik terlemah. Materi baru terus ditambah oleh tim, termasuk dengan bantuan AI yang direview manual.",
+  },
+];
+
+/** Fakta kesesuaian dengan Kerangka Asesmen TKA (asesmen/*.json, docs/ATURAN_PAKET.md). */
+const kerangka: { icon: LucideIcon; title: string; text: string }[] = [
+  {
+    icon: ListChecks,
+    title: "Tiga bentuk soal resmi",
+    text: "Pilihan Ganda, PG Kompleks pilih-banyak (MCMA), dan PG Kompleks Kategori (Benar/Salah, Sesuai/Tidak Sesuai) — sama seperti di ujian sesungguhnya.",
+  },
+  {
+    icon: Layers,
+    title: "Per elemen & subelemen kerangka",
+    text: "Setiap soal dipetakan ke topik dan subtopik kerangka asesmen. Paket wajib mencakup semua topik mapel dan minimal 80% subtopik.",
+  },
+  {
+    icon: Brain,
+    title: "Level kognitif L1–L3",
+    text: "Pengetahuan & pemahaman, aplikasi, hingga penalaran. Paket disusun agar tidak didominasi soal mudah atau hafalan.",
+  },
+  {
+    icon: ClipboardList,
+    title: "Komposisi paket sesuai aturan",
+    text: "Jumlah soal & durasi per mapel (mis. 30 soal / 75 menit) dan porsi PG sederhana 50–60% dicek sistem sebelum paket diterbitkan.",
+  },
+  {
+    icon: BookOpenCheck,
+    title: "Pembahasan di setiap soal",
+    text: "Setelah tes, lihat kunci dan pembahasan langkah demi langkah — termasuk kesalahan yang sering terjadi.",
+  },
+  {
+    icon: FileCheck2,
+    title: "Ditinjau sebelum tayang",
+    text: "Soal baru — termasuk yang dibuat dengan bantuan AI — dicek kunci & pembahasannya oleh admin sebelum bisa dikerjakan siswa.",
+  },
+];
+
+const faqs: { q: string; a: string }[] = [
+  {
+    q: "Apa itu TKA?",
+    a: "Tes Kemampuan Akademik (TKA) adalah tes terstandar dari Kemendikdasmen untuk mengukur capaian akademik murid SD, SMP, dan SMA/SMK. Hasilnya dapat dipakai, antara lain, untuk keperluan seleksi akademik.",
+  },
+  {
+    q: "Apakah soal di sini sama dengan soal TKA resmi?",
+    a: "Tidak. Soal di sini adalah soal latihan yang disusun mandiri mengikuti Kerangka Asesmen TKA resmi — bentuk soal, cakupan materi, dan level kognitifnya sama, tetapi bukan bocoran atau salinan soal ujian.",
+  },
+  {
+    q: "Bagaimana analisis kelemahan bekerja?",
+    a: "Setiap soal terhubung ke satu subtopik kerangka. Setelah tes, skor dihitung per subtopik dan digabung dari semua tes yang pernah kamu kerjakan, sehingga terlihat subtopik mana yang paling perlu dilatih.",
+  },
+  {
+    q: "Apakah bisa dikerjakan di HP?",
+    a: "Bisa. Tampilan tes menyesuaikan layar HP, jawaban tersimpan otomatis setiap kamu memilih, dan waktu dihitung dari server — jadi aman meski koneksi sempat terputus.",
+  },
+  {
+    q: "Apakah gratis?",
+    a: "Daftar dan paket gratis bisa langsung dipakai tanpa biaya. Akses Premium membuka semua paket lengkap dan latihan lanjutan.",
   },
 ];
 
@@ -108,7 +177,8 @@ const steps = [
   { title: "Latih yang lemah", text: "Lihat subtopik terlemah dan lanjut ke latihan terfokus." },
 ];
 
-export default function LandingPage() {
+export default async function LandingPage() {
+  const { stats, testimonials } = await getLandingData();
   return (
     <div className="flex flex-1 flex-col bg-card">
       <header className="sticky top-0 z-50 border-b bg-card/90 backdrop-blur">
@@ -116,9 +186,11 @@ export default function LandingPage() {
           <Logo />
           <nav aria-label="Navigasi utama" className="hidden items-center gap-1 md:flex">
             {[
+              ["#kerangka", "Kerangka TKA"],
               ["#fitur", "Fitur"],
               ["#jenjang", "Jenjang"],
               ["#paket", "Paket"],
+              ["#faq", "FAQ"],
             ].map(([href, label]) => (
               <a key={href} href={href} className="rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
                 {label}
@@ -186,6 +258,47 @@ export default function LandingPage() {
               </li>
             ))}
           </ul>
+        </section>
+
+        {/* Kerangka asesmen */}
+        <section id="kerangka" className="scroll-mt-20 bg-card">
+          <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+            <SectionHeading
+              eyebrow="Sesuai kerangka resmi"
+              title="Disusun mengikuti Kerangka Asesmen TKA"
+              text="Mengacu Peraturan Kepala BSKAP Kemendikdasmen No. 047/H/AN/2025 (SD & SMP) dan No. 045/H/AN/2025 (SMA/SMK) — latihanmu sama bentuk dan cakupannya dengan ujian sesungguhnya."
+            />
+            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+              {kerangka.map(({ icon: Icon, title, text }) => (
+                <article key={title} className="flex gap-4 rounded-2xl border bg-background p-5">
+                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
+                    <Icon className="size-5" aria-hidden />
+                  </span>
+                  <div>
+                    <h3 className="font-bold">{title}</h3>
+                    <p className="mt-1 text-sm text-muted-foreground">{text}</p>
+                  </div>
+                </article>
+              ))}
+            </div>
+            {stats && stats.questions > 0 && (
+              <dl className="mx-auto mt-10 grid max-w-3xl grid-cols-3 divide-x rounded-2xl border bg-primary-soft/50 text-center">
+                {[
+                  [stats.questions, "soal siap dikerjakan"],
+                  [stats.packages, "paket tes"],
+                  [stats.subjects, "mata pelajaran"],
+                ].map(([n, label]) => (
+                  <div key={label} className="flex flex-col-reverse px-3 py-5">
+                    <dt className="mt-1 text-xs text-muted-foreground sm:text-sm">{label}</dt>
+                    <dd className="text-3xl font-extrabold text-primary tabular-nums sm:text-4xl">{Number(n).toLocaleString("id-ID")}</dd>
+                  </div>
+                ))}
+              </dl>
+            )}
+            <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-muted-foreground">
+              Soal latihan disusun mandiri mengikuti kerangka asesmen; bukan soal resmi TKA.
+            </p>
+          </div>
         </section>
 
         {/* Fitur */}
@@ -307,6 +420,52 @@ export default function LandingPage() {
                 </li>
               ))}
             </ol>
+          </div>
+        </section>
+
+        {/* Testimoni — hanya dari data asli yang diisi admin */}
+        {testimonials.length > 0 && (
+          <section id="testimoni" className="scroll-mt-20 bg-background">
+            <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
+              <SectionHeading eyebrow="Testimoni" title="Kata mereka yang sudah berlatih" />
+              <ul className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+                {testimonials.map((t, i) => (
+                  <li key={i} className="surface-card flex flex-col gap-4 p-6">
+                    <Quote className="size-7 text-primary/40" aria-hidden />
+                    <blockquote className="flex-1 leading-relaxed">{t.quote}</blockquote>
+                    <div className="flex items-center gap-3 border-t pt-4">
+                      <span className="flex size-10 items-center justify-center rounded-full bg-primary-soft font-bold text-primary" aria-hidden>
+                        {t.name.trim().charAt(0).toUpperCase()}
+                      </span>
+                      <div>
+                        <div className="font-bold">{t.name}</div>
+                        {t.role && <div className="text-sm text-muted-foreground">{t.role}</div>}
+                      </div>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+
+        {/* FAQ */}
+        <section id="faq" className="scroll-mt-20 bg-card">
+          <div className="mx-auto w-full max-w-3xl px-4 py-20 sm:px-6 lg:px-8">
+            <SectionHeading eyebrow="FAQ" title="Pertanyaan yang sering diajukan" />
+            <div className="mt-10 flex flex-col gap-3">
+              {faqs.map((f) => (
+                <details key={f.q} className="group rounded-2xl border bg-background px-5 py-4">
+                  <summary className="flex cursor-pointer list-none items-center justify-between gap-4 font-semibold">
+                    {f.q}
+                    <span className="text-xl text-primary transition-transform group-open:rotate-45" aria-hidden>
+                      +
+                    </span>
+                  </summary>
+                  <p className="mt-3 text-muted-foreground">{f.a}</p>
+                </details>
+              ))}
+            </div>
           </div>
         </section>
 

@@ -6,9 +6,20 @@ import { z } from "zod";
 import { db } from "@/server/db";
 import { appSettings } from "@/server/db/schema";
 
+/** Testimoni landing page — diisi admin dari testimoni ASLI (bukan karangan). */
+export const testimonialSchema = z.object({
+  name: z.string().trim().min(2, "Nama minimal 2 karakter.").max(80),
+  /** Mis. "Siswa kelas 12, SMAN 1 Bandung" atau "Orang tua siswa". */
+  role: z.string().trim().max(120).default(""),
+  quote: z.string().trim().min(10, "Isi testimoni minimal 10 karakter.").max(400, "Isi testimoni maksimal 400 karakter."),
+  visible: z.boolean().default(true),
+});
+export type Testimonial = z.infer<typeof testimonialSchema>;
+
 const SETTINGS = {
   /** Pendaftar baru (siswa) berstatus `pending` sampai dikonfirmasi admin. */
   "registration.requireApproval": { schema: z.boolean(), default: false },
+  "landing.testimonials": { schema: z.array(testimonialSchema).max(12), default: [] as Testimonial[] },
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS;

@@ -12,6 +12,17 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-03 — Paket #22 "Matematika SMA — Paket Otomatis 3/10/2026" dilengkapi
+Paket otomatis berisi 24 soal (batch AI sebagian gagal sebelum perbaikan level
+kognitif) → satu-satunya aturan wajib yang gagal: jumlah soal 25. Claude
+memeriksa 12 soal AI `pending_review` (#328–#339): 12/12 kunci benar; #335
+opsi D diperjelas ("Lama penggunaan … tidak mungkin sama", sebelumnya
+"Jumlah jam …" ambigu) + alasan pembahasan diluruskan (x = y = 12,5 membuat
+median 12). Ditambah #340 (Transformasi Geometri, PG, L3 sulit: dilatasi
+luas ×k² + translasi, "[Soal tambahan]") di urutan 18 → 25 soal, PG 14,
+10/10 subtopik, semua aturan wajib lolos. Saran SMA (mayoritas berbasis
+stimulus, soal grup 3–5) belum terpenuhi — tidak memblokir.
+
 ## 2026-10-03 — Admin bisa membuat akun siswa
 Keputusan: tombol "Tambah user" di Manajemen User (`createUserAction`): nama,
 email, jenjang, kata sandi awal (diketik admin atau "Buat acak"). Akun selalu

@@ -1,5 +1,8 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Eye } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { PackageForm } from "@/components/admin/package-form";
 import { PageHeader } from "@/components/layout/page-header";
 import { getPackageDetail, listCategories, listEntitledUsers, listSubjects } from "@/server/queries/packages";
@@ -21,7 +24,15 @@ export default async function AdminPaketEditPage({ params }: PageProps<"/admin/p
 
   return (
     <div className="flex flex-col gap-8">
-      <PageHeader title={pkg.title} description="Ubah metadata, susunan soal, dan akses premium paket ini." />
+      <PageHeader
+        title={pkg.title}
+        description="Ubah metadata, susunan soal, dan akses premium paket ini."
+        actions={
+          <Button variant="outline" nativeButton={false} render={<Link href={`/admin/paket-tes/${pkg.id}/pratinjau`} />}>
+            <Eye aria-hidden /> Pratinjau & tinjau paket
+          </Button>
+        }
+      />
       <PackageForm
         categories={categories}
         subjects={subjects}

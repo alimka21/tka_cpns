@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { BookOpenCheck, Clock, FileQuestion, Package, Plus, Sparkles } from "lucide-react";
+import { BookOpenCheck, Clock, Eye, FileQuestion, Package, Plus, Sparkles } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -88,6 +88,9 @@ export default async function AdminPaketTesPage({ searchParams }: PageProps<"/ad
                 </dl>
               </div>
               <div className="flex shrink-0 flex-wrap items-center gap-2">
+                <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/admin/paket-tes/${pkg.id}/pratinjau`} />}>
+                  <Eye aria-hidden /> Pratinjau
+                </Button>
                 <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/admin/paket-tes/${pkg.id}`} />}>
                   <BookOpenCheck aria-hidden /> Kelola
                 </Button>

@@ -25,6 +25,9 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-03 (2):** halaman Pratinjau Paket (tombol "Pratinjau" di daftar
+Paket Tes & halaman Kelola) — cek kesiapan terbit, tinjau kunci/pembahasan,
+setujui per soal, dan tampilan siswa.
 **2026-10-03:** Buat Paket Otomatis kini menargetkan sebaran level/kesulitan
 (±20/50/30, bukan L1/mudah semua) + cek saran kualitas di aturan paket; bug
 level kognitif kosong (batch Matematika ditolak) diperbaiki.
@@ -173,9 +176,12 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
       simpan `pending_review` + paket draf (docs/AI_GENERATION.md §10)
 - [x] Admin: Buat Paket Otomatis — bank belum terpakai + AI menambal
       kekurangan per subtopik/bentuk (docs/AI_GENERATION.md §11)
-- [ ] Admin: halaman "Tinjau Paket" (paket utuh + kunci + pembahasan,
-      edit per soal); Bank Soal: filter per paket + terbitkan massal
-      (usulan 2026-10-01)
+- [x] Admin: Pratinjau Paket `/admin/paket-tes/[id]/pratinjau` (2026-10-03):
+      kesiapan terbit (aturan wajib + saran + soal belum tayang/tanpa
+      pembahasan/dilaporkan), mode "Tinjau kunci & pembahasan" (filter,
+      setujui per soal, edit soal) & mode "Tampilan siswa" (komponen ujian
+      asli, tanpa kunci, jawaban tidak disimpan)
+- [ ] Bank Soal: filter per paket + terbitkan massal (usulan 2026-10-01)
 - [x] Admin: entitlement manual (kasih akses paket premium ke user) —
       per paket di `/admin/paket-tes/[id]` (cari user → beri/cabut akses)
 - [x] Student: lihat daftar paket tes (gratis/premium, lock kalau belum

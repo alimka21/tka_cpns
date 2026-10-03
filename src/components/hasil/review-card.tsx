@@ -11,7 +11,18 @@ import { cn } from "@/lib/utils";
 
 /** `footer`: mis. tombol Laporkan soal (client component dari halaman). */
 /** `keyOnly`: tampilan admin — hanya soal & kunci, tanpa nomor/status jawaban siswa. */
-export function ReviewCard({ item, footer, keyOnly = false }: { item: ReviewItem; footer?: React.ReactNode; keyOnly?: boolean }) {
+/** `heading`: judul kartu pengganti (mis. "Soal 5" di pratinjau paket admin). */
+export function ReviewCard({
+  item,
+  footer,
+  keyOnly = false,
+  heading,
+}: {
+  item: ReviewItem;
+  footer?: React.ReactNode;
+  keyOnly?: boolean;
+  heading?: string;
+}) {
   const status = reviewStatus(item);
   const badge =
     status === "benar"
@@ -25,7 +36,7 @@ export function ReviewCard({ item, footer, keyOnly = false }: { item: ReviewItem
     <article aria-labelledby={`soal-${item.questionId}`} className="surface-card flex flex-col gap-5 p-5 sm:p-6">
       <div className="flex flex-wrap items-center gap-2">
         <h2 id={`soal-${item.questionId}`} className="text-base font-bold">
-          {keyOnly ? "Soal & kunci" : `Soal ${item.number}`}
+          {heading ?? (keyOnly ? "Soal & kunci" : `Soal ${item.number}`)}
         </h2>
         {!keyOnly && (
           <Badge variant={badge.variant}>

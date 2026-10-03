@@ -12,6 +12,20 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-03 — Halaman Pratinjau Paket sebelum terbit
+Keputusan: satu halaman `/admin/paket-tes/[id]/pratinjau` dengan dua mode —
+"Tinjau kunci & pembahasan" (ReviewCard `keyOnly` + metadata status/asal/
+level/kesulitan/laporan, tombol Setujui per soal = `updateQuestionStatusAction`)
+dan "Tampilan siswa" (QuestionView + StimulusPanel asli; data lewat
+`toExamQuestion`, jadi kunci tidak pernah dikirim ke browser). Vonis kesiapan:
+merah bila aturan wajib gagal; kuning bila ada laporan terbuka/tanpa
+pembahasan; soal "menunggu tinjauan" tidak memblokir karena ikut terbit lewat
+dialog Terbitkan.
+Alasan: admin butuh satu tempat untuk memeriksa paket utuh seperti siswa
+melihatnya sebelum launching, tanpa membuat attempt sungguhan.
+Alternatif yang ditolak: admin mengerjakan tes sungguhan (`/tes/[id]`) —
+membuat attempt & skor palsu di statistik.
+
 ## 2026-10-03 — Buat Paket Otomatis: target level kognitif & kesulitan
 Keputusan (permintaan pemilik produk): soal AI di paket otomatis tidak boleh
 L1/mudah semua. Target sebaran paket ±20/50/30 (mudah·L1/sedang·L2/sulit·L3),

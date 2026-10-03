@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-03 — Paket TKA SMA Biologi — Paket 1 (#23, draf, lolos aturan)
+PDF "SOAL TKA Biologi SMA 2025 Pilihan" berisi 27 soal (no. 25–27 belum ada)
+TANPA kunci → kunci & pembahasan ditentukan Claude. Diimpor sebagai soal
+#341–#370 (`pending_review`), 10 gambar/tabel dipotong dari PDF (pdfjs-dist +
+@napi-rs/canvas, galeri #30–#39). Komposisi PDF 20 PG / 7 non-PG, sedangkan
+mapel pilihan 25 soal & PG ≤ 15 → ditambah 3 soal Claude ("[Soal tambahan]":
+pewarnaan Gram, rancangan percobaan garam–perkecambahan, interaksi ekosistem
+sawah). Paket #23 = 15 PG + 10 non-PG, 60 menit, 11/11 subtopik, sebaran
+L1 20% / L3 36%. Lima PG (no. 11, 21, 22, 23, 24) di bank, belum dipaketkan.
+Kunci yang paling perlu dicek admin: no. 15 (PCOS) dianggap C, D, E — bayi
+tabung (E) dihitung benar; no. 4 kunci E (glikolisis: fosforilasi gula);
+no. 14 kunci A (vasokonstriksi → tekanan darah naik).
+
 ## 2026-10-03 — Paket #22 "Matematika SMA — Paket Otomatis 3/10/2026" dilengkapi
 Paket otomatis berisi 24 soal (batch AI sebagian gagal sebelum perbaikan level
 kognitif) → satu-satunya aturan wajib yang gagal: jumlah soal 25. Claude

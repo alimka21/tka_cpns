@@ -294,6 +294,7 @@ export default async function LandingPage() {
             <SectionHeading
               eyebrow="Fitur"
               title="Semua yang kamu butuhkan untuk latihan TKA"
+              wide
               text="Dirancang supaya waktu belajarmu dipakai untuk hal yang paling berdampak."
             />
             <div className="mt-12 grid gap-6 sm:grid-cols-2">

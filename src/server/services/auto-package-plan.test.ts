@@ -78,8 +78,35 @@ describe("planAutoPackage", () => {
 
   it("bentuk soal AI dikelompokkan per subtopik → sedikit panggilan Gemini", () => {
     const plan = planAutoPackage({ available: [], outline, questionCount: 30 });
-    // 6 subtopik + paling banyak 2 subtopik yang terbelah oleh pergantian bentuk.
-    expect(batchAiSlots(plan.aiSlots).length).toBeLessThanOrEqual(8);
+    // 6 subtopik + paling banyak 2 pergantian bentuk + 2 pergantian tingkat.
+    expect(batchAiSlots(plan.aiSlots).length).toBeLessThanOrEqual(10);
+  });
+
+  it("bank kosong → tingkat AI mengikuti target 20/50/30 (tidak mudah semua)", () => {
+    const plan = planAutoPackage({ available: [], outline, questionCount: 30, levelled: true });
+    expect(plan.tiers).toEqual({ 1: 6, 2: 15, 3: 9 });
+    const report = checkPackageRules({
+      jenjang: "SD",
+      subject: { code: "SD-MTK", type: "wajib" },
+      durationMinutes: 75,
+      outline,
+      questions: plan.aiSlots.map((s) => ({ type: s.type, subjectCode: "SD-MTK", subtopicCode: s.subtopicCode, stimulusKey: null, hasImage: false, difficulty: (["easy", "medium", "hard"] as const)[s.tier - 1], cognitiveLevel: `L${s.tier}` })),
+    });
+    expect(report.recommended.filter((c) => /kesulitan|kognitif/.test(c.label)).every((c) => c.ok)).toBe(true);
+  });
+
+  it("bank berisi soal mudah/L1 → AI tidak menambah L1, condong ke sulit", () => {
+    const available = Array.from({ length: 18 }, (_, i) => ({ ...q(`S${(i % 6) + 1}`, "pg"), difficulty: "easy" as const, cognitiveLevel: "L1" }));
+    const plan = planAutoPackage({ available, outline, questionCount: 30, levelled: true });
+    expect(plan.aiSlots.some((s) => s.tier === 1)).toBe(false);
+    expect(plan.aiSlots.filter((s) => s.tier === 3).length).toBeGreaterThanOrEqual(4);
+  });
+
+  it("mata uji tanpa level (bahasa) memakai tingkat kesulitan soal bank", () => {
+    const available = Array.from({ length: 12 }, (_, i) => ({ ...q(`S${(i % 6) + 1}`, "pg"), difficulty: "hard" as const, cognitiveLevel: null }));
+    const plan = planAutoPackage({ available, outline, questionCount: 30, levelled: false });
+    expect(plan.tiers[3]).toBeGreaterThanOrEqual(12);
+    expect(plan.aiSlots.some((s) => s.tier === 3)).toBe(false);
   });
 
   it("25 soal (SMA Matematika): PG 13–15", () => {
@@ -93,13 +120,15 @@ describe("batchAiSlots", () => {
   it("menggabungkan slot per subtopik & bentuk", () => {
     expect(
       batchAiSlots([
-        { subtopicCode: "S1", type: "pg" },
-        { subtopicCode: "S1", type: "pg" },
-        { subtopicCode: "S1", type: "pgk_mcma" },
+        { subtopicCode: "S1", type: "pg", tier: 2 },
+        { subtopicCode: "S1", type: "pg", tier: 2 },
+        { subtopicCode: "S1", type: "pg", tier: 3 },
+        { subtopicCode: "S1", type: "pgk_mcma", tier: 2 },
       ]),
     ).toEqual([
-      { subtopicCode: "S1", type: "pg", count: 2 },
-      { subtopicCode: "S1", type: "pgk_mcma", count: 1 },
+      { subtopicCode: "S1", type: "pg", tier: 2, count: 2 },
+      { subtopicCode: "S1", type: "pg", tier: 3, count: 1 },
+      { subtopicCode: "S1", type: "pgk_mcma", tier: 2, count: 1 },
     ]);
   });
 });

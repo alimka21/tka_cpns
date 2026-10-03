@@ -8,6 +8,23 @@ import { findSubdomain, type CognitiveLevel, type SubdomainRef } from "./index";
 
 const DIFFICULTY_LABEL: Record<Difficulty, string> = { easy: "mudah", medium: "sedang", hard: "sulit" };
 
+/** Ciri konkret tiap tingkat kesulitan — supaya "sulit" benar-benar sulit, bukan sekadar label. */
+const DIFFICULTY_GUIDE: Record<Difficulty, string[]> = {
+  easy: [
+    "Cukup 1–2 langkah penyelesaian; informasi yang dibutuhkan tersedia langsung di soal/teks.",
+    "Konteks sederhana dan akrab; pengecoh tetap masuk akal (bukan jawaban asal).",
+  ],
+  medium: [
+    "Butuh 2–3 langkah: memahami konteks, memilih konsep/prosedur yang tepat, lalu menghitung atau menyimpulkan.",
+    "Konteks kehidupan nyata yang familiar; minimal satu pengecoh berasal dari kesalahan langkah yang umum.",
+  ],
+  hard: [
+    "Butuh minimal 3 langkah atau penalaran: menggabungkan beberapa informasi/konsep, menganalisis, mengevaluasi, atau menyimpulkan.",
+    "Konteks tidak rutin atau data yang harus diolah dulu (tabel, perbandingan, kondisi bersyarat); jawaban TIDAK bisa diperoleh dengan satu rumus langsung.",
+    "Semua pengecoh berasal dari miskonsepsi atau kesalahan langkah yang masuk akal — siswa yang hanya setengah paham harus bisa terjebak.",
+  ],
+};
+
 // Field deskriptif mata uji yang relevan untuk penulis soal.
 const SUBJECT_CONTEXT_KEYS = [
   "fokus_keterampilan",
@@ -90,6 +107,7 @@ export function buildGenerationContext(req: GenerationRequest): GenerationContex
   const sections = [
     `Kamu adalah penyusun soal Tes Kemampuan Akademik (TKA) untuk jenjang ${framework.jenjangName}, mengikuti Kerangka Asesmen BSKAP No. ${framework.regulation.number}.`,
     `Buat ${req.count} ${FORM_SENTENCE[req.form ?? "pg"]} dengan tingkat kesulitan ${DIFFICULTY_LABEL[req.difficulty]}.`,
+    `## Ciri tingkat kesulitan "${DIFFICULTY_LABEL[req.difficulty]}" (WAJIB dipenuhi setiap soal)\n${bullets(DIFFICULTY_GUIDE[req.difficulty])}`,
     [
       "## Posisi dalam kerangka",
       `Mata uji: ${subject.fullName} (${subject.code})`,
@@ -120,6 +138,7 @@ export function buildGenerationContext(req: GenerationRequest): GenerationContex
         "Rumus matematika memakai KaTeX: $...$ inline, $$...$$ blok.",
         "Setiap soal disertai pembahasan singkat yang menjelaskan kenapa kunci benar.",
         "Pengecoh harus masuk akal dan mencerminkan miskonsepsi umum murid, bukan jawaban asal.",
+        "Soal harus benar-benar mengukur kompetensi & cakupan subdomain di atas pada level kognitif target — bukan sekadar hafalan definisi atau rumus.",
         "Jangan menyalin soal resmi yang sudah dipublikasikan.",
       ]),
     ].join("\n"),

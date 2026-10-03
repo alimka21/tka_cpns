@@ -2,7 +2,7 @@
 // (docs/ATURAN_PAKET.md). Fungsi murni — dipakai form admin (cek langsung)
 // dan server (wajib lolos sebelum paket diterbitkan).
 
-import type { QuestionType } from "@/lib/validation/enums";
+import type { Difficulty, QuestionType } from "@/lib/validation/enums";
 
 export type PackageRule = { questionCount: number; durationMinutes: number; label: string };
 
@@ -44,6 +44,15 @@ export function pgRange(total: number) {
   return { min: Math.ceil(total * 0.5), max: Math.floor(total * 0.6) };
 }
 
+/**
+ * Sebaran kualitas soal (disarankan, docs/ATURAN_PAKET.md): target paket
+ * ±20% mudah/L1, ±50% sedang/L2, ±30% sulit/L3. Dipakai Buat Paket Otomatis
+ * untuk menentukan target soal AI dan cek saran di bawah.
+ */
+export const QUALITY_TARGET = { low: 0.2, mid: 0.5, high: 0.3 } as const;
+/** Batas saran: mudah/L1 paling banyak 40%, sulit/L3 minimal 15%/20%. */
+export const QUALITY_LIMIT = { maxEasy: 0.4, minHard: 0.15, maxL1: 0.4, minL3: 0.2 } as const;
+
 export type RuleQuestion = {
   type: QuestionType;
   subjectCode: string;
@@ -52,6 +61,10 @@ export type RuleQuestion = {
   /** Id atau kode stimulus (soal grup); null = soal tunggal. */
   stimulusKey: number | string | null;
   hasImage: boolean;
+  /** Opsional — tanpa data ini cek sebaran kualitas dilewati. */
+  difficulty?: Difficulty;
+  /** L1/L2/L3; null untuk mata uji tanpa level kognitif (mis. bahasa). */
+  cognitiveLevel?: string | null;
 };
 
 export type RuleCheck = { ok: boolean; label: string; detail: string };
@@ -180,6 +193,7 @@ export function checkPackageRules(input: {
       });
     }
   }
+  recommended.push(...qualityChecks(qs));
   if (input.jenjang === "SMA") {
     recommended.push({
       ok: stats.total > 0 && stats.stimulusBased * 2 > stats.total,
@@ -210,6 +224,39 @@ export function checkPackageRules(input: {
     missingSubtopics: missingSubtopics.map((s) => s.name),
     publishable: required.every((c) => c.ok),
   };
+}
+
+const pct = (n: number, total: number) => `${Math.round((n / total) * 100)}%`;
+
+/** Saran sebaran tingkat kesulitan & level kognitif — paket tidak boleh mudah/L1 semua. */
+function qualityChecks(qs: RuleQuestion[]): RuleCheck[] {
+  const checks: RuleCheck[] = [];
+  const withDiff = qs.filter((q) => q.difficulty);
+  if (withDiff.length > 0 && withDiff.length === qs.length) {
+    const n = qs.length;
+    const easy = qs.filter((q) => q.difficulty === "easy").length;
+    const medium = qs.filter((q) => q.difficulty === "medium").length;
+    const hard = qs.filter((q) => q.difficulty === "hard").length;
+    checks.push({
+      ok: easy <= n * QUALITY_LIMIT.maxEasy && hard >= Math.ceil(n * QUALITY_LIMIT.minHard),
+      label: `Tingkat kesulitan beragam (mudah ≤ ${QUALITY_LIMIT.maxEasy * 100}%, sulit ≥ ${QUALITY_LIMIT.minHard * 100}%)`,
+      detail: `${easy} mudah (${pct(easy, n)}) · ${medium} sedang · ${hard} sulit (${pct(hard, n)})`,
+    });
+  }
+  // Level kognitif hanya untuk mata uji yang memakainya (soal bahasa tidak punya level).
+  const levelled = qs.filter((q) => q.cognitiveLevel);
+  if (levelled.length > 0 && levelled.length * 2 >= qs.length) {
+    const n = levelled.length;
+    const l1 = levelled.filter((q) => q.cognitiveLevel === "L1").length;
+    const l2 = levelled.filter((q) => q.cognitiveLevel === "L2").length;
+    const l3 = levelled.filter((q) => q.cognitiveLevel === "L3").length;
+    checks.push({
+      ok: l1 <= n * QUALITY_LIMIT.maxL1 && l3 >= Math.ceil(n * QUALITY_LIMIT.minL3),
+      label: `Level kognitif beragam (L1 ≤ ${QUALITY_LIMIT.maxL1 * 100}%, L3 penalaran ≥ ${QUALITY_LIMIT.minL3 * 100}%)`,
+      detail: `${l1} L1 (${pct(l1, n)}) · ${l2} L2 · ${l3} L3 (${pct(l3, n)})${n < qs.length ? ` — ${qs.length - n} soal tanpa level` : ""}`,
+    });
+  }
+  return checks;
 }
 
 /** Pesan error (untuk server) dari aturan wajib yang gagal. */

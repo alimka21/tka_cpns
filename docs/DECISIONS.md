@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-03 — Buat Paket Otomatis: target level kognitif & kesulitan
+Keputusan (permintaan pemilik produk): soal AI di paket otomatis tidak boleh
+L1/mudah semua. Target sebaran paket ±20/50/30 (mudah·L1/sedang·L2/sulit·L3),
+dihitung bersama soal bank; cek saran baru di aturan paket (mudah ≤ 40%, sulit
+≥ 15%; L1 ≤ 40%, L3 ≥ 20%). Prompt Gemini diberi ciri konkret per tingkat.
+Sekaligus memperbaiki bug: batch paket otomatis untuk mapel ber-level dikirim
+tanpa level kognitif sehingga selalu ditolak.
+Alasan: angka 20/50/30 = asumsi wajar (TKA menekankan penalaran), bukan angka
+resmi BSKAP — ubah di `QUALITY_TARGET` bila ada acuan resmi. Level & tingkat
+dikopel (L1↔mudah, L3↔sulit) agar jumlah batch Gemini tetap kecil.
+Alternatif yang ditolak: level/kesulitan per soal dalam satu prompt campuran
+(validator & penyimpanan memakai satu level per batch).
+
 ## 2026-10-02 — Paket TKA SMP Matematika — Paket 1 (#20, draf, lolos aturan)
 "30 Soal Variasi" e-ujian (semua PG, kunci & pembahasan PDF dicek Claude —
 benar) diimpor sebagai soal #291–#320; 4 soal MCMA/Kategori buatan Claude

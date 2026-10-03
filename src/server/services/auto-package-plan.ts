@@ -1,10 +1,12 @@
 // Rencana "Buat paket otomatis" (docs/ATURAN_PAKET.md): pilih soal bank yang
 // belum masuk paket mana pun sehingga aturan wajib terpenuhi sebisa mungkin,
 // lalu hitung kekurangannya untuk ditambal AI (variasi soal bank di subtopik
-// yang sama, atau soal baru bila subtopik belum punya soal). Fungsi murni.
+// yang sama, atau soal baru bila subtopik belum punya soal). Tiap soal AI
+// diberi tingkat (mudah/L1 … sulit/L3) agar sebaran paket tidak mudah semua.
+// Fungsi murni.
 
-import { pgRange, type SubjectOutline } from "@/lib/package-rules";
-import type { QuestionType } from "@/lib/validation/enums";
+import { pgRange, QUALITY_TARGET, type SubjectOutline } from "@/lib/package-rules";
+import type { Difficulty, QuestionType } from "@/lib/validation/enums";
 
 export type PlanQuestion = {
   id: number;
@@ -12,12 +14,25 @@ export type PlanQuestion = {
   subtopicCode: string;
   stimulusId: number | null;
   stimulusOrder: number | null;
+  difficulty?: Difficulty;
+  cognitiveLevel?: string | null;
 };
+
+/** Tingkat kualitas soal: 1 = mudah/L1, 2 = sedang/L2, 3 = sulit/L3 (penalaran). */
+export type Tier = 1 | 2 | 3;
+export const TIER_DIFFICULTY: Record<Tier, Difficulty> = { 1: "easy", 2: "medium", 3: "hard" };
+const DIFFICULTY_TIER: Record<Difficulty, Tier> = { easy: 1, medium: 2, hard: 3 };
+
+/** Tingkat soal bank: level kognitif bila mata uji memakainya, selain itu tingkat kesulitan. */
+function tierOf(q: PlanQuestion, levelled: boolean): Tier | null {
+  if (levelled && q.cognitiveLevel && /^L[123]$/.test(q.cognitiveLevel)) return Number(q.cognitiveLevel[1]) as Tier;
+  return q.difficulty ? DIFFICULTY_TIER[q.difficulty] : null;
+}
 
 /** Satu blok paket: soal tunggal, atau seluruh soal satu stimulus (urut). */
 type Unit = { ids: number[]; subtopics: string[]; pg: number; size: number; sortKey: string };
 
-export type AiSlot = { subtopicCode: string; type: QuestionType };
+export type AiSlot = { subtopicCode: string; type: QuestionType; tier: Tier };
 
 export type AutoPackagePlan = {
   /** Soal bank terpilih, sudah tersusun (grup utuh & berurutan). */
@@ -25,6 +40,8 @@ export type AutoPackagePlan = {
   /** Kekurangan yang perlu dibuat AI, satu entri per soal. */
   aiSlots: AiSlot[];
   stats: { bank: number; bankPg: number; ai: number; aiPg: number; target: number };
+  /** Sebaran tingkat 1/2/3 seluruh paket (bank + AI); soal bank tanpa data tidak dihitung. */
+  tiers: Record<Tier, number>;
 };
 
 function unitsOf(questions: PlanQuestion[], order: Map<string, number>): Unit[] {
@@ -57,7 +74,13 @@ function unitsOf(questions: PlanQuestion[], order: Map<string, number>): Unit[] 
  * status tayang / menunggu tinjauan). Grup stimulus hanya dipakai bila semua
  * anggotanya ada di `available` (pemanggil yang menyaring).
  */
-export function planAutoPackage(input: { available: PlanQuestion[]; outline: SubjectOutline; questionCount: number }): AutoPackagePlan {
+export function planAutoPackage(input: {
+  available: PlanQuestion[];
+  outline: SubjectOutline;
+  questionCount: number;
+  /** Mata uji memakai level kognitif L1–L3 (bahasa: tidak). */
+  levelled?: boolean;
+}): AutoPackagePlan {
   const N = input.questionCount;
   const range = pgRange(N);
   const targetPg = Math.min(range.max, Math.max(range.min, Math.round(N * 0.55)));
@@ -163,21 +186,44 @@ export function planAutoPackage(input: { available: PlanQuestion[]; outline: Sub
   };
   const slotSubs = allSubs.length > 0 ? types.map(() => pickSubtopic()) : [];
   slotSubs.sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0));
-  const aiSlots: AiSlot[] = slotSubs.map((subtopicCode, i) => ({ subtopicCode, type: types[i] }));
+
+  // 4) Tingkat soal AI: tutup kekurangan terhadap target sebaran seluruh paket
+  // (QUALITY_TARGET). Satu kelompok subtopik+bentuk diusahakan satu tingkat
+  // supaya batch Gemini tetap sedikit.
+  const tiers: Record<Tier, number> = { 1: 0, 2: 0, 3: 0 };
+  for (const id of chosen.flatMap((u) => u.ids)) {
+    const t = tierOf(byId.get(id)!, input.levelled ?? false);
+    if (t) tiers[t]++;
+  }
+  const target: Record<Tier, number> = { 1: N * QUALITY_TARGET.low, 2: N * QUALITY_TARGET.mid, 3: N * QUALITY_TARGET.high };
+  const deficit = (t: Tier) => target[t] - tiers[t];
+  const aiSlots: AiSlot[] = [];
+  let prevKey = "";
+  let prevTier: Tier = 2;
+  slotSubs.forEach((subtopicCode, i) => {
+    const key = `${subtopicCode}|${types[i]}`;
+    const best = ([3, 2, 1] as Tier[]).reduce((a, b) => (deficit(b) > deficit(a) ? b : a));
+    const tier = key === prevKey && deficit(prevTier) > 0 ? prevTier : best;
+    tiers[tier]++;
+    aiSlots.push({ subtopicCode, type: types[i], tier });
+    prevKey = key;
+    prevTier = tier;
+  });
 
   chosen.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   return {
     bankIds: chosen.flatMap((u) => u.ids),
     aiSlots,
     stats: { bank: size, bankPg: pg, ai: aiSlots.length, aiPg: aiSlots.filter((s) => s.type === "pg").length, target: N },
+    tiers,
   };
 }
 
-/** Gabungkan slot AI menjadi permintaan per (subtopik, bentuk soal). */
-export function batchAiSlots(slots: AiSlot[]): { subtopicCode: string; type: QuestionType; count: number }[] {
-  const map = new Map<string, { subtopicCode: string; type: QuestionType; count: number }>();
+/** Gabungkan slot AI menjadi permintaan per (subtopik, bentuk soal, tingkat). */
+export function batchAiSlots(slots: AiSlot[]): (AiSlot & { count: number })[] {
+  const map = new Map<string, AiSlot & { count: number }>();
   for (const s of slots) {
-    const k = `${s.subtopicCode}|${s.type}`;
+    const k = `${s.subtopicCode}|${s.type}|${s.tier}`;
     const cur = map.get(k);
     if (cur) cur.count++;
     else map.set(k, { ...s, count: 1 });

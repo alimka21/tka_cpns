@@ -17,6 +17,7 @@ export type QuestionListRow = {
   /** Nama subdomain. */
   subtopic: string;
   difficulty: Difficulty;
+  cognitiveLevel: string | null;
   type: QuestionType;
   status: "draft" | "pending_review" | "published";
   generatedBy: "manual" | "ai" | "import";

@@ -115,7 +115,7 @@ export function PackageForm({
     questions: selectedIds.flatMap((id) => {
       const row = byId.get(id);
       return row
-        ? [{ type: row.type, subjectCode: row.subjectCode, subtopicCode: row.subtopicCode, stimulusKey: row.stimulusCode, hasImage: row.hasImage }]
+        ? [{ type: row.type, subjectCode: row.subjectCode, subtopicCode: row.subtopicCode, stimulusKey: row.stimulusCode, hasImage: row.hasImage, difficulty: row.difficulty, cognitiveLevel: row.cognitiveLevel }]
         : [];
     }),
     outline: subject?.outline,

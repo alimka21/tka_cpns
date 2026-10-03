@@ -8,6 +8,7 @@ const row = (p: Partial<QuestionListRow>): QuestionListRow => ({
   jenjang: "SMP",
   topic: "Matematika",
   subjectCode: "SMP-MTK",
+  cognitiveLevel: null,
   subtopicId: 1,
   subtopicCode: "SMP-MTK-D1-S1",
   subtopic: "Bilangan Real",

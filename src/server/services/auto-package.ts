@@ -5,12 +5,14 @@
 import { and, eq, inArray, isNull, notInArray } from "drizzle-orm";
 import { packageRuleFor } from "@/lib/package-rules";
 import type { Difficulty, QuestionType } from "@/lib/validation/enums";
+import type { VariationStyle } from "@/server/asesmen/generation-context";
+import { findSubdomain } from "@/server/asesmen";
 import { db } from "@/server/db";
 import { categories, questions, subjects, subtopics, testPackageQuestions, testPackages, topics } from "@/server/db/schema";
 import { loadSubjectOutlines } from "@/server/queries/packages";
 import { getGeminiKey } from "@/server/services/ai-key";
 import { generateAiQuestions } from "@/server/services/ai-generate";
-import { batchAiSlots, planAutoPackage, type PlanQuestion } from "@/server/services/auto-package-plan";
+import { batchAiSlots, planAutoPackage, TIER_DIFFICULTY, type PlanQuestion, type Tier } from "@/server/services/auto-package-plan";
 import { validatePackageOrder } from "@/server/services/package-composition";
 
 /** Status soal bank yang boleh diambil (keputusan pemilik produk 2026-10-02). */
@@ -22,6 +24,8 @@ export type AutoBatch = {
   topicName: string;
   type: QuestionType;
   count: number;
+  /** 1 = mudah/L1, 2 = sedang/L2, 3 = sulit/L3. */
+  tier: Tier;
   /** null = soal baru (subtopik belum punya soal tunggal untuk dimodifikasi). */
   sourceQuestionId: number | null;
   sourceSnippet: string | null;
@@ -40,6 +44,10 @@ export type AutoPackagePreview =
       bankPg: number;
       batches: AutoBatch[];
       hasGeminiKey: boolean;
+      /** Mata uji memakai level kognitif (L1–L3); bahasa tidak. */
+      levelled: boolean;
+      /** Sebaran tingkat 1/2/3 seluruh paket setelah AI (bank + AI). */
+      tiers: Record<Tier, number>;
     }
   | { ok: false; error: string };
 
@@ -52,7 +60,9 @@ async function loadSubjectContext(categoryId: number, subjectId: number) {
   if (!row) return null;
   const rule = packageRuleFor(row.jenjang, { code: row.code, type: row.type });
   const outline = (await loadSubjectOutlines([subjectId])).get(subjectId) ?? [];
-  return { ...row, rule, outline };
+  const firstSub = outline[0]?.subtopics[0]?.code;
+  const levelled = firstSub ? (findSubdomain(firstSub)?.subject.cognitiveLevels.length ?? 0) > 0 : false;
+  return { ...row, rule, outline, levelled };
 }
 
 /** Soal mapel ini (status tayang/menunggu tinjauan) yang belum masuk paket mana pun. */
@@ -65,6 +75,8 @@ async function loadAvailable(subjectId: number, onlyIds?: number[]) {
       stimulusId: questions.stimulusId,
       stimulusOrder: questions.stimulusOrder,
       subtopicCode: subtopics.code,
+      difficulty: questions.difficulty,
+      cognitiveLevel: questions.cognitiveLevel,
     })
     .from(questions)
     .innerJoin(subtopics, eq(subtopics.id, questions.subtopicId))
@@ -114,7 +126,7 @@ export async function buildAutoPackagePreview(userId: number, categoryId: number
   if (!ctx.outline.length) return { ok: false, error: "Topik & subtopik mapel ini belum ada — jalankan npm run db:seed:asesmen." };
 
   const available = await loadAvailable(subjectId);
-  const plan = planAutoPackage({ available, outline: ctx.outline, questionCount: ctx.rule.questionCount });
+  const plan = planAutoPackage({ available, outline: ctx.outline, questionCount: ctx.rule.questionCount, levelled: ctx.levelled });
   const names = new Map(ctx.outline.flatMap((t) => t.subtopics.map((s) => [s.code, { sub: s.name, topic: t.name }] as const)));
   const raw = batchAiSlots(plan.aiSlots);
   const sources = await pickSources([...new Set(raw.map((b) => b.subtopicCode))]);
@@ -131,6 +143,7 @@ export async function buildAutoPackagePreview(userId: number, categoryId: number
         subtopicName: names.get(b.subtopicCode)?.sub ?? b.subtopicCode,
         topicName: names.get(b.subtopicCode)?.topic ?? "",
         type: b.type,
+        tier: b.tier,
         count: Math.min(left, 10),
         sourceQuestionId: source?.id ?? null,
         sourceSnippet: source ? source.text.slice(0, 140) : null,
@@ -148,16 +161,28 @@ export async function buildAutoPackagePreview(userId: number, categoryId: number
     bankPg: plan.stats.bankPg,
     batches,
     hasGeminiKey: Boolean(await getGeminiKey(userId)),
+    levelled: ctx.levelled,
+    tiers: plan.tiers,
   };
 }
 
 export type AutoBatchResult = { ok: true; ids: number[]; rejected: string[] } | { ok: false; error: string };
 
+const DIFF_RANK: Record<Difficulty, number> = { easy: 1, medium: 2, hard: 3 };
+
 export async function runAutoPackageBatch(
   userId: number,
-  b: { subtopicCode: string; type: QuestionType; count: number; sourceQuestionId: number | null },
+  b: { subtopicCode: string; type: QuestionType; count: number; tier: Tier; sourceQuestionId: number | null },
 ): Promise<AutoBatchResult> {
-  let difficulty: Difficulty = "medium";
+  const ref = findSubdomain(b.subtopicCode);
+  if (!ref) return { ok: false, error: "Subtopik tidak ada di kerangka asesmen." };
+  // Mata uji ber-level (mis. Matematika) wajib menyebut level kognitif target.
+  const levelled = ref.subject.cognitiveLevels.length > 0;
+  const cognitiveLevel = levelled ? (ref.subject.cognitiveLevels.find((l) => l.code === `L${b.tier}`)?.code ?? null) : null;
+  if (levelled && !cognitiveLevel) return { ok: false, error: `Level L${b.tier} tidak ada untuk ${ref.subject.name}.` };
+  const difficulty = TIER_DIFFICULTY[b.tier];
+
+  let variation: VariationStyle = "bebas";
   if (b.sourceQuestionId) {
     const [src] = await db
       .select({ difficulty: questions.difficulty, subtopicCode: subtopics.code })
@@ -165,7 +190,9 @@ export async function runAutoPackageBatch(
       .innerJoin(subtopics, eq(subtopics.id, questions.subtopicId))
       .where(eq(questions.id, b.sourceQuestionId));
     if (!src || src.subtopicCode !== b.subtopicCode) return { ok: false, error: "Soal asal tidak cocok dengan subtopik." };
-    difficulty = src.difficulty;
+    // Variasi diarahkan ke tingkat target: soal asal lebih mudah → "lebih sulit", dst.
+    const gap = DIFF_RANK[difficulty] - DIFF_RANK[src.difficulty];
+    variation = gap > 0 ? "lebih_sulit" : gap < 0 ? "lebih_mudah" : "bebas";
   }
   const r = await generateAiQuestions(userId, {
     mode: b.sourceQuestionId ? "variasi" : "baru",
@@ -173,9 +200,9 @@ export async function runAutoPackageBatch(
     form: b.type,
     count: b.count,
     difficulty,
-    cognitiveLevel: null,
+    cognitiveLevel,
     sourceQuestionId: b.sourceQuestionId,
-    variation: "bebas",
+    variation,
   });
   if (!r.ok) return { ok: false, error: r.error };
   return { ok: true, ids: r.created.map((c) => c.id), rejected: r.rejected };

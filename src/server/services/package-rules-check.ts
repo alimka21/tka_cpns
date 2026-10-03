@@ -24,6 +24,8 @@ export async function packageRuleReport(p: {
           type: questions.type,
           stimulusId: questions.stimulusId,
           imageUrl: questions.imageUrl,
+          difficulty: questions.difficulty,
+          cognitiveLevel: questions.cognitiveLevel,
           subjectCode: subjects.code,
           subtopicCode: subtopics.code,
         })
@@ -39,7 +41,7 @@ export async function packageRuleReport(p: {
     // Mapel dari jenjang lain dianggap tidak dipilih.
     subject: subject && subject.categoryId === p.categoryId ? { code: subject.code, type: subject.type } : null,
     durationMinutes: p.durationMinutes,
-    questions: rows.map((r) => ({ type: r.type, subjectCode: r.subjectCode, subtopicCode: r.subtopicCode, stimulusKey: r.stimulusId, hasImage: r.imageUrl != null })),
+    questions: rows.map((r) => ({ type: r.type, subjectCode: r.subjectCode, subtopicCode: r.subtopicCode, stimulusKey: r.stimulusId, hasImage: r.imageUrl != null, difficulty: r.difficulty, cognitiveLevel: r.cognitiveLevel })),
     outline,
   });
 }

@@ -52,6 +52,17 @@ stimulus bacaan sesuai perkembangan kognitif.
 - Generate AI mode **Soal grup** bisa memilih **beberapa subtopik** (mapel
   sama) untuk satu bacaan; tiap soal AI menyebut subtopiknya.
 
+## Kualitas soal: sebaran level & kesulitan (disarankan)
+
+- Paket tidak boleh mudah/L1 semua. Target: **±20% mudah/L1, ±50% sedang/L2,
+  ±30% sulit/L3** (`QUALITY_TARGET` di `src/lib/package-rules.ts`).
+- Cek saran (tidak memblokir): mudah ≤ 40% & sulit ≥ 15%; untuk mata uji
+  ber-level kognitif, L1 ≤ 40% & L3 ≥ 20%. Mata uji bahasa tidak memakai level
+  — hanya tingkat kesulitan.
+- Buat Paket Otomatis memberi setiap soal AI target tingkat agar sebaran
+  seluruh paket (bank + AI) mendekati target; prompt Gemini memuat ciri konkret
+  tiap tingkat kesulitan (jumlah langkah, konteks, pengecoh).
+
 ## Karakteristik SMA/SMK (disarankan, tampil sebagai peringatan)
 
 - **Berbasis stimulus:** mayoritas soal diawali teks bacaan, grafik,

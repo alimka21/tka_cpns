@@ -129,6 +129,8 @@ export function PdfImporter({ subjects }: { subjects: PdfImportSubject[] }) {
         subtopicCode: q.subtopicCode,
         stimulusKey: q.stimulusKey,
         hasImage: q.image != null && !droppedCrops.has(cropKey(q.image)),
+        difficulty: q.difficulty,
+        cognitiveLevel: q.cognitiveLevel,
       })),
     });
   }, [subject, chosen, droppedCrops]);

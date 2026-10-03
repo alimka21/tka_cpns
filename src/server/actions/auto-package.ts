@@ -32,6 +32,7 @@ const batchInput = z.object({
   subtopicCode: frameworkCode,
   type: z.enum(QUESTION_TYPES),
   count: z.number().int().min(1).max(10),
+  tier: z.union([z.literal(1), z.literal(2), z.literal(3)]),
   sourceQuestionId: id.nullable(),
 });
 

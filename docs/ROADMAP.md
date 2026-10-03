@@ -25,6 +25,9 @@ edit/hapus soal `/admin/soal/[id]` + pratinjau KaTeX. **Fase 1 lengkap.**
 Fase 2.5 langkah 4 (diagnosa, `/progres`, `/riwayat`) juga selesai —
 berikutnya: latihan kelemahan bank-only (tabel practice_sessions).
 Riwayat & diagnosa kini ikut menghitung attempt `expired` (waktu habis).
+**2026-10-03:** Buat Paket Otomatis kini menargetkan sebaran level/kesulitan
+(±20/50/30, bukan L1/mudah semua) + cek saran kualitas di aturan paket; bug
+level kognitif kosong (batch Matematika ditolak) diperbaiki.
 **2026-10-02 (2):** Buat Paket Otomatis (`/admin/paket-tes/otomatis`): soal
 bank belum terpakai + AI menambal kekurangan (pratinjau dulu, batch paralel)
 → paket draf. Diuji pratinjau & pembuatan dari bank; batch AI belum diuji

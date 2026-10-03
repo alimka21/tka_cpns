@@ -19,6 +19,13 @@ type BatchState = { status: "waiting" | "running" | "done" | "failed"; ids: numb
 
 const PARALLEL = 3;
 
+const DIFFICULTY_NAME = { 1: "Mudah", 2: "Sedang", 3: "Sulit" } as const;
+
+/** Label tingkat: "L2 · Sedang" untuk mapel ber-level, "Sedang" untuk mapel bahasa. */
+function tierLabel(tier: 1 | 2 | 3, levelled: boolean) {
+  return levelled ? `L${tier} · ${DIFFICULTY_NAME[tier]}` : DIFFICULTY_NAME[tier];
+}
+
 const selectClass =
   "h-10 w-full min-w-0 rounded-lg border border-input bg-card px-3 text-sm focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15 focus-visible:outline-none disabled:opacity-50";
 
@@ -84,7 +91,7 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
         state[i] = { status: "running", ids: [] };
         setBatches([...state]);
         const b = preview.batches[i];
-        const r = await runAutoPackageBatchAction({ subtopicCode: b.subtopicCode, type: b.type, count: b.count, sourceQuestionId: b.sourceQuestionId }).catch(
+        const r = await runAutoPackageBatchAction({ subtopicCode: b.subtopicCode, type: b.type, count: b.count, tier: b.tier, sourceQuestionId: b.sourceQuestionId }).catch(
           () => ({ ok: false as const, error: "Koneksi terputus." }),
         );
         state[i] = r.ok
@@ -192,6 +199,30 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
             </div>
           </dl>
 
+          {(() => {
+            const t = preview.tiers;
+            const counted = t[1] + t[2] + t[3];
+            if (counted === 0) return null;
+            const pct = (n: number) => `${Math.round((n / counted) * 100)}%`;
+            return (
+              <div className="flex flex-col gap-1.5 rounded-xl border p-4">
+                <div className="text-xs text-muted-foreground">
+                  Sebaran {preview.levelled ? "level kognitif & kesulitan" : "tingkat kesulitan"} paket (bank + AI) — target ±20% / 50% / 30%
+                </div>
+                <div className="flex flex-wrap gap-2 text-sm">
+                  {([1, 2, 3] as const).map((k) => (
+                    <Badge key={k} variant={k === 1 ? "muted" : k === 2 ? "info" : "warning"}>
+                      {tierLabel(k, preview.levelled)}: {t[k]} ({pct(t[k])})
+                    </Badge>
+                  ))}
+                </div>
+                {counted < preview.questionCount && (
+                  <div className="text-xs text-muted-foreground">{preview.questionCount - counted} soal bank belum punya data level/kesulitan.</div>
+                )}
+              </div>
+            );
+          })()}
+
           {preview.batches.length > 0 && (
             <div className="flex flex-col gap-2">
               <h3 className="text-sm font-semibold">Kekurangan yang dibuat AI</h3>
@@ -202,7 +233,8 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
                     <li key={i} className="flex flex-col gap-1 p-3 text-sm sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <div className="min-w-0">
                         <div className="font-semibold">
-                          {b.count}× {QUESTION_TYPE_META[b.type].short} — {b.subtopicName}
+                          {b.count}× {QUESTION_TYPE_META[b.type].short} — {b.subtopicName}{" "}
+                          <Badge variant={b.tier === 1 ? "muted" : b.tier === 2 ? "info" : "warning"}>{tierLabel(b.tier, preview.levelled)}</Badge>
                         </div>
                         <div className="text-xs text-muted-foreground">{b.topicName}</div>
                         <div className="mt-1 text-xs text-muted-foreground">

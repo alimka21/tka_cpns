@@ -266,6 +266,7 @@ export default async function LandingPage() {
             <SectionHeading
               eyebrow="Sesuai kerangka resmi"
               title="Disusun mengikuti Kerangka Asesmen TKA"
+              wide
               text="Mengacu Peraturan Kepala BSKAP Kemendikdasmen No. 047/H/AN/2025 (SD & SMP) dan No. 045/H/AN/2025 (SMA/SMK) — latihanmu sama bentuk dan cakupannya dengan ujian sesungguhnya."
             />
             <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
@@ -484,9 +485,10 @@ export default async function LandingPage() {
   );
 }
 
-function SectionHeading({ eyebrow, title, text }: { eyebrow: string; title: string; text?: string }) {
+/** `wide`: judul panjang tetap satu baris di desktop (tetap membungkus di HP). */
+function SectionHeading({ eyebrow, title, text, wide }: { eyebrow: string; title: string; text?: string; wide?: boolean }) {
   return (
-    <div className="mx-auto max-w-2xl text-center">
+    <div className={cn("mx-auto text-center", wide ? "max-w-4xl" : "max-w-2xl")}>
       <span className="text-sm font-bold tracking-wide text-primary uppercase">{eyebrow}</span>
       <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h2>
       {text && <p className="mt-3 text-lg text-muted-foreground">{text}</p>}

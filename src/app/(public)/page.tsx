@@ -63,27 +63,28 @@ const features: { icon: LucideIcon; title: string; text: string }[] = [
   },
 ];
 
-/** Fakta kesesuaian dengan Kerangka Asesmen TKA (asesmen/*.json, docs/ATURAN_PAKET.md). */
+/** Fakta kesesuaian dengan Kerangka Asesmen TKA (asesmen/*.json, docs/ATURAN_PAKET.md).
+ *  Nomor urut = penanda ①–④ pada ilustrasi soal di sebelahnya. */
 const kerangka: { icon: LucideIcon; title: string; text: string }[] = [
   {
     icon: ListChecks,
     title: "Tiga bentuk soal resmi",
-    text: "Pilihan Ganda, PG Kompleks pilih-banyak (MCMA), dan PG Kompleks Kategori (Benar/Salah, Sesuai/Tidak Sesuai) — sama seperti di ujian sesungguhnya.",
+    text: "Pilihan Ganda, PG Kompleks pilih-banyak (MCMA), dan PG Kompleks Kategori — sama seperti ujian sesungguhnya.",
   },
   {
     icon: Layers,
-    title: "Per elemen & subelemen kerangka",
-    text: "Setiap soal dipetakan ke topik dan subtopik kerangka asesmen. Paket wajib mencakup semua topik mapel dan minimal 80% subtopik.",
+    title: "Dipetakan ke elemen & subelemen",
+    text: "Setiap soal punya topik dan subtopik kerangka. Paket mencakup semua topik dan minimal 80% subtopik mapel.",
   },
   {
     icon: Brain,
     title: "Level kognitif L1–L3",
-    text: "Pengetahuan & pemahaman, aplikasi, hingga penalaran. Paket disusun agar tidak didominasi soal mudah atau hafalan.",
+    text: "Dari pemahaman, aplikasi, hingga penalaran — paket tidak didominasi soal mudah atau hafalan.",
   },
   {
     icon: BookOpenCheck,
     title: "Pembahasan di setiap soal",
-    text: "Setelah tes, lihat kunci dan pembahasan langkah demi langkah — termasuk kesalahan yang sering terjadi.",
+    text: "Kunci dan langkah penyelesaian lengkap, termasuk kesalahan yang sering terjadi.",
   },
 ];
 
@@ -248,29 +249,40 @@ export default async function LandingPage() {
           </ul>
         </section>
 
-        {/* Kerangka asesmen */}
-        <section id="kerangka" className="scroll-mt-20 bg-card">
+        {/* Kerangka asesmen: ilustrasi soal beranotasi ①–④ + penjelasan bernomor */}
+        <section id="kerangka" className="scroll-mt-20 bg-gradient-to-b from-card via-primary-soft/40 to-card">
           <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-            <SectionHeading
-              eyebrow="Sesuai kerangka resmi"
-              title="Disusun mengikuti Kerangka Asesmen TKA"
-              wide
-              text="Mengacu Peraturan Kepala BSKAP Kemendikdasmen No. 047/H/AN/2025 (SD & SMP) dan No. 045/H/AN/2025 (SMA/SMK) — latihanmu sama bentuk dan cakupannya dengan ujian sesungguhnya."
-            />
-            <div className="mt-12 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-              {kerangka.map(({ icon: Icon, title, text }) => (
-                <article key={title} className="flex gap-4 rounded-2xl border bg-background p-5">
-                  <span className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary-soft text-primary">
-                    <Icon className="size-5" aria-hidden />
-                  </span>
-                  <div>
-                    <h3 className="font-bold">{title}</h3>
-                    <p className="mt-1 text-sm text-muted-foreground">{text}</p>
-                  </div>
-                </article>
+            <SectionHeading eyebrow="Sesuai kerangka resmi" title="Disusun mengikuti Kerangka Asesmen TKA" wide />
+            <ul className="mt-5 flex flex-wrap justify-center gap-2" aria-label="Acuan regulasi">
+              {[
+                ["SD & SMP", "Perkaban BSKAP No. 047/H/AN/2025"],
+                ["SMA / SMK", "Perkaban BSKAP No. 045/H/AN/2025"],
+              ].map(([level, reg]) => (
+                <li key={level} className="flex items-center gap-2 rounded-full border bg-card py-1 pr-3 pl-1 text-xs shadow-sm sm:text-sm">
+                  <span className="rounded-full bg-primary px-2.5 py-0.5 font-bold text-primary-foreground">{level}</span>
+                  <span className="font-medium text-muted-foreground">{reg}</span>
+                </li>
               ))}
+            </ul>
+
+            <div className="mt-14 grid items-center gap-12 lg:grid-cols-[minmax(0,1.05fr)_minmax(0,1fr)] lg:gap-16">
+              <KerangkaIllustration />
+              <ol className="flex flex-col gap-7">
+                {kerangka.map(({ icon: Icon, title, text }, i) => (
+                  <li key={title} className="flex gap-4">
+                    <Marker n={i + 1} className="mt-0.5 size-9 text-base" />
+                    <div>
+                      <h3 className="flex items-center gap-2 text-lg font-bold">
+                        <Icon className="size-5 text-primary" aria-hidden /> {title}
+                      </h3>
+                      <p className="mt-1 text-muted-foreground">{text}</p>
+                    </div>
+                  </li>
+                ))}
+              </ol>
             </div>
-            <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-muted-foreground">
+
+            <p className="mx-auto mt-14 max-w-2xl text-center text-xs text-muted-foreground">
               Soal latihan disusun mandiri mengikuti kerangka asesmen; bukan soal resmi TKA.
             </p>
           </div>
@@ -480,6 +492,88 @@ function SectionHeading({ eyebrow, title, text, wide }: { eyebrow: string; title
       <span className="text-sm font-bold tracking-wide text-primary uppercase">{eyebrow}</span>
       <h2 className="mt-2 text-3xl font-extrabold tracking-tight sm:text-4xl">{title}</h2>
       {text && <p className="mt-3 text-lg text-muted-foreground">{text}</p>}
+    </div>
+  );
+}
+
+/** Penanda bernomor yang menghubungkan ilustrasi dengan daftar penjelasan. */
+function Marker({ n, className }: { n: number; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={cn("flex size-7 shrink-0 items-center justify-center rounded-full bg-cta text-sm font-extrabold text-cta-foreground shadow-md ring-4 ring-card", className)}
+    >
+      {n}
+    </span>
+  );
+}
+
+/** Ilustrasi kartu soal (contoh, bukan soal dari bank) dengan anotasi ①–④ sejajar elemennya. */
+function KerangkaIllustration() {
+  const options = ["3 buku", "4 buku", "5 buku", "6 buku"];
+  const small = "size-5 text-[11px] ring-2 shadow-none";
+  return (
+    <div
+      role="img"
+      aria-label="Contoh kartu soal: bentuk Pilihan Ganda, subtopik Aljabar Persamaan Linear, level kognitif L2 Aplikasi, dilengkapi pembahasan"
+      className="surface-card mx-auto w-full max-w-lg shadow-xl ring-8 ring-primary/5"
+    >
+      {/* ① bentuk soal */}
+      <div className="flex flex-wrap items-center gap-1.5 rounded-t-[inherit] border-b bg-muted/50 p-3">
+        <Marker n={1} className={small} />
+        {["Pilihan Ganda", "PGK MCMA", "PGK Kategori"].map((t, i) => (
+          <span
+            key={t}
+            className={cn("rounded-lg px-2.5 py-1 text-xs font-semibold", i === 0 ? "bg-primary text-primary-foreground" : "bg-card text-muted-foreground")}
+          >
+            {t}
+          </span>
+        ))}
+      </div>
+
+      <div className="flex flex-col gap-4 p-5 sm:p-6">
+        {/* ② subtopik & ③ level kognitif */}
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-2 text-xs">
+          <span className="flex items-center gap-1.5">
+            <Marker n={2} className={small} />
+            <span className="rounded-full bg-primary-soft px-2.5 py-1 font-semibold text-primary">SMP · Aljabar › Persamaan Linear</span>
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Marker n={3} className={small} />
+            <span className="rounded-full bg-warning-soft px-2.5 py-1 font-semibold text-warning-strong">L2 · Aplikasi</span>
+          </span>
+        </div>
+
+        <p className="leading-relaxed">
+          Harga 3 buku tulis dan 2 pensil adalah Rp29.000,00. Jika harga 1 pensil Rp4.000,00, banyak buku yang dapat dibeli
+          dengan uang Rp35.000,00 adalah ....
+        </p>
+
+        <ul className="grid grid-cols-2 gap-2 text-sm">
+          {options.map((o, i) => (
+            <li key={o} className={cn("flex items-center gap-2 rounded-lg border px-3 py-2", i === 2 && "border-primary bg-primary-soft font-semibold text-primary")}>
+              <span
+                className={cn(
+                  "flex size-6 items-center justify-center rounded-md text-xs font-bold",
+                  i === 2 ? "bg-primary text-primary-foreground" : "bg-muted text-muted-foreground",
+                )}
+              >
+                {"ABCD"[i]}
+              </span>
+              {o}
+            </li>
+          ))}
+        </ul>
+
+        {/* ④ pembahasan */}
+        <div className="rounded-xl bg-success-soft p-3 text-sm">
+          <div className="flex items-center gap-1.5 font-semibold text-success-strong">
+            <Marker n={4} className={small} />
+            <BookOpenCheck className="size-4" aria-hidden /> Pembahasan
+          </div>
+          <p className="mt-1 text-muted-foreground">Harga 1 buku = (29.000 − 8.000) : 3 = 7.000, jadi 35.000 : 7.000 = 5 buku.</p>
+        </div>
+      </div>
     </div>
   );
 }

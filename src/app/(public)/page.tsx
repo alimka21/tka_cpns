@@ -26,13 +26,13 @@ import { SITE_NAME } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { getLandingData } from "@/server/queries/landing";
 
-// Angka soal/paket & testimoni dibaca dari DB, diperbarui tiap 5 menit (dan
-// langsung saat admin menyimpan testimoni).
+// Testimoni dibaca dari DB, diperbarui tiap 5 menit (dan langsung saat admin
+// menyimpan testimoni).
 export const revalidate = 300;
 
 // Struktur mengikuti docs/UI_UX.md §4.1 & layar Stitch "Landing Page".
 // Semua klaim di halaman ini harus faktual — jangan tambahkan angka pengguna,
-// tingkat kelulusan, atau testimoni karangan. Angka & testimoni hanya dari DB
+// tingkat kelulusan, atau testimoni karangan. Testimoni hanya dari DB
 // (testimoni diisi admin di Pengaturan Sistem; section tersembunyi bila kosong).
 
 const highlights: { icon: LucideIcon; title: string; text: string }[] = [
@@ -178,7 +178,7 @@ const steps = [
 ];
 
 export default async function LandingPage() {
-  const { stats, testimonials } = await getLandingData();
+  const { testimonials } = await getLandingData();
   return (
     <div className="flex flex-1 flex-col bg-card">
       <header className="sticky top-0 z-50 border-b bg-card/90 backdrop-blur">
@@ -281,20 +281,6 @@ export default async function LandingPage() {
                 </article>
               ))}
             </div>
-            {stats && stats.questions > 0 && (
-              <dl className="mx-auto mt-10 grid max-w-3xl grid-cols-3 divide-x rounded-2xl border bg-primary-soft/50 text-center">
-                {[
-                  [stats.questions, "soal siap dikerjakan"],
-                  [stats.packages, "paket tes"],
-                  [stats.subjects, "mata pelajaran"],
-                ].map(([n, label]) => (
-                  <div key={label} className="flex flex-col-reverse px-3 py-5">
-                    <dt className="mt-1 text-xs text-muted-foreground sm:text-sm">{label}</dt>
-                    <dd className="text-3xl font-extrabold text-primary tabular-nums sm:text-4xl">{Number(n).toLocaleString("id-ID")}</dd>
-                  </div>
-                ))}
-              </dl>
-            )}
             <p className="mx-auto mt-6 max-w-2xl text-center text-xs text-muted-foreground">
               Soal latihan disusun mandiri mengikuti kerangka asesmen; bukan soal resmi TKA.
             </p>

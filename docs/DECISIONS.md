@@ -15,8 +15,8 @@ Alternatif yang ditolak: ...
 ## 2026-10-03 — Landing page: kerangka asesmen, angka live, testimoni admin, FAQ
 Keputusan: section "Disusun mengikuti Kerangka Asesmen TKA" (BSKAP No.
 047/H/AN/2025 SD & SMP, No. 045/H/AN/2025 SMA/SMK; bentuk soal, subtopik ≥80%,
-level L1–L3, aturan komposisi, pembahasan, review admin) + angka live dari DB
-(soal tayang, paket tayang, mapel) dengan ISR 5 menit; FAQ jujur ("bukan soal
+level L1–L3, aturan komposisi, pembahasan, review admin) — angka live (soal/
+paket/mapel) sempat ditambah lalu dihapus atas permintaan pemilik; FAQ jujur ("bukan soal
 resmi TKA"). Testimoni disimpan di `app_settings` key `landing.testimonials`
 (maks 12, dikelola di Pengaturan Sistem), section tersembunyi bila kosong.
 Alasan: aturan halaman — semua klaim harus faktual; testimoni karangan

@@ -12,6 +12,21 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-04 — Soal TKA Fisika SMA 2025 (impor PDF ke bank, belum dipaketkan)
+PDF "SOAL TKA Fisika SMA 2025 Pilihan" berisi 24 soal (no. 6 belum ada) TANPA
+kunci → kunci & pembahasan Claude. Diimpor sebagai soal #379–#402
+(`pending_review`), 16 gambar dipotong dari PDF, 2 grup bacaan: "Uji Coba
+Mobil" (#39, no. 3–4) dan "Percobaan Konduksi Kalor" (#40, no. 18–19; teks
+alat & langkah dipindah ke stimulus). 15/15 subtopik Fisika terwakili;
+komposisi 20 PG / 3 MCMA / 1 Kategori → untuk paket 25 soal (PG ≤ 15) masih
+perlu ±6 soal non-PG. Penyesuaian: no. 2 di PDF tidak menyebut jarak & waktu
+berangkat → ditambah "berangkat pukul 08.00, Pulau B 10 km di timur" agar kunci
+(timur 8 km/jam) dapat dihitung; no. 17 pasangan Tepat/Tidak Tepat → Ya/Tidak
+(pasangan yang didukung). Mikrometer no. 1 dibaca dari render 4×: luar 10,95 mm,
+tebal 0,80 mm → dalam 9,35 mm. Catatan: data no. 7 (basket) tidak konsisten
+secara numerik dengan premis "bola masuk" — kunci C ditetapkan dari
+perbandingan relatif (bola Bisma ±0,6 m lebih rendah).
+
 ## 2026-10-03 — Landing page: kerangka asesmen, angka live, testimoni admin, FAQ
 Keputusan: section "Disusun mengikuti Kerangka Asesmen TKA" (BSKAP No.
 047/H/AN/2025 SD & SMP, No. 045/H/AN/2025 SMA/SMK; bentuk soal, subtopik ≥80%,

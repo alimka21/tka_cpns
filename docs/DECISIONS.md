@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-04 — Paket TKA SMA Ekonomi — Paket 1 (#24, draf, lolos aturan)
+PDF "SOAL TKA Ekonomi SMA 2025 Pilihan" 30 soal TANPA kunci → kunci & pembahasan
+Claude; soal #403–#432 (`pending_review`), 10 tabel/grafik dipotong dari PDF.
+Paket #24 = 15 PG + 8 MCMA + 2 Kategori, 60 menit, 10/10 subtopik (outline DB),
+sulit 16%, L3 48%. Di bank saja: no. 3, 4, 16 (PG) dan no. 11, 19 (MCMA yang
+tafsirannya paling bisa diperdebatkan). Perbaikan atas PDF: no. 6 pajak Rp25 →
+Rp15/unit (dengan 25 tidak ada opsi benar; dengan 15 opsi C, D, E cocok);
+no. 28 diperjelas "JUMLAH (total) aset maupun kewajiban" (kunci 1, 3, 4, 5);
+no. 10 kalimat menggantung dilengkapi "meningkat"; no. 19 opsi E "dengan
+pengawasan" → "tanpa pengawasan". Keputusan kunci yang perlu dicek admin:
+no. 2 biaya peluang = alternatif terbaik (Rp10 juta), no. 9 A, B, C, E
+(stabilitas harga dihitung faktor), no. 11 A, C, E, no. 18 A, B.
+
 ## 2026-10-04 — Soal TKA Fisika SMA 2025 (impor PDF ke bank, belum dipaketkan)
 PDF "SOAL TKA Fisika SMA 2025 Pilihan" berisi 24 soal (no. 6 belum ada) TANPA
 kunci → kunci & pembahasan Claude. Diimpor sebagai soal #379–#402

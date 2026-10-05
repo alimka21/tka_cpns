@@ -12,6 +12,20 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Kimia — Paket 1 (#28, draf, lolos aturan)
+PDF "SOAL TKA Kimia SMA 2025 Pilihan" 25 soal TANPA kunci → kunci & pembahasan
+Claude (semua hitungan dicek ulang); soal #524–#554, 16 gambar/tabel/grafik dari PDF.
+PDF 21 PG / 4 non-PG dan tanpa soal Struktur Atom & Ikatan Kimia → 6 soal tambahan
+Claude ("[Soal tambahan]": ion X²⁺/Y⁻, bentuk & kepolaran molekul, ΔHc metana,
+penyangga asetat, sel Zn–Cu, faktor laju CaCO₃). Paket #28 = 15 PG + 4 MCMA +
+6 Kategori, 60 menit, 8/8 subtopik, L3 56%. Di bank saja (PG): no. 1, 4, 10, 17, 18, 20.
+Perbaikan PDF: no. 4 R ditambahkan; no. 12 massa jenis 1 g/mL ditambahkan (kunci
+1,6%); no. 10 opsi "₃O⁺" → H₃O⁺; no. 24 H₂O di kedua ruas (tidak setara) dihapus;
+no. 25 "X₂⁺" → X²⁺; no. 17 "jumlah sama" → "jumlah mol sama"; no. 8 struktur
+zig-zag ditulis CH₃–CH₂–CH₂–CH₃; no. 11 opsi tabel ditulis sebagai teks.
+Kunci yang paling perlu dicek: no. 7 (A, B, D — S = parafin/lilin), no. 9 (B, B, S),
+no. 25 (B — arah panah elektron Y → X), no. 22 (B).
+
 ## 2026-10-05 — Paket TKA SMA Geografi — Paket 1 (#27, draf, lolos aturan)
 PDF "SOAL TKA Geografi SMA 2025 Pilihan" 49 halaman, 30 soal unik (soal Arjuno
 250249-0328 tercetak dua kali) TANPA kunci → kunci & pembahasan Claude; soal

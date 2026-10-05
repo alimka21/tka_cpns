@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-05 — Paket TKA SMA Geografi — Paket 1 (#27, draf, lolos aturan)
+PDF "SOAL TKA Geografi SMA 2025 Pilihan" 49 halaman, 30 soal unik (soal Arjuno
+250249-0328 tercetak dua kali) TANPA kunci → kunci & pembahasan Claude; soal
+#494–#523, 27 gambar dipotong dari PDF (peta DSP + tabel dan ShakeMap + skala MMI
+masing-masing digabung jadi satu gambar). Paket #27 = 13 PG + 4 MCMA + 8 Kategori,
+60 menit, 11/11 subtopik. Di bank saja (paling ambigu): no. 8 (lokasi X), 9
+(strategi Papua), 12 (Arjuno), 20 (fakta/opini Sigi), 26 (PLTS terapung).
+Penyesuaian: Fakta/Opini → Ya/Tidak ("apakah fakta?"); narasi no. 19 menyebut
+Pasaman Barat padahal peta/judul/koordinat Tapanuli Utara → diselaraskan.
+Kunci paling bisa diperdebatkan: no. 7 (TS, S, S), no. 11 (A, C, D, E — usia
+pensiun dihitung benar), no. 25 (A, B, C — petak persegi = tambak).
+
 ## 2026-10-05 — Paket TKA SMA Bahasa Inggris Tingkat Lanjut — Paket 1 (#26, draf, lolos aturan)
 PDF "SOAL TKA Bahasa Inggris SMA 2025 Pilihan" (SMA-BING-L) 41 halaman; hlm. 32–41
 mengulang 10 soal pertama (kode soal sama) → 30 soal unik TANPA kunci. Diimpor

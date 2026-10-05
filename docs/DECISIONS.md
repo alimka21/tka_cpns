@@ -12,6 +12,22 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-05 — Paket TKA SMA Bahasa Inggris Tingkat Lanjut — Paket 1 (#26, draf, lolos aturan)
+PDF "SOAL TKA Bahasa Inggris SMA 2025 Pilihan" (SMA-BING-L) 41 halaman; hlm. 32–41
+mengulang 10 soal pertama (kode soal sama) → 30 soal unik TANPA kunci. Diimpor
+#463–#493 (30 + 1 PG tambahan Claude "digital dissonance"), stimulus #54–#65.
+PDF hanya punya 12 PG (paket butuh ≥13) → tambah 1 PG; 6 non-PG (no. 5, 9, 15,
+20, 22, 29 — paling ambigu) ke bank dengan salinan bacaan sendiri agar 6 grup paket
+tetap utuh (4–5 soal/grup). Paket #26 = 13 PG + 8 MCMA + 4 Kategori, 60 menit,
+13/16 subtopik. Penyesuaian: pasangan kategori di luar yang didukung (Digital
+Dissonance/Mindful, Increased Stress/Loss of Authenticity, Cause/Effect,
+Argument/Explanation) dijadikan pernyataan Benar/Salah, Agree/Disagree → Ya/Tidak,
+Suitable → Sesuai/Tidak Sesuai; no. 28 pilihan gambar diagram alir ditranskripsi
+jadi teks; no. 30 kalimat opini yang dirujuk tidak ada di PDF → ditambahkan
+("Fast fashion encourages people to buy more clothes than they actually need").
+Kunci paling bisa diperdebatkan: no. 23 (A, B, C — D bertentangan angka 90%),
+no. 24 (B, D, E), no. 4 (A).
+
 ## 2026-10-05 — Paket TKA SMA Bahasa Indonesia Tingkat Lanjut — Paket 1 (#25, draf, lolos aturan)
 PDF "SOAL TKA Bahasa Indonesia SMA 2025 Pilihan" = mapel SMA-BIND-L. 30 soal
 (label "1–4 / 27–30 OTW" di PDF hanya catatan; yang ada lengkap 30) TANPA kunci →

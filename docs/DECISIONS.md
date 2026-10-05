@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-05 — Paket TKA SMA Bahasa Indonesia Tingkat Lanjut — Paket 1 (#25, draf, lolos aturan)
+PDF "SOAL TKA Bahasa Indonesia SMA 2025 Pilihan" = mapel SMA-BIND-L. 30 soal
+(label "1–4 / 27–30 OTW" di PDF hanya catatan; yang ada lengkap 30) TANPA kunci →
+kunci & pembahasan Claude; soal #433–#462, stimulus #41–#53, 3 tabel dipotong
+dari PDF (kemiskinan, bobot inflasi, tarif pantai; screenshot ulasan pantai
+ditranskrip jadi teks). Paket #25 = 15 PG + 5 MCMA + 5 Kategori, 60 menit,
+12/15 subtopik. Semua soal berbasis bacaan, sehingga paket hanya bisa dikurangi
+per grup utuh — no. 24, 26, 27, 29, 30 (PG) dibuat dengan bacaan tunggal (tabel
+pantai / satu wacana) agar bisa disisihkan ke bank; dua-wacana menjadi grup 2 soal.
+Perbaikan PDF: no. 17 opsi D dan E identik → E diganti "Bobot Makassar lebih
+tinggi daripada Palembang" (salah). Kunci yang paling bisa diperdebatkan: no. 5
+(A, C, E), no. 25 (S, B, B), no. 22 (B, B, S), no. 23 (S, B, B).
+
 ## 2026-10-04 — Paket TKA SMA Ekonomi — Paket 1 (#24, draf, lolos aturan)
 PDF "SOAL TKA Ekonomi SMA 2025 Pilihan" 30 soal TANPA kunci → kunci & pembahasan
 Claude; soal #403–#432 (`pending_review`), 10 tabel/grafik dipotong dari PDF.

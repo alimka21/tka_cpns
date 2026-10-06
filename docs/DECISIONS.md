@@ -12,6 +12,16 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Matematika — Paket 3 (#33, draf, ditulis Claude)
+Pola sama dengan B. Indonesia Paket 2: 13 soal variasi soal bank (bilangan dan
+konteks diganti, `source_question_id` = #152, 153, 154, 155, 156, 157, 172, 173, 175,
+331, 333, 334, 339 — sumber dipilih yang tidak bergantung gambar) + 12 soal baru
+dengan 3 grup stimulus (paket internet, data lama tidur, kolam taman). Soal #682–#706,
+stimulus #72–#74. 15 PG + 4 MCMA + 6 Kategori, 75 menit, 10/10 subtopik, L1 12%,
+L3 40%, sulit 32% — semua aturan wajib lolos; saran "mayoritas berbasis stimulus"
+belum (10/25). Semua hitungan dicek ulang dan 157 rumus KaTeX valid. Catatan
+tampilan: stimulus tidak merender tabel markdown — tabel ditulis sebagai baris teks.
+
 ## 2026-10-06 — Paket TKA SMA Bahasa Indonesia — Paket 2 (#32, draf, ditulis Claude)
 Permintaan pemilik: 50% variasi soal bank, 50% soal baru. 6 bacaan × 5 soal (stimulus
 #66–#71, soal #652–#681, `generated_by` manual). Variasi (15): 3 bacaan baru meniru pola

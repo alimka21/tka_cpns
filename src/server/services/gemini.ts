@@ -68,6 +68,11 @@ export async function verifyGeminiKey(apiKey: string): Promise<void> {
   if (!res.ok) throw geminiErrorFor(res.status, await res.text());
 }
 
+const RETRYABLE_STATUS = new Set([429, 500, 502, 503, 504]);
+/** Jeda sebelum percobaan ulang ke-1 dan ke-2. Bisa dipendekkan untuk pengujian. */
+const RETRY_DELAYS_MS = (process.env.GEMINI_RETRY_DELAYS_MS ?? "3000,10000").split(",").map(Number).filter((n) => n >= 0);
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 export type GeminiImage = { mime: string; data: Buffer };
 
 /**
@@ -87,24 +92,29 @@ export async function generateJson(opts: {
     ...(opts.images ?? []).map((img) => ({ inline_data: { mime_type: img.mime, data: img.data.toString("base64") } })),
     { text: opts.prompt },
   ];
-  const res = await call(
-    `/models/${encodeURIComponent(geminiModel())}:generateContent`,
-    opts.apiKey,
-    {
-      method: "POST",
-      body: JSON.stringify({
-        contents: [{ role: "user", parts }],
-        // Gemini 3: biarkan temperature default model kecuali diminta eksplisit.
-        generationConfig: {
-          responseMimeType: "application/json",
-          ...(opts.temperature != null && { temperature: opts.temperature }),
-          ...(opts.maxOutputTokens != null && { maxOutputTokens: opts.maxOutputTokens }),
-        },
-      }),
-    },
-    opts.timeoutMs ?? 90_000,
-  );
-  const body = await res.text();
+  const init: RequestInit = {
+    method: "POST",
+    body: JSON.stringify({
+      contents: [{ role: "user", parts }],
+      // Gemini 3: biarkan temperature default model kecuali diminta eksplisit.
+      generationConfig: {
+        responseMimeType: "application/json",
+        ...(opts.temperature != null && { temperature: opts.temperature }),
+        ...(opts.maxOutputTokens != null && { maxOutputTokens: opts.maxOutputTokens }),
+      },
+    }),
+  };
+  // Gemini sibuk (503/500/502/504) atau batas per menit (429): coba ulang
+  // otomatis dengan jeda bertambah sebelum menyerah ke pengguna.
+  let res: Response;
+  let body: string;
+  for (let attempt = 0; ; attempt++) {
+    res = await call(`/models/${encodeURIComponent(geminiModel())}:generateContent`, opts.apiKey, init, opts.timeoutMs ?? 90_000);
+    body = await res.text();
+    const wait = RETRY_DELAYS_MS[attempt];
+    if (res.ok || !RETRYABLE_STATUS.has(res.status) || wait == null) break;
+    await sleep(wait);
+  }
   if (!res.ok) throw geminiErrorFor(res.status, body);
 
   let json: { candidates?: { content?: { parts?: { text?: string }[] }; finishReason?: string }[]; promptFeedback?: { blockReason?: string } };

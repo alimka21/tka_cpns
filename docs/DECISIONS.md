@@ -12,6 +12,22 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Buat Paket Otomatis: grup bacaan, rencana per soal, soal berdiri sendiri
+
+- Pemicu: paket #35 (Bahasa Indonesia SMA, 30 soal AI) — 10 soal merujuk
+  bacaan yang tidak ada, 0 soal berbasis stimulus, bentuk & tingkat berblok
+  per subtopik, nama/tema berulang. Paket #35 + 30 soalnya dihapus (draf,
+  belum dikerjakan) atas permintaan pemilik produk.
+- Keputusan: mapel bahasa dibuat sebagai grup bacaan 3–5 soal; SMA lain ±50%
+  grup. Bentuk & tingkat ditentukan sistem per soal (rencana), AI wajib
+  mengikuti; soal di luar rencana dibuang. Soal tunggal wajib memuat bacaannya
+  (prompt + validator). Retry otomatis 429/5xx, paralel 2.
+- Konsekuensi: jumlah panggilan Gemini untuk 30 soal bahasa ±7 (sebelumnya
+  ±12); prompt grup lebih panjang. Detail: docs/AI_GENERATION.md §11.
+- Kunci Gemini terenkripsi dengan `ENCRYPTION_SECRET` server produksi → paket
+  pengganti #35 dibuat admin dari web produksi setelah deploy (tidak bisa dari
+  lokal).
+
 ## 2026-10-06 — Paket TKA SMA Fisika — Paket 1 (#34, draf)
 
 - 19 soal impor PDF (#379, 381–382 grup #39, 384–385, 387–388, 390–392,

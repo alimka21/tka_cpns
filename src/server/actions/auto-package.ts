@@ -29,11 +29,13 @@ export async function previewAutoPackageAction(raw: unknown): Promise<AutoPackag
 }
 
 const batchInput = z.object({
-  subtopicCode: frameworkCode,
-  type: z.enum(QUESTION_TYPES),
-  count: z.number().int().min(1).max(10),
-  tier: z.union([z.literal(1), z.literal(2), z.literal(3)]),
+  kind: z.enum(["grup", "tunggal"]),
+  slots: z
+    .array(z.object({ subtopicCode: frameworkCode, type: z.enum(QUESTION_TYPES), tier: z.union([z.literal(1), z.literal(2), z.literal(3)]) }))
+    .min(1)
+    .max(10),
   sourceQuestionId: id.nullable(),
+  theme: z.string().trim().max(600),
 });
 
 export async function runAutoPackageBatchAction(raw: unknown): Promise<AutoBatchResult> {

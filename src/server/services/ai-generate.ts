@@ -14,7 +14,9 @@ import { db } from "@/server/db";
 import { aiGenerationLogs, questions, stimuli, subtopics, type AiGenerationMode } from "@/server/db/schema";
 import { loadQuestionsWithKeys, type QuestionWithKeys } from "@/server/queries/practice";
 import { getGeminiKey } from "@/server/services/ai-key";
-import { mapAiQuestions, parseAiStimulus, type AiForm } from "@/server/services/ai-questions";
+import { fillPlan, mapAiQuestions, parseAiStimulus, type AiForm, type PlanItem, type ResolvedPlanItem } from "@/server/services/ai-questions";
+
+export type { PlanItem };
 import { GeminiError, generateJson, geminiModel, type GeminiImage } from "@/server/services/gemini";
 import { getQuestionImage, imagePath } from "@/server/services/question-images";
 import { insertQuestion, subtopicIdsByCode } from "@/server/services/question-store";
@@ -35,8 +37,12 @@ export type RunAiInput = {
   subtopicByCode?: Record<string, number>;
   /** Mode grup tanpa stimulus: AI menulis bacaan di percobaan pertama. */
   wantsNewStimulus?: boolean;
-  /** Prompt untuk `need` soal; `stimulus` terisi setelah AI menulis bacaan. */
-  prompt: (need: number, avoid: string[], stimulus: Stimulus | null) => ReturnType<typeof buildAiPrompt>;
+  /** Soal tunggal: tolak soal yang merujuk bacaan yang tidak ditulis. */
+  standalone?: boolean;
+  /** Rencana per soal; `count` harus sama dengan panjangnya. */
+  plan?: ResolvedPlanItem[];
+  /** Prompt untuk `need` soal (dan sisa rencana); `stimulus` terisi setelah AI menulis bacaan. */
+  prompt: (need: number, avoid: string[], stimulus: Stimulus | null, plan: PlanItem[] | null) => ReturnType<typeof buildAiPrompt>;
 };
 
 export type RunAiOutput = { valid: QuestionInput[]; rejected: string[]; error: string | null; stimulus: Stimulus | null };
@@ -46,10 +52,11 @@ export async function runAiGeneration(input: RunAiInput): Promise<RunAiOutput> {
   const valid: QuestionInput[] = [];
   const rejected: string[] = [];
   let stimulus: Stimulus | null = null;
+  let planLeft = input.plan ?? null;
   try {
     for (let attempt = 0; attempt < 2 && valid.length < input.count; attempt++) {
       const need = input.count - valid.length;
-      const prompt = input.prompt(need, valid.map((v) => v.questionText), stimulus);
+      const prompt = input.prompt(need, valid.map((v) => v.questionText), stimulus, planLeft);
       if (!prompt.ok) return { valid, rejected, error: prompt.error, stimulus };
       const raw = await generateJson({ apiKey: input.apiKey, prompt: prompt.prompt, images: input.images });
       if (input.wantsNewStimulus && !stimulus) {
@@ -67,9 +74,17 @@ export async function runAiGeneration(input: RunAiInput): Promise<RunAiOutput> {
         cognitiveLevel: input.cognitiveLevel,
         imageUrl: input.imageUrl,
         existingTexts: [...input.existingTexts, ...valid.map((v) => v.questionText)],
+        standalone: input.standalone,
       });
-      valid.push(...mapped.valid.slice(0, need));
       rejected.push(...mapped.rejected);
+      if (planLeft) {
+        const filled = fillPlan(mapped.valid, planLeft);
+        valid.push(...filled.accepted);
+        rejected.push(...filled.rejected);
+        planLeft = filled.left;
+      } else {
+        valid.push(...mapped.valid.slice(0, need));
+      }
     }
     return { valid, rejected, error: null, stimulus };
   } catch (e) {
@@ -92,6 +107,10 @@ export type AiGenerateRequest = {
   /** Mode grup: subtopik tambahan di mata uji yang sama (satu bacaan, beberapa subtopik). */
   extraSubdomainCodes?: string[] | null;
   extraInstruction?: string | null;
+  /** Rencana per soal (Buat Paket Otomatis); menggantikan form/count/difficulty. */
+  plan?: PlanItem[] | null;
+  /** Arahan tema & nama tokoh dari sistem. */
+  contextHint?: string | null;
 };
 
 export type AiGenerateResult =
@@ -112,7 +131,15 @@ function stimulusCode() {
 export async function generateAiQuestions(userId: number, req: AiGenerateRequest): Promise<AiGenerateResult> {
   const apiKey = await getGeminiKey(userId);
   if (!apiKey) return { ok: false, error: "Simpan API key Gemini milikmu dulu di halaman Pengaturan." };
-  if (req.form === "campuran" && req.mode !== "grup") return { ok: false, error: "Bentuk campuran hanya untuk mode soal grup." };
+  const plan = req.plan?.length ? req.plan : null;
+  if (plan) {
+    if (req.mode === "gambar") return { ok: false, error: "Rencana per soal tidak untuk mode gambar." };
+    if (req.mode !== "grup" && plan.some((p) => p.subdomainCode !== req.subdomainCode)) {
+      return { ok: false, error: "Soal tunggal dalam satu permintaan harus satu subtopik." };
+    }
+    req = { ...req, form: "campuran", count: plan.length, subdomainCode: plan[0].subdomainCode };
+  }
+  if (req.form === "campuran" && req.mode !== "grup" && !plan) return { ok: false, error: "Bentuk campuran hanya untuk mode soal grup." };
 
   let subdomainCode = req.subdomainCode;
   let source: QuestionWithKeys | undefined;
@@ -150,7 +177,10 @@ export async function generateAiQuestions(userId: number, req: AiGenerateRequest
   const subtopicId = (await subtopicIdsByCode(db, [subdomainCode])).get(subdomainCode);
   if (!subtopicId) return { ok: false, error: "Subdomain belum ada di database — jalankan npm run db:seed:asesmen." };
 
-  const extraCodes = req.mode === "grup" ? [...new Set((req.extraSubdomainCodes ?? []).filter((c) => c !== subdomainCode))] : [];
+  const extraCodes =
+    req.mode === "grup"
+      ? [...new Set([...(req.extraSubdomainCodes ?? []), ...(plan ?? []).map((p) => p.subdomainCode)].filter((c) => c !== subdomainCode))]
+      : [];
   let subtopicByCode: Record<string, number> | undefined;
   if (extraCodes.length > 0) {
     const ids = await subtopicIdsByCode(db, extraCodes);
@@ -159,6 +189,7 @@ export async function generateAiQuestions(userId: number, req: AiGenerateRequest
     subtopicByCode = Object.fromEntries([[subdomainCode, subtopicId], ...ids]);
   }
   const allSubtopicIds = subtopicByCode ? Object.values(subtopicByCode) : [subtopicId];
+  const resolvedPlan = plan?.map((p) => ({ ...p, subtopicId: p.subdomainCode === subdomainCode ? subtopicId : subtopicByCode![p.subdomainCode] }));
   const existing = await db.select({ text: questions.questionText }).from(questions).where(inArray(questions.subtopicId, allSubtopicIds));
   const started = Date.now();
   const run = await runAiGeneration({
@@ -173,23 +204,25 @@ export async function generateAiQuestions(userId: number, req: AiGenerateRequest
     existingTexts: [...existing.map((e) => e.text), ...(source ? [source.questionText] : [])],
     subtopicByCode,
     wantsNewStimulus: req.mode === "grup" && !existingStimulus,
-    prompt: (need, avoid, aiStimulus) =>
+    standalone: req.mode === "baru" || req.mode === "variasi",
+    plan: resolvedPlan,
+    prompt: (need, avoid, aiStimulus, planLeft) =>
       buildAiPrompt({
         mode: req.mode,
         form: req.form,
         count: need,
         subdomainCode,
-        difficulty: req.difficulty,
-        cognitiveLevel: req.cognitiveLevel,
+        difficulty: planLeft?.[0]?.difficulty ?? req.difficulty,
+        cognitiveLevel: planLeft?.[0]?.cognitiveLevel ?? req.cognitiveLevel,
+        plan: planLeft?.map(({ subdomainCode, form, difficulty, cognitiveLevel }) => ({ subdomainCode, form, difficulty, cognitiveLevel })),
+        contextHint: req.contextHint ?? undefined,
+        avoid,
         variation: req.variation,
         imageNote,
         // Setelah AI menulis bacaan, percobaan ulang memakai bacaan yang sama.
         stimulus: existingStimulus ?? aiStimulus,
         extraSubdomainCodes: extraCodes,
-        extraInstruction:
-          [req.extraInstruction, avoid.length ? `Jangan mengulang soal berikut:\n${avoid.map((t) => `- ${t.slice(0, 160)}`).join("\n")}` : null]
-            .filter(Boolean)
-            .join("\n\n") || undefined,
+        extraInstruction: req.extraInstruction ?? undefined,
         source: source
           ? { type: source.type, questionText: source.questionText, categoryLabels: source.categoryLabels, explanation: source.explanation, options: source.options }
           : undefined,

@@ -11,24 +11,24 @@ import { db } from "@/server/db";
 import { categories, questions, subjects, subtopics, testPackageQuestions, testPackages, topics } from "@/server/db/schema";
 import { loadSubjectOutlines } from "@/server/queries/packages";
 import { getGeminiKey } from "@/server/services/ai-key";
-import { generateAiQuestions } from "@/server/services/ai-generate";
+import { generateAiQuestions, type PlanItem } from "@/server/services/ai-generate";
 import { batchAiSlots, planAutoPackage, TIER_DIFFICULTY, type PlanQuestion, type Tier } from "@/server/services/auto-package-plan";
 import { validatePackageOrder } from "@/server/services/package-composition";
 
 /** Status soal bank yang boleh diambil (keputusan pemilik produk 2026-10-02). */
 const USABLE_STATUSES = ["published", "pending_review"] as const;
 
+export type AutoBatchSlot = { subtopicCode: string; subtopicName: string; topicName: string; type: QuestionType; tier: Tier };
+
 export type AutoBatch = {
-  subtopicCode: string;
-  subtopicName: string;
-  topicName: string;
-  type: QuestionType;
-  count: number;
-  /** 1 = mudah/L1, 2 = sedang/L2, 3 = sulit/L3. */
-  tier: Tier;
-  /** null = soal baru (subtopik belum punya soal tunggal untuk dimodifikasi). */
+  /** grup = 1 bacaan baru + beberapa soal; tunggal = soal berdiri sendiri satu subtopik. */
+  kind: "grup" | "tunggal";
+  slots: AutoBatchSlot[];
+  /** Hanya batch tunggal: soal bank yang divariasikan (null = soal baru). */
   sourceQuestionId: number | null;
   sourceSnippet: string | null;
+  /** Arahan tema & nama tokoh supaya batch tidak seragam (mis. nama "Aris" di banyak soal). */
+  theme: string;
 };
 
 export type AutoPackagePreview =
@@ -61,8 +61,13 @@ async function loadSubjectContext(categoryId: number, subjectId: number) {
   const rule = packageRuleFor(row.jenjang, { code: row.code, type: row.type });
   const outline = (await loadSubjectOutlines([subjectId])).get(subjectId) ?? [];
   const firstSub = outline[0]?.subtopics[0]?.code;
-  const levelled = firstSub ? (findSubdomain(firstSub)?.subject.cognitiveLevels.length ?? 0) > 0 : false;
-  return { ...row, rule, outline, levelled };
+  const ref = firstSub ? findSubdomain(firstSub) : null;
+  const levelled = (ref?.subject.cognitiveLevels.length ?? 0) > 0;
+  // Mata uji literasi membaca (Bahasa Indonesia/Inggris): soal TKA-nya berbasis bacaan.
+  const reading = ref?.subject.raw.aspek_keterampilan_membaca !== undefined;
+  // SMA: mayoritas soal disarankan berbasis stimulus (docs/ATURAN_PAKET.md).
+  const groupShare = reading ? 1 : row.jenjang === "SMA" ? 0.5 : 0;
+  return { ...row, rule, outline, levelled, groupShare };
 }
 
 /** Soal mapel ini (status tayang/menunggu tinjauan) yang belum masuk paket mana pun. */
@@ -126,30 +131,32 @@ export async function buildAutoPackagePreview(userId: number, categoryId: number
   if (!ctx.outline.length) return { ok: false, error: "Topik & subtopik mapel ini belum ada — jalankan npm run db:seed:asesmen." };
 
   const available = await loadAvailable(subjectId);
-  const plan = planAutoPackage({ available, outline: ctx.outline, questionCount: ctx.rule.questionCount, levelled: ctx.levelled });
+  const plan = planAutoPackage({
+    available,
+    outline: ctx.outline,
+    questionCount: ctx.rule.questionCount,
+    levelled: ctx.levelled,
+    groupShare: ctx.groupShare,
+  });
   const names = new Map(ctx.outline.flatMap((t) => t.subtopics.map((s) => [s.code, { sub: s.name, topic: t.name }] as const)));
-  const raw = batchAiSlots(plan.aiSlots);
-  const sources = await pickSources([...new Set(raw.map((b) => b.subtopicCode))]);
-  const batches: AutoBatch[] = [];
-  for (const b of raw) {
-    const candidates = sources.get(b.subtopicCode) ?? [];
-    const same = candidates.filter((c) => c.type === b.type);
-    const pool = same.length ? same : candidates;
+  const raw = batchAiSlots(plan);
+  const sources = await pickSources([...new Set(raw.filter((b) => b.kind === "tunggal").map((b) => b.slots[0].subtopicCode))]);
+  const themes = themeAssigner();
+  const batches: AutoBatch[] = raw.map((b) => {
+    const pool = b.kind === "tunggal" ? (sources.get(b.slots[0].subtopicCode) ?? []) : [];
     const source = pool.length ? pool[Math.floor(Math.random() * pool.length)] : null;
-    // Maks. 10 soal per panggilan Gemini (batas generate AI).
-    for (let left = b.count; left > 0; left -= 10) {
-      batches.push({
-        subtopicCode: b.subtopicCode,
-        subtopicName: names.get(b.subtopicCode)?.sub ?? b.subtopicCode,
-        topicName: names.get(b.subtopicCode)?.topic ?? "",
-        type: b.type,
-        tier: b.tier,
-        count: Math.min(left, 10),
-        sourceQuestionId: source?.id ?? null,
-        sourceSnippet: source ? source.text.slice(0, 140) : null,
-      });
-    }
-  }
+    return {
+      kind: b.kind,
+      slots: b.slots.map((s) => ({
+        ...s,
+        subtopicName: names.get(s.subtopicCode)?.sub ?? s.subtopicCode,
+        topicName: names.get(s.subtopicCode)?.topic ?? "",
+      })),
+      sourceQuestionId: source?.id ?? null,
+      sourceSnippet: source ? source.text.slice(0, 140) : null,
+      theme: themes(b.slots.length),
+    };
+  });
   return {
     ok: true,
     subjectName: ctx.name,
@@ -172,37 +179,51 @@ const DIFF_RANK: Record<Difficulty, number> = { easy: 1, medium: 2, hard: 3 };
 
 export async function runAutoPackageBatch(
   userId: number,
-  b: { subtopicCode: string; type: QuestionType; count: number; tier: Tier; sourceQuestionId: number | null },
+  b: { kind: "grup" | "tunggal"; slots: { subtopicCode: string; type: QuestionType; tier: Tier }[]; sourceQuestionId: number | null; theme: string },
 ): Promise<AutoBatchResult> {
-  const ref = findSubdomain(b.subtopicCode);
-  if (!ref) return { ok: false, error: "Subtopik tidak ada di kerangka asesmen." };
+  const refs = b.slots.map((s) => findSubdomain(s.subtopicCode));
+  if (refs.some((r) => !r)) return { ok: false, error: "Subtopik tidak ada di kerangka asesmen." };
+  const subject = refs[0]!.subject;
+  if (refs.some((r) => r!.subject.code !== subject.code)) return { ok: false, error: "Semua soal batch harus dari mata uji yang sama." };
+  if (b.kind === "tunggal" && b.slots.some((s) => s.subtopicCode !== b.slots[0].subtopicCode)) {
+    return { ok: false, error: "Batch soal tunggal harus satu subtopik." };
+  }
   // Mata uji ber-level (mis. Matematika) wajib menyebut level kognitif target.
-  const levelled = ref.subject.cognitiveLevels.length > 0;
-  const cognitiveLevel = levelled ? (ref.subject.cognitiveLevels.find((l) => l.code === `L${b.tier}`)?.code ?? null) : null;
-  if (levelled && !cognitiveLevel) return { ok: false, error: `Level L${b.tier} tidak ada untuk ${ref.subject.name}.` };
-  const difficulty = TIER_DIFFICULTY[b.tier];
+  const levelled = subject.cognitiveLevels.length > 0;
+  const plan: PlanItem[] = [];
+  for (const s of b.slots) {
+    const cognitiveLevel = levelled ? (subject.cognitiveLevels.find((l) => l.code === `L${s.tier}`)?.code ?? null) : null;
+    if (levelled && !cognitiveLevel) return { ok: false, error: `Level L${s.tier} tidak ada untuk ${subject.name}.` };
+    plan.push({ subdomainCode: s.subtopicCode, form: s.type, difficulty: TIER_DIFFICULTY[s.tier], cognitiveLevel });
+  }
 
+  const sourceQuestionId = b.kind === "tunggal" ? b.sourceQuestionId : null;
   let variation: VariationStyle = "bebas";
-  if (b.sourceQuestionId) {
+  if (sourceQuestionId) {
     const [src] = await db
       .select({ difficulty: questions.difficulty, subtopicCode: subtopics.code })
       .from(questions)
       .innerJoin(subtopics, eq(subtopics.id, questions.subtopicId))
-      .where(eq(questions.id, b.sourceQuestionId));
-    if (!src || src.subtopicCode !== b.subtopicCode) return { ok: false, error: "Soal asal tidak cocok dengan subtopik." };
-    // Variasi diarahkan ke tingkat target: soal asal lebih mudah → "lebih sulit", dst.
-    const gap = DIFF_RANK[difficulty] - DIFF_RANK[src.difficulty];
-    variation = gap > 0 ? "lebih_sulit" : gap < 0 ? "lebih_mudah" : "bebas";
+      .where(eq(questions.id, sourceQuestionId));
+    if (!src || src.subtopicCode !== b.slots[0].subtopicCode) return { ok: false, error: "Soal asal tidak cocok dengan subtopik." };
+    // Satu variasi bertingkat sama → arahkan; tingkat campur → bebas (tingkat per soal ada di rencana).
+    const only = new Set(plan.map((p) => p.difficulty));
+    if (only.size === 1) {
+      const gap = DIFF_RANK[plan[0].difficulty] - DIFF_RANK[src.difficulty];
+      variation = gap > 0 ? "lebih_sulit" : gap < 0 ? "lebih_mudah" : "bebas";
+    }
   }
   const r = await generateAiQuestions(userId, {
-    mode: b.sourceQuestionId ? "variasi" : "baru",
-    subdomainCode: b.subtopicCode,
-    form: b.type,
-    count: b.count,
-    difficulty,
-    cognitiveLevel,
-    sourceQuestionId: b.sourceQuestionId,
+    mode: b.kind === "grup" ? "grup" : sourceQuestionId ? "variasi" : "baru",
+    subdomainCode: plan[0].subdomainCode,
+    form: "campuran",
+    count: plan.length,
+    difficulty: plan[0].difficulty,
+    cognitiveLevel: plan[0].cognitiveLevel,
+    sourceQuestionId,
     variation,
+    plan,
+    contextHint: b.theme,
   });
   if (!r.ok) return { ok: false, error: r.error };
   return { ok: true, ids: r.created.map((c) => c.id), rejected: r.rejected };
@@ -230,17 +251,19 @@ export async function createAutoPackage(
         const own = await db
           .select({ id: questions.id })
           .from(questions)
-          .where(and(inArray(questions.id, p.aiIds), eq(questions.generatedBy, "ai"), eq(questions.createdBy, userId), isNull(questions.stimulusId)));
+          .where(and(inArray(questions.id, p.aiIds), eq(questions.generatedBy, "ai"), eq(questions.createdBy, userId)));
         const ownIds = new Set(own.map((o) => o.id));
         return rows.filter((r) => ownIds.has(r.id));
       })
     : [];
   if (aiRows.length !== new Set(p.aiIds).size) return { ok: false, errors: ["Soal AI tidak valid atau sudah dipakai paket lain."] };
 
+  // Urutkan seluruh paket per subtopik; grup stimulus (bank atau AI) tetap utuh & berurutan.
   const subOrder = new Map(ctx.outline.flatMap((t) => t.subtopics).map((s, i) => [s.code, i]));
-  const aiOrdered = [...aiRows].sort((a, b) => (subOrder.get(a.subtopicCode) ?? 0) - (subOrder.get(b.subtopicCode) ?? 0) || a.id - b.id).map((r) => r.id);
-  const ordered = [...p.bankIds, ...aiOrdered];
+  const ordered = orderPackage(p.bankIds, bank, aiRows, subOrder);
   if (!ordered.length) return { ok: false, errors: ["Belum ada soal untuk paket."] };
+  const finalErrors = validatePackageOrder(ordered, [...bank, ...aiRows]);
+  if (finalErrors.length) return { ok: false, errors: finalErrors };
 
   const id = await db.transaction(async (tx) => {
     const [{ id }] = await tx
@@ -260,4 +283,65 @@ export async function createAutoPackage(
     return id;
   });
   return { ok: true, id, total: ordered.length };
+}
+
+/** Blok paket (soal tunggal / satu grup stimulus) diurutkan per subtopik terendahnya. */
+function orderPackage(bankIds: number[], bank: PlanQuestion[], ai: PlanQuestion[], subOrder: Map<string, number>) {
+  const byId = new Map([...bank, ...ai].map((q) => [q.id, q]));
+  const aiSorted = [...ai].sort((a, b) => (a.stimulusId ?? 0) - (b.stimulusId ?? 0) || (a.stimulusOrder ?? 0) - (b.stimulusOrder ?? 0) || a.id - b.id);
+  const blocks: number[][] = [];
+  const blockOf = new Map<number, number[]>();
+  for (const id of [...bankIds, ...aiSorted.map((q) => q.id)]) {
+    const st = byId.get(id)!.stimulusId;
+    if (st == null) blocks.push([id]);
+    else if (blockOf.has(st)) blockOf.get(st)!.push(id);
+    else {
+      const blk = [id];
+      blockOf.set(st, blk);
+      blocks.push(blk);
+    }
+  }
+  const rank = (blk: number[]) => Math.min(...blk.map((id) => subOrder.get(byId.get(id)!.subtopicCode) ?? 9999));
+  return blocks
+    .map((blk, i) => ({ blk, i, r: rank(blk) }))
+    .sort((a, b) => a.r - b.r || a.i - b.i)
+    .flatMap((x) => x.blk);
+}
+
+// Tema & nama tokoh per batch (diacak per rencana) — tiap panggilan Gemini
+// berjalan terpisah/paralel sehingga tidak saling tahu isi batch lain.
+const THEMES = [
+  "kelautan dan nelayan pesisir",
+  "kuliner dan pangan lokal",
+  "kesehatan remaja",
+  "seni pertunjukan dan budaya daerah",
+  "sejarah dan tokoh lokal",
+  "transportasi dan tata kota",
+  "olahraga dan prestasi pelajar",
+  "sains sehari-hari dan penelitian siswa",
+  "pertanian dan ketahanan pangan",
+  "pariwisata dan kearifan lokal",
+  "literasi digital dan media sosial",
+  "kebencanaan dan mitigasi",
+  "kewirausahaan dan UMKM",
+  "keluarga dan persahabatan",
+  "energi terbarukan",
+  "satwa, hutan, dan konservasi",
+  "musik dan sastra",
+  "kehidupan sekolah dan organisasi siswa",
+];
+const NAMES = [
+  "Nadia", "Bayu", "Kirana", "Fajar", "Wulan", "Rizky", "Dewi", "Yohanes", "Putu", "Made", "Ketut", "Siti", "Ucok", "Butet",
+  "Andi", "Daeng", "Intan", "Tigor", "Laras", "Gilang", "Mei Lin", "Hendra", "Asih", "Ratna", "Bima", "Sekar", "Arif", "Lestari",
+  "Theresia", "Ilham", "Nur", "Dimas", "Ayu", "Rahmat", "Citra", "Yusuf", "Marlina", "Galih", "Fitri", "Samuel",
+];
+
+function themeAssigner() {
+  let t = Math.floor(Math.random() * THEMES.length);
+  let n = Math.floor(Math.random() * NAMES.length);
+  return (count: number) => {
+    const theme = THEMES[t++ % THEMES.length];
+    const names = Array.from({ length: Math.min(4, count + 1) }, () => NAMES[n++ % NAMES.length]);
+    return `Tema/konteks bacaan: ${theme} (boleh disesuaikan agar cocok dengan subtopik). Bila perlu nama tokoh, pakai: ${names.join(", ")} — jangan memakai nama lain yang umum dipakai berulang (mis. Aris, Budi, Rina).`;
+  };
 }

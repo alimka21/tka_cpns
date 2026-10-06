@@ -17,7 +17,8 @@ export type AutoJenjangOption = { id: number; code: string; name: string; subjec
 type Preview = Extract<AutoPackagePreview, { ok: true }>;
 type BatchState = { status: "waiting" | "running" | "done" | "failed"; ids: number[]; error?: string };
 
-const PARALLEL = 3;
+// 2 sekaligus: 3 batch paralel ikut memicu "Gemini sedang tidak tersedia" (503).
+const PARALLEL = 2;
 
 const DIFFICULTY_NAME = { 1: "Mudah", 2: "Sedang", 3: "Sulit" } as const;
 
@@ -91,11 +92,15 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
         state[i] = { status: "running", ids: [] };
         setBatches([...state]);
         const b = preview.batches[i];
-        const r = await runAutoPackageBatchAction({ subtopicCode: b.subtopicCode, type: b.type, count: b.count, tier: b.tier, sourceQuestionId: b.sourceQuestionId }).catch(
-          () => ({ ok: false as const, error: "Koneksi terputus." }),
-        );
+        const r = await runAutoPackageBatchAction({
+          kind: b.kind,
+          slots: b.slots.map(({ subtopicCode, type, tier }) => ({ subtopicCode, type, tier })),
+          sourceQuestionId: b.sourceQuestionId,
+          theme: b.theme,
+        }).catch(() => ({ ok: false as const, error: "Koneksi terputus." }));
+        const want = b.slots.length;
         state[i] = r.ok
-          ? { status: "done", ids: r.ids, error: r.ids.length < b.count ? `${r.ids.length} dari ${b.count} soal lolos validasi.` : undefined }
+          ? { status: "done", ids: r.ids, error: r.ids.length < want ? `${r.ids.length} dari ${want} soal lolos validasi.` : undefined }
           : { status: "failed", ids: [], error: r.error };
         setBatches([...state]);
       }
@@ -155,8 +160,8 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
         </div>
         <p className="text-sm text-muted-foreground">
           Sistem mengambil soal bank yang <strong>belum masuk paket mana pun</strong> (tayang atau menunggu tinjauan),
-          memilihnya agar aturan paket terpenuhi, lalu menghitung kekurangan per subtopik &amp; bentuk soal untuk dibuat AI
-          — memodifikasi soal bank di subtopik yang sama, atau soal baru bila subtopik belum punya soal.
+          memilihnya agar aturan paket terpenuhi, lalu menghitung kekurangan per subtopik &amp; bentuk soal untuk dibuat AI. Mapel bahasa dibuat sebagai grup
+          bacaan (1 bacaan untuk 3–5 soal); SMA lain sebagian berupa grup stimulus, sisanya soal tunggal yang berdiri sendiri.
         </p>
         {loading && (
           <p className="flex items-center gap-2 text-sm text-muted-foreground">
@@ -233,12 +238,23 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
                     <li key={i} className="flex flex-col gap-1 p-3 text-sm sm:flex-row sm:items-start sm:justify-between sm:gap-4">
                       <div className="min-w-0">
                         <div className="font-semibold">
-                          {b.count}× {QUESTION_TYPE_META[b.type].short} — {b.subtopicName}{" "}
-                          <Badge variant={b.tier === 1 ? "muted" : b.tier === 2 ? "info" : "warning"}>{tierLabel(b.tier, preview.levelled)}</Badge>
+                          {b.kind === "grup" ? `Grup bacaan · ${b.slots.length} soal` : `${b.slots.length} soal tunggal — ${b.slots[0].subtopicName}`}
                         </div>
-                        <div className="text-xs text-muted-foreground">{b.topicName}</div>
+                        <div className="text-xs text-muted-foreground">
+                          {[...new Set(b.slots.map((x) => x.topicName))].join(" · ")}
+                          {b.kind === "grup" && <> — {[...new Set(b.slots.map((x) => x.subtopicName))].join("; ")}</>}
+                        </div>
+                        <div className="mt-1 flex flex-wrap gap-1">
+                          {b.slots.map((x, k) => (
+                            <Badge key={k} variant={x.tier === 1 ? "muted" : x.tier === 2 ? "info" : "warning"}>
+                              {QUESTION_TYPE_META[x.type].short} · {tierLabel(x.tier, preview.levelled)}
+                            </Badge>
+                          ))}
+                        </div>
                         <div className="mt-1 text-xs text-muted-foreground">
-                          {b.sourceQuestionId ? (
+                          {b.kind === "grup" ? (
+                            "AI menulis satu bacaan baru, lalu semua soal grup ini mengacu ke bacaan itu."
+                          ) : b.sourceQuestionId ? (
                             <>
                               Variasi dari soal{" "}
                               <Link href={`/admin/soal/${b.sourceQuestionId}`} target="_blank" className="font-semibold text-primary hover:underline">
@@ -331,7 +347,7 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
           </div>
           {running && (
             <p role="status" className="flex items-center gap-2 text-xs text-muted-foreground">
-              <CircleCheck className="size-3.5" aria-hidden /> Tiap batch butuh ±30–60 detik (3 berjalan bersamaan). Jangan tutup halaman ini.
+              <CircleCheck className="size-3.5" aria-hidden /> Tiap batch butuh ±30–60 detik (2 berjalan bersamaan; bila Gemini sibuk, sistem otomatis mencoba ulang). Jangan tutup halaman ini.
             </p>
           )}
         </section>

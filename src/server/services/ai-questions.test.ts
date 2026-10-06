@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { mapAiQuestions, mathRenders, normalizeText, parseAiStimulus, type AiMappingContext } from "./ai-questions";
+import { mapAiQuestions, mathRenders, normalizeText, parseAiStimulus, refersToMissingText, fillPlan, type AiMappingContext } from "./ai-questions";
 
 const ctx = (p: Partial<AiMappingContext> = {}): AiMappingContext => ({
   type: "pg",
@@ -142,5 +142,49 @@ describe("grup multi-subtopik", () => {
     );
     expect(r.valid.map((v) => v.subtopicId)).toEqual([11, 22, 11]);
     expect(r.rejected[0]).toMatch(/di luar pilihan/);
+  });
+});
+
+describe("refersToMissingText", () => {
+  const passage = "Lorem ipsum dolor sit amet. ".repeat(10);
+  it("menolak rujukan ke teks yang tidak ditulis", () => {
+    expect(refersToMissingText("Berdasarkan teks tersebut, manakah gagasan utama paragraf kedua?")).toBe(true);
+    expect(refersToMissingText("Istilah 'disparitas' pada paragraf ketiga teks tersebut bermakna …")).toBe(true);
+    expect(refersToMissingText("Bacalah teks berikut!\n\nBerdasarkan teks, …")).toBe(true);
+  });
+  it("menerima soal yang memuat bacaannya sendiri", () => {
+    expect(refersToMissingText(`Bacalah teks berikut!\n\n${passage}\n\nBerdasarkan teks tersebut, simpulan yang tepat adalah …`)).toBe(false);
+    expect(refersToMissingText(`${passage} Berdasarkan data tersebut, …`)).toBe(false);
+    expect(refersToMissingText("Hasil dari $2 + 3$ adalah …")).toBe(false);
+  });
+  it("mapAiQuestions: soal tunggal yatim ditolak bila standalone", () => {
+    const raw = {
+      questions: [
+        {
+          questionText: "Berdasarkan teks tersebut, makna kata 'infrastruktur' adalah …",
+          options: [{ text: "a", isCorrect: true }, { text: "b" }, { text: "c" }, { text: "d" }],
+          explanation: "x",
+        },
+      ],
+    };
+    const base = { type: "pg" as const, subtopicId: 1, difficulty: "medium" as const, cognitiveLevel: null, existingTexts: [] };
+    expect(mapAiQuestions(raw, { ...base, standalone: true }).valid).toHaveLength(0);
+    expect(mapAiQuestions(raw, base).valid).toHaveLength(1);
+  });
+});
+
+describe("fillPlan", () => {
+  const q = (type: "pg" | "pgk_mcma", subtopicId: number) =>
+    ({ type, subtopicId, questionText: `soal ${type} ${subtopicId}`, difficulty: "medium", cognitiveLevel: null, status: "pending_review", options: [] }) as never;
+  it("mengisi slot sesuai bentuk & subtopik, tingkat mengikuti slot, sisanya ditolak", () => {
+    const plan = [
+      { subdomainCode: "A", subtopicId: 1, form: "pg" as const, difficulty: "hard" as const, cognitiveLevel: "L3" },
+      { subdomainCode: "B", subtopicId: 2, form: "pgk_mcma" as const, difficulty: "easy" as const, cognitiveLevel: "L1" },
+    ];
+    const r = fillPlan([q("pg", 1), q("pg", 1), q("pgk_mcma", 1)], plan);
+    expect(r.accepted).toHaveLength(1);
+    expect(r.accepted[0]).toMatchObject({ difficulty: "hard", cognitiveLevel: "L3" });
+    expect(r.rejected).toHaveLength(2);
+    expect(r.left.map((p) => p.subdomainCode)).toEqual(["B"]);
   });
 });

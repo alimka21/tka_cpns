@@ -37,8 +37,10 @@ export type AiSlot = { subtopicCode: string; type: QuestionType; tier: Tier };
 export type AutoPackagePlan = {
   /** Soal bank terpilih, sudah tersusun (grup utuh & berurutan). */
   bankIds: number[];
-  /** Kekurangan yang perlu dibuat AI, satu entri per soal. */
+  /** Kekurangan yang perlu dibuat AI, satu entri per soal (urut subtopik). */
   aiSlots: AiSlot[];
+  /** Indeks `aiSlots` yang dibuat sebagai satu grup bacaan (1 stimulus, 3–5 soal). */
+  aiGroups: number[][];
   stats: { bank: number; bankPg: number; ai: number; aiPg: number; target: number };
   /** Sebaran tingkat 1/2/3 seluruh paket (bank + AI); soal bank tanpa data tidak dihitung. */
   tiers: Record<Tier, number>;
@@ -80,6 +82,8 @@ export function planAutoPackage(input: {
   questionCount: number;
   /** Mata uji memakai level kognitif L1–L3 (bahasa: tidak). */
   levelled?: boolean;
+  /** Porsi soal AI yang dibuat sebagai grup bacaan: 1 = semua (mapel bahasa), 0.5 = separuh (SMA), 0 = tidak ada. */
+  groupShare?: number;
 }): AutoPackagePlan {
   const N = input.questionCount;
   const range = pgRange(N);
@@ -147,8 +151,8 @@ export function planAutoPackage(input: {
   }
 
   // 3) Kekurangan untuk AI: subtopik dulu (yang belum terwakili, lalu yang
-  // paling sedikit), lalu bentuk soal dibagikan berurutan per subtopik supaya
-  // satu subtopik = sedikit bentuk = sedikit panggilan Gemini.
+  // paling sedikit). Bentuk soal disebar merata sepanjang paket (bukan blok
+  // per subtopik) supaya tiap topik punya PG, MCMA, dan Kategori.
   const missing = N - size;
   const aiPg = Math.min(Math.min(missing, range.max - pg), Math.max(range.min - pg, targetPg - pg, 0));
   const byId = new Map(input.available.map((q) => [q.id, q]));
@@ -163,10 +167,10 @@ export function planAutoPackage(input: {
       aiMcma++;
     } else kategori++;
   }
-  const types: QuestionType[] = [
-    ...Array.from({ length: aiPg }, () => "pg" as const),
-    ...Array.from({ length: aiMcma }, () => "pgk_mcma" as const),
-    ...Array.from({ length: missing - aiPg - aiMcma }, () => "pgk_kategori" as const),
+  const typeTotals: [QuestionType, number][] = [
+    ["pg", aiPg],
+    ["pgk_mcma", aiMcma],
+    ["pgk_kategori", missing - aiPg - aiMcma],
   ];
 
   const pickSubtopic = () => {
@@ -184,49 +188,129 @@ export function planAutoPackage(input: {
     subCount.set(best, (subCount.get(best) ?? 0) + 1);
     return best;
   };
-  const slotSubs = allSubs.length > 0 ? types.map(() => pickSubtopic()) : [];
+  const slotSubs = allSubs.length > 0 ? Array.from({ length: missing }, () => pickSubtopic()) : [];
   slotSubs.sort((a, b) => (order.get(a) ?? 0) - (order.get(b) ?? 0));
+  const types = spread(typeTotals, slotSubs.length);
 
   // 4) Tingkat soal AI: tutup kekurangan terhadap target sebaran seluruh paket
-  // (QUALITY_TARGET). Satu kelompok subtopik+bentuk diusahakan satu tingkat
-  // supaya batch Gemini tetap sedikit.
+  // (QUALITY_TARGET), lalu sebar merata (tidak satu subtopik satu tingkat).
   const tiers: Record<Tier, number> = { 1: 0, 2: 0, 3: 0 };
   for (const id of chosen.flatMap((u) => u.ids)) {
     const t = tierOf(byId.get(id)!, input.levelled ?? false);
     if (t) tiers[t]++;
   }
   const target: Record<Tier, number> = { 1: N * QUALITY_TARGET.low, 2: N * QUALITY_TARGET.mid, 3: N * QUALITY_TARGET.high };
-  const deficit = (t: Tier) => target[t] - tiers[t];
-  const aiSlots: AiSlot[] = [];
-  let prevKey = "";
-  let prevTier: Tier = 2;
-  slotSubs.forEach((subtopicCode, i) => {
-    const key = `${subtopicCode}|${types[i]}`;
-    const best = ([3, 2, 1] as Tier[]).reduce((a, b) => (deficit(b) > deficit(a) ? b : a));
-    const tier = key === prevKey && deficit(prevTier) > 0 ? prevTier : best;
-    tiers[tier]++;
-    aiSlots.push({ subtopicCode, type: types[i], tier });
-    prevKey = key;
-    prevTier = tier;
-  });
+  // Bagi slot sebanding kekurangan tiap tingkat (sisa pembulatan → kekurangan terbesar, sulit dulu).
+  const n = slotSubs.length;
+  const deficits = ([1, 2, 3] as Tier[]).map((t) => Math.max(0, target[t] - tiers[t]));
+  const sum = deficits.reduce((a, b) => a + b, 0);
+  const weights = sum > 0 ? deficits : [QUALITY_TARGET.low, QUALITY_TARGET.mid, QUALITY_TARGET.high];
+  const wsum = weights.reduce((a, b) => a + b, 0);
+  const exact = weights.map((w) => (n * w) / wsum);
+  const counts = exact.map(Math.floor);
+  const byRemainder = [2, 1, 0].sort((a, b) => exact[b] - counts[b] - (exact[a] - counts[a]));
+  for (let k = 0; counts.reduce((a, b) => a + b, 0) < n; k++) counts[byRemainder[k % 3]]++;
+  const tierTotals: Record<Tier, number> = { 1: counts[0], 2: counts[1], 3: counts[2] };
+  // Mulai dari tingkat sedang supaya urutan tidak berpola sama dengan bentuk soal.
+  const slotTiers = spread(
+    ([2, 3, 1] as Tier[]).map((t) => [t, tierTotals[t]] as [Tier, number]),
+    slotSubs.length,
+  );
+  for (const t of slotTiers) tiers[t]++;
+  const aiSlots: AiSlot[] = slotSubs.map((subtopicCode, i) => ({ subtopicCode, type: types[i], tier: slotTiers[i] }));
+
+  // 5) Grup bacaan: slot berurutan dalam satu topik dipecah jadi grup 3–5 soal
+  // (1 stimulus, lintas subtopik). Mapel bahasa: semua; SMA lain: sebagian.
+  const aiGroups: number[][] = [];
+  const share = input.groupShare ?? 0;
+  if (share > 0) {
+    const byTopic = new Map<string, number[]>();
+    aiSlots.forEach((s, i) => {
+      const t = topicOf.get(s.subtopicCode) ?? "";
+      byTopic.set(t, [...(byTopic.get(t) ?? []), i]);
+    });
+    // Porsi < 1: ambil dari topik dengan slot terbanyak sampai ±share × jumlah slot AI.
+    const want = share >= 1 ? Infinity : Math.round(aiSlots.length * share);
+    let grouped = 0;
+    const topicsBySize = [...byTopic.values()].sort((a, b) => b.length - a.length);
+    for (const idx of topicsBySize) {
+      if (grouped >= want) break;
+      const take = Math.min(idx.length, Math.max(3, want - grouped));
+      const groups = chunkGroups(idx.slice(0, take));
+      for (const g of groups) aiGroups.push(g);
+      grouped += groups.flat().length;
+    }
+    aiGroups.sort((a, b) => a[0] - b[0]);
+  }
 
   chosen.sort((a, b) => a.sortKey.localeCompare(b.sortKey));
   return {
     bankIds: chosen.flatMap((u) => u.ids),
     aiSlots,
+    aiGroups,
     stats: { bank: size, bankPg: pg, ai: aiSlots.length, aiPg: aiSlots.filter((s) => s.type === "pg").length, target: N },
     tiers,
   };
 }
 
-/** Gabungkan slot AI menjadi permintaan per (subtopik, bentuk soal, tingkat). */
-export function batchAiSlots(slots: AiSlot[]): (AiSlot & { count: number })[] {
-  const map = new Map<string, AiSlot & { count: number }>();
-  for (const s of slots) {
-    const k = `${s.subtopicCode}|${s.type}|${s.tier}`;
-    const cur = map.get(k);
-    if (cur) cur.count++;
-    else map.set(k, { ...s, count: 1 });
+/**
+ * Sebar `totals` (mis. 15 PG, 8 MCMA, 7 Kategori) ke `n` posisi secara merata:
+ * di tiap posisi pilih jenis yang paling tertinggal dari porsi idealnya.
+ */
+export function spread<T>(totals: [T, number][], n: number): T[] {
+  const used = totals.map(() => 0);
+  const out: T[] = [];
+  for (let i = 0; i < n; i++) {
+    let best = -1;
+    let bestLag = -Infinity;
+    totals.forEach(([, total], k) => {
+      if (used[k] >= total) return;
+      const lag = ((i + 1) * total) / n - used[k];
+      if (lag > bestLag) {
+        best = k;
+        bestLag = lag;
+      }
+    });
+    if (best < 0) break;
+    used[best]++;
+    out.push(totals[best][0]);
   }
-  return [...map.values()];
+  return out;
+}
+
+/** Pecah indeks berurutan jadi grup berukuran 3–5 (sebisa mungkin 4); < 3 → tidak ada grup. */
+export function chunkGroups(idx: number[]): number[][] {
+  const m = idx.length;
+  if (m < 3) return [];
+  let k = Math.max(1, Math.round(m / 4));
+  while (m / k > 5) k++;
+  while (k > 1 && m / k < 3) k--;
+  const out: number[][] = [];
+  let at = 0;
+  for (let g = 0; g < k; g++) {
+    const size = Math.floor(m / k) + (g < m % k ? 1 : 0);
+    out.push(idx.slice(at, at + size));
+    at += size;
+  }
+  return out;
+}
+
+/** Satu panggilan Gemini: grup bacaan, atau soal tunggal satu subtopik (bentuk & tingkat campur). */
+export type AiBatchPlan = { kind: "grup" | "tunggal"; slots: AiSlot[] };
+
+/** Susun panggilan Gemini: tiap grup satu panggilan; soal tunggal digabung per subtopik (maks. 10). */
+export function batchAiSlots(plan: Pick<AutoPackagePlan, "aiSlots" | "aiGroups">): AiBatchPlan[] {
+  const inGroup = new Set(plan.aiGroups.flat());
+  const out: { first: number; batch: AiBatchPlan }[] = plan.aiGroups.map((g) => ({ first: g[0], batch: { kind: "grup", slots: g.map((i) => plan.aiSlots[i]) } }));
+  const singles = new Map<string, number[]>();
+  plan.aiSlots.forEach((s, i) => {
+    if (!inGroup.has(i)) singles.set(s.subtopicCode, [...(singles.get(s.subtopicCode) ?? []), i]);
+  });
+  for (const idx of singles.values()) {
+    for (let at = 0; at < idx.length; at += 10) {
+      const part = idx.slice(at, at + 10);
+      out.push({ first: part[0], batch: { kind: "tunggal", slots: part.map((i) => plan.aiSlots[i]) } });
+    }
+  }
+  return out.sort((a, b) => a.first - b.first).map((o) => o.batch);
 }

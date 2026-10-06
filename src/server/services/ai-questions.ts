@@ -39,6 +39,8 @@ export type AiMappingContext = {
   imageUrl?: string | null;
   /** Teks soal yang sudah ada (bank subtopik ini, soal asal) — untuk cegah duplikat. */
   existingTexts: string[];
+  /** Soal tunggal (bukan grup/gambar): tolak soal yang merujuk bacaan yang tidak ditulis. */
+  standalone?: boolean;
 };
 
 export type AiMappingResult = { valid: QuestionInput[]; rejected: string[] };
@@ -64,6 +66,26 @@ export function mathRenders(text: string) {
     }
   }
   return true;
+}
+
+const TEXT_REF =
+  /\b(teks|bacaan|kutipan|cerpen|cerita|paragraf|wacana|tabel|grafik|diagram|data|infografis|puisi|dialog|artikel|novel)\s+(tersebut|di atas|berikut|tadi)\b|\bparagraf\s+(pertama|kedua|ketiga|keempat|kelima|terakhir|ke-?\d)\b/gi;
+
+/**
+ * Soal tunggal yang merujuk bacaan/data tanpa memuatnya, mis. "Berdasarkan
+ * teks tersebut, ..." padahal teksnya ada di soal lain (atau tidak ada sama
+ * sekali). "… berikut" harus diikuti isinya; "… tersebut / paragraf kedua"
+ * harus didahului isinya.
+ */
+export function refersToMissingText(questionText: string) {
+  const text = questionText.replace(/\s+/g, " ").trim();
+  for (const m of text.matchAll(TEXT_REF)) {
+    const start = m.index ?? 0;
+    const forward = m[2]?.toLowerCase() === "berikut";
+    const room = forward ? text.length - (start + m[0].length) : start;
+    if (room < (forward ? 100 : 150)) return true;
+  }
+  return false;
 }
 
 function matchPair(labels: string[] | undefined) {
@@ -129,6 +151,9 @@ export function mapAiQuestions(raw: unknown, ctx: AiMappingContext): AiMappingRe
       return rejected.push(`${n}: panjang teks tidak wajar.`);
     }
     if (!q.explanation.trim()) return rejected.push(`${n}: pembahasan kosong.`);
+    if (ctx.standalone && !ctx.imageUrl && refersToMissingText(q.questionText)) {
+      return rejected.push(`${n}: merujuk bacaan/data yang tidak ditulis di soal itu.`);
+    }
     if (![q.questionText, q.explanation, ...options.map((o) => o.optionText)].every(mathRenders)) {
       return rejected.push(`${n}: rumus KaTeX tidak bisa dirender.`);
     }
@@ -139,6 +164,30 @@ export function mapAiQuestions(raw: unknown, ctx: AiMappingContext): AiMappingRe
   });
 
   return { valid, rejected };
+}
+
+/** Satu soal dalam rencana (Buat Paket Otomatis): bentuk, subtopik & tingkat ditentukan sistem. */
+export type PlanItem = { subdomainCode: string; form: QuestionType; difficulty: Difficulty; cognitiveLevel: string | null };
+export type ResolvedPlanItem = PlanItem & { subtopicId: number };
+
+/**
+ * Pasangkan soal valid ke slot rencana yang belum terisi (bentuk & subtopik
+ * harus sama); tingkat soal mengikuti slot. Soal di luar rencana dibuang.
+ */
+export function fillPlan(valid: QuestionInput[], remaining: ResolvedPlanItem[]) {
+  const left = [...remaining];
+  const accepted: QuestionInput[] = [];
+  const rejected: string[] = [];
+  for (const q of valid) {
+    const i = left.findIndex((p) => p.form === q.type && p.subtopicId === q.subtopicId);
+    if (i < 0) {
+      rejected.push(`Soal "${q.questionText.slice(0, 40)}…" tidak sesuai rencana bentuk/subtopik.`);
+      continue;
+    }
+    const [slot] = left.splice(i, 1);
+    accepted.push({ ...q, difficulty: slot.difficulty, cognitiveLevel: slot.cognitiveLevel });
+  }
+  return { accepted, rejected, left };
 }
 
 const aiStimulus = z.object({ title: z.string().trim().min(3).max(255), content: z.string().trim().min(80).max(8000) });

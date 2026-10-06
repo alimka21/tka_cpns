@@ -109,3 +109,58 @@ describe("buildAiPrompt grup multi-subtopik", () => {
     if (!r.ok) expect(r.error).toMatch(/mata uji yang sama/);
   });
 });
+
+describe("buildAiPrompt rencana per soal & soal berdiri sendiri", () => {
+  it("mode baru: aturan soal berdiri sendiri; grup: tidak", () => {
+    const one = { subdomainCode: "SMP-BIND-D1-S3", difficulty: "medium" as const, count: 2, cognitiveLevel: null, form: "pg" as const };
+    const baru = buildAiPrompt({ ...one, mode: "baru" });
+    const grup = buildAiPrompt({ ...one, mode: "grup" });
+    if (!baru.ok || !grup.ok) throw new Error("prompt gagal");
+    expect(baru.prompt).toContain("Setiap soal berdiri sendiri");
+    expect(grup.prompt).not.toContain("Setiap soal berdiri sendiri");
+  });
+
+  it("rencana: tiap soal tertulis bentuk/subtopik/tingkat, ciri semua tingkat & level ikut, JSON campuran", () => {
+    const r = buildAiPrompt({
+      subdomainCode: "SMP-MTK-D1-S1",
+      difficulty: "medium",
+      count: 2,
+      cognitiveLevel: "L1",
+      form: "campuran",
+      mode: "baru",
+      plan: [
+        { subdomainCode: "SMP-MTK-D1-S1", form: "pg", difficulty: "easy", cognitiveLevel: "L1" },
+        { subdomainCode: "SMP-MTK-D1-S1", form: "pgk_kategori", difficulty: "hard", cognitiveLevel: "L3" },
+      ],
+      contextHint: "Tema/konteks bacaan: kelautan",
+      avoid: ["Soal lama"],
+    });
+    if (!r.ok) throw new Error(r.error);
+    expect(r.prompt).toContain("## Rencana soal");
+    expect(r.prompt).toContain('1. type "pg"');
+    expect(r.prompt).toContain('2. type "pgk_kategori"');
+    expect(r.prompt).toContain('tingkat kesulitan "mudah"');
+    expect(r.prompt).toContain('tingkat kesulitan "sulit"');
+    expect(r.prompt).toContain("Level kognitif target: L1");
+    expect(r.prompt).toContain("Level kognitif target: L3");
+    expect(r.prompt).toContain('field "type"');
+    expect(r.prompt).toContain("kelautan");
+    expect(r.prompt).toContain("- Soal lama");
+  });
+
+  it("soal tunggal dengan beberapa subtopik ditolak", () => {
+    const r = buildAiPrompt({
+      subdomainCode: "SMP-BIND-D1-S3",
+      difficulty: "medium",
+      count: 2,
+      cognitiveLevel: null,
+      form: "campuran",
+      mode: "baru",
+      plan: [
+        { subdomainCode: "SMP-BIND-D1-S3", form: "pg", difficulty: "easy", cognitiveLevel: null },
+        { subdomainCode: "SMP-BIND-D2-S1", form: "pg", difficulty: "easy", cognitiveLevel: null },
+      ],
+    });
+    expect(r.ok).toBe(false);
+  });
+});

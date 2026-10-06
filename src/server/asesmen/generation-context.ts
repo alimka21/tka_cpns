@@ -63,7 +63,17 @@ export type GenerationRequest = {
   cognitiveLevel?: string | null;
   /** Bentuk soal; default PG sederhana. "campuran" = AI memilih per soal. */
   form?: QuestionType | "campuran";
+  /**
+   * Rencana per soal (Buat Paket Otomatis): bentuk, subtopik & tingkat tiap
+   * soal ditentukan sistem. Bila terisi, `count` = panjang rencana dan
+   * `difficulty`/`cognitiveLevel` di atas diabaikan.
+   */
+  plan?: PlannedQuestion[];
 };
+
+export type PlannedQuestion = { subdomainCode: string; form: QuestionType; difficulty: Difficulty; cognitiveLevel: string | null };
+
+const FORM_SHORT: Record<QuestionType, string> = { pg: "PG sederhana", pgk_mcma: "PGK multi jawaban", pgk_kategori: "PGK kategori" };
 
 const FORM_SENTENCE: Record<QuestionType | "campuran", string> = {
   campuran:
@@ -87,18 +97,25 @@ export function buildGenerationContext(req: GenerationRequest): GenerationContex
   if (!ref) return { ok: false, error: `Kode subdomain ${req.subdomainCode} tidak ada di kerangka asesmen.` };
   const { framework, subject, domain, subdomain } = ref;
 
-  let level: CognitiveLevel | null = null;
-  if (subject.cognitiveLevels.length > 0) {
-    level = subject.cognitiveLevels.find((l) => l.code === req.cognitiveLevel) ?? null;
-    if (!level) {
-      return {
-        ok: false,
-        error: `Pilih level kognitif untuk ${subject.name}: ${subject.cognitiveLevels.map((l) => `${l.code} (${l.name})`).join(", ")}.`,
-      };
+  const plan = req.plan?.length ? req.plan : null;
+  const wantedLevels = plan ? [...new Set(plan.map((p) => p.cognitiveLevel))] : [req.cognitiveLevel ?? null];
+  const levels: CognitiveLevel[] = [];
+  for (const code of wantedLevels) {
+    if (subject.cognitiveLevels.length > 0) {
+      const found = subject.cognitiveLevels.find((l) => l.code === code);
+      if (!found) {
+        return {
+          ok: false,
+          error: `Pilih level kognitif untuk ${subject.name}: ${subject.cognitiveLevels.map((l) => `${l.code} (${l.name})`).join(", ")}.`,
+        };
+      }
+      levels.push(found);
+    } else if (code) {
+      return { ok: false, error: `${subject.name} memakai struktur kompetensi, bukan level kognitif.` };
     }
-  } else if (req.cognitiveLevel) {
-    return { ok: false, error: `${subject.name} memakai struktur kompetensi, bukan level kognitif.` };
   }
+  const level = levels[0] ?? null;
+  const difficulties = plan ? [...new Set(plan.map((p) => p.difficulty))] : [req.difficulty];
 
   const subjectContext = Object.fromEntries(
     SUBJECT_CONTEXT_KEYS.filter((k) => subject.raw[k] !== undefined).map((k) => [k, subject.raw[k]]),
@@ -106,8 +123,13 @@ export function buildGenerationContext(req: GenerationRequest): GenerationContex
 
   const sections = [
     `Kamu adalah penyusun soal Tes Kemampuan Akademik (TKA) untuk jenjang ${framework.jenjangName}, mengikuti Kerangka Asesmen BSKAP No. ${framework.regulation.number}.`,
-    `Buat ${req.count} ${FORM_SENTENCE[req.form ?? "pg"]} dengan tingkat kesulitan ${DIFFICULTY_LABEL[req.difficulty]}.`,
-    `## Ciri tingkat kesulitan "${DIFFICULTY_LABEL[req.difficulty]}" (WAJIB dipenuhi setiap soal)\n${bullets(DIFFICULTY_GUIDE[req.difficulty])}`,
+    plan
+      ? `Buat ${plan.length} soal persis mengikuti "Rencana soal" di bawah (bentuk, subtopik, dan tingkat kesulitan ditentukan per soal).`
+      : `Buat ${req.count} ${FORM_SENTENCE[req.form ?? "pg"]} dengan tingkat kesulitan ${DIFFICULTY_LABEL[req.difficulty]}.`,
+    ...difficulties.map(
+      (d) =>
+        `## Ciri tingkat kesulitan "${DIFFICULTY_LABEL[d]}" (WAJIB dipenuhi ${plan ? "soal bertingkat ini" : "setiap soal"})\n${bullets(DIFFICULTY_GUIDE[d])}`,
+    ),
     [
       "## Posisi dalam kerangka",
       `Mata uji: ${subject.fullName} (${subject.code})`,
@@ -120,14 +142,15 @@ export function buildGenerationContext(req: GenerationRequest): GenerationContex
     subdomain.competencies.length > 0 && `## Kompetensi yang diukur\n${bullets(subdomain.competencies)}`,
     subdomain.scope.length > 0 && `## Cakupan (soal HARUS berada di dalam cakupan ini)\n${bullets(subdomain.scope)}`,
     subdomain.limits && `## Batasan (soal TIDAK BOLEH keluar dari batasan ini)\n${subdomain.limits}`,
-    level &&
+    ...levels.map((lv) =>
       [
-        `## Level kognitif target: ${level.code} — ${level.name}${level.nameEn ? ` (${level.nameEn})` : ""}`,
-        level.description,
-        level.processes.length > 0 && `Proses berpikir yang boleh diukur:\n${bullets(level.processes.map((p) => `${p.name}: ${p.description}`))}`,
+        `## Level kognitif target: ${lv.code} — ${lv.name}${lv.nameEn ? ` (${lv.nameEn})` : ""}`,
+        lv.description,
+        lv.processes.length > 0 && `Proses berpikir yang boleh diukur:\n${bullets(lv.processes.map((p) => `${p.name}: ${p.description}`))}`,
       ]
         .filter(Boolean)
         .join("\n"),
+    ),
     Object.keys(subjectContext).length > 0 &&
       `## Karakteristik mata uji (ikuti untuk stimulus, teks, dan konteks)\n${JSON.stringify(subjectContext, null, 1)}`,
     JENJANG_CHARACTER[framework.jenjang] && `## Karakteristik soal TKA ${framework.jenjang}\n${JENJANG_CHARACTER[framework.jenjang]}`,
@@ -189,6 +212,10 @@ export type AiPromptRequest = GenerationRequest & {
   imageNote?: string;
   /** Instruksi tambahan dari admin (opsional, dibatasi panjangnya). */
   extraInstruction?: string;
+  /** Teks soal yang tidak boleh diulang (percobaan ulang / bank). */
+  avoid?: string[];
+  /** Arahan konteks dari sistem (tema & nama tokoh) supaya antar-batch tidak seragam. */
+  contextHint?: string;
 };
 
 function describeSource(src: SourceQuestionForPrompt) {
@@ -248,9 +275,26 @@ export function buildAiPrompt(req: AiPromptRequest): GenerationContext {
             .join("\n")
         : null;
 
+  // Soal tunggal wajib berdiri sendiri — AI cenderung menulis bacaan hanya di
+  // soal pertama lalu soal berikutnya merujuk "teks tersebut" (paket #35).
+  const standaloneSection =
+    req.mode === "baru" || req.mode === "variasi"
+      ? [
+          "## Setiap soal berdiri sendiri (WAJIB)",
+          bullets([
+            "Soal akan ditampilkan TERPISAH dan bisa diacak. Bila soal membutuhkan teks bacaan, kutipan, tabel, atau data, tuliskan LENGKAP di dalam questionText soal itu sendiri, sebelum kalimat pertanyaan.",
+            'DILARANG merujuk bacaan/teks/tabel milik soal lain atau yang tidak ditulis di soal itu (mis. "teks tersebut", "paragraf kedua", "data di atas" tanpa teksnya).',
+            "Setiap soal memakai bacaan/konteks yang berbeda dari soal lain dalam permintaan ini.",
+          ]),
+        ].join("\n")
+      : null;
+
   // Grup multi-subtopik: daftar subtopik yang boleh dipakai + cakupan/batasannya.
   let multiSection: string | null = null;
-  const extraCodes = [...new Set((req.extraSubdomainCodes ?? []).filter((c) => c !== req.subdomainCode))];
+  const extraCodes = [
+    ...new Set([...(req.extraSubdomainCodes ?? []), ...(req.plan ?? []).map((p) => p.subdomainCode)].filter((c) => c !== req.subdomainCode)),
+  ];
+  if (req.mode !== "grup" && extraCodes.length > 0) return { ok: false, error: "Beberapa subtopik dalam satu permintaan hanya untuk mode soal grup." };
   if (req.mode === "grup" && extraCodes.length > 0) {
     const refs = [base.ref, ...extraCodes.map((c) => findSubdomain(c))];
     const bad = extraCodes.filter((_, i) => !refs[i + 1] || refs[i + 1]!.subject.code !== base.ref.subject.code);
@@ -270,13 +314,26 @@ export function buildAiPrompt(req: AiPromptRequest): GenerationContext {
     ].join("\n");
   }
 
+  const plan = req.plan?.length ? req.plan : null;
+  const planSection = plan
+    ? [
+        "## Rencana soal (WAJIB diikuti, urut)",
+        ...plan.map((p, i) => {
+          const sub = findSubdomain(p.subdomainCode);
+          return `${i + 1}. type "${p.form}" (${FORM_SHORT[p.form]}) · subtopik ${p.subdomainCode}${sub ? ` — ${sub.subdomain.name}` : ""} · tingkat ${DIFFICULTY_LABEL[p.difficulty]}${p.cognitiveLevel ? ` · level ${p.cognitiveLevel}` : ""}`;
+        }),
+        "Variasikan bentuk pertanyaan; soal yang lebih sulit harus benar-benar menuntut penalaran lebih dalam, bukan hanya teks lebih panjang.",
+      ].join("\n")
+    : null;
+  const form = plan ? "campuran" : req.form;
+
   const output = [
     "## Format output (WAJIB)",
     "Balas HANYA dengan JSON valid (tanpa teks lain, tanpa markdown) persis dengan struktur berikut:",
-    OUTPUT_EXAMPLE[req.form],
+    OUTPUT_EXAMPLE[form],
     `Jumlah elemen "questions" tepat ${req.count}. Opsi TANPA huruf label (label A–E diberikan sistem).`,
-    req.form === "pgk_kategori" || req.form === "campuran" ? 'PGK Kategori memakai "categoryLabels" ["Benar","Salah"], ["Sesuai","Tidak Sesuai"], atau ["Ya","Tidak"].' : null,
-    req.form === "campuran" ? 'Setiap soal WAJIB punya field "type": "pg" | "pgk_mcma" | "pgk_kategori".' : null,
+    form === "pgk_kategori" || form === "campuran" ? 'PGK Kategori memakai "categoryLabels" ["Benar","Salah"], ["Sesuai","Tidak Sesuai"], atau ["Ya","Tidak"].' : null,
+    form === "campuran" ? 'Setiap soal WAJIB punya field "type": "pg" | "pgk_mcma" | "pgk_kategori".' : null,
     req.mode === "grup" && !req.stimulus ? 'Contoh tingkat teratas: {"stimulus":{"title":"...","content":"..."},"questions":[...]}' : null,
     multiSection ? 'Setiap soal WAJIB punya field "subtopicCode" berisi salah satu kode subtopik di atas.' : null,
   ]
@@ -284,8 +341,11 @@ export function buildAiPrompt(req: AiPromptRequest): GenerationContext {
     .join("\n");
 
   const extra = req.extraInstruction?.trim() ? `## Instruksi tambahan dari admin\n${req.extraInstruction.trim().slice(0, 500)}` : null;
+  const hint = req.contextHint?.trim() ? `## Variasi konteks\n${req.contextHint.trim().slice(0, 600)}` : null;
+  const avoid = req.avoid?.length ? `## Jangan mengulang soal berikut\n${bullets(req.avoid.slice(0, 40).map((t) => t.replace(/\s+/g, " ").slice(0, 160)))}` : null;
 
-
-
-  return { ...base, prompt: [base.prompt, modeSection, multiSection, extra, output].filter(Boolean).join("\n\n") };
+  return {
+    ...base,
+    prompt: [base.prompt, modeSection, standaloneSection, multiSection, planSection, hint, extra, avoid, output].filter(Boolean).join("\n\n"),
+  };
 }

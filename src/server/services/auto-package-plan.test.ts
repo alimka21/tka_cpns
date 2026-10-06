@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { checkPackageRules, type SubjectOutline } from "@/lib/package-rules";
 import type { QuestionType } from "@/lib/validation/enums";
-import { batchAiSlots, planAutoPackage, type AutoPackagePlan, type PlanQuestion } from "./auto-package-plan";
+import { batchAiSlots, chunkGroups, planAutoPackage, spread, type AutoPackagePlan, type PlanQuestion } from "./auto-package-plan";
 import { validatePackageOrder } from "./package-composition";
 
 // 3 topik, 6 subtopik (SD Matematika-ish: 30 soal).
@@ -76,10 +76,48 @@ describe("planAutoPackage", () => {
     expect(finalReport(plan, available).publishable).toBe(true);
   });
 
-  it("bentuk soal AI dikelompokkan per subtopik → sedikit panggilan Gemini", () => {
+  it("soal tunggal digabung per subtopik → satu panggilan Gemini per subtopik", () => {
     const plan = planAutoPackage({ available: [], outline, questionCount: 30 });
-    // 6 subtopik + paling banyak 2 pergantian bentuk + 2 pergantian tingkat.
-    expect(batchAiSlots(plan.aiSlots).length).toBeLessThanOrEqual(10);
+    const batches = batchAiSlots(plan);
+    expect(batches).toHaveLength(6);
+    expect(batches.every((b) => b.kind === "tunggal" && new Set(b.slots.map((s) => s.subtopicCode)).size === 1)).toBe(true);
+  });
+
+  it("bentuk & tingkat soal AI tersebar — tiap topik punya PG dan PGK, tingkat tidak seragam per subtopik", () => {
+    const plan = planAutoPackage({ available: [], outline, questionCount: 30, levelled: true });
+    for (const t of outline) {
+      const slots = plan.aiSlots.filter((s) => t.subtopics.some((x) => x.code === s.subtopicCode));
+      expect(new Set(slots.map((s) => s.type)).size).toBeGreaterThanOrEqual(2);
+      expect(slots.some((s) => s.type === "pg")).toBe(true);
+    }
+    for (const sub of ["S1", "S2", "S3", "S4", "S5", "S6"]) {
+      expect(new Set(plan.aiSlots.filter((s) => s.subtopicCode === sub).map((s) => s.tier)).size).toBeGreaterThanOrEqual(2);
+    }
+  });
+
+  it("mapel bahasa (groupShare 1): semua soal AI jadi grup 3–5 soal dalam satu topik, aturan tetap lolos", () => {
+    const plan = planAutoPackage({ available: [], outline, questionCount: 30, groupShare: 1 });
+    expect(plan.aiGroups.flat().sort((a, b) => a - b)).toEqual(plan.aiSlots.map((_, i) => i));
+    for (const g of plan.aiGroups) {
+      expect(g.length).toBeGreaterThanOrEqual(3);
+      expect(g.length).toBeLessThanOrEqual(5);
+      const topics = new Set(g.map((i) => outline.find((t) => t.subtopics.some((s) => s.code === plan.aiSlots[i].subtopicCode))!.code));
+      expect(topics.size).toBe(1);
+    }
+    const batches = batchAiSlots(plan);
+    expect(batches.every((b) => b.kind === "grup")).toBe(true);
+    expect(batches.length).toBe(plan.aiGroups.length);
+    expect(finalReport(plan, []).publishable).toBe(true);
+  });
+
+  it("SMA (groupShare 0.5): sebagian grup, sisanya soal tunggal", () => {
+    const plan = planAutoPackage({ available: [], outline, questionCount: 25, groupShare: 0.5 });
+    const grouped = plan.aiGroups.flat().length;
+    expect(grouped).toBeGreaterThan(0);
+    expect(grouped).toBeLessThan(25);
+    const batches = batchAiSlots(plan);
+    expect(batches.filter((b) => b.kind === "tunggal").length).toBeGreaterThan(0);
+    expect(batches.reduce((n, b) => n + b.slots.length, 0)).toBe(25);
   });
 
   it("bank kosong → tingkat AI mengikuti target 20/50/30 (tidak mudah semua)", () => {
@@ -116,19 +154,21 @@ describe("planAutoPackage", () => {
   });
 });
 
-describe("batchAiSlots", () => {
-  it("menggabungkan slot per subtopik & bentuk", () => {
-    expect(
-      batchAiSlots([
-        { subtopicCode: "S1", type: "pg", tier: 2 },
-        { subtopicCode: "S1", type: "pg", tier: 2 },
-        { subtopicCode: "S1", type: "pg", tier: 3 },
-        { subtopicCode: "S1", type: "pgk_mcma", tier: 2 },
-      ]),
-    ).toEqual([
-      { subtopicCode: "S1", type: "pg", tier: 2, count: 2 },
-      { subtopicCode: "S1", type: "pg", tier: 3, count: 1 },
-      { subtopicCode: "S1", type: "pgk_mcma", tier: 2, count: 1 },
-    ]);
+describe("spread & chunkGroups", () => {
+  it("spread menyebar merata", () => {
+    expect(spread([["a", 2], ["b", 2], ["c", 1]], 5).join("")).toMatch(/^(?!.*aa)(?!.*bb)[abc]{5}$/);
+    expect(spread([["pg", 3], ["x", 0]], 3)).toEqual(["pg", "pg", "pg"]);
+  });
+
+  it("chunkGroups: ukuran 3–5, < 3 tidak dikelompokkan", () => {
+    expect(chunkGroups([1, 2])).toEqual([]);
+    expect(chunkGroups([1, 2, 3]).map((g) => g.length)).toEqual([3]);
+    expect(chunkGroups(Array.from({ length: 8 }, (_, i) => i)).map((g) => g.length)).toEqual([4, 4]);
+    expect(chunkGroups(Array.from({ length: 14 }, (_, i) => i)).map((g) => g.length)).toEqual([4, 4, 3, 3]);
+    for (let m = 3; m <= 40; m++) {
+      const sizes = chunkGroups(Array.from({ length: m }, (_, i) => i)).map((g) => g.length);
+      expect(sizes.reduce((a, b) => a + b, 0)).toBe(m);
+      expect(sizes.every((n) => n >= 3 && n <= 5)).toBe(true);
+    }
   });
 });

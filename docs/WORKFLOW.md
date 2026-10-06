@@ -230,3 +230,10 @@ membersihkan; sisa run terputus: `npm run loadtest -- --cleanup`).
   belum diukur: CPU/memori Node di Hostinger saat render halaman — uji HTTP
   ke domain produksi (k6/autocannon) di jam sepi bila perlu.
 
+## 12. Lupa kata sandi admin
+
+`npm run user:password -- <email>` — mengatur kata sandi baru dari terminal
+(diketik tersembunyi, minimal 8 karakter, diketik dua kali). Kata sandi di-hash
+seperti daftar biasa; semua sesi lama user itu dihapus. Kata sandi lama tidak bisa
+dilihat oleh siapa pun (hanya hash yang tersimpan).
+

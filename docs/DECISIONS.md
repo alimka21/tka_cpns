@@ -12,6 +12,17 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Bahasa Indonesia — Paket 2 (#32, draf, ditulis Claude)
+Permintaan pemilik: 50% variasi soal bank, 50% soal baru. 6 bacaan × 5 soal (stimulus
+#66–#71, soal #652–#681, `generated_by` manual). Variasi (15): 3 bacaan baru meniru pola
+bacaan bank — "Uang Panaik" (pola Belis/Buwuhan), cerpen "Perahu Terakhir" (pola Roh
+Meratus/Layur), "Remaja dan Jerat Gim Daring" (pola Interaksi Sosial di Era Digital) —
+tiap soal meniru bentuk & indikator soal asal dan `source_question_id` diisi (#92, 97,
+98, 99, 101, 103, 111–115, 117–120). Baru (15): eksplanasi penurunan muka tanah, puisi
+"Di Dermaga Senja", dua teks opini ponsel di sekolah (antarteks). 18 PG + 6 MCMA +
+6 Kategori, 75 menit, 11/11 subtopik, mudah 23%, sulit 20%, 6 grup × 5 — semua aturan
+wajib & saran lolos. Data survei di bacaan gim berlabel ilustratif (Kota Ardana fiktif).
+
 ## 2026-10-06 — Paket TKA SMA Sosiologi — Paket 1 (#31, draf, lolos aturan)
 PDF "SOAL TKA Sosiologi SMA 2025 Pilihan" 30 soal TANPA kunci (27 PG, 2 MCMA, 1 Kategori)
 → kunci & pembahasan Claude; soal #615–#651, 7 gambar dari PDF (infografis urbanisasi,

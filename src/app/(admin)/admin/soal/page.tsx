@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenText, ChevronLeft, ChevronRight, FileUp, ImageIcon, Plus, Sparkles } from "lucide-react";
-import { BankFilterBar, QuestionList, type FilterNode } from "@/components/admin/question-bank";
+import { BankFilterBar, BulkPublishButton, QuestionList, type FilterNode } from "@/components/admin/question-bank";
 import { PageHeader } from "@/components/layout/page-header";
 import { Button } from "@/components/ui/button";
 import { bankHref, parseBankFilters, type BankFilters } from "@/lib/bank-filters";
-import { BANK_PAGE_SIZE, getBankHierarchy, searchQuestions, type BankNode } from "@/server/queries/question-bank";
+import { BANK_PAGE_SIZE, getBankHierarchy, searchQuestions, unpublishedIdsForFilter, type BankNode } from "@/server/queries/question-bank";
+import { listPackagesAdmin } from "@/server/queries/packages";
 
 export const metadata: Metadata = { title: "Bank Soal" };
 export const dynamic = "force-dynamic";
@@ -14,7 +15,12 @@ const LEVEL_LABEL = ["Jenjang", "Mata pelajaran", "Topik", "Subtopik"];
 
 export default async function AdminSoalPage({ searchParams }: PageProps<"/admin/soal">) {
   const filters = parseBankFilters(await searchParams);
-  const [tree, { rows, total }] = await Promise.all([getBankHierarchy(), searchQuestions(filters)]);
+  const [tree, { rows, total }, packages, unpublished] = await Promise.all([
+    getBankHierarchy(),
+    searchQuestions(filters),
+    listPackagesAdmin({ jenjang: filters.jenjang, mapel: filters.mapel }),
+    unpublishedIdsForFilter(filters),
+  ]);
 
   // Jalur node terpilih: jenjang → mapel → topik → subtopik.
   const path: BankNode[] = [];
@@ -60,7 +66,7 @@ export default async function AdminSoalPage({ searchParams }: PageProps<"/admin/
         }
       />
 
-      <BankFilterBar tree={filterTree} filters={filters} />
+      <BankFilterBar tree={filterTree} filters={filters} packages={packages.map((p) => ({ id: p.id, title: p.title, status: p.status }))} />
 
       {/* Lingkup + turun ke level berikutnya (setiap level punya bank soalnya sendiri) */}
       <section aria-label="Lingkup bank soal" className="flex flex-col gap-3">
@@ -112,11 +118,14 @@ export default async function AdminSoalPage({ searchParams }: PageProps<"/admin/
           <h2 id="daftar-heading" className="font-bold">
             {total} soal{scope ? ` di ${scope.name.length > 40 ? `${scope.name.slice(0, 40)}…` : scope.name}` : ""}
           </h2>
-          {pages > 1 && (
-            <span className="text-sm text-muted-foreground tabular-nums">
-              Halaman {page} dari {pages}
-            </span>
-          )}
+          <span className="flex flex-wrap items-center gap-3">
+            {pages > 1 && (
+              <span className="text-sm text-muted-foreground tabular-nums">
+                Halaman {page} dari {pages}
+              </span>
+            )}
+            <BulkPublishButton filters={filters} count={unpublished.length} />
+          </span>
         </div>
         {rows.length === 0 ? (
           <div className="surface-card flex flex-col items-center gap-4 px-6 py-12 text-center">

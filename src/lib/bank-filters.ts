@@ -1,5 +1,5 @@
 // Filter Bank Soal (admin) dari query string: jenjang → mapel → topik →
-// subtopik + status/bentuk/kesulitan/teks. Dipakai halaman server & komponen
+// subtopik + paket + status/bentuk/kesulitan/teks. Dipakai halaman server & komponen
 // filter (client) supaya nama parameter URL satu sumber.
 
 import { z } from "zod";
@@ -16,6 +16,8 @@ export const bankFilterSchema = z.object({
   bentuk: z.enum(QUESTION_TYPES).optional().catch(undefined),
   tingkat: z.enum(DIFFICULTIES).optional().catch(undefined),
   sumber: z.enum(["manual", "import", "ai"]).optional().catch(undefined),
+  /** Id paket tes, atau "tanpa" = soal yang belum masuk paket mana pun. */
+  paket: z.string().trim().regex(/^(tanpa|[1-9]\d{0,8})$/).optional().catch(undefined),
   q: z.string().trim().max(100).optional().catch(undefined),
   hal: z.coerce.number().int().min(1).max(1000).optional().catch(undefined),
 });

@@ -108,6 +108,9 @@ export default async function PratinjauPaketPage({ params, searchParams }: PageP
           </p>
         </div>
         <div className="flex shrink-0 flex-wrap items-start gap-2">
+          <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/admin/soal?paket=${id}`} />}>
+            <FileQuestion aria-hidden /> Soal di Bank
+          </Button>
           <Button variant="outline" size="sm" nativeButton={false} render={<Link href={`/admin/paket-tes/${id}`} />}>
             <Settings2 aria-hidden /> Kelola paket
           </Button>

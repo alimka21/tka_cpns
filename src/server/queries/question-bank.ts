@@ -1,10 +1,10 @@
 // Query baca Bank Soal & Stimulus (admin). Tidak memuat kunci jawaban,
 // kecuali `getQuestionForEdit` (halaman Edit Soal, admin saja).
 
-import { and, asc, count, desc, eq, isNotNull, like, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNotNull, like, ne, notInArray, sql, type SQL } from "drizzle-orm";
 import type { BankFilters } from "@/lib/bank-filters";
 import { db } from "@/server/db";
-import { categories, questionExplanations, questionOptions, questions, stimuli, subjects, subtopics, topics } from "@/server/db/schema";
+import { categories, questionExplanations, questionOptions, questions, stimuli, subjects, subtopics, testPackageQuestions, topics } from "@/server/db/schema";
 import type { QuestionEditData, QuestionListRow, StimulusListItem } from "@/lib/question-bank-types";
 import { renderMathToHtml } from "@/lib/math-html";
 import { questionUsage } from "@/server/services/question-store";
@@ -163,8 +163,9 @@ export async function getBankHierarchy(): Promise<BankNode[]> {
 
 export const BANK_PAGE_SIZE = 30;
 
-/** Daftar soal sesuai filter, terbaru dulu, dengan paginasi. */
-export async function searchQuestions(f: BankFilters): Promise<{ rows: QuestionListRow[]; total: number }> {
+/** Kondisi WHERE filter Bank Soal (dipakai daftar, hitungan, dan terbitkan massal). */
+function bankWhere(f: BankFilters) {
+  const inPackage = f.paket && f.paket !== "tanpa" ? Number(f.paket) : null;
   const conditions = [
     f.jenjang && eq(categories.code, f.jenjang),
     f.mapel && eq(subjects.code, f.mapel),
@@ -175,8 +176,34 @@ export async function searchQuestions(f: BankFilters): Promise<{ rows: QuestionL
     f.tingkat && eq(questions.difficulty, f.tingkat),
     f.sumber && eq(questions.generatedBy, f.sumber),
     f.q && like(questions.questionText, `%${f.q.replace(/[%_\\]/g, (c) => `\\${c}`)}%`),
+    inPackage &&
+      inArray(questions.id, db.select({ id: testPackageQuestions.questionId }).from(testPackageQuestions).where(eq(testPackageQuestions.testPackageId, inPackage))),
+    f.paket === "tanpa" && notInArray(questions.id, db.select({ id: testPackageQuestions.questionId }).from(testPackageQuestions)),
   ].filter((c): c is SQL => Boolean(c));
-  const where = conditions.length ? and(...conditions) : undefined;
+  return { where: conditions.length ? and(...conditions) : undefined, inPackage };
+}
+
+/** Id soal yang cocok dengan filter dan belum tayang (untuk terbitkan massal). */
+export async function unpublishedIdsForFilter(f: BankFilters, limit = 2000): Promise<number[]> {
+  const { where } = bankWhere({ ...f, status: undefined });
+  const rows = await db
+    .select({ id: questions.id })
+    .from(questions)
+    .innerJoin(subtopics, eq(subtopics.id, questions.subtopicId))
+    .innerJoin(topics, eq(topics.id, subtopics.topicId))
+    .innerJoin(subjects, eq(subjects.id, topics.subjectId))
+    .innerJoin(categories, eq(categories.id, subjects.categoryId))
+    .where(and(where, ne(questions.status, "published")))
+    .limit(limit);
+  return rows.map((r) => r.id);
+}
+
+/** Daftar soal sesuai filter, terbaru dulu (urutan paket bila difilter per paket), dengan paginasi. */
+export async function searchQuestions(f: BankFilters): Promise<{ rows: QuestionListRow[]; total: number }> {
+  const { where, inPackage } = bankWhere(f);
+  const order = inPackage
+    ? [asc(sql`(select ${testPackageQuestions.order} from ${testPackageQuestions} where ${testPackageQuestions.questionId} = ${questions.id} and ${testPackageQuestions.testPackageId} = ${inPackage})`)]
+    : [desc(questions.createdAt), desc(questions.id)];
 
   const page = f.hal ?? 1;
   const [rows, [{ n }]] = await Promise.all([
@@ -207,7 +234,7 @@ export async function searchQuestions(f: BankFilters): Promise<{ rows: QuestionL
       .innerJoin(categories, eq(categories.id, subjects.categoryId))
       .leftJoin(stimuli, eq(stimuli.id, questions.stimulusId))
       .where(where)
-      .orderBy(desc(questions.createdAt), desc(questions.id))
+      .orderBy(...order)
       .limit(BANK_PAGE_SIZE)
       .offset((page - 1) * BANK_PAGE_SIZE),
     db

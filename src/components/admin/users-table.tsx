@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, Clock, Crown, GraduationCap, Search, Settings, Trash2, Users, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, Crown, GraduationCap, Search, Settings, Trash2, Users, X } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -29,81 +29,94 @@ import {
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { approveAllPendingAction, deleteUserAction, setUserJenjangAction, setUserStatusAction } from "@/server/actions/users";
-import type { AdminUserRow } from "@/server/queries/users";
+import { USERS_PAGE_SIZE, usersHref, type UserFilters } from "@/lib/user-filters";
+import type { AdminUserRow, AdminUsersPage } from "@/server/queries/users";
 
 type Role = AdminUserRow["role"];
-type RoleFilter = "all" | Role;
-type AccessFilter = "all" | "premium" | "free";
 type Status = AdminUserRow["status"];
 type StatusTab = "all" | Status;
-type JenjangFilter = "all" | "none" | "SD" | "SMP" | "SMA";
 
 const statusMeta: Record<Status, { label: string; variant: "success" | "warning" | "danger" }> = {
   active: { label: "Aktif", variant: "success" },
   pending: { label: "Menunggu", variant: "warning" },
   rejected: { label: "Ditolak", variant: "danger" },
 };
-const jenjangFilterItems: Record<JenjangFilter, string> = { all: "Semua jenjang", SD: "SD", SMP: "SMP", SMA: "SMA", none: "Belum memilih" };
+const jenjangFilterItems = { all: "Semua jenjang", SD: "SD", SMP: "SMP", SMA: "SMA", none: "Belum memilih" };
 
 const roleLabel: Record<Role, string> = { student: "Siswa", admin: "Admin" };
-const roleFilterItems: Record<RoleFilter, string> = { all: "Semua role", ...roleLabel };
-const accessFilterItems: Record<AccessFilter, string> = { all: "Semua akses", premium: "Premium", free: "Gratis" };
+const roleFilterItems = { all: "Semua role", ...roleLabel };
+const accessFilterItems = { all: "Semua akses", premium: "Premium", free: "Gratis" };
 
+/** Tabel user — filter & paginasi di server lewat query string (lib/user-filters). */
 export function UsersTable({
-  users,
+  data,
+  filters,
   currentUserId,
   requireApproval,
 }: {
-  users: AdminUserRow[];
+  data: AdminUsersPage;
+  filters: UserFilters;
   currentUserId: number;
   requireApproval: boolean;
 }) {
   const router = useRouter();
-  const pendingCount = users.filter((u) => u.status === "pending").length;
-  const [tab, setTab] = useState<StatusTab>(pendingCount > 0 ? "pending" : "all");
-  const [jenjangFilter, setJenjangFilter] = useState<JenjangFilter>("all");
+  const [navPending, startNav] = useTransition();
   const [bulkPending, startBulk] = useTransition();
-  const [query, setQuery] = useState("");
-  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
-  const [accessFilter, setAccessFilter] = useState<AccessFilter>("all");
+  const [query, setQuery] = useState(filters.q ?? "");
+  const { rows, total, statusCounts, stats } = data;
+  const page = filters.hal ?? 1;
+  const pageCount = Math.max(1, Math.ceil(total / USERS_PAGE_SIZE));
 
-  const q = query.trim().toLowerCase();
-  const visible = users.filter(
-    (u) =>
-      (q === "" || u.name.toLowerCase().includes(q) || u.email.toLowerCase().includes(q)) &&
-      (roleFilter === "all" || u.role === roleFilter) &&
-      (tab === "all" || u.status === tab) &&
-      (jenjangFilter === "all" || (jenjangFilter === "none" ? u.jenjang == null : u.jenjang === jenjangFilter)) &&
-      (accessFilter === "all" || (accessFilter === "premium") === u.premiumCount > 0),
-  );
+  /** Ganti satu/lebih filter; paginasi kembali ke halaman 1 kecuali `hal` diubah. */
+  const go = (patch: Partial<Record<keyof UserFilters, string | number | undefined>>) =>
+    startNav(() => router.replace(usersHref({ ...filters, hal: undefined, ...patch }), { scroll: false }));
+
+  // Pencarian: kirim ke server setelah berhenti mengetik.
+  useEffect(() => {
+    const q = query.trim();
+    if (q === (filters.q ?? "")) return;
+    const t = setTimeout(() => go({ q: q || undefined }), 350);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [query]);
+
+  const tab: StatusTab = filters.status ?? "all";
+  const from = total === 0 ? 0 : (page - 1) * USERS_PAGE_SIZE + 1;
 
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total user" value={String(users.length)} icon={Users} />
-        <StatCard label="Siswa" value={String(users.filter((u) => u.role === "student").length)} icon={GraduationCap} tone="muted" />
-        <StatCard label="Punya akses premium" value={String(users.filter((u) => u.premiumCount > 0).length)} icon={Crown} tone="cta" />
-        <StatCard label="Menunggu konfirmasi" value={String(pendingCount)} icon={Clock} tone="success" />
+        <StatCard label="Total user" value={String(stats.users)} icon={Users} />
+        <StatCard label="Siswa" value={String(stats.students)} icon={GraduationCap} tone="muted" />
+        <StatCard label="Punya akses premium" value={String(stats.premium)} icon={Crown} tone="cta" />
+        <StatCard label="Menunggu konfirmasi" value={String(stats.pending)} icon={Clock} tone="success" />
       </div>
 
-      {pendingCount > 0 && (
+      {stats.pending > 0 && (
         <div className="flex flex-col gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex items-center gap-2 text-sm font-semibold text-warning-strong">
-            <Clock className="size-4" aria-hidden /> {pendingCount} pendaftar baru menunggu konfirmasi.
+            <Clock className="size-4" aria-hidden /> {stats.pending} pendaftar baru menunggu konfirmasi.
           </p>
-          <Button
-            size="sm"
-            disabled={bulkPending}
-            onClick={() =>
-              startBulk(async () => {
-                if (!window.confirm(`Setujui semua ${pendingCount} pendaftar?`)) return;
-                await approveAllPendingAction();
-                router.refresh();
-              })
-            }
-          >
-            <Check aria-hidden /> Setujui semua
-          </Button>
+          <div className="flex gap-2">
+            {tab !== "pending" && (
+              <Button size="sm" variant="outline" onClick={() => go({ status: "pending" })}>
+                Lihat
+              </Button>
+            )}
+            <Button
+              size="sm"
+              disabled={bulkPending}
+              onClick={() =>
+                startBulk(async () => {
+                  if (!window.confirm(`Setujui semua ${stats.pending} pendaftar?`)) return;
+                  await approveAllPendingAction();
+                  router.refresh();
+                })
+              }
+            >
+              <Check aria-hidden /> Setujui semua
+            </Button>
+          </div>
         </div>
       )}
 
@@ -116,25 +129,22 @@ export function UsersTable({
         </Link>
       </p>
 
-      <section className="surface-card overflow-hidden">
+      <section className={cn("surface-card overflow-hidden transition-opacity", navPending && "opacity-60")} aria-busy={navPending}>
         <nav aria-label="Status akun" className="flex gap-1 overflow-x-auto border-b px-4 pt-2 sm:px-5">
-          {(["all", "pending", "active", "rejected"] as StatusTab[]).map((t) => {
-            const n = t === "all" ? users.length : users.filter((u) => u.status === t).length;
-            return (
-              <button
-                key={t}
-                type="button"
-                aria-pressed={tab === t}
-                onClick={() => setTab(t)}
-                className={cn(
-                  "-mb-px border-b-2 px-3 py-2 text-sm font-semibold whitespace-nowrap",
-                  tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
-                )}
-              >
-                {t === "all" ? "Semua" : statusMeta[t].label} <span className="tabular-nums opacity-70">({n})</span>
-              </button>
-            );
-          })}
+          {(["all", "pending", "active", "rejected"] as StatusTab[]).map((t) => (
+            <button
+              key={t}
+              type="button"
+              aria-pressed={tab === t}
+              onClick={() => go({ status: t === "all" ? undefined : t })}
+              className={cn(
+                "-mb-px border-b-2 px-3 py-2 text-sm font-semibold whitespace-nowrap",
+                tab === t ? "border-primary text-primary" : "border-transparent text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {t === "all" ? "Semua" : statusMeta[t].label} <span className="tabular-nums opacity-70">({statusCounts[t]})</span>
+            </button>
+          ))}
         </nav>
         <div className="flex flex-col gap-3 border-b p-4 sm:flex-row sm:items-center sm:p-5">
           <div className="relative flex-1">
@@ -145,11 +155,12 @@ export function UsersTable({
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Cari nama atau email…"
               aria-label="Cari user"
+              maxLength={100}
               className="pl-10"
             />
           </div>
           <div className="flex gap-3">
-            <Select items={roleFilterItems} value={roleFilter} onValueChange={(v) => setRoleFilter(v as RoleFilter)}>
+            <Select items={roleFilterItems} value={filters.role ?? "all"} onValueChange={(v) => go({ role: v === "all" ? undefined : String(v) })}>
               <SelectTrigger className="w-full sm:w-36" aria-label="Filter role">
                 <SelectValue />
               </SelectTrigger>
@@ -159,7 +170,7 @@ export function UsersTable({
                 <SelectItem value="admin">Admin</SelectItem>
               </SelectContent>
             </Select>
-            <Select items={jenjangFilterItems} value={jenjangFilter} onValueChange={(v) => setJenjangFilter(v as JenjangFilter)}>
+            <Select items={jenjangFilterItems} value={filters.jenjang ?? "all"} onValueChange={(v) => go({ jenjang: v === "all" ? undefined : String(v) })}>
               <SelectTrigger className="w-full sm:w-40" aria-label="Filter jenjang">
                 <SelectValue />
               </SelectTrigger>
@@ -171,7 +182,7 @@ export function UsersTable({
                 ))}
               </SelectContent>
             </Select>
-            <Select items={accessFilterItems} value={accessFilter} onValueChange={(v) => setAccessFilter(v as AccessFilter)}>
+            <Select items={accessFilterItems} value={filters.akses ?? "all"} onValueChange={(v) => go({ akses: v === "all" ? undefined : String(v) })}>
               <SelectTrigger className="w-full sm:w-40" aria-label="Filter akses">
                 <SelectValue />
               </SelectTrigger>
@@ -199,7 +210,7 @@ export function UsersTable({
               </tr>
             </thead>
             <tbody className="divide-y">
-              {visible.map((user) => (
+              {rows.map((user) => (
                 <tr key={user.id} className="hover:bg-muted/40">
                   <td className="px-5 py-3.5">
                     <UserIdentity user={user} />
@@ -228,7 +239,7 @@ export function UsersTable({
 
         {/* Mobile & tablet: kartu per user (docs/UI_UX.md §5) */}
         <ul className="divide-y lg:hidden">
-          {visible.map((user) => (
+          {rows.map((user) => (
             <li key={user.id} className="flex flex-col gap-4 p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <UserIdentity user={user} />
@@ -245,11 +256,26 @@ export function UsersTable({
           ))}
         </ul>
 
-        {visible.length === 0 && (
+        {rows.length === 0 && (
           <p className="px-5 py-12 text-center text-sm text-muted-foreground">Tidak ada user yang cocok dengan filter.</p>
         )}
-        <div className="border-t px-5 py-3 text-xs text-muted-foreground">
-          Menampilkan {visible.length} dari {users.length} user
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t px-5 py-3 text-xs text-muted-foreground">
+          <span>
+            Menampilkan {from}–{from === 0 ? 0 : from + rows.length - 1} dari {total} user
+          </span>
+          {pageCount > 1 && (
+            <span className="flex items-center gap-2">
+              <Button variant="outline" size="xs" disabled={page <= 1 || navPending} onClick={() => go({ hal: page - 1 > 1 ? page - 1 : undefined })}>
+                <ChevronLeft aria-hidden /> Sebelumnya
+              </Button>
+              <span className="tabular-nums">
+                Hal. {page} / {pageCount}
+              </span>
+              <Button variant="outline" size="xs" disabled={page >= pageCount || navPending} onClick={() => go({ hal: page + 1 })}>
+                Berikutnya <ChevronRight aria-hidden />
+              </Button>
+            </span>
+          )}
         </div>
       </section>
     </div>

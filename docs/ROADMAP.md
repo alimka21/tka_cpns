@@ -186,7 +186,7 @@ berikutnya langsung tahu posisi tanpa baca ulang riwayat chat._
       pembahasan/dilaporkan), mode "Tinjau kunci & pembahasan" (filter,
       setujui per soal, edit soal) & mode "Tampilan siswa" (komponen ujian
       asli, tanpa kunci, jawaban tidak disimpan)
-- [ ] Bank Soal: filter per paket + terbitkan massal (usulan 2026-10-01)
+- [x] Bank Soal: filter per paket (`?paket=<id>` / `tanpa`) + tombol "Terbitkan semua" sesuai filter (2026-10-06)
 - [x] Admin: entitlement manual (kasih akses paket premium ke user) —
       per paket di `/admin/paket-tes/[id]` (cari user → beri/cabut akses)
 - [x] Student: lihat daftar paket tes (gratis/premium, lock kalau belum
@@ -359,7 +359,7 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       150 siswa stres tanpa error, WORKFLOW §11). Belum: uji HTTP ke produksi
 - [x] Review index database & query lambat — migrasi 0016 (12 index) + cache
       detail paket + autosave 1 query lebih sedikit (DECISIONS 2026-10-03)
-- [ ] Manajemen User: paginasi server (sekarang memuat semua user sekaligus)
+- [x] Manajemen User: filter, tab status, statistik & paginasi (50/hal) di server via query string (2026-10-06)
 - [ ] Rencana migrasi ke VPS Hostinger kalau trafik naik
 - [ ] Backup otomatis database
 

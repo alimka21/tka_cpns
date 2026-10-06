@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Filter bank soal per paket, terbitkan massal, paginasi user
+
+- Bank Soal: param `paket=<id>` (urut sesuai nomor di paket) atau `paket=tanpa`
+  (belum masuk paket mana pun). Pratinjau paket punya tautan "Soal di Bank".
+- "Terbitkan semua (N)": menerbitkan semua soal non-published yang cocok
+  filter aktif (abaikan filter status), lintas halaman, maks 2000, dengan
+  konfirmasi. Mengisi `reviewed_by/at` dan membersihkan cache paket.
+- Manajemen User: filter (q, role, jenjang, akses, status) & `hal` di query
+  string (`lib/user-filters.ts`); query LIMIT 50 + COUNT, hitungan tab status
+  mengikuti filter lain, statistik kartu dihitung SQL atas semua user.
+  Pencarian di-debounce 350 ms; `LIKE` meng-escape `%`/`_`.
+
 ## 2026-10-06 — Paket TKA SMA Matematika — Paket 3 (#33, draf, ditulis Claude)
 Pola sama dengan B. Indonesia Paket 2: 13 soal variasi soal bank (bilangan dan
 konteks diganti, `source_question_id` = #152, 153, 154, 155, 156, 157, 172, 173, 175,

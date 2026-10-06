@@ -5,13 +5,14 @@
 
 import { revalidatePath } from "next/cache";
 import { invalidatePackageCache } from "@/server/queries/packages";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { findSubdomain } from "@/server/asesmen";
 import { getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { questions, stimuli } from "@/server/db/schema";
-import { getQuestionForEdit } from "@/server/queries/question-bank";
+import { getQuestionForEdit, unpublishedIdsForFilter } from "@/server/queries/question-bank";
+import { parseBankFilters } from "@/lib/bank-filters";
 import { editLockViolation } from "@/server/services/question-edit-rules";
 import {
   deleteQuestion,
@@ -178,6 +179,26 @@ export async function updateQuestionStatusAction(input: { id: number; status: st
   invalidatePackageCache();
   revalidatePath("/admin/soal");
   return { ok: true };
+}
+
+/**
+ * Terbitkan sekaligus semua soal yang cocok dengan filter Bank Soal (semua halaman,
+ * maks. 2.000 soal). Filter divalidasi ulang di server lewat parseBankFilters.
+ */
+export async function bulkPublishQuestionsAction(rawFilters: Record<string, string | undefined>): Promise<ActionResult<{ count: number }>> {
+  const session = await getAdminSession();
+  if (!session) return NOT_ADMIN;
+  const filters = parseBankFilters(rawFilters);
+  const ids = await unpublishedIdsForFilter(filters);
+  if (ids.length === 0) return { ok: false, errors: ["Tidak ada soal yang perlu diterbitkan pada filter ini."] };
+  await db
+    .update(questions)
+    .set({ status: "published", reviewedBy: Number(session.user.id), reviewedAt: new Date() })
+    .where(inArray(questions.id, ids));
+  invalidatePackageCache();
+  revalidatePath("/admin/soal");
+  revalidatePath("/admin/paket-tes");
+  return { ok: true, count: ids.length };
 }
 
 /** Simpan stimulus baru. */

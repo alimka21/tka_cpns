@@ -27,6 +27,9 @@ ditambah paragraf 4 (potensi di Indonesia); no. 17 dirujuk ke kalimat yang benar
 benar memuat "bukan hanya … melainkan juga"; no. 29 dipindah D3-S4 → D3-S2
 (membandingkan ulasan dengan tabel, bukan teks fiksi). Hasil: 17 PG · 7 MCMA ·
 6 Kategori, 11/11 subtopik, mudah 20% · sulit 30%, 9 grup — semua aturan lolos.
+Cek ganda: tidak ada soal sama dengan paket #13/#32/#25. #826 (tabel kemiskinan) dan
+#834 (tabel inflasi) semula berbagi pernyataan dengan #443/#449 (Tingkat Lanjut, paket #25)
+→ pernyataan diganti data lain dari tabel yang sama.
 
 ## 2026-10-06 — Paket TKA SMA Bahasa Inggris — Paket 2 (#38, draf, ditulis Claude)
 

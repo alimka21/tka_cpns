@@ -12,6 +12,22 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Bahasa Indonesia — Paket 3 (#39, draf, dari PDF)
+
+Sumber: PDF "Soal TKA Bahasa Indonesia (Pilihan) SMA 2025" + kunci. Walau berjudul
+"Pilihan", kode subtopik di PDF = SMA-BIND (wajib) & 30 soal → dimasukkan ke
+Bahasa Indonesia wajib. 9 teks PDF adalah ringkasan stimulus #41–#49 (Bahasa
+Indonesia Tingkat Lanjut); dipakai TEKS LENGKAPNYA (soal PDF merujuk "insangnya",
+"perang sipil", "4 testimoni" yang hanya ada di teks lengkap) dan disalin jadi
+stimulus baru PDF-261006-BIND-1…9 (grup stimulus tidak boleh dibagi antarmapel),
+gambar tabel #68–#70 dipakai ulang. Soal #815–#844, `generated_by` import.
+Optimasi: PDF 30 PG → 13 diubah jadi 7 MCMA + 6 Kategori; opsi terpotong (no. 11,
+14, 20) dilengkapi; soal 30 (hilang) ditulis dari kuncinya; no. 9 opsi kunci
+ditambah paragraf 4 (potensi di Indonesia); no. 17 dirujuk ke kalimat yang benar-
+benar memuat "bukan hanya … melainkan juga"; no. 29 dipindah D3-S4 → D3-S2
+(membandingkan ulasan dengan tabel, bukan teks fiksi). Hasil: 17 PG · 7 MCMA ·
+6 Kategori, 11/11 subtopik, mudah 20% · sulit 30%, 9 grup — semua aturan lolos.
+
 ## 2026-10-06 — Paket TKA SMA Bahasa Inggris — Paket 2 (#38, draf, ditulis Claude)
 
 Permintaan pemilik: 50% variasi soal bank, 50% baru. 6 bacaan × 5 soal (stimulus

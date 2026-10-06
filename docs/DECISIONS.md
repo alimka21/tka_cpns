@@ -12,6 +12,20 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Bahasa Inggris — Paket 2 (#38, draf, ditulis Claude)
+
+Permintaan pemilik: 50% variasi soal bank, 50% baru. 6 bacaan × 5 soal (stimulus
+CL-261006-BING-1…6, soal #785–#814, `generated_by` manual, `pending_review`).
+Variasi (15, `source_question_id` diisi): fabel "The Buffalo and the Sparrow" (pola
+The Lion and the Mouse: #176, 178–181), infografis "Smart Ways to Cut Plastic Waste
+at School" (pola Effective Study Techniques: #182–184, 186–187), eksposisi bertabel
+"Why Teenagers Need Enough Sleep" (pola Money Management: #200, 201, 203–205; data
+survei berlabel ilustratif). Baru (15): recount "The Last Ferry", eksplanasi
+"Mangroves: Guardians of the Coast", dua teks opini "Online Learning: Two Views".
+17 PG · 8 MCMA · 5 Kategori, 75 menit, 17/17 subtopik, mudah 20%, sulit 23%,
+30/30 berbasis stimulus — semua aturan wajib & saran lolos. Pembahasan berbahasa
+Inggris mengikuti soal bank mapel ini.
+
 ## 2026-10-06 — Buat Paket Otomatis: grup bacaan, rencana per soal, soal berdiri sendiri
 
 - Pemicu: paket #35 (Bahasa Indonesia SMA, 30 soal AI) — 10 soal merujuk

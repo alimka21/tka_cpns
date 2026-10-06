@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Sejarah — Paket 1 (#30, draf, lolos aturan)
+PDF "SOAL TKA Sejarah SMA 2025 Pilihan" 29 halaman, 30 soal unik (Demak 0041 &
+Teuku Abdul Jalil 0422 tercetak dua kali) TANPA kunci → kunci & pembahasan Claude;
+soal #585–#614, 6 gambar/tabel (kapal Belanda, Tritura, relief Karmawibhangga 65,
+poenale sanctie, ekonomi Demokrasi Liberal, dualisme kepemimpinan). Paket #30 =
+14 PG + 6 MCMA + 5 Kategori, 60 menit, 13/16 subtopik; label no. 9, 12, 14, 23
+dinaikkan ke L3 (9 & 23 sulit) → mudah 40%, sulit 16%, L3 24%. Di bank saja:
+no. 2, 6, 13, 21, 24. Perbaikan PDF: Tepat/Tidak Tepat → Sesuai/Tidak Sesuai;
+no. 27 tanggal Agresi II 10 → 19 Desember 1948; no. 24 pernyataan ketiga diganti
+(ketiganya semula bernilai Benar); no. 25 frasa "akibat berbagai konflik" (tidak
+didukung tabel) diperjelas. Kunci paling bisa diperdebatkan: no. 10 (E hama
+tikus), no. 17 (E penindasan), no. 23 (A, C — Semarang melawan Jepang), no. 2 (A, C).
+
 ## 2026-10-06 — Paket TKA SMA Pendidikan Pancasila — Paket 1 (#29, draf, lolos aturan)
 PDF "SOAL TKA PPKn SMA 2025 Pilihan" 29 soal (no. 21 belum ada) TANPA kunci → kunci
 & pembahasan Claude; soal #555–#584 (tanpa gambar). PDF 20 PG / 9 non-PG → +1 Kategori

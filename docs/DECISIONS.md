@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Sosiologi — Paket 1 (#31, draf, lolos aturan)
+PDF "SOAL TKA Sosiologi SMA 2025 Pilihan" 30 soal TANPA kunci (27 PG, 2 MCMA, 1 Kategori)
+→ kunci & pembahasan Claude; soal #615–#651, 7 gambar dari PDF (infografis urbanisasi,
+perempuan dalam politik [dipakai no. 7 & 8], grafik partisipasi, tabel informan,
+tambang, jenis kelompok, hoaks). Paket butuh ≥ 10 non-PG → 7 soal tambahan Claude
+("[Soal tambahan]": sifat sosiologi, agen sosialisasi, ciri masyarakat majemuk,
+kesetaraan gender, bentuk akomodasi, perubahan sosial tol, sikap kritis globalisasi).
+Paket #31 = 15 PG + 5 MCMA + 5 Kategori, 60 menit, 12/12 subtopik; no. 6, 10, 26
+dilabeli sulit → mudah 32%, sulit 16%, L3 20%. Di bank saja (PG): no. 8, 13, 14, 15,
+17, 19, 20, 22, 23, 25, 29, 30. Kunci paling bisa diperdebatkan: no. 10 (B, D — A & C
+manfaat teoretis), no. 16 (E vs D), no. 25 (B), no. 15 (C arbitrase, bank).
+
 ## 2026-10-06 — Paket TKA SMA Sejarah — Paket 1 (#30, draf, lolos aturan)
 PDF "SOAL TKA Sejarah SMA 2025 Pilihan" 29 halaman, 30 soal unik (Demak 0041 &
 Teuku Abdul Jalil 0422 tercetak dua kali) TANPA kunci → kunci & pembahasan Claude;

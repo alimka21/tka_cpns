@@ -12,6 +12,22 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Fisika — Paket 1 (#34, draf)
+
+- 19 soal impor PDF (#379, 381–382 grup #39, 384–385, 387–388, 390–392,
+  394–399 grup #40 = 395–396, 400–402) + 6 soal tambahan (#718–#723,
+  `pending_review`, pembahasan diawali "[Soal tambahan]").
+- Soal tambahan: grup stimulus baru #75 "Pengamatan Fisika di Taman
+  Hiburan" (lift → Newton, bom-bom car → momentum, air mancur → gerak
+  lengkung; lintas subtopik) + MCMA Doppler, Kategori Carnot
+  (Sesuai/Tidak Sesuai), MCMA listrik statis.
+- Tidak dipakai: #380, #383, #386, #389, #393 (PG berlebih) dan grup AI #38
+  (#376–378, ketiganya Pemanasan Global — memboroskan kuota subtopik).
+- Hasil: 15 PG · 6 MCMA · 4 Kategori, 15/15 subtopik, 20% mudah · 28% sulit,
+  L3 40%, 16/25 berbasis stimulus; semua aturan wajib lolos. Dua saran gagal
+  berasal dari grup PDF #39/#40 (2 soal, satu subtopik) — dibiarkan sesuai sumber.
+- Teks soal/stimulus tidak merender `**tebal**` — jangan pakai markdown tebal.
+
 ## 2026-10-06 — Filter bank soal per paket, terbitkan massal, paginasi user
 
 - Bank Soal: param `paket=<id>` (urut sesuai nomor di paket) atau `paket=tanpa`

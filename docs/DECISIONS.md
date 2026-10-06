@@ -12,6 +12,16 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-06 — Paket TKA SMA Pendidikan Pancasila — Paket 1 (#29, draf, lolos aturan)
+PDF "SOAL TKA PPKn SMA 2025 Pilihan" 29 soal (no. 21 belum ada) TANPA kunci → kunci
+& pembahasan Claude; soal #555–#584 (tanpa gambar). PDF 20 PG / 9 non-PG → +1 Kategori
+tambahan Claude (hoaks video suntingan & keutuhan NKRI). Paket #29 = 15 PG + 4 MCMA +
+6 Kategori, 60 menit, 4/4 subtopik (kerangka PPKn hanya 1 subtopik per elemen).
+Di bank saja (PG): no. 7, 18, 19, 30. Kesulitan no. 9 & 12 dinaikkan ke sulit, no. 13
+ke sedang → mudah 40%, sulit 16%. Kunci paling bisa diperdebatkan: no. 9 (A
+pemerataan vs D partisipasi), no. 12 (E vs C), no. 7 (D, bank), no. 8 (A, D, E),
+no. 28 (B, C, E), no. 29 (A, C, E).
+
 ## 2026-10-06 — Paket TKA SMA Kimia — Paket 1 (#28, draf, lolos aturan)
 PDF "SOAL TKA Kimia SMA 2025 Pilihan" 25 soal TANPA kunci → kunci & pembahasan
 Claude (semua hitungan dicek ulang); soal #524–#554, 16 gambar/tabel/grafik dari PDF.

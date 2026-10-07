@@ -5,11 +5,10 @@
 // di-hash dengan konfigurasi Better Auth yang sama seperti daftar biasa.
 // Dipakai bila admin lupa kata sandi (fitur reset lewat email belum ada).
 
-import { randomInt } from "node:crypto";
-import { and, eq } from "drizzle-orm";
-import { auth } from "@/server/auth";
+import { eq } from "drizzle-orm";
+import { randomPassword, setUserPassword } from "@/server/services/password-reset";
 import { db } from "./index";
-import { accounts, sessions, users } from "./schema";
+import { users } from "./schema";
 
 function askHidden(prompt: string): Promise<string> {
   return new Promise((resolve) => {
@@ -40,12 +39,6 @@ function askHidden(prompt: string): Promise<string> {
   });
 }
 
-/** Kata sandi sementara mudah dibaca: tanpa huruf/angka yang mirip (O/0, l/1/I). */
-function randomPassword() {
-  const pick = (chars: string, n: number) => Array.from({ length: n }, () => chars[randomInt(chars.length)]).join("");
-  return `${pick("ABCDEFGHJKLMNPQRSTUVWXYZ", 3)}${pick("abcdefghijkmnpqrstuvwxyz", 4)}-${pick("23456789", 4)}`;
-}
-
 async function main() {
   const args = process.argv.slice(2);
   const random = args.includes("--acak");
@@ -61,16 +54,8 @@ async function main() {
   if (password !== password.trim()) throw new Error("Kata sandi diawali/diakhiri spasi — kemungkinan tidak sengaja. Tidak ada yang diubah.");
   if (!random) console.log(`Panjang kata sandi: ${[...password].length} karakter (cocokkan dengan yang Anda ketik).`);
 
-  const hash = await (await auth.$context).password.hash(password);
-  const [credential] = await db
-    .select({ id: accounts.id })
-    .from(accounts)
-    .where(and(eq(accounts.userId, user.id), eq(accounts.providerId, "credential")));
-  if (credential) await db.update(accounts).set({ password: hash }).where(eq(accounts.id, credential.id));
-  else await db.insert(accounts).values({ userId: user.id, accountId: String(user.id), providerId: "credential", password: hash });
-
-  // Keluarkan dari semua perangkat supaya hanya kata sandi baru yang berlaku.
-  await db.delete(sessions).where(eq(sessions.userId, user.id));
+  // Hash seperti daftar biasa; semua sesi lama dihapus supaya hanya kata sandi baru yang berlaku.
+  await setUserPassword(user.id, password);
   console.log(`✓ Kata sandi ${email} diperbarui. Semua sesi lama dihapus — silakan masuk dengan kata sandi baru.`);
   if (random) {
     console.log(`\n  Kata sandi sementara:  ${password}\n`);

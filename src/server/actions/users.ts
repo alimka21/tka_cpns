@@ -13,8 +13,9 @@ import { getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { JENJANG_CODES, USER_STATUSES, accounts, sessions, users } from "@/server/db/schema";
 import { setSetting } from "@/server/services/app-settings";
+import { randomPassword, setUserPassword } from "@/server/services/password-reset";
 
-export type ActionResult = { ok: true } | { ok: false; error: string };
+export type ActionResult<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
 function isFkError(error: unknown) {
   return typeof error === "object" && error !== null && "code" in error && (error as { code: string }).code === "ER_ROW_IS_REFERENCED_2";
@@ -131,4 +132,22 @@ export async function setRequireApprovalAction(enabled: boolean): Promise<Action
   revalidatePath("/admin/pengaturan");
   revalidatePath("/admin/users");
   return { ok: true };
+}
+
+/**
+ * Admin mengatur ulang kata sandi user: sistem membuat kata sandi sementara,
+ * menyimpan hash-nya, mengeluarkan user dari semua perangkat, lalu
+ * mengembalikan kata sandi itu SEKALI untuk diberikan ke user. Tidak disimpan
+ * dalam bentuk teks. Akun sendiri → pakai Profil (atau `npm run user:password`).
+ */
+export async function resetUserPasswordAction(userId: number): Promise<ActionResult<{ password: string }>> {
+  const session = await getAdminSession();
+  if (!session) return NOT_ADMIN;
+  if (!z.number().int().positive().safeParse(userId).success) return { ok: false, error: "User tidak valid." };
+  if (userId === Number(session.user.id)) return { ok: false, error: "Untuk akunmu sendiri, ganti kata sandi di Profil." };
+  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId));
+  if (!user) return { ok: false, error: "User tidak ditemukan." };
+  const password = randomPassword();
+  await setUserPassword(user.id, password);
+  return { ok: true, password };
 }

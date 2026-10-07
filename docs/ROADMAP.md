@@ -360,6 +360,7 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
 - [ ] Uji dengan Sandbox DOKU asli (Client ID/Secret Key user, env) lalu pindah Production
 - [ ] Email/WA notifikasi pembayaran (opsional)
 - [x] Ganti kata sandi di Pengaturan/Profil (+ "Buat kata sandi" untuk akun Google-only) — 2026-10-02
+- [x] Admin: atur ulang kata sandi user (kata sandi sementara tampil sekali, hanya hash disimpan) — 2026-10-07
 - [ ] Lupa kata sandi (link reset via email) — butuh SMTP Hostinger diisi di env (WORKFLOW §10)
 
 ## Fase 4 — Pengerasan (sebelum ramai dipakai)

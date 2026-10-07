@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight, Clock, Crown, GraduationCap, Search, Settings, Trash2, Users, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, Copy, KeyRound, Crown, GraduationCap, Search, Settings, Trash2, Users, X } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/format";
 import { cn } from "@/lib/utils";
-import { approveAllPendingAction, deleteUserAction, setUserJenjangAction, setUserStatusAction } from "@/server/actions/users";
+import { approveAllPendingAction, deleteUserAction, resetUserPasswordAction, setUserJenjangAction, setUserStatusAction } from "@/server/actions/users";
 import { USERS_PAGE_SIZE, usersHref, type UserFilters } from "@/lib/user-filters";
 import type { AdminUserRow, AdminUsersPage } from "@/server/queries/users";
 
@@ -229,7 +229,10 @@ export function UsersTable({
                     <PremiumCount count={user.premiumCount} />
                   </td>
                   <td className="px-5 py-3.5 text-right">
-                    <DeleteUser user={user} disabled={user.id === currentUserId} />
+                    <span className="inline-flex items-center gap-1">
+                      <ResetPassword user={user} disabled={user.id === currentUserId} />
+                      <DeleteUser user={user} disabled={user.id === currentUserId} />
+                    </span>
                   </td>
                 </tr>
               ))}
@@ -243,7 +246,10 @@ export function UsersTable({
             <li key={user.id} className="flex flex-col gap-4 p-4 sm:p-5">
               <div className="flex items-start justify-between gap-3">
                 <UserIdentity user={user} />
-                <DeleteUser user={user} disabled={user.id === currentUserId} />
+                <span className="flex items-center gap-1">
+                  <ResetPassword user={user} disabled={user.id === currentUserId} />
+                  <DeleteUser user={user} disabled={user.id === currentUserId} />
+                </span>
               </div>
               <div className="flex flex-wrap items-center gap-x-6 gap-y-3 text-sm">
                 <JenjangCell user={user} />
@@ -309,6 +315,106 @@ function PremiumCount({ count }: { count: number }) {
     <span className="flex items-center gap-1.5 text-sm font-semibold text-success-strong">
       <Crown className="size-3.5" aria-hidden /> {count} paket
     </span>
+  );
+}
+
+/**
+ * Atur ulang kata sandi: sistem membuat kata sandi sementara & menampilkannya
+ * SEKALI di sini untuk diberikan ke user. Tidak disimpan dalam bentuk teks.
+ */
+function ResetPassword({ user, disabled }: { user: AdminUserRow; disabled?: boolean }) {
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  const [password, setPassword] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        // Kata sandi hanya hidup selama dialog terbuka.
+        if (!o) {
+          setPassword(null);
+          setError(null);
+          setCopied(false);
+        }
+      }}
+    >
+      <AlertDialogTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            disabled={disabled}
+            title={disabled ? "Ganti kata sandimu sendiri di Profil" : "Atur ulang kata sandi"}
+            aria-label={`Atur ulang kata sandi ${user.name}`}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <KeyRound aria-hidden />
+          </Button>
+        }
+      />
+      <AlertDialogContent>
+        {password ? (
+          <>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Kata sandi sementara {user.name}</AlertDialogTitle>
+              <AlertDialogDescription>
+                Berikan kata sandi ini ke {user.email}. Kata sandi <strong>hanya ditampilkan sekarang</strong> — tidak
+                disimpan dan tidak bisa dilihat lagi. Minta user menggantinya di Profil setelah masuk.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
+              <code className="flex-1 font-mono text-lg font-bold tracking-wider select-all" aria-label="Kata sandi sementara">
+                {password}
+              </code>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={async () => {
+                  await navigator.clipboard?.writeText(password).catch(() => {});
+                  setCopied(true);
+                }}
+              >
+                <Copy aria-hidden /> {copied ? "Tersalin" : "Salin"}
+              </Button>
+            </div>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Selesai</AlertDialogCancel>
+            </AlertDialogFooter>
+          </>
+        ) : (
+          <>
+            <AlertDialogHeader>
+              <AlertDialogTitle>Atur ulang kata sandi?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Sistem membuat kata sandi sementara baru untuk {user.name} ({user.email}). Kata sandi lama langsung tidak
+                berlaku dan user dikeluarkan dari semua perangkat.
+                {error && <span className="mt-2 block font-semibold text-destructive">{error}</span>}
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Batal</AlertDialogCancel>
+              <AlertDialogAction
+                disabled={pending}
+                onClick={(e) => {
+                  e.preventDefault();
+                  startTransition(async () => {
+                    const result = await resetUserPasswordAction(user.id);
+                    if (!result.ok) setError(result.error);
+                    else setPassword(result.password);
+                  });
+                }}
+              >
+                {pending ? "Memproses…" : "Buat kata sandi sementara"}
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </>
+        )}
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 

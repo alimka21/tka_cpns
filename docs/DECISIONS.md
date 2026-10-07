@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Atur ulang kata sandi oleh admin (bukan kolom "Sandi Teks")
+
+Permintaan: kolom kata sandi asli di Manajemen User agar admin bisa membantu
+user yang lupa. Ditolak: menyimpan kata sandi dalam teks membuka akun siswa di
+layanan lain (kata sandi dipakai ulang) bila DB/backup bocor; pengguna anak
+sekolah. Pengganti: tombol kunci "Atur ulang kata sandi" per user →
+`resetUserPasswordAction` membuat kata sandi sementara acak
+(`services/password-reset.ts`, pola `ABCdefg-2345`), menyimpan HASH saja,
+menghapus semua sesi user, dan menampilkan kata sandi SEKALI di dialog (tombol
+Salin) untuk diberikan ke user. Akun sendiri dinonaktifkan (pakai Profil atau
+`npm run user:password -- <email> --acak`, fungsi yang sama).
+
 ## 2026-10-07 — Peringatan keamanan Hostinger: next/og ImageResponse (RCE)
 
 Aplikasi tidak memakai `next/og`/`ImageResponse` (gambar OG & ikon = PNG

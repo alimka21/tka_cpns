@@ -23,7 +23,11 @@ import { ScoreTrend } from "@/components/analytics/score-trend";
 import { SubtopicRadar } from "@/components/analytics/subtopic-radar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, scoreTone } from "@/lib/format";
+import { formatDateTime, formatRupiah, scoreTone } from "@/lib/format";
+import { PremiumLock } from "@/components/billing/premium-lock";
+import { UpgradeModal } from "@/components/billing/upgrade-modal";
+import { canSeeFullResults } from "@/server/services/access";
+import { listPlans } from "@/server/services/billing";
 import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { attempts } from "@/server/db/schema";
@@ -86,6 +90,18 @@ export default async function HasilPage({
 
   const r = await getAttemptResult(attemptId, userId);
   if (!r) notFound();
+  // Akun gratis: pembahasan & statistik kelemahan dikunci (services/access.ts).
+  const full = await canSeeFullResults(
+    { id: userId, role: user.role },
+    r.jenjang,
+    r.packageId,
+  );
+  const weakCount = r.subtopics.filter((s) => s.percentage < 75).length;
+  const cheapest = full
+    ? null
+    : (await listPlans({ activeOnly: true, jenjang: r.jenjang })).sort(
+        (a, b) => a.price - b.price,
+      )[0];
 
   const sp = await searchParams;
   const tab: TabKey = TABS.some((t) => t.key === sp.tab)
@@ -96,8 +112,16 @@ export default async function HasilPage({
     : "semua";
   const no = Number(sp.no);
   // Pembahasan (kunci + jawaban) hanya dimuat saat tab-nya dibuka.
-  const review =
+  const fullReview =
     tab === "pembahasan" ? await getAttemptReview(attemptId, userId) : null;
+  // Pembahasan TIDAK dikirim ke browser untuk akun gratis (kunci jawaban tetap).
+  const review =
+    fullReview && !full
+      ? {
+          ...fullReview,
+          items: fullReview.items.map((i) => ({ ...i, explanationHtml: null })),
+        }
+      : fullReview;
   if (tab === "pembahasan" && !review) notFound();
   const tabHref = (t: TabKey) =>
     t === "ringkasan"
@@ -173,15 +197,33 @@ export default async function HasilPage({
         })}
       </nav>
 
-      {tab === "ringkasan" && <SummaryTab r={r} tabHref={tabHref} />}
-      {tab === "analisa" && <AnalysisTab r={r} />}
+      {tab === "ringkasan" && (
+        <SummaryTab r={r} tabHref={tabHref} full={full} weakCount={weakCount} />
+      )}
+      {tab === "analisa" &&
+        (full ? (
+          <AnalysisTab r={r} />
+        ) : (
+          <AnalysisLocked count={r.subtopics.length} weakCount={weakCount} />
+        ))}
       {tab === "pembahasan" && review && (
         <ReviewPager
+          explanationLocked={!full}
           attemptId={r.attemptId}
           items={review.items}
           stimuli={review.stimuli}
           filter={filter}
           number={Number.isInteger(no) ? no : null}
+        />
+      )}
+      {!full && (
+        <UpgradeModal
+          storageKey={`upsell-hasil-${r.attemptId}`}
+          correct={r.correct}
+          total={r.correct + r.wrong + r.blank}
+          wrong={r.wrong}
+          weakCount={weakCount}
+          priceText={cheapest ? `mulai ${formatRupiah(cheapest.price)}` : null}
         />
       )}
     </div>
@@ -218,9 +260,13 @@ function ResultStat({
 function SummaryTab({
   r,
   tabHref,
+  full,
+  weakCount,
 }: {
   r: AttemptResult;
   tabHref: (t: TabKey) => string;
+  full: boolean;
+  weakCount: number;
 }) {
   const sorted = [...r.subtopics].sort((a, b) => a.percentage - b.percentage);
   const weakest = sorted[0];
@@ -281,7 +327,20 @@ function SummaryTab({
         </dl>
       </section>
 
-      {weakest && (
+      {weakest && !full && (
+        <PremiumLock
+          title={
+            weakCount > 0
+              ? `${weakCount} subtopik perlu diperkuat`
+              : "Prioritas latihan & kekuatanmu"
+          }
+          description="Lihat subtopik mana yang paling menahan skormu dan mana yang sudah kuat — lalu latih yang lemah dengan Latihan Kelemahan."
+          variant="bars"
+          compact
+        />
+      )}
+
+      {weakest && full && (
         <section className="grid gap-6 lg:grid-cols-2">
           <div className="surface-card border-destructive/30 p-6">
             <div className="flex items-center gap-2 text-sm font-semibold text-destructive">
@@ -552,5 +611,31 @@ function AnalysisTab({ r }: { r: AttemptResult }) {
         </Button>
       </section>
     </>
+  );
+}
+
+/** Tab Analisa untuk akun gratis: contoh tampilan diburamkan + ajakan Premium (data asli tidak dikirim). */
+function AnalysisLocked({
+  count,
+  weakCount,
+}: {
+  count: number;
+  weakCount: number;
+}) {
+  return (
+    <PremiumLock
+      variant="chart"
+      title="Statistik kelemahan khusus Premium"
+      description={
+        count > 0
+          ? `Kami sudah menganalisis jawabanmu di ${count} subtopik${weakCount > 0 ? ` dan menemukan ${weakCount} yang perlu diperkuat` : ""}. Buka Premium untuk melihat rinciannya.`
+          : "Buka Premium untuk melihat penguasaanmu per subtopik."
+      }
+      benefits={[
+        "Grafik penguasaan per subtopik",
+        "Prioritas latihan: subtopik paling lemah lebih dulu",
+        "Latihan kelemahan otomatis per subtopik",
+      ]}
+    />
   );
 }

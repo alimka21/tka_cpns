@@ -24,7 +24,8 @@ export function PackageGrid({ packages }: { packages: StudentPackageRow[] }) {
   const byJenjang = jenjang === ALL ? packages : packages.filter((p) => p.categoryCode === jenjang);
   const counts = { semua: byJenjang.length, gratis: byJenjang.filter((p) => !p.isPremium).length, premium: byJenjang.filter((p) => p.isPremium).length };
   const visible = access === "semua" ? byJenjang : byJenjang.filter((p) => (access === "premium") === p.isPremium);
-  const lockedCount = byJenjang.filter((p) => p.isPremium && !p.unlocked).length;
+  const lockedCount = byJenjang.filter((p) => (p.isPremium && !p.unlocked) || p.freeQuotaUsedBy).length;
+  const quotaCount = byJenjang.filter((p) => p.freeQuotaUsedBy).length;
 
   if (packages.length === 0) {
     return (
@@ -62,7 +63,10 @@ export function PackageGrid({ packages }: { packages: StudentPackageRow[] }) {
       {access !== "gratis" && lockedCount > 0 && (
         <div className="flex flex-col gap-3 rounded-xl border border-cta/40 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
           <p className="flex items-center gap-2 text-sm font-semibold text-warning-strong">
-            <Crown className="size-4 shrink-0" aria-hidden /> {lockedCount} paket Premium masih terkunci — buka semuanya dengan langganan Premium.
+            <Crown className="size-4 shrink-0" aria-hidden />
+            {quotaCount > 0
+              ? `${lockedCount} paket masih terkunci — akun gratis hanya 1 paket per mata pelajaran. Buka semuanya dengan Premium.`
+              : `${lockedCount} paket Premium masih terkunci — buka semuanya dengan langganan Premium.`}
           </p>
           <Button size="sm" variant="cta" nativeButton={false} render={<Link href="/langganan" />}>
             Lihat Premium
@@ -86,7 +90,8 @@ export function PackageGrid({ packages }: { packages: StudentPackageRow[] }) {
 }
 
 function PackageCard({ pkg }: { pkg: StudentPackageRow }) {
-  const locked = pkg.isPremium && !pkg.unlocked;
+  const quotaLocked = pkg.freeQuotaUsedBy != null;
+  const locked = (pkg.isPremium && !pkg.unlocked) || quotaLocked;
   return (
     <article
       className={cn(
@@ -102,8 +107,8 @@ function PackageCard({ pkg }: { pkg: StudentPackageRow }) {
             {locked ? "Premium · terkunci" : "Premium"}
           </Badge>
         ) : (
-          <Badge variant="success">
-            <Gift aria-hidden /> Gratis
+          <Badge variant={quotaLocked ? "muted" : "success"}>
+            {quotaLocked ? <Lock aria-hidden /> : <Gift aria-hidden />} {quotaLocked ? "Gratis · kuota terpakai" : "Gratis"}
           </Badge>
         )}
         <Badge variant="info">{pkg.categoryCode}</Badge>
@@ -111,6 +116,11 @@ function PackageCard({ pkg }: { pkg: StudentPackageRow }) {
       <div className="flex-1">
         <h3 className="text-base leading-snug font-bold">{pkg.title}</h3>
         {pkg.description && <p className="mt-1.5 text-sm text-muted-foreground">{pkg.description}</p>}
+        {quotaLocked && (
+          <p className="mt-2 rounded-lg bg-warning-soft px-3 py-2 text-xs font-medium text-warning-strong">
+            Kuota gratis {pkg.subjectName ?? "mapel ini"} sudah dipakai di &ldquo;{pkg.freeQuotaUsedBy}&rdquo;. Kerjakan paket itu lagi, atau buka semua paket dengan Premium.
+          </p>
+        )}
       </div>
       <dl className="flex items-center gap-4 text-sm text-muted-foreground">
         <div className="flex items-center gap-1.5">

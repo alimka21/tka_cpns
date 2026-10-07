@@ -17,11 +17,14 @@ export function ReviewCard({
   footer,
   keyOnly = false,
   heading,
+  explanationSlot,
 }: {
   item: ReviewItem;
   footer?: React.ReactNode;
   keyOnly?: boolean;
   heading?: string;
+  /** Pengganti blok pembahasan (mis. kunci Premium untuk akun gratis). */
+  explanationSlot?: React.ReactNode;
 }) {
   const status = reviewStatus(item);
   const badge =
@@ -59,16 +62,18 @@ export function ReviewCard({
 
       {item.type === "pgk_kategori" ? <CategoryTable item={item} /> : <OptionList options={item.options} />}
 
-      <div className="rounded-lg bg-primary-soft p-4">
-        <h3 className="text-sm font-semibold text-primary">Pembahasan</h3>
-        {item.explanationHtml ? (
-          <div className="mt-2 text-sm leading-relaxed">
-            <RichHtml html={item.explanationHtml} />
-          </div>
-        ) : (
-          <p className="mt-2 text-sm text-muted-foreground">Pembahasan untuk soal ini belum tersedia.</p>
-        )}
-      </div>
+      {explanationSlot ?? (
+        <div className="rounded-lg bg-primary-soft p-4">
+          <h3 className="text-sm font-semibold text-primary">Pembahasan</h3>
+          {item.explanationHtml ? (
+            <div className="mt-2 text-sm leading-relaxed">
+              <RichHtml html={item.explanationHtml} />
+            </div>
+          ) : (
+            <p className="mt-2 text-sm text-muted-foreground">Pembahasan untuk soal ini belum tersedia.</p>
+          )}
+        </div>
+      )}
       {footer}
     </article>
   );

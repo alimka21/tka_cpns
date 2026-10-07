@@ -12,6 +12,28 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Batas akun gratis & ajakan Premium di hasil tes
+
+Keputusan pemilik produk. Akun gratis:
+- 1 paket tes GRATIS per mata pelajaran per jenjang (paket pertama yang dicoba;
+  mengulang paket itu boleh) — `queries/free-usage.ts`, dicek di
+  `startOrResumeAttempt` (reason `free_quota`) dan ditampilkan di kartu paket
+  ("Gratis · kuota terpakai"). Paket lama tanpa mapel tidak dihitung.
+- Hasil tes: skor & kunci jawaban terlihat; pembahasan per soal, statistik
+  kelemahan (tab Analisa, kartu prioritas, /progres, kartu dashboard) khusus
+  Premium. Latihan Kelemahan sudah Premium sebelumnya.
+- Konten terkunci TIDAK dikirim ke browser: `explanationHtml` dikosongkan di
+  server; panel terkunci (`components/billing/premium-lock.tsx`) memburamkan
+  CONTOH tampilan, bukan data asli.
+- Popup upgrade (`upgrade-modal.tsx`) muncul ±3 dtk setelah halaman hasil
+  tampil, sekali per percobaan (localStorage), isi personal (jumlah benar/salah,
+  jumlah subtopik lemah) + harga paket aktif termurah. Teknik yang dipakai:
+  personalisasi, loss framing ("8 soal bisa jadi poin tambahanmu"), daftar
+  manfaat konkret, CTA tunggal, penghapus keraguan (QRIS, aktif otomatis, tanpa
+  perpanjangan otomatis). Sengaja TIDAK memakai hitung mundur palsu,
+  kelangkaan buatan, atau testimoni fiktif.
+- Premium = admin, membership aktif jenjangnya, atau entitlement paket itu.
+
 ## 2026-10-07 — Paket TKA SMA Bahasa Indonesia — Paket 4 (#41, dari Buat Paket Otomatis)
 
 Dibuat admin dengan builder baru (Gemini, 7 grup bacaan; satu panggilan

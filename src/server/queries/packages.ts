@@ -20,6 +20,7 @@ import {
   users,
 } from "@/server/db/schema";
 import type { SubjectOutline } from "@/lib/package-rules";
+import { freeUsageBySubject } from "./free-usage";
 import type { QuestionType } from "@/lib/validation/enums";
 
 export type CategoryOption = { id: number; code: string; name: string };
@@ -243,6 +244,9 @@ export type StudentPackageRow = {
   questionCount: number;
   unlocked: boolean;
   lastScore: number | null;
+  subjectName: string | null;
+  /** Akun gratis: kuota 1 paket gratis untuk mapel ini sudah dipakai di paket lain (judulnya). */
+  freeQuotaUsedBy: string | null;
 };
 
 /** Paket tayang untuk siswa, dengan status akses & skor terakhir milik user itu. */
@@ -259,16 +263,23 @@ export async function listPackagesForStudent(userId: number, jenjang: string | n
       categoryCode: categories.code,
       durationMinutes: testPackages.durationMinutes,
       isPremium: testPackages.isPremium,
+      subjectId: testPackages.subjectId,
+      subjectName: subjects.name,
       questionCount: sql<number>`count(distinct ${testPackageQuestions.id})`,
       entitlementId: sql<number | null>`max(${entitlements.id})`,
     })
     .from(testPackages)
     .innerJoin(categories, eq(categories.id, testPackages.categoryId))
+    .leftJoin(subjects, eq(subjects.id, testPackages.subjectId))
     .leftJoin(testPackageQuestions, eq(testPackageQuestions.testPackageId, testPackages.id))
     .leftJoin(entitlements, and(eq(entitlements.testPackageId, testPackages.id), eq(entitlements.userId, userId)))
     .where(and(eq(testPackages.status, "published"), jenjang ? eq(categories.code, jenjang) : undefined))
-    .groupBy(testPackages.id, categories.code)
+    .groupBy(testPackages.id, categories.code, subjects.name)
     .orderBy(desc(testPackages.id));
+
+  // Akun gratis: paket gratis pertama per mapel (lihat services/access.ts).
+  const freeUsage = premium ? new Map<number, number>() : await freeUsageBySubject(userId);
+  const titleById = new Map(rows.map((r) => [r.id, r.title]));
 
   const lastScoreRows = await db
     .select({ testPackageId: attempts.testPackageId, totalScore: attempts.totalScore, maxScore: attempts.maxScore })
@@ -292,6 +303,12 @@ export async function listPackagesForStudent(userId: number, jenjang: string | n
     questionCount: Number(r.questionCount),
     unlocked: !r.isPremium || premium || r.entitlementId != null,
     lastScore: lastScoreByPackage.get(r.id) ?? null,
+    subjectName: r.subjectName ?? null,
+    freeQuotaUsedBy: (() => {
+      if (premium || r.isPremium || r.entitlementId != null || r.subjectId == null) return null;
+      const used = freeUsage.get(r.subjectId);
+      return used != null && used !== r.id ? (titleById.get(used) ?? "paket lain") : null;
+    })(),
   }));
 }
 

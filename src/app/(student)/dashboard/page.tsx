@@ -3,6 +3,7 @@ import Link from "next/link";
 import { ArrowRight, BookOpenCheck, ChevronRight, Layers, TrendingUp, TriangleAlert } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { PackageGrid } from "@/components/student/package-grid";
+import { PremiumLock } from "@/components/billing/premium-lock";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDateTime, scoreTone } from "@/lib/format";
@@ -53,7 +54,15 @@ export default async function DashboardPage() {
         </div>
       </section>
 
-      {weakest && <WeakestCard weakest={weakest} />}
+      {weakest && premium && <WeakestCard weakest={weakest} />}
+      {weakest && !premium && (
+        <PremiumLock
+          title="Prioritas latihanmu sudah dihitung"
+          description="Kami sudah menemukan subtopik yang paling perlu kamu perkuat. Buka Premium untuk melihatnya dan langsung berlatih di subtopik itu."
+          variant="bars"
+          compact
+        />
+      )}
 
       <section aria-labelledby="paket-heading" className="flex flex-col gap-5">
         <div>

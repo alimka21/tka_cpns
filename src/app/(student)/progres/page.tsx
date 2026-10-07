@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { DIAGNOSIS_STATUS, type DiagnosisStatusKey } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/session";
+import { PremiumLock } from "@/components/billing/premium-lock";
+import { isPremiumUser } from "@/server/services/access";
 import { getStudentProgress, type PrioritySubdomain, type ProgressSubject } from "@/server/queries/progress";
 import type { SubtopicDiagnosis } from "@/server/services/diagnosis";
 
@@ -20,6 +22,7 @@ const LEGEND: DiagnosisStatusKey[] = ["baik", "cukup", "perlu_latihan", "insuffi
 export default async function ProgresPage() {
   const { user } = await requireUser("/progres");
   const progress = await getStudentProgress(Number(user.id));
+  const premium = await isPremiumUser({ id: Number(user.id), role: user.role }, user.role === "admin" ? null : (user.jenjang ?? null));
 
   if (progress.testCount === 0) {
     return (
@@ -33,6 +36,36 @@ export default async function ProgresPage() {
             Pilih paket tes <ArrowRight aria-hidden />
           </Button>
         </section>
+      </div>
+    );
+  }
+
+  if (!premium) {
+    const tested = progress.subjects.reduce((n, sub) => n + sub.tested, 0);
+    return (
+      <div className="flex flex-col gap-8">
+        <Header />
+        <section aria-label="Ringkasan" className="surface-card p-6 text-base leading-relaxed">
+          <p>
+            Kamu sudah menyelesaikan <strong>{progress.testCount} tes</strong>. Diagnosa kemampuanmu di{" "}
+            <strong>{tested} subdomain</strong> sudah kami hitung dan siap dibuka.
+          </p>
+        </section>
+        {progress.scoreTrend.length > 1 && (
+          <section className="surface-card p-6">
+            <h2 className="text-lg font-bold">Tren skor tes</h2>
+            <p className="mt-1 text-sm text-muted-foreground">{progress.scoreTrend.length} tes terakhir, skala 0–100.</p>
+            <div className="mt-6">
+              <ScoreTrend points={progress.scoreTrend} />
+            </div>
+          </section>
+        )}
+        <PremiumLock
+          variant="chart"
+          title="Peta kemampuan & prioritas latihan khusus Premium"
+          description="Lihat penguasaanmu di setiap subdomain, trennya dari tes ke tes, dan tiga subdomain yang paling perlu dilatih."
+          benefits={["Peta kemampuan per subdomain", "Grafik tren per subdomain", "Prioritas & latihan kelemahan otomatis"]}
+        />
       </div>
     );
   }

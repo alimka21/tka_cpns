@@ -8,6 +8,7 @@ import { db } from "@/server/db";
 import { attemptAnswers, attemptSubtopicScores, attempts } from "@/server/db/schema";
 import { getPackageDetailCached, hasEntitlement, type PackageDetail } from "@/server/queries/packages";
 import { getActiveMembership } from "@/server/services/billing";
+import { freeUsageBySubject } from "@/server/queries/free-usage";
 import { summarizeBySubtopic } from "./analytics";
 import { scoreAttempt, type AnswerMap, type ScorableQuestion } from "./scoring";
 
@@ -64,7 +65,10 @@ export async function finalizeAttempt(attemptId: number, status: "submitted" | "
   });
 }
 
-export type StartAttemptResult = { ok: true; attemptId: number } | { ok: false; error: string };
+export type StartAttemptResult =
+  | { ok: true; attemptId: number }
+  /** `reason` dipakai halaman untuk menampilkan ajakan Premium yang sesuai. */
+  | { ok: false; error: string; reason?: "premium" | "free_quota" };
 
 /**
  * Lanjutkan attempt in_progress yang masih berjalan, atau mulai baru.
@@ -86,7 +90,18 @@ export async function startOrResumeAttempt(
   }
   if (pkg.questions.length === 0) return { ok: false, error: "Paket tes ini belum berisi soal." };
   if (pkg.isPremium && !isAdmin && !(await hasEntitlement(userId, testPackageId)) && !(await getActiveMembership(userId, pkg.categoryCode))) {
-    return { ok: false, error: "Paket ini khusus Premium. Buka Premium di menu Langganan untuk mengerjakannya." };
+    return { ok: false, reason: "premium", error: "Paket ini khusus Premium. Buka Premium di menu Langganan untuk mengerjakannya." };
+  }
+  // Akun gratis: 1 paket gratis per mata pelajaran (mengulang paket yang sama tetap boleh).
+  if (!pkg.isPremium && !isAdmin && pkg.subjectId != null && !(await getActiveMembership(userId, pkg.categoryCode)) && !(await hasEntitlement(userId, testPackageId))) {
+    const usedPackageId = (await freeUsageBySubject(userId)).get(pkg.subjectId);
+    if (usedPackageId != null && usedPackageId !== testPackageId) {
+      return {
+        ok: false,
+        reason: "free_quota",
+        error: "Akun gratis bisa mengerjakan 1 paket tes per mata pelajaran, dan kuota mapel ini sudah kamu pakai. Upgrade ke Premium untuk membuka semua paket.",
+      };
+    }
   }
 
   const [existing] = await db

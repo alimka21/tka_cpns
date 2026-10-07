@@ -7,6 +7,7 @@ import { BookOpenText, ChevronLeft, ChevronRight } from "lucide-react";
 import { ReportQuestionButton } from "@/components/hasil/report-question-button";
 import { reportTargetOf } from "@/lib/report-target";
 import { ReviewCard } from "@/components/hasil/review-card";
+import { LockedExplanation } from "@/components/billing/premium-lock";
 import { QuestionImage } from "@/components/tes/question-image";
 import { RichHtml } from "@/components/tes/rich-html";
 import { Button } from "@/components/ui/button";
@@ -33,6 +34,7 @@ export function ReviewPager({
   stimuli,
   filter,
   number,
+  explanationLocked = false,
 }: {
   attemptId: number;
   items: ReviewItem[];
@@ -45,6 +47,8 @@ export function ReviewPager({
   filter: ReviewFilter;
   /** Nomor soal asli (1..n) yang dibuka. */
   number: number | null;
+  /** Akun gratis: kunci jawaban tetap tampil, pembahasan dikunci (pemanggil wajib mengosongkan explanationHtml). */
+  explanationLocked?: boolean;
 }) {
   const href = (f: ReviewFilter, no?: number) => {
     const q = new URLSearchParams({ tab: "pembahasan" });
@@ -176,6 +180,7 @@ export function ReviewPager({
 
           <ReviewCard
             item={current}
+            explanationSlot={explanationLocked ? <LockedExplanation /> : undefined}
             footer={<ReportQuestionButton target={reportTargetOf(current)} />}
           />
 

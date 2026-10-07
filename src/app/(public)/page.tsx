@@ -18,9 +18,9 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
-import { Logo } from "@/components/brand/logo";
+import { BrandLockup, Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
-import { SITE_NAME } from "@/lib/site";
+import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { getLandingData } from "@/server/queries/landing";
 
@@ -172,7 +172,7 @@ export default async function LandingPage() {
     <div className="flex flex-1 flex-col bg-card">
       <header className="sticky top-0 z-50 border-b bg-card/90 backdrop-blur">
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:h-20 lg:px-8">
-          <Logo />
+          <Logo priority />
           <nav aria-label="Navigasi utama" className="hidden items-center gap-1 md:flex">
             {[
               ["#kerangka", "Kerangka TKA"],
@@ -203,8 +203,11 @@ export default async function LandingPage() {
           <div className="mx-auto grid w-full max-w-7xl items-center gap-12 px-4 py-16 sm:px-6 lg:grid-cols-2 lg:px-8 lg:py-24">
             <div className="flex flex-col items-start gap-6">
               <span className="inline-flex items-center gap-2 rounded-full border border-primary/15 bg-card px-3 py-1 text-xs font-semibold text-primary">
-                <Sparkles className="size-3.5" aria-hidden /> Latihan Tes Kemampuan Akademik SD · SMP · SMA
+                <Sparkles className="size-3.5" aria-hidden /> {SITE_NAME} · Latihan TKA SD · SMP · SMA
               </span>
+              <p className="text-xl font-extrabold tracking-tight">
+                <span className="text-primary">Kenali Kelemahan,</span> <span className="text-cta-hover">Kuasai TKA.</span>
+              </p>
               <h1 className="text-4xl font-extrabold tracking-tight text-foreground sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
                 Latihan TKA jadi lebih <span className="text-primary">terarah</span> & terukur
               </h1>
@@ -473,9 +476,12 @@ export default async function LandingPage() {
 
       <footer className="border-t bg-background">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div className="flex flex-col gap-2">
-            <Logo />
-            <p className="text-sm text-muted-foreground">Platform latihan Tes Kemampuan Akademik untuk siswa SD, SMP, dan SMA.</p>
+          <div className="flex flex-col gap-3">
+            <BrandLockup className="h-auto w-44" />
+            <p className="text-base font-bold text-primary">{SITE_TAGLINE}</p>
+            <p className="max-w-md text-sm text-muted-foreground">
+              Platform latihan Tes Kemampuan Akademik untuk siswa SD, SMP, dan SMA — disusun mengikuti Kerangka Asesmen TKA.
+            </p>
           </div>
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} {SITE_NAME}

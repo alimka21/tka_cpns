@@ -48,6 +48,9 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-07 (2):** rebrand → **Pakar TKA**, slogan "Kenali Kelemahan,
+Kuasai TKA." — logo di header/footer/auth/ujian, favicon, ikon, manifest,
+gambar pratinjau tautan (UI_UX §0). Grafik tren per subdomain di /progres.
 **2026-10-07:** pembayaran pindah ke **DOKU Checkout (QRIS)**, Midtrans
 dihapus. Diuji dengan server DOKU tiruan (signature diverifikasi, alur beli →
 notifikasi → Premium aktif, notifikasi palsu ditolak). Migrasi 0017 (hapus

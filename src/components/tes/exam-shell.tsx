@@ -3,7 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowLeft, ArrowRight, CheckCircle2, Flag, GraduationCap, LayoutGrid, LoaderCircle, X } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Flag, LayoutGrid, LoaderCircle, X } from "lucide-react";
+import { BrandMark } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -238,9 +239,7 @@ export function ExamShell({
     <div className="flex min-h-dvh flex-col bg-background">
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex w-full max-w-[96rem] items-center gap-3 px-4 py-3 sm:px-6 lg:px-8">
-          <span className="hidden size-9 shrink-0 items-center justify-center rounded-lg bg-primary text-primary-foreground sm:flex">
-            <GraduationCap className="size-5" aria-hidden />
-          </span>
+          <BrandMark className="hidden h-7 w-auto shrink-0 sm:block" />
           <div className="min-w-0 flex-1">
             <h1 className="truncate text-sm font-bold sm:text-base">{title}</h1>
             <p className="text-xs text-muted-foreground">

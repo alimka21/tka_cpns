@@ -16,6 +16,22 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 
 ---
 
+## 0. Merek — Pakar TKA
+
+- Nama: **Pakar TKA** (`SITE_NAME`), slogan **"Kenali Kelemahan, Kuasai TKA."**
+  (`SITE_TAGLINE`) — keduanya di `src/lib/site.ts`, jangan ditulis manual.
+- Aset logo (latar transparan, dari logo pemilik produk) di `public/brand/`:
+  `pakar-tka-mark` (simbol TKA), `pakar-tka-wordmark` (tulisan PAKAR TKA),
+  `pakar-tka-logo` (bertumpuk), versi `-white` untuk latar gelap. PNG + WebP.
+- Komponen: `Logo` (simbol + tulisan, header semua area), `BrandMark` (simbol
+  saja, header ujian), `BrandLockup` (bertumpuk, footer landing).
+- Ikon: `src/app/favicon.ico` (16/32/48), `icon.png` 512, `apple-icon.png` 180,
+  `manifest.ts`, gambar pratinjau tautan `opengraph-image.png`/`twitter-image.png`.
+- Warna logo = token yang ada: biru tua `--primary` #1e3a8a + amber `--cta`
+  #f59e0b; teks slogan oranye pakai `text-cta-hover` (#d97706) ukuran ≥ 20px tebal.
+- Simbol lebar (±2,4:1) → favicon terlihat kecil; bila nanti ada versi simbol
+  persegi dari desainer, ganti file ikon saja.
+
 ## 1. Prinsip desain
 
 - **Terpercaya & fokus** — ini platform latihan TKA untuk siswa SD/SMP/SMA,

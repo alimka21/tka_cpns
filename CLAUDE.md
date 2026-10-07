@@ -1,6 +1,6 @@
 # CLAUDE.md — Panduan Kerja untuk Claude Code
 
-Proyek: **Web Tes Premium** — platform latihan Tes Kemampuan Akademik (TKA)
+Proyek: **Pakar TKA** (dulu "Web Tes Premium"; slogan "Kenali Kelemahan, Kuasai TKA.") — platform latihan Tes Kemampuan Akademik (TKA)
 khusus siswa sekolah SD/SMP/SMA (bank soal, ujian online, analisis kelemahan per subtopik, generate soal via
 Gemini API milik masing-masing user).
 

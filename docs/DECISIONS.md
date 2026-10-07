@@ -12,6 +12,16 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Merek Pakar TKA & slogan
+
+Nama sistem "Web Tes Premium" → **Pakar TKA** (logo dari pemilik produk).
+Slogan dipilih: **"Kenali Kelemahan, Kuasai TKA."** — merangkum pembeda
+produk (diagnosa per subtopik → latihan terarah), dua kata kerja berpasangan
+dengan aliterasi K, pendek untuk header/metadata. Logo dibuat transparan dan
+dipecah (simbol, tulisan, bertumpuk, putih) di `public/brand/`; tulisan di
+header memakai gambar wordmark (bukan teks CSS) agar sama persis dengan logo.
+Palet UI tidak diubah karena sudah sama (biru tua + amber).
+
 ## 2026-10-07 — Pembayaran pindah ke DOKU Checkout (QRIS), Midtrans dihapus
 
 Keputusan pemilik produk: hanya DOKU, metode QRIS (satu QR untuk semua

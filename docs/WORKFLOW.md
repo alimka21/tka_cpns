@@ -241,3 +241,8 @@ membersihkan; sisa run terputus: `npm run loadtest -- --cleanup`).
 seperti daftar biasa; semua sesi lama user itu dihapus. Kata sandi lama tidak bisa
 dilihat oleh siapa pun (hanya hash yang tersimpan).
 
+Paling aman bila kata sandi ketikan tetap ditolak saat login:
+`npm run user:password -- <email> --acak` — sistem membuat kata sandi sementara
+(mis. `KTRmnpa-4827`) dan menampilkannya SEKALI di terminal; masuk dengan itu,
+lalu ganti di Profil → Ganti kata sandi.
+

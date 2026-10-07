@@ -16,7 +16,10 @@ function askHidden(prompt: string): Promise<string> {
     stdin.resume();
     stdin.setEncoding("utf8");
     let value = "";
-    const onData = (ch: string) => {
+    const onData = (chunk: string) => {
+      // Buang urutan escape terminal (penanda paste "ESC[200~ … ESC[201~", tombol panah, dll.)
+      // supaya tidak ikut tersimpan sebagai bagian kata sandi.
+      const ch = chunk.replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, "").replace(/\u001b./g, "");
       for (const c of ch) {
         if (c === "\r" || c === "\n") {
           stdin.setRawMode?.(false);
@@ -26,8 +29,8 @@ function askHidden(prompt: string): Promise<string> {
           return resolve(value);
         }
         if (c === "\u0003") process.exit(130); // Ctrl+C
-        if (c === "\u007f" || c === "\b") value = value.slice(0, -1);
-        else value += c;
+        if (c === "\u007f" || c === "\b") value = [...value].slice(0, -1).join("");
+        else if (c >= " ") value += c; // karakter kontrol lain diabaikan
       }
     };
     stdin.on("data", onData);
@@ -44,6 +47,8 @@ async function main() {
   const confirm = await askHidden("Ulangi kata sandi baru: ");
   if (password !== confirm) throw new Error("Kata sandi tidak sama. Tidak ada yang diubah.");
   if (password.length < 8 || password.length > 128) throw new Error("Kata sandi harus 8–128 karakter. Tidak ada yang diubah.");
+  if (password !== password.trim()) throw new Error("Kata sandi diawali/diakhiri spasi — kemungkinan tidak sengaja. Tidak ada yang diubah.");
+  console.log(`Panjang kata sandi: ${[...password].length} karakter (cocokkan dengan yang Anda ketik).`);
 
   const hash = await (await auth.$context).password.hash(password);
   const [credential] = await db

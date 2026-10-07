@@ -45,7 +45,14 @@ export type RunAiInput = {
   prompt: (need: number, avoid: string[], stimulus: Stimulus | null, plan: PlanItem[] | null) => ReturnType<typeof buildAiPrompt>;
 };
 
-export type RunAiOutput = { valid: QuestionInput[]; rejected: string[]; error: string | null; stimulus: Stimulus | null };
+export type RunAiOutput = {
+  valid: QuestionInput[];
+  rejected: string[];
+  error: string | null;
+  stimulus: Stimulus | null;
+  /** Slot rencana yang belum terisi (null = tanpa rencana). */
+  planLeft: ResolvedPlanItem[] | null;
+};
 
 /** Percobaan pertama + satu kali ulang hanya untuk kekurangannya. */
 export async function runAiGeneration(input: RunAiInput): Promise<RunAiOutput> {
@@ -57,7 +64,7 @@ export async function runAiGeneration(input: RunAiInput): Promise<RunAiOutput> {
     for (let attempt = 0; attempt < 2 && valid.length < input.count; attempt++) {
       const need = input.count - valid.length;
       const prompt = input.prompt(need, valid.map((v) => v.questionText), stimulus, planLeft);
-      if (!prompt.ok) return { valid, rejected, error: prompt.error, stimulus };
+      if (!prompt.ok) return { valid, rejected, error: prompt.error, stimulus, planLeft };
       const raw = await generateJson({ apiKey: input.apiKey, prompt: prompt.prompt, images: input.images });
       if (input.wantsNewStimulus && !stimulus) {
         stimulus = parseAiStimulus(raw);
@@ -86,9 +93,9 @@ export async function runAiGeneration(input: RunAiInput): Promise<RunAiOutput> {
         valid.push(...mapped.valid.slice(0, need));
       }
     }
-    return { valid, rejected, error: null, stimulus };
+    return { valid, rejected, error: null, stimulus, planLeft };
   } catch (e) {
-    return { valid, rejected, error: e instanceof GeminiError ? e.message : "Terjadi kesalahan saat memanggil Gemini.", stimulus };
+    return { valid, rejected, error: e instanceof GeminiError ? e.message : "Terjadi kesalahan saat memanggil Gemini.", stimulus, planLeft };
   }
 }
 
@@ -119,6 +126,8 @@ export type AiGenerateResult =
       created: { id: number; text: string; html: string }[];
       rejected: string[];
       stimulus: { id: number; code: string; title: string } | null;
+      /** Dengan rencana: slot yang belum terisi (untuk "Lengkapi soal yang kurang"). */
+      missing: PlanItem[];
     }
   | { ok: false; error: string; rejected?: string[] };
 
@@ -284,5 +293,6 @@ export async function generateAiQuestions(userId: number, req: AiGenerateRequest
     created: saved.created,
     stimulus: saved.stimulus && { id: saved.stimulus.id, code: saved.stimulus.code, title: saved.stimulus.title },
     rejected: run.error ? [...run.rejected, `Sebagian gagal: ${run.error}`] : run.rejected,
+    missing: (run.planLeft ?? []).map(({ subdomainCode, form, difficulty, cognitiveLevel }) => ({ subdomainCode, form, difficulty, cognitiveLevel })),
   };
 }

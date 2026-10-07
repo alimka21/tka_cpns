@@ -15,7 +15,15 @@ import type { AutoPackagePreview } from "@/server/services/auto-package";
 export type AutoJenjangOption = { id: number; code: string; name: string; subjects: { id: number; name: string }[] };
 
 type Preview = Extract<AutoPackagePreview, { ok: true }>;
-type BatchState = { status: "waiting" | "running" | "done" | "failed"; ids: number[]; error?: string };
+type Slot = { subtopicCode: string; type: Preview["batches"][number]["slots"][number]["type"]; tier: 1 | 2 | 3 };
+/** `partial` = sebagian slot rencana belum terisi (Gemini mengembalikan soal kurang / tidak lolos validasi). */
+type BatchState = {
+  status: "waiting" | "running" | "done" | "partial" | "failed";
+  ids: number[];
+  error?: string;
+  missing?: Slot[];
+  stimulusId?: number | null;
+};
 
 // 2 sekaligus: 3 batch paralel ikut memicu "Gemini sedang tidak tersedia" (503).
 const PARALLEL = 2;
@@ -68,7 +76,8 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
 
   const aiIds = batches.flatMap((b) => b.ids);
   const failed = batches.filter((b) => b.status === "failed").length;
-  const pendingAi = batches.some((b) => b.status === "waiting" || b.status === "failed");
+  const missingCount = batches.reduce((n, b) => n + (b.status === "partial" ? (b.missing?.length ?? 0) : 0), 0);
+  const pendingAi = batches.some((b) => b.status === "waiting" || b.status === "failed" || b.status === "partial");
   const total = (preview?.bankIds.length ?? 0) + aiIds.length;
 
   async function createPackage(ids: number[]) {
@@ -78,35 +87,60 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
     router.push(`/admin/paket-tes/${r.id}`);
   }
 
-  async function run(onlyFailed: boolean) {
+  /** `all`: batch belum jalan & gagal; `failed`: hanya yang gagal; `missing`: lengkapi slot yang kurang. */
+  async function run(mode: "all" | "failed" | "missing") {
     if (!preview) return;
     setError(null);
     setRunning(true);
     const state = [...batches];
     const queue = preview.batches
       .map((_, i) => i)
-      .filter((i) => state[i].status !== "done" && (!onlyFailed || state[i].status === "failed"));
+      .filter((i) =>
+        mode === "missing"
+          ? state[i].status === "partial"
+          : mode === "failed"
+            ? state[i].status === "failed"
+            : state[i].status === "waiting" || state[i].status === "failed",
+      );
     // Beberapa batch sekaligus (tiap batch ±30–60 detik), tetap di bawah batas rate Gemini.
     const worker = async () => {
       for (let i = queue.shift(); i !== undefined; i = queue.shift()) {
-        state[i] = { status: "running", ids: [] };
-        setBatches([...state]);
+        const prev = state[i];
+        const completing = mode === "missing";
         const b = preview.batches[i];
+        const slots: Slot[] = completing ? (prev.missing ?? []) : b.slots.map(({ subtopicCode, type, tier }) => ({ subtopicCode, type, tier }));
+        state[i] = { ...prev, status: "running", ids: completing ? prev.ids : [] };
+        setBatches([...state]);
         const r = await runAutoPackageBatchAction({
           kind: b.kind,
-          slots: b.slots.map(({ subtopicCode, type, tier }) => ({ subtopicCode, type, tier })),
+          slots,
           sourceQuestionId: b.sourceQuestionId,
           theme: b.theme,
+          // Melengkapi grup → soal ditambahkan ke bacaan yang sama.
+          stimulusId: completing && b.kind === "grup" ? (prev.stimulusId ?? null) : null,
         }).catch(() => ({ ok: false as const, error: "Koneksi terputus." }));
-        const want = b.slots.length;
-        state[i] = r.ok
-          ? { status: "done", ids: r.ids, error: r.ids.length < want ? `${r.ids.length} dari ${want} soal lolos validasi.` : undefined }
-          : { status: "failed", ids: [], error: r.error };
+        if (r.ok) {
+          const ids = completing ? [...prev.ids, ...r.ids] : r.ids;
+          const missing = r.missing;
+          state[i] = {
+            status: missing.length > 0 ? "partial" : "done",
+            ids,
+            missing,
+            stimulusId: r.stimulusId ?? prev.stimulusId ?? null,
+            error: missing.length > 0 ? `Kurang ${missing.length} dari ${b.slots.length} soal — belum lolos validasi.` : undefined,
+          };
+        } else if (completing) {
+          // Gagal melengkapi: soal yang sudah ada tetap tersimpan, kekurangannya tetap tercatat.
+          state[i] = { ...prev, status: "partial", error: `Belum berhasil melengkapi: ${r.error}` };
+        } else {
+          state[i] = { status: "failed", ids: [], error: r.error };
+        }
         setBatches([...state]);
       }
     };
     await Promise.all(Array.from({ length: PARALLEL }, worker));
     setRunning(false);
+    // Simpan otomatis HANYA bila semua batch lengkap — kekurangan tidak lagi diam-diam lolos.
     if (state.every((s) => s.status === "done")) await createPackage(state.flatMap((s) => s.ids));
   }
 
@@ -266,7 +300,11 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
                             "Soal baru (subtopik belum punya soal tunggal tanpa gambar untuk dimodifikasi)"
                           )}
                         </div>
-                        {s?.error && <div className={`mt-1 text-xs ${s.status === "failed" ? "text-destructive" : "text-muted-foreground"}`}>{s.error}</div>}
+                        {s?.error && (
+                          <div className={`mt-1 text-xs ${s.status === "failed" ? "text-destructive" : s.status === "partial" ? "font-medium text-warning-strong" : "text-muted-foreground"}`}>
+                            {s.error}
+                          </div>
+                        )}
                       </div>
                       <div className="shrink-0">
                         {s?.status === "running" ? (
@@ -275,6 +313,10 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
                           </Badge>
                         ) : s?.status === "done" ? (
                           <Badge variant="success">{s.ids.length} soal</Badge>
+                        ) : s?.status === "partial" ? (
+                          <Badge variant="warning">
+                            {s.ids.length} soal · kurang {s.missing?.length ?? 0}
+                          </Badge>
                         ) : s?.status === "failed" ? (
                           <Badge variant="warning">Gagal</Badge>
                         ) : (
@@ -312,25 +354,32 @@ export function AutoPackageBuilder({ options, initialCategoryId }: { options: Au
 
           <div className="flex flex-wrap items-center gap-2">
             {preview.batches.length === 0 ? (
-              <Button disabled={running || title.trim().length < 3} onClick={() => run(false)}>
+              <Button disabled={running || title.trim().length < 3} onClick={() => run("all")}>
                 <Wand2 aria-hidden /> Buat paket
               </Button>
             ) : !pendingAi && !running ? (
               <Button disabled={title.trim().length < 3} onClick={() => createPackage(aiIds)}>
                 <Wand2 aria-hidden /> Simpan paket ({total} soal)
               </Button>
-            ) : failed > 0 && !running ? (
+            ) : (failed > 0 || missingCount > 0) && !running ? (
               <>
-                <Button disabled={!preview.hasGeminiKey} onClick={() => run(true)}>
-                  <Sparkles aria-hidden /> Coba lagi yang gagal ({failed})
-                </Button>
-                <Button variant="outline" disabled={title.trim().length < 3 || total === 0} onClick={() => createPackage(aiIds)}>
-                  Buat paket dengan {total} soal yang ada
+                {missingCount > 0 && (
+                  <Button disabled={!preview.hasGeminiKey} onClick={() => run("missing")}>
+                    <Sparkles aria-hidden /> Lengkapi soal yang kurang ({missingCount})
+                  </Button>
+                )}
+                {failed > 0 && (
+                  <Button variant={missingCount > 0 ? "outline" : "default"} disabled={!preview.hasGeminiKey} onClick={() => run("failed")}>
+                    <Sparkles aria-hidden /> Coba lagi yang gagal ({failed})
+                  </Button>
+                )}
+                <Button variant="ghost" disabled={title.trim().length < 3 || total === 0} onClick={() => createPackage(aiIds)}>
+                  Simpan dengan {total} dari {preview.questionCount} soal
                 </Button>
               </>
             ) : (
               <>
-                <Button disabled={running || !preview.hasGeminiKey || title.trim().length < 3 || !pendingAi} onClick={() => run(false)}>
+                <Button disabled={running || !preview.hasGeminiKey || title.trim().length < 3 || !pendingAi} onClick={() => run("all")}>
                   {running ? <LoaderCircle className="animate-spin" aria-hidden /> : <Sparkles aria-hidden />}
                   {running ? "AI sedang membuat soal…" : "Jalankan AI & buat paket"}
                 </Button>

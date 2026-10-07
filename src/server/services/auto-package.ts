@@ -8,7 +8,7 @@ import type { Difficulty, QuestionType } from "@/lib/validation/enums";
 import type { VariationStyle } from "@/server/asesmen/generation-context";
 import { findSubdomain } from "@/server/asesmen";
 import { db } from "@/server/db";
-import { categories, questions, subjects, subtopics, testPackageQuestions, testPackages, topics } from "@/server/db/schema";
+import { categories, questions, stimuli, subjects, subtopics, testPackageQuestions, testPackages, topics } from "@/server/db/schema";
 import { loadSubjectOutlines } from "@/server/queries/packages";
 import { getGeminiKey } from "@/server/services/ai-key";
 import { generateAiQuestions, type PlanItem } from "@/server/services/ai-generate";
@@ -173,14 +173,32 @@ export async function buildAutoPackagePreview(userId: number, categoryId: number
   };
 }
 
-export type AutoBatchResult = { ok: true; ids: number[]; rejected: string[] } | { ok: false; error: string };
+export type AutoBatchSlotInput = { subtopicCode: string; type: QuestionType; tier: Tier };
+export type AutoBatchResult =
+  | {
+      ok: true;
+      ids: number[];
+      rejected: string[];
+      /** Slot rencana yang belum terisi — bisa diminta ulang ("Lengkapi soal yang kurang"). */
+      missing: AutoBatchSlotInput[];
+      /** Grup: stimulus yang dibuat/dipakai, supaya kekurangannya ditambahkan ke bacaan yang sama. */
+      stimulusId: number | null;
+    }
+  | { ok: false; error: string };
 
 const DIFF_RANK: Record<Difficulty, number> = { easy: 1, medium: 2, hard: 3 };
+const DIFFICULTY_TIER: Record<Difficulty, Tier> = { easy: 1, medium: 2, hard: 3 };
 
 export async function runAutoPackageBatch(
   userId: number,
-  b: { kind: "grup" | "tunggal"; slots: { subtopicCode: string; type: QuestionType; tier: Tier }[]; sourceQuestionId: number | null; theme: string },
+  b: { kind: "grup" | "tunggal"; slots: AutoBatchSlotInput[]; sourceQuestionId: number | null; theme: string; stimulusId?: number | null },
 ): Promise<AutoBatchResult> {
+  // Melengkapi grup: hanya ke bacaan buatan AI milik admin ini sendiri.
+  if (b.stimulusId != null) {
+    if (b.kind !== "grup") return { ok: false, error: "Stimulus hanya untuk batch grup." };
+    const [st] = await db.select({ createdBy: stimuli.createdBy, code: stimuli.code }).from(stimuli).where(eq(stimuli.id, b.stimulusId));
+    if (!st || st.createdBy !== userId || !st.code.startsWith("AI-")) return { ok: false, error: "Bacaan grup tidak valid untuk dilengkapi." };
+  }
   const refs = b.slots.map((s) => findSubdomain(s.subtopicCode));
   if (refs.some((r) => !r)) return { ok: false, error: "Subtopik tidak ada di kerangka asesmen." };
   const subject = refs[0]!.subject;
@@ -224,9 +242,16 @@ export async function runAutoPackageBatch(
     variation,
     plan,
     contextHint: b.theme,
+    stimulusId: b.kind === "grup" ? (b.stimulusId ?? null) : null,
   });
   if (!r.ok) return { ok: false, error: r.error };
-  return { ok: true, ids: r.created.map((c) => c.id), rejected: r.rejected };
+  return {
+    ok: true,
+    ids: r.created.map((c) => c.id),
+    rejected: r.rejected,
+    missing: r.missing.map((m) => ({ subtopicCode: m.subdomainCode, type: m.form, tier: DIFFICULTY_TIER[m.difficulty] })),
+    stimulusId: r.stimulus?.id ?? b.stimulusId ?? null,
+  };
 }
 
 export type AutoCreateResult = { ok: true; id: number; total: number } | { ok: false; errors: string[] };

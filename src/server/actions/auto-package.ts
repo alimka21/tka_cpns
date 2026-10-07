@@ -36,6 +36,7 @@ const batchInput = z.object({
     .max(10),
   sourceQuestionId: id.nullable(),
   theme: z.string().trim().max(600),
+  stimulusId: id.nullable().optional(),
 });
 
 export async function runAutoPackageBatchAction(raw: unknown): Promise<AutoBatchResult> {

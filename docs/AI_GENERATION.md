@@ -225,5 +225,6 @@ bergantung pada siswa punya key; AI (langkah 6) menambah variasi.
   - **Variasi konteks:** tiap batch mendapat tema & nama tokoh berbeda (acak per rencana) karena batch berjalan paralel.
   - **Gemini sibuk:** `generateJson` mencoba ulang 429/5xx dua kali (jeda 3 s, 10 s); client 2 batch paralel (sebelumnya 3).
   - Paket disusun per subtopik dengan grup (bank maupun AI) utuh & berurutan, divalidasi `validatePackageOrder`.
+  - **Lengkapi soal yang kurang** (2026-10-07): batch yang slot rencananya belum terisi berstatus `partial` (badge "kurang N"); paket TIDAK disimpan otomatis. Tombol "Lengkapi soal yang kurang" meminta ulang hanya slot itu — untuk grup ke **stimulus yang sama** (`stimulusId`, hanya stimulus `AI-` milik admin itu). Alternatif: "Simpan dengan N dari 30 soal".
 - `createAutoPackage` memvalidasi ulang (soal masih belum terpakai, grup utuh, soal AI milik admin itu) → paket **draf** (durasi dari aturan). Soal AI `pending_review`; terbitkan lewat tombol Terbitkan paket (bisa sekaligus soalnya).
 

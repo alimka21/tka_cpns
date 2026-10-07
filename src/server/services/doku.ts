@@ -43,6 +43,19 @@ export function isDokuProduction() {
   return env("DOKU_IS_PRODUCTION")?.toLowerCase() === "true";
 }
 
+/**
+ * Metode bayar di halaman DOKU Checkout. Env DOKU_PAYMENT_METHODS: daftar kode
+ * dipisah koma (default "QRIS"); "ALL" = semua channel yang aktif di akun DOKU.
+ */
+export function dokuPaymentMethods(): string[] {
+  const raw = env("DOKU_PAYMENT_METHODS") ?? "QRIS";
+  if (raw.toUpperCase() === "ALL") return [];
+  return raw
+    .split(",")
+    .map((m) => m.trim().toUpperCase())
+    .filter((m) => /^[A-Z0-9_]{2,40}$/.test(m));
+}
+
 /** Info aman untuk ditampilkan ke admin (tanpa Secret Key). */
 export function dokuPublicInfo() {
   const id = env("DOKU_CLIENT_ID") ?? "";
@@ -51,6 +64,7 @@ export function dokuPublicInfo() {
     apiBase: process.env.DOKU_API_BASE?.trim() || (isDokuProduction() ? "https://api.doku.com" : "https://api-sandbox.doku.com"),
     clientIdMasked: id ? `${id.slice(0, 8)}…${id.slice(-4)} (${id.length} karakter)` : "(kosong)",
     secretKeyLength: env("DOKU_SECRET_KEY")?.length ?? 0,
+    paymentMethods: dokuPaymentMethods(),
   };
 }
 
@@ -109,6 +123,7 @@ export async function createCheckout(input: {
   callbackUrl: string;
   dueMinutes?: number;
 }): Promise<{ url: string; tokenId: string | null }> {
+  const methods = dokuPaymentMethods();
   const { res, json } = await call("/checkout/v1/payment", "POST", {
     order: {
       amount: input.amount,
@@ -119,11 +134,18 @@ export async function createCheckout(input: {
       auto_redirect: true,
       line_items: [{ id: input.invoiceNumber.slice(0, 50), name: input.itemName.slice(0, 255), quantity: 1, price: input.amount }],
     },
-    payment: { payment_due_date: input.dueMinutes ?? 60, payment_method_types: ["QRIS"] },
+    payment: { payment_due_date: input.dueMinutes ?? 60, ...(methods.length > 0 && { payment_method_types: methods }) },
     customer: { id: input.customer.id, name: input.customer.name.slice(0, 255), email: input.customer.email },
   });
   const payment = (json.response as { payment?: { url?: unknown; token_id?: unknown } } | undefined)?.payment;
-  if (!res.ok || typeof payment?.url !== "string") throw new DokuError(`DOKU menolak transaksi: ${errorText(json, res.status)}`);
+  if (!res.ok || typeof payment?.url !== "string") {
+    const text = errorText(json, res.status);
+    // Pesan teknis DOKU → arahan yang bisa ditindaklanjuti (siswa melihat pesan ini).
+    if (/payment channel is inactive/i.test(text)) {
+      throw new DokuError("Metode pembayaran belum aktif di akun DOKU. Mohon hubungi admin — pembayaran belum bisa diproses saat ini.");
+    }
+    throw new DokuError(`DOKU menolak transaksi: ${text}`);
+  }
   return { url: payment.url, tokenId: typeof payment.token_id === "string" ? payment.token_id : null };
 }
 

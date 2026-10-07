@@ -46,6 +46,11 @@ export default async function AdminLanggananPage() {
             </dd>
             <dt>Secret Key</dt>
             <dd>{info.secretKeyLength ? `terisi (${info.secretKeyLength} karakter)` : "kosong"}</dd>
+            <dt>Metode bayar</dt>
+            <dd>
+              {info.paymentMethods.length ? info.paymentMethods.join(", ") : "Semua channel yang aktif di akun DOKU"}{" "}
+              <span className="text-xs">(env DOKU_PAYMENT_METHODS; harus aktif di DOKU Back Office)</span>
+            </dd>
           </dl>
         )}
         {configured && <DokuConnectionTest />}

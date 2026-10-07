@@ -147,6 +147,10 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
    per transaksi lewat `callback_url`). Pastikan metode **QRIS** aktif di akun.
    Kolom **URL Halaman Sukses** (bila diminta): `https://<domain>/langganan/selesai`
    — tanpa nomor invoice halaman itu menampilkan transaksi terbaru siswa.
+   Error **"PAYMENT CHANNEL IS INACTIVE"** = QRIS belum aktif di akun DOKU itu
+   (Production butuh aktivasi/persetujuan DOKU). Sementara bisa uji dengan
+   channel lain yang aktif: env `DOKU_PAYMENT_METHODS=ALL` (atau daftar kode
+   dipisah koma), restart; kembalikan ke `QRIS` setelah QRIS aktif.
 4. Admin → `/admin/langganan` → buat paket langganan (harga, durasi,
    jenjang). Tandai paket tes gratis (`is_premium = false`) di Paket Tes.
 5. Uji: akun siswa → Premium → Bayar → halaman DOKU menampilkan QRIS →

@@ -145,6 +145,8 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
 3. Back Office → Settings → Payment Settings → **Notification URL**:
    `https://<domain>/api/doku/notification` (halaman kembali dikirim otomatis
    per transaksi lewat `callback_url`). Pastikan metode **QRIS** aktif di akun.
+   Kolom **URL Halaman Sukses** (bila diminta): `https://<domain>/langganan/selesai`
+   — tanpa nomor invoice halaman itu menampilkan transaksi terbaru siswa.
 4. Admin → `/admin/langganan` → buat paket langganan (harga, durasi,
    jenjang). Tandai paket tes gratis (`is_premium = false`) di Paket Tes.
 5. Uji: akun siswa → Premium → Bayar → halaman DOKU menampilkan QRIS →

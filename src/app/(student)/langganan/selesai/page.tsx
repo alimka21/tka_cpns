@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { notFound } from "next/navigation";
-import { eq } from "drizzle-orm";
+import { notFound, redirect } from "next/navigation";
+import { desc, eq } from "drizzle-orm";
 import { CircleCheck, Clock, XCircle } from "lucide-react";
 import { SyncOrderButton } from "@/components/billing/sync-order-button";
 import { Button } from "@/components/ui/button";
@@ -15,13 +15,18 @@ import { isDokuConfigured } from "@/server/services/doku";
 export const metadata: Metadata = { title: "Status Pembayaran" };
 export const dynamic = "force-dynamic";
 
-// Halaman kembali dari DOKU Checkout (callback_url). Status dicek ulang ke DOKU
-// (cadangan bila webhook belum sampai), lalu ditampilkan.
+// Halaman kembali dari DOKU Checkout (callback_url) — juga "URL Halaman Sukses"
+// di dashboard DOKU. Status dicek ulang ke DOKU (cadangan bila webhook belum
+// sampai), lalu ditampilkan. Tanpa nomor invoice (URL polos dari dashboard)
+// → transaksi terbaru milik user; belum pernah transaksi → /langganan.
 export default async function LanggananSelesaiPage({ searchParams }: PageProps<"/langganan/selesai">) {
   const { user } = await requireUser("/langganan");
-  const { order_id } = await searchParams;
-  if (typeof order_id !== "string") notFound();
-  const [owned] = await db.select().from(orders).where(eq(orders.orderCode, order_id.slice(0, 50)));
+  const params = await searchParams;
+  const code = [params.order_id, params.invoice_number, params.invoice].find((v): v is string => typeof v === "string" && v.length > 0);
+  const [owned] = code
+    ? await db.select().from(orders).where(eq(orders.orderCode, code.slice(0, 50)))
+    : await db.select().from(orders).where(eq(orders.userId, Number(user.id))).orderBy(desc(orders.createdAt), desc(orders.id)).limit(1);
+  if (!owned && !code) redirect("/langganan");
   if (!owned || owned.userId !== Number(user.id)) notFound();
 
   if (isDokuConfigured() && owned.status === "pending") await syncOrder(owned.orderCode);

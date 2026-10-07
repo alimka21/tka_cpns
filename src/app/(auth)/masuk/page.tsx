@@ -13,6 +13,14 @@ export default async function MasukPage({ searchParams }: PageProps<"/masuk">) {
   // Sudah login → langsung ke tujuan.
   const session = await getSession();
   if (session) redirect(nextPath ?? homeFor(session.user.role));
-  const { error } = await searchParams;
-  return <AuthForm mode="signin" next={nextPath} googleEnabled={isGoogleEnabled} oauthError={typeof error === "string" ? error : undefined} />;
+  const { error, reset } = await searchParams;
+  return (
+    <AuthForm
+      mode="signin"
+      next={nextPath}
+      googleEnabled={isGoogleEnabled}
+      oauthError={typeof error === "string" ? error : undefined}
+      success={reset === "berhasil" ? "Kata sandi baru tersimpan. Silakan masuk dengan kata sandi baru." : undefined}
+    />
+  );
 }

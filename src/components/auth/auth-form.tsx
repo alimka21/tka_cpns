@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, Eye, EyeOff, Info, Lock, Mail, User, type LucideIcon } from "lucide-react";
+import { ArrowRight, CircleCheck, Eye, EyeOff, Info, Lock, Mail, User, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { JenjangPicker } from "@/components/profile/jenjang-picker";
 import { Button } from "@/components/ui/button";
@@ -62,11 +62,14 @@ export function AuthForm({
   next,
   googleEnabled = false,
   oauthError,
+  success,
 }: {
   mode: Mode;
   next?: string;
   googleEnabled?: boolean;
   oauthError?: string;
+  /** Pesan hijau di atas form (mis. setelah kata sandi berhasil diatur ulang). */
+  success?: string;
 }) {
   const router = useRouter();
   const [errors, setErrors] = useState<Errors>({});
@@ -161,6 +164,12 @@ export function AuthForm({
         </>
       )}
 
+      {success && (
+        <p role="status" className="mt-6 flex gap-2 rounded-lg border border-success/30 bg-success-soft px-3 py-2.5 text-sm text-success-strong">
+          <CircleCheck className="mt-0.5 size-4 shrink-0" aria-hidden /> {success}
+        </p>
+      )}
+
       <form noValidate onSubmit={handleSubmit} className={cn("flex flex-col gap-5", googleEnabled ? "mt-6" : "mt-8")}>
         {mode === "signup" && (
           <Field id="name" label="Nama lengkap" icon={User} error={errors.name}>
@@ -187,6 +196,13 @@ export function AuthForm({
           icon={Lock}
           error={errors.password}
           hint={mode === "signup" ? "Minimal 8 karakter, kombinasi huruf & angka." : undefined}
+          aside={
+            mode === "signin" ? (
+              <Link href="/lupa-kata-sandi" className="text-xs font-semibold text-primary hover:underline">
+                Lupa kata sandi?
+              </Link>
+            ) : undefined
+          }
         >
           <Input
             id="password"
@@ -266,6 +282,7 @@ function Field({
   icon: Icon,
   error,
   hint,
+  aside,
   children,
 }: {
   id: string;
@@ -273,13 +290,17 @@ function Field({
   icon: LucideIcon;
   error?: string;
   hint?: string;
+  aside?: React.ReactNode;
   children: React.ReactNode;
 }) {
   return (
     <div className="flex flex-col gap-1.5">
-      <Label htmlFor={id} className="text-sm font-semibold">
-        {label}
-      </Label>
+      <div className="flex items-center justify-between gap-2">
+        <Label htmlFor={id} className="text-sm font-semibold">
+          {label}
+        </Label>
+        {aside}
+      </div>
       <div className="relative">
         <Icon
           className={cn("pointer-events-none absolute top-1/2 left-3.5 size-4 -translate-y-1/2 text-muted-foreground", error && "text-destructive")}

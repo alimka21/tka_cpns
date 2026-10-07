@@ -206,40 +206,52 @@ dan formulir merchant DOKU. Perbarui tanggal "Berlaku sejak" bila isinya diubah.
    (`/pilih-jenjang`); bila konfirmasi pendaftar aktif, statusnya Menunggu.
    Email yang sudah terdaftar dengan kata sandi otomatis tersambung ke Google.
 
-## 10. Email SMTP Hostinger (untuk "Lupa kata sandi")
+## 10. Lupa kata sandi lewat email (SMTP Hostinger)
 
-Belum dipakai kode — siapkan dulu, fitur reset dibuat setelah env terisi.
+Sudah ada di kode (2026-10-07): tautan "Lupa kata sandi?" di /masuk →
+`/lupa-kata-sandi` (isi email) → email berisi tautan (berlaku 1 jam, sekali
+pakai) → `/atur-ulang-kata-sandi` (kata sandi baru) → semua sesi lama dikeluarkan →
+masuk lagi. Aktif otomatis begitu `SMTP_HOST`, `SMTP_USER`, `SMTP_PASS` terisi;
+kalau kosong, halaman itu menyuruh menghubungi admin. Respons sama untuk email
+terdaftar/tidak (tidak membocorkan siapa yang punya akun); dibatasi 3 permintaan /
+15 menit per IP. Kode: `services/mailer.ts`, `sendResetPassword` di `server/auth`.
 
-1. **Buat akun email** — hPanel → **Emails** → pilih domain → **Email
-   Accounts → Create email account**, mis. `noreply@<domain>`. Paket
-   Business/Cloud biasanya sudah termasuk email gratis; kalau belum,
-   aktifkan dulu paket email untuk domain tersebut.
-2. **Cek DNS** (agar email tidak masuk spam) — Emails → domain →
-   **DNS / Connect domain**: pastikan MX, SPF (`v=spf1 include:_spf.mail.hostinger.com ~all`),
-   DKIM, dan DMARC berstatus hijau. Kalau domain memakai nameserver
-   Hostinger, klik **Auto-configure**; kalau DNS di luar Hostinger
-   (mis. Cloudflare), salin record yang ditampilkan ke DNS tersebut.
-3. **Data SMTP** (hPanel → Emails → **Configuration / Connect apps & devices**):
-   - Host: `smtp.hostinger.com`
-   - Port: `465` (SSL) — alternatif `587` (STARTTLS)
-   - Username: alamat email lengkap (`noreply@<domain>`)
-   - Password: kata sandi akun email tersebut
-4. **Isi env** di hPanel (Node.js app → Environment variables) dan `.env` lokal:
+1. **Buat akun email** — hPanel → **Emails** → domain → **Email Accounts →
+   Create email account**, mis. `noreply@<domain>` + kata sandi kuat. (Paket web
+   Hostinger biasanya termasuk email gratis; kalau menu kosong, aktifkan dulu.)
+2. **DNS anti-spam** — Emails → domain → **DNS / Connect domain**: MX, SPF
+   (`v=spf1 include:_spf.mail.hostinger.com ~all`), DKIM, DMARC harus hijau.
+   Nameserver Hostinger → klik **Auto-configure**; DNS di luar (Cloudflare) →
+   salin record yang ditampilkan. Tunggu propagasi (bisa beberapa jam).
+3. **Data SMTP** (Emails → **Connect apps & devices**): host `smtp.hostinger.com`,
+   port `465` (SSL; alternatif `587`), username = alamat email lengkap, password
+   = kata sandi akun email (BUKAN kata sandi hPanel).
+4. **Isi env produksi** — hPanel → Websites → Node.js app → **Environment
+   variables** (jangan kirim kata sandinya lewat chat):
    ```
    SMTP_HOST=smtp.hostinger.com
    SMTP_PORT=465
    SMTP_USER=noreply@<domain>
    SMTP_PASS=<kata sandi email>
-   EMAIL_FROM="Web Tes Premium <noreply@<domain>>"
+   EMAIL_FROM=Pakar TKA <noreply@<domain>>
    ```
-   Jangan commit `.env`. Redeploy setelah diisi.
-5. **Tes kirim** — login webmail (hPanel → Emails → Webmail) dengan akun
-   tadi, kirim ke Gmail sendiri; cek tidak masuk spam. Setelah itu minta
-   Claude membuat fitur "Lupa kata sandi" (Better Auth `sendResetPassword`
-   + nodemailer).
-6. **Batas kirim**: email hosting punya kuota kirim harian (lihat detail
-   paket di hPanel). Cukup untuk reset kata sandi; untuk email massal
-   pakai layanan khusus (Resend/Brevo).
+   Pastikan `BETTER_AUTH_URL=https://<domain>` (tautan di email memakai alamat
+   ini — kalau masih `localhost`, tautan tidak bisa dibuka siswa). Simpan →
+   **Redeploy/Restart** aplikasi (env baru dibaca saat start).
+5. **Tes SMTP dari laptop (opsional)** — tambahkan 5 baris yang sama ke `.env.prod`,
+   lalu `npm run prod:mail:test -- <gmail-anda>` → harus tampil "Login SMTP berhasil"
+   dan email uji sampai di Gmail (cek Spam). Error 535/Invalid login → cek
+   SMTP_USER (email lengkap) & SMTP_PASS. Timeout → coba `SMTP_PORT=587`.
+6. **Tes di produksi** — buka `https://<domain>/masuk` → **Lupa kata sandi?** →
+   isi email akun uji → buka email → klik **Atur ulang kata sandi** → isi sandi
+   baru → masuk dengan sandi baru. Klik tautan yang sama lagi → harus "Tautan
+   tidak berlaku".
+7. **Kalau email tidak datang**: cek folder Spam; hPanel → Node.js app → log
+   (`[mail] gagal kirim email reset kata sandi: …`); kuota kirim harian email
+   hosting (cukup untuk reset; email massal pakai Resend/Brevo).
+
+Lokal: tanpa SMTP di `.env` fitur ini nonaktif (normal). Akun Google-only juga bisa
+memakai reset ini untuk membuat kata sandi.
 
 ## 11. Load test pengerjaan tes
 

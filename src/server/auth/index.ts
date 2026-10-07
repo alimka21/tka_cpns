@@ -8,6 +8,7 @@ import { db } from "@/server/db";
 import { accounts, sessions, users, verifications } from "@/server/db/schema";
 import { SITE_NAME } from "@/lib/site";
 import { getSetting } from "@/server/services/app-settings";
+import { isMailConfigured, resetPasswordEmail, sendMail } from "@/server/services/mailer";
 
 export const ROLES = ["student", "admin"] as const;
 
@@ -49,6 +50,18 @@ export const auth = betterAuth({
     minPasswordLength: 8,
     maxPasswordLength: 128,
     autoSignIn: true,
+    // "Lupa kata sandi" (WORKFLOW §10): aktif bila SMTP diisi. Tautan berlaku
+    // 1 jam, sekali pakai; reset mengeluarkan semua perangkat.
+    sendResetPassword: isMailConfigured()
+      ? async ({ user, url }) => {
+          // Tidak di-await: waktu respons sama untuk email terdaftar/tidak.
+          void sendMail({ to: user.email, ...resetPasswordEmail(user.name, url) }).catch((e) =>
+            console.error("[mail] gagal kirim email reset kata sandi:", e instanceof Error ? e.message : e),
+          );
+        }
+      : undefined,
+    resetPasswordTokenExpiresIn: 60 * 60,
+    revokeSessionsOnPasswordReset: true,
   },
   user: {
     additionalFields: {
@@ -70,6 +83,13 @@ export const auth = betterAuth({
           return { data: { ...user, status: requireApproval ? "pending" : "active" } };
         },
       },
+    },
+  },
+  // Batasi permintaan email reset (anti-spam/pemborosan kuota SMTP).
+  rateLimit: {
+    customRules: {
+      "/request-password-reset": { window: 60 * 15, max: 3 },
+      "/reset-password": { window: 60, max: 10 },
     },
   },
   session: {

@@ -324,8 +324,8 @@ Rancangan: `docs/AI_GENERATION.md` (Jalur A + fondasi §2–3).
       form soal
 - [x] Bank soal berjenjang: jenjang → mapel → topik → subtopik dengan
       hitungan per level, filter & paginasi di server
-- [ ] Uji dengan API key Gemini asli di produksi (sejauh ini diuji
-      dengan server Gemini tiruan)
+- [x] Uji dengan API key Gemini asli di produksi — 2026-10-07: 40 panggilan sukses
+      (109 soal), paket otomatis #41 dari builder grup bacaan
 
 ## Fase 2.5 — Diagnosa & latihan adaptif per siswa
 

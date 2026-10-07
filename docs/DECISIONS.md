@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Paket TKA SMA Matematika — Paket 4 (#40, draf, ditulis Claude)
+
+25 soal baru (#848–#872, `pending_review`, manual), 5 gambar baru buatan SVG →
+galeri (#129 grafik $f(x)=x^2-2x-3$, #130 tandon tabung + kerucut, #131 diagram
+batang penjualan, #132 segitiga ABC di bidang koordinat, #133 menara & elevasi
+60° — diberi keterangan "tidak berskala"). 3 grup stimulus (usaha kue/program
+linear, tandon air + gambar, penjualan koperasi + diagram). 14 PG · 6 MCMA ·
+5 Kategori, 75 menit, 10/10 subtopik, L1 16% · L3 28%, mudah 16% · sulit 28%,
+16/25 berbasis stimulus/gambar — semua aturan wajib & saran lolos. Semua
+hitungan diverifikasi otomatis di skrip impor (gagal = batal) dan 173 teks
+KaTeX dicek render.
+
 ## 2026-10-07 — Halaman hasil tes bertab & pembahasan berhalaman
 
 Tab di query string (`?tab=ringkasan|analisa|pembahasan`) — bisa dibagikan &

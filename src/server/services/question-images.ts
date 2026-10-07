@@ -14,8 +14,14 @@ const TARGET_BYTES = 900 * 1024;
 
 export const imagePath = (id: number) => `/gambar/${id}`;
 
+/** Format yang boleh di-decode — dicek dari ISI file (tipe MIME dari browser bisa dipalsukan). */
+const RASTER_FORMATS = new Set(["jpeg", "png", "webp", "gif"]);
+
 /** Kompres ke WebP; turunkan kualitas bila masih > ~900 KB. */
 export async function compressImage(input: Buffer) {
+  // SVG/PDF/dll. ditolak sebelum diproses: pengurai SVG (librsvg) sharp pernah punya celah keamanan.
+  const { format } = await sharp(input).metadata();
+  if (!format || !RASTER_FORMATS.has(format)) throw new Error(`Format gambar tidak didukung: ${format ?? "tidak dikenal"}`);
   let quality = 82;
   for (;;) {
     const { data, info } = await sharp(input, { animated: false })

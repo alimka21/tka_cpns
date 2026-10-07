@@ -12,6 +12,20 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Peringatan keamanan Hostinger: next/og ImageResponse (RCE)
+
+Aplikasi tidak memakai `next/og`/`ImageResponse` (gambar OG & ikon = PNG
+statis) → tidak bisa dieksploitasi, tetapi `next` 16.3.5 ada di rentang
+terdampak → naik ke 16.3.8 (patch terbaru seri 16.3, bukan 16.4).
+Sekalian: `npm audit fix` non-breaking (sharp 0.35.5 — celah librsvg/SVG),
+dan `compressImage` kini menolak file non-raster dari ISI file (SVG tidak
+pernah sampai ke librsvg; MIME dari browser bisa dipalsukan).
+Sisa temuan audit (sengaja ditunda): pdfjs-dist 5.x (dipakai di BROWSER admin
+saat impor PDF; perbaikan butuh 6.x = breaking, risiko hanya bila admin
+membuka PDF berbahaya), exceljs→uuid (exceljs tidak memakai jalur buf yang
+rentan), drizzle-kit/esbuild & shadcn/braces (alat pengembangan, tidak
+berjalan di server produksi).
+
 ## 2026-10-07 — Merek Pakar TKA & slogan
 
 Nama sistem "Web Tes Premium" → **Pakar TKA** (logo dari pemilik produk).

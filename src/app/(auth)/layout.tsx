@@ -20,8 +20,16 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
       <main className="flex flex-1 items-start justify-center px-4 pt-4 pb-16 sm:items-center sm:pt-0">
         <div className="w-full max-w-md">{children}</div>
       </main>
-      <footer className="px-4 pb-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} {SITE_NAME}
+      <footer className="flex flex-wrap items-center justify-center gap-x-4 gap-y-1 px-4 pb-6 text-xs text-muted-foreground">
+        <span>
+          © {new Date().getFullYear()} {SITE_NAME}
+        </span>
+        <Link href="/syarat" className="hover:text-foreground">
+          Syarat & Ketentuan
+        </Link>
+        <Link href="/privasi" className="hover:text-foreground">
+          Kebijakan Privasi
+        </Link>
       </footer>
     </div>
   );

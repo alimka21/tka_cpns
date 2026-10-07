@@ -483,9 +483,19 @@ export default async function LandingPage() {
               Platform latihan Tes Kemampuan Akademik untuk siswa SD, SMP, dan SMA — disusun mengikuti Kerangka Asesmen TKA.
             </p>
           </div>
-          <p className="text-sm text-muted-foreground">
-            © {new Date().getFullYear()} {SITE_NAME}
-          </p>
+          <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
+            <nav aria-label="Tautan legal" className="flex flex-wrap gap-x-4 gap-y-1">
+              <Link href="/syarat" className="hover:text-foreground">
+                Syarat & Ketentuan
+              </Link>
+              <Link href="/privasi" className="hover:text-foreground">
+                Kebijakan Privasi
+              </Link>
+            </nav>
+            <p>
+              © {new Date().getFullYear()} {SITE_NAME}
+            </p>
+          </div>
         </div>
       </footer>
     </div>

@@ -236,7 +236,15 @@ export function AuthForm({
 
       {mode === "signup" && (
         <p className="mt-6 text-center text-xs text-muted-foreground">
-          Dengan mendaftar, kamu setuju dengan Syarat & Ketentuan serta Kebijakan Privasi kami.
+          Dengan mendaftar, kamu setuju dengan{" "}
+          <Link href="/syarat" target="_blank" className="font-semibold text-primary hover:underline">
+            Syarat & Ketentuan
+          </Link>{" "}
+          serta{" "}
+          <Link href="/privasi" target="_blank" className="font-semibold text-primary hover:underline">
+            Kebijakan Privasi
+          </Link>{" "}
+          kami. Bila belum 18 tahun, pastikan orang tua/wali menyetujuinya.
         </p>
       )}
       <p className="mt-6 text-center text-sm text-muted-foreground">

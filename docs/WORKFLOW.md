@@ -159,6 +159,15 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
 6. Go-live: ganti ke Client ID & Secret Key **Production**,
    `DOKU_IS_PRODUCTION=true`, ulangi langkah 3 di Back Office Production.
 
+## 8b. Halaman legal (/privasi, /syarat)
+
+Kebijakan Privasi & Syarat & Ketentuan sudah tersedia (tautan di footer & form
+daftar). Isi env `CONTACT_EMAIL=<email kontak resmi>` di hPanel agar email itu
+tampil sebagai kanal permintaan data/kendala pembayaran; tanpa env, halaman
+menulis "kanal kontak resmi yang tercantum di situs ini". Pakai URL
+`https://<domain>/privasi` & `/syarat` di Google OAuth consent screen (Branding)
+dan formulir merchant DOKU. Perbarui tanggal "Berlaku sejak" bila isinya diubah.
+
 ## 9. Login & daftar dengan Google
 
 1. https://console.cloud.google.com → buat/pilih project.

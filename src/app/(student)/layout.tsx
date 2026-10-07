@@ -17,9 +17,17 @@ export default async function StudentLayout({ children }: { children: React.Reac
       <footer className="border-t bg-card">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
           <span>© {new Date().getFullYear()} {SITE_NAME}</span>
-          <Link href="/" className="hover:text-foreground">
-            Beranda
-          </Link>
+          <span className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link href="/" className="hover:text-foreground">
+              Beranda
+            </Link>
+            <Link href="/syarat" className="hover:text-foreground">
+              Syarat & Ketentuan
+            </Link>
+            <Link href="/privasi" className="hover:text-foreground">
+              Kebijakan Privasi
+            </Link>
+          </span>
         </div>
       </footer>
     </div>

@@ -7,33 +7,33 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, formatDateTime, formatRupiah, ORDER_STATUS_META } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
 import { listActiveMembershipsAdmin, listOrdersAdmin, listPlans } from "@/server/services/billing";
-import { isMidtransConfigured } from "@/server/services/midtrans";
+import { DOKU_NOTIFICATION_PATH, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminLanggananPage() {
   const [plans, orders, members] = await Promise.all([listPlans({ activeOnly: false }), listOrdersAdmin(), listActiveMembershipsAdmin()]);
-  const configured = isMidtransConfigured();
-  const production = process.env.MIDTRANS_IS_PRODUCTION === "true";
+  const configured = isDokuConfigured();
+  const production = isDokuProduction();
   const paidTotal = orders.filter((o) => o.order.status === "paid").reduce((n, o) => n + o.order.amount, 0);
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Langganan & Pembayaran"
-        description="Akun gratis: paket tes gratis saja. Premium (dibeli lewat Midtrans atau diberikan admin) membuka semua paket premium jenjangnya + Latihan Kelemahan, aktif otomatis setelah pembayaran berhasil."
+        description="Akun gratis: paket tes gratis saja. Premium (dibayar lewat QRIS DOKU atau diberikan admin) membuka semua paket premium jenjangnya + Latihan Kelemahan, aktif otomatis setelah pembayaran berhasil."
       />
 
       <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${configured ? "border-success/40" : "border-warning/50"}`}>
         <p className="flex items-center gap-2 font-semibold">
           {configured ? <CircleCheck className="size-4 text-success-strong" aria-hidden /> : <CircleAlert className="size-4 text-warning-strong" aria-hidden />}
-          Midtrans {configured ? `terhubung — mode ${production ? "PRODUKSI" : "Sandbox (uji coba)"}` : "belum dikonfigurasi"}
+          DOKU {configured ? `terhubung — mode ${production ? "PRODUKSI" : "Sandbox (uji coba)"}` : "belum dikonfigurasi"}
         </p>
-        {!configured && <p className="text-muted-foreground">Isi env MIDTRANS_SERVER_KEY (dan MIDTRANS_IS_PRODUCTION) di hPanel, lalu redeploy.</p>}
+        {!configured && <p className="text-muted-foreground">Isi env DOKU_CLIENT_ID, DOKU_SECRET_KEY (dan DOKU_IS_PRODUCTION) di hPanel, lalu redeploy.</p>}
         <p className="text-muted-foreground">
-          Notification URL (pasang di dashboard Midtrans → Settings → Payment):{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{SITE_URL.replace(/\/$/, "")}/api/midtrans/notification</code>
+          Notification URL (pasang di DOKU Back Office → Settings → Payment Settings):{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{SITE_URL.replace(/\/$/, "")}{DOKU_NOTIFICATION_PATH}</code>
         </p>
       </section>
 

@@ -10,12 +10,12 @@ import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { orders } from "@/server/db/schema";
 import { getActiveMembership, syncOrder } from "@/server/services/billing";
-import { isMidtransConfigured } from "@/server/services/midtrans";
+import { isDokuConfigured } from "@/server/services/doku";
 
 export const metadata: Metadata = { title: "Status Pembayaran" };
 export const dynamic = "force-dynamic";
 
-// Halaman "finish" Snap Midtrans. Status dicek ulang langsung ke Midtrans
+// Halaman kembali dari DOKU Checkout (callback_url). Status dicek ulang ke DOKU
 // (cadangan bila webhook belum sampai), lalu ditampilkan.
 export default async function LanggananSelesaiPage({ searchParams }: PageProps<"/langganan/selesai">) {
   const { user } = await requireUser("/langganan");
@@ -24,7 +24,7 @@ export default async function LanggananSelesaiPage({ searchParams }: PageProps<"
   const [owned] = await db.select().from(orders).where(eq(orders.orderCode, order_id.slice(0, 50)));
   if (!owned || owned.userId !== Number(user.id)) notFound();
 
-  if (isMidtransConfigured() && owned.status === "pending") await syncOrder(owned.orderCode);
+  if (isDokuConfigured() && owned.status === "pending") await syncOrder(owned.orderCode);
   const [order] = await db.select().from(orders).where(eq(orders.id, owned.id));
   const membership = order.status === "paid" ? await getActiveMembership(Number(user.id), order.jenjang) : null;
   const meta = ORDER_STATUS_META[order.status];
@@ -53,7 +53,7 @@ export default async function LanggananSelesaiPage({ searchParams }: PageProps<"
         )}
         {order.status === "pending" && (
           <p className="mt-2 text-sm text-muted-foreground">
-            Selesaikan pembayaran sesuai instruksi Midtrans. Premium aktif otomatis begitu pembayaran kami terima — halaman ini bisa
+            Selesaikan pembayaran dengan memindai kode QRIS di halaman DOKU. Premium aktif otomatis begitu pembayaran kami terima — halaman ini bisa
             dicek ulang.
           </p>
         )}

@@ -48,6 +48,10 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-07:** pembayaran pindah ke **DOKU Checkout (QRIS)**, Midtrans
+dihapus. Diuji dengan server DOKU tiruan (signature diverifikasi, alur beli →
+notifikasi → Premium aktif, notifikasi palsu ditolak). Migrasi 0017 (hapus
+`orders.snap_token`) BELUM dijalankan — jalankan saat deploy (WORKFLOW §8).
 **2026-10-01 (3):** login/daftar dengan Google (aktif setelah env
 GOOGLE_CLIENT_ID/SECRET diisi; langkah di WORKFLOW §9).
 **2026-10-01 (2):** Fase 3 pembayaran Midtrans selesai (diuji dengan
@@ -339,16 +343,17 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
 
 ## Fase 3 — Monetisasi
 
-- [x] Payment gateway: **Midtrans Snap** (redirect) — `services/midtrans.ts`,
-      webhook `/api/midtrans/notification` (signature + cek ulang Status API)
+- [x] Payment gateway: **DOKU Checkout, QRIS saja** (redirect, menggantikan
+      Midtrans 2026-10-07) — `services/doku.ts` + `doku-core.ts`, webhook
+      `/api/doku/notification` (signature HMAC + cek ulang Check Status API)
 - [x] Alur checkout → Premium aktif otomatis (`memberships`, bukan
       entitlement per paket): `/langganan` → bayar → webhook →
-      `applyMidtransStatus` (idempoten, perpanjang masa aktif)
+      `applyDokuStatus` (idempoten, perpanjang masa aktif)
 - [x] Halaman riwayat transaksi user (`/langganan`) & admin
       (`/admin/langganan`: paket langganan, anggota, beri/cabut manual)
 - [x] Gating: akun gratis = paket `is_premium=false`; Premium = semua paket
       premium jenjangnya + Latihan Kelemahan
-- [ ] Uji dengan Sandbox Midtrans asli (key user) lalu pindah Production
+- [ ] Uji dengan Sandbox DOKU asli (Client ID/Secret Key user, env) lalu pindah Production
 - [ ] Email/WA notifikasi pembayaran (opsional)
 - [x] Ganti kata sandi di Pengaturan/Profil (+ "Buat kata sandi" untuk akun Google-only) — 2026-10-02
 - [ ] Lupa kata sandi (link reset via email) — butuh SMTP Hostinger diisi di env (WORKFLOW §10)

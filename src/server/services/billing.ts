@@ -1,12 +1,12 @@
-// Langganan Premium & pembayaran (Midtrans). Satu-satunya tempat yang
+// Langganan Premium & pembayaran (DOKU Checkout, QRIS). Satu-satunya tempat yang
 // mengubah status order & membuat membership dari pembayaran.
 
 import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, gt, isNull, or } from "drizzle-orm";
 import { db } from "@/server/db";
 import { memberships, orders, plans, users, type JenjangCode, type OrderStatus } from "@/server/db/schema";
-import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
-import { mapMidtransStatus, membershipWindow, nextOrderStatus, type MidtransPayload } from "./midtrans-status";
+import { createCheckout, DokuError, getOrderStatus } from "./doku";
+import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -45,7 +45,7 @@ function newOrderCode(userId: number) {
   return `WTP-${userId}-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 }
 
-/** Buat order + transaksi Snap; kembalikan URL halaman bayar Midtrans. */
+/** Buat order + halaman bayar DOKU Checkout (QRIS); kembalikan URL-nya. */
 export async function createOrder(
   user: { id: number; name: string; email: string; jenjang: string | null },
   planId: number,
@@ -62,40 +62,39 @@ export async function createOrder(
     .values({ orderCode, userId: user.id, planId: plan.id, planName: plan.name, jenjang: plan.jenjang, durationDays: plan.durationDays, amount: plan.price })
     .$returningId();
   try {
-    const snap = await createSnapTransaction({
-      orderCode,
+    const checkout = await createCheckout({
+      invoiceNumber: orderCode,
       amount: plan.price,
       itemName: plan.name,
-      customer: { name: user.name, email: user.email },
-      finishUrl: `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`,
+      customer: { id: String(user.id), name: user.name, email: user.email },
+      callbackUrl: `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`,
     });
-    await db.update(orders).set({ snapToken: snap.token, redirectUrl: snap.redirectUrl }).where(eq(orders.id, id));
-    return { ok: true, redirectUrl: snap.redirectUrl, orderCode };
+    await db.update(orders).set({ redirectUrl: checkout.url }).where(eq(orders.id, id));
+    return { ok: true, redirectUrl: checkout.url, orderCode };
   } catch (e) {
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, id));
-    return { ok: false, error: e instanceof MidtransError ? e.message : "Gagal membuat transaksi." };
+    return { ok: false, error: e instanceof DokuError ? e.message : "Gagal membuat transaksi." };
   }
 }
 
 /**
- * Terapkan status Midtrans ke order (dari webhook atau cek status). Idempoten:
+ * Terapkan status DOKU ke order (dari webhook atau Check Status). Idempoten:
  * membership hanya dibuat sekali per order (unique order_id). Nominal harus sama.
  */
-export async function applyMidtransStatus(payload: MidtransPayload): Promise<Result<{ status: OrderStatus }>> {
-  const [order] = await db.select().from(orders).where(eq(orders.orderCode, payload.order_id));
+export async function applyDokuStatus(payload: DokuStatus): Promise<Result<{ status: OrderStatus }>> {
+  const [order] = await db.select().from(orders).where(eq(orders.orderCode, payload.invoiceNumber));
   if (!order) return { ok: false, error: "Order tidak ditemukan." };
-  if (Math.round(Number(payload.gross_amount)) !== order.amount) return { ok: false, error: "Nominal tidak cocok." };
+  if (Math.round(payload.amount) !== order.amount) return { ok: false, error: "Nominal tidak cocok." };
 
-  const status = nextOrderStatus(order.status, mapMidtransStatus(payload.transaction_status, payload.fraud_status));
+  const status = nextOrderStatus(order.status, mapDokuStatus(payload.status));
   await db.transaction(async (tx) => {
     await tx
       .update(orders)
       .set({
         status,
-        paymentType: payload.payment_type ?? order.paymentType,
-        transactionId: payload.transaction_id ?? order.transactionId,
-        paidAt: status === "paid" && !order.paidAt ? new Date() : order.paidAt,
-        lastPayload: payload,
+        paymentType: payload.channel ?? order.paymentType,
+        paidAt: status === "paid" && !order.paidAt ? (payload.date ? new Date(payload.date) : new Date()) : order.paidAt,
+        lastPayload: payload.raw,
       })
       .where(eq(orders.id, order.id));
 
@@ -120,17 +119,17 @@ export async function applyMidtransStatus(payload: MidtransPayload): Promise<Res
   return { ok: true, status };
 }
 
-/** Tarik status terbaru dari Midtrans lalu terapkan (halaman selesai & tombol admin). */
+/** Tarik status terbaru dari DOKU lalu terapkan (halaman selesai & tombol cek status). */
 export async function syncOrder(orderCode: string): Promise<Result<{ status: OrderStatus }>> {
   try {
-    const payload = await getTransactionStatus(orderCode);
+    const payload = await getOrderStatus(orderCode);
     if (!payload) {
       const [order] = await db.select({ status: orders.status }).from(orders).where(eq(orders.orderCode, orderCode));
       return order ? { ok: true, status: order.status } : { ok: false, error: "Order tidak ditemukan." };
     }
-    return applyMidtransStatus(payload);
+    return applyDokuStatus(payload);
   } catch (e) {
-    return { ok: false, error: e instanceof MidtransError ? e.message : "Gagal mengecek status." };
+    return { ok: false, error: e instanceof DokuError ? e.message : "Gagal mengecek status." };
   }
 }
 

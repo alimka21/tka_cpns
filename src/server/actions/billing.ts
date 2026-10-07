@@ -16,7 +16,7 @@ type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 const NOT_ADMIN = { ok: false as const, error: "Sesi admin berakhir. Silakan masuk lagi." };
 const id = z.number().int().positive();
 
-/** URL situs untuk callback Midtrans: env SITE_URL, atau host request (fallback). */
+/** URL situs untuk callback DOKU: env SITE_URL, atau host request (fallback). */
 async function siteUrl() {
   if (process.env.SITE_URL) return SITE_URL;
   const h = await headers();
@@ -33,7 +33,7 @@ export async function createOrderAction(planId: number): Promise<Result<{ redire
   return result.ok ? { ok: true, redirectUrl: result.redirectUrl } : result;
 }
 
-/** Siswa/admin mengecek ulang status order ke Midtrans. Siswa hanya untuk order miliknya. */
+/** Siswa/admin mengecek ulang status order ke DOKU. Siswa hanya untuk order miliknya. */
 export async function syncOrderAction(orderCode: string): Promise<Result<{ status: string }>> {
   const session = await getActiveSession();
   if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };

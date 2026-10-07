@@ -6,7 +6,7 @@ import { TestimonialsSetting } from "@/components/admin/testimonials-setting";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { getSetting } from "@/server/services/app-settings";
-import { isMidtransConfigured } from "@/server/services/midtrans";
+import { isDokuConfigured } from "@/server/services/doku";
 
 export const metadata: Metadata = { title: "Pengaturan Sistem" };
 export const dynamic = "force-dynamic";
@@ -30,11 +30,11 @@ export default async function AdminPengaturanPage() {
       <section className="surface-card flex flex-col gap-3 p-6">
         <h2 className="flex items-center gap-2 text-lg font-bold">
           <CreditCard className="size-5 text-primary" aria-hidden /> Pembayaran & Premium{" "}
-          <Badge variant={isMidtransConfigured() ? "success" : "muted"}>{isMidtransConfigured() ? "Midtrans aktif" : "Belum dikonfigurasi"}</Badge>
+          <Badge variant={isDokuConfigured() ? "success" : "muted"}>{isDokuConfigured() ? "DOKU QRIS aktif" : "Belum dikonfigurasi"}</Badge>
         </h2>
         <p className="text-sm text-muted-foreground">
           Akun gratis hanya bisa mengerjakan paket tes gratis. Premium membuka semua paket premium sesuai jenjang + Latihan
-          Kelemahan, aktif otomatis setelah pembayaran Midtrans berhasil.
+          Kelemahan, aktif otomatis setelah pembayaran QRIS (DOKU) berhasil.
         </p>
         <Link href="/admin/langganan" className="w-fit text-sm font-semibold text-primary hover:underline">
           Atur paket langganan, harga & transaksi

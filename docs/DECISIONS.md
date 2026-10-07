@@ -12,6 +12,24 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Pembayaran pindah ke DOKU Checkout (QRIS), Midtrans dihapus
+
+Keputusan pemilik produk: hanya DOKU, metode QRIS (satu QR untuk semua
+e-wallet & m-banking). Integrasi: DOKU Checkout non-SNAP (halaman bayar DOKU,
+`payment_method_types: ["QRIS"]`, kedaluwarsa 60 menit, `callback_url` →
+`/langganan/selesai`). Signature HMAC-SHA256 (Client-Id, Request-Id,
+Request-Timestamp, Request-Target, Digest SHA-256 body untuk POST). Webhook
+`/api/doku/notification`: verifikasi signature dengan Request-Target = path
+webhook + Client-Id harus milik kita + timestamp ≤ 24 jam; notifikasi FAILED
+diabaikan (siswa bisa coba ulang di Checkout); status lalu diambil ulang dari
+Check Status API `GET /orders/v1/status/{invoice}` sebelum diterapkan
+(nominal harus sama, idempoten). `failed → paid` diizinkan. Env:
+`DOKU_CLIENT_ID`, `DOKU_SECRET_KEY`, `DOKU_IS_PRODUCTION`. Model membership
+Premium (2026-10-01) tidak berubah.
+Alternatif yang ditolak: QRIS langsung di aplikasi (render QR + polling) —
+lebih mulus tapi lebih banyak kode; bisa menyusul. Mempertahankan Midtrans
+sebagai cadangan — ditolak pemilik produk.
+
 ## 2026-10-06 — Paket TKA SMA Bahasa Indonesia — Paket 3 (#39, draf, dari PDF)
 
 Sumber: PDF "Soal TKA Bahasa Indonesia (Pilihan) SMA 2025" + kunci. Walau berjudul

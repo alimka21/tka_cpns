@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { formatDate, formatDateTime, formatRupiah, ORDER_STATUS_META } from "@/lib/format";
 import { requireUser } from "@/server/auth/session";
 import { getActiveMembership, listPlans, listUserOrders } from "@/server/services/billing";
-import { isMidtransConfigured } from "@/server/services/midtrans";
+import { isDokuConfigured } from "@/server/services/doku";
 
 export const metadata: Metadata = { title: "Langganan Premium" };
 export const dynamic = "force-dynamic";
@@ -28,7 +28,7 @@ export default async function LanggananPage() {
     listPlans({ activeOnly: true, jenjang }),
     listUserOrders(userId),
   ]);
-  const configured = isMidtransConfigured();
+  const configured = isDokuConfigured();
   const pendingOrder = orders.find((o) => o.status === "pending" && o.redirectUrl);
 
   return (
@@ -114,7 +114,7 @@ export default async function LanggananPage() {
           </ul>
         )}
         <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <Lock className="size-3.5" aria-hidden /> Pembayaran diproses aman oleh Midtrans (QRIS, transfer VA, e-wallet, kartu).
+          <Lock className="size-3.5" aria-hidden /> Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Diproses aman oleh DOKU.
         </p>
       </section>
 

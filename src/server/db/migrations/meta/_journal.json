@@ -120,6 +120,13 @@
       "when": 1791031120415,
       "tag": "0016_index_query_panas",
       "breakpoints": true
+    },
+    {
+      "idx": 17,
+      "version": "5",
+      "when": 1791339150298,
+      "tag": "0017_hapus_snap_token_doku",
+      "breakpoints": true
     }
   ]
 }

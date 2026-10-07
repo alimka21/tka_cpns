@@ -2,7 +2,7 @@ import { boolean, index, int, mysqlEnum, mysqlTable, text, timestamp, uniqueInde
 import { jsonText } from "./json-text";
 import { JENJANG_CODES, users } from "./users";
 
-// Grup: Langganan & pembayaran (Midtrans Snap, DECISIONS 2026-10-01).
+// Grup: Langganan & pembayaran (DOKU Checkout QRIS, DECISIONS 2026-10-07).
 // Akun gratis: paket tes `is_premium = false` saja. Premium (membership aktif)
 // membuka semua paket premium jenjangnya + Latihan Kelemahan.
 
@@ -25,7 +25,7 @@ export const plans = mysqlTable("plans", {
 export const ORDER_STATUSES = ["pending", "paid", "expired", "failed", "cancelled", "refunded"] as const;
 export type OrderStatus = (typeof ORDER_STATUSES)[number];
 
-/** Satu percobaan pembelian = satu order Midtrans (`order_code` = order_id Midtrans). */
+/** Satu percobaan pembelian = satu order DOKU (`order_code` = invoice_number DOKU). */
 export const orders = mysqlTable(
   "orders",
   {
@@ -43,12 +43,11 @@ export const orders = mysqlTable(
     durationDays: int("duration_days"),
     amount: int("amount").notNull(),
     status: mysqlEnum("status", ORDER_STATUSES).notNull().default("pending"),
-    snapToken: varchar("snap_token", { length: 100 }),
     redirectUrl: varchar("redirect_url", { length: 500 }),
     paymentType: varchar("payment_type", { length: 40 }),
     transactionId: varchar("transaction_id", { length: 80 }),
     paidAt: timestamp("paid_at"),
-    /** Notifikasi/status terakhir dari Midtrans (audit). */
+    /** Notifikasi/status terakhir dari DOKU (audit). */
     lastPayload: jsonText<unknown>("last_payload"),
     createdAt: timestamp("created_at").notNull().defaultNow(),
     updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),

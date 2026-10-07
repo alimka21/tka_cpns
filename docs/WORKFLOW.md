@@ -132,22 +132,26 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
   untuk migrasi selanjutnya juga (generate SQL-nya, bersihkan penanda,
   paste ke phpMyAdmin).
 
-## 8. Pembayaran Midtrans (Premium)
+## 8. Pembayaran DOKU Checkout — QRIS (Premium)
 
-1. Dashboard Midtrans (mulai mode **Sandbox**) → Settings → Access Keys →
-   salin **Server Key** (`SB-Mid-server-…`).
-2. hPanel → env: `MIDTRANS_SERVER_KEY=<server key>`,
-   `MIDTRANS_IS_PRODUCTION=false`, pastikan `SITE_URL=https://<domain>`.
-   Redeploy.
-3. Dashboard Midtrans → Settings → Payment → **Notification URL**:
-   `https://<domain>/api/midtrans/notification` (finish redirect sudah
-   dikirim otomatis per transaksi).
+1. Daftar/masuk DOKU Back Office **Sandbox** (https://sandbox.doku.com/bo) →
+   Integration → API Keys → salin **Client ID** dan **Secret Key**.
+   Jangan kirim keduanya lewat chat/email — langsung isi ke env.
+2. hPanel → env: `DOKU_CLIENT_ID=<client id>`, `DOKU_SECRET_KEY=<secret key>`,
+   `DOKU_IS_PRODUCTION=false`, pastikan `SITE_URL=https://<domain>`.
+   Hapus env lama `MIDTRANS_*` bila ada. Redeploy, lalu `npm run db:migrate`
+   (migrasi 0017 menghapus kolom `orders.snap_token`) — jalankan SETELAH kode
+   baru ter-deploy.
+3. Back Office → Settings → Payment Settings → **Notification URL**:
+   `https://<domain>/api/doku/notification` (halaman kembali dikirim otomatis
+   per transaksi lewat `callback_url`). Pastikan metode **QRIS** aktif di akun.
 4. Admin → `/admin/langganan` → buat paket langganan (harga, durasi,
    jenjang). Tandai paket tes gratis (`is_premium = false`) di Paket Tes.
-5. Uji: akun siswa → Premium → Bayar → bayar dengan simulator Sandbox
-   Midtrans → kembali ke `/langganan/selesai` → Premium aktif.
-6. Go-live: ganti ke Server Key **Production**, `MIDTRANS_IS_PRODUCTION=true`,
-   ulangi langkah 3 di dashboard Production.
+5. Uji: akun siswa → Premium → Bayar → halaman DOKU menampilkan QRIS →
+   bayar dengan simulator Sandbox DOKU → kembali ke `/langganan/selesai` →
+   Premium aktif (halaman ini juga mengecek status ke DOKU bila notifikasi telat).
+6. Go-live: ganti ke Client ID & Secret Key **Production**,
+   `DOKU_IS_PRODUCTION=true`, ulangi langkah 3 di Back Office Production.
 
 ## 9. Login & daftar dengan Google
 

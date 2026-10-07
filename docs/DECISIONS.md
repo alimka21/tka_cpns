@@ -12,6 +12,24 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Paket TKA SMA Bahasa Indonesia — Paket 4 (#41, dari Buat Paket Otomatis)
+
+Dibuat admin dengan builder baru (Gemini, 7 grup bacaan; satu panggilan
+sempat mengembalikan output non-JSON lalu diulang). 29/30 soal: grup Halmahera
+hanya 3 dari 4 soal lolos. Ditinjau Claude dan diperbaiki: fakta spesies
+(*Semioptera wallacii* = burung bidadari Halmahera, bukan cendrawasih gagak) di
+stimulus #105 + opsi #883; hubungan tokoh di stimulus #103 (Dimas kakak Nur,
+Pak Ilham berpulang) agar soal #876 punya dasar; "puisi klasik" Chairil Anwar
+→ penyair Angkatan '45 (#106); kunci #897 (cloud/data analitik bukan kata
+serapan → digital, aplikasi, analitik); pembahasan #891 (big data/user
+interface = istilah asing belum diserap); redaksi #880 & #893. Ditambah #902
+(PGK Kategori Ya/Tidak, D2-S3 prediksi) di grup Halmahera. Judul diganti
+"TKA SMA Bahasa Indonesia — Paket 4". Hasil: 17 PG · 7 MCMA · 6 Kategori,
+11/11 subtopik, 30/30 berbasis stimulus — semua aturan lolos.
+Catatan builder: batch yang hasilnya kurang dari rencana ditandai "selesai"
+dengan keterangan "3 dari 4 soal lolos validasi", bukan "gagal", sehingga tombol
+"Coba lagi yang gagal" tidak muncul untuk kekurangannya.
+
 ## 2026-10-07 — Paket TKA SMA Matematika — Paket 4 (#40, draf, ditulis Claude)
 
 25 soal baru (#848–#872, `pending_review`, manual), 5 gambar baru buatan SVG →

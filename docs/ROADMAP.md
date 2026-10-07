@@ -326,8 +326,9 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       ±20 soal terbaru, min 3 soal; dipakai juga kartu prioritas dashboard
 - [x] Halaman `/progres` (peta kemampuan, tren, ringkasan kalimat) &
       `/riwayat` (filter jenjang) — `queries/progress.ts`. Tren per
-      subdomain baru berupa naik/turun vs sebelum tes terakhir (belum
-      grafik garis per subdomain). Filter tes/latihan menunggu tabel latihan.
+      subdomain: grafik mini di tiap baris peta + grafik "Tren per
+      subdomain" (akurasi per tes/latihan + akurasi berjalan, batas 50/75%,
+      pemilih subdomain) — 2026-10-07.
 - [x] Tabel `practice_sessions` & `practice_session_items`; latihan
       kelemahan **bank-only** dengan pembahasan langsung per soal —
       `/latihan` (pilih ≤3 subdomain, 5–20 soal), `/latihan/[id]`,

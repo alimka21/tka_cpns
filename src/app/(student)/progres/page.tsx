@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { ArrowDown, ArrowRight, ArrowUp, ChevronDown, Dumbbell, TriangleAlert } from "lucide-react";
 import { ScoreTrend } from "@/components/analytics/score-trend";
+import { Sparkline } from "@/components/analytics/sparkline";
+import { SubtopicTrend } from "@/components/analytics/subtopic-trend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DIAGNOSIS_STATUS, type DiagnosisStatusKey } from "@/lib/format";
@@ -91,6 +93,19 @@ export default async function ProgresPage() {
           <div className="mt-6">
             <ScoreTrend points={progress.scoreTrend} />
           </div>
+        </section>
+      )}
+
+      {progress.trends.length > 0 && (
+        <section aria-labelledby="tren-sub-heading" className="surface-card p-6">
+          <h2 id="tren-sub-heading" className="text-lg font-bold">
+            Tren per subdomain
+          </h2>
+          <p className="mt-1 mb-5 text-sm text-muted-foreground">
+            Perkembangan akurasimu di satu subdomain dari tes ke tes. Garis biru adalah akurasi berjalan (±20 soal terbaru) yang
+            menentukan status; titik abu-abu adalah hasil tiap tes atau latihan.
+          </p>
+          <SubtopicTrend options={progress.trends} initialId={progress.trendInitialId ?? undefined} />
         </section>
       )}
 
@@ -222,7 +237,7 @@ function SubjectMap({ subject, defaultOpen }: { subject: ProgressSubject; defaul
               {domain.subdomains.map((s) => {
                 const d = s.diagnosis;
                 return (
-                  <li key={s.id} className="grid gap-2 py-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-center sm:gap-6">
+                  <li key={s.id} className="grid gap-2 py-3 sm:grid-cols-[minmax(0,1fr)_12rem_auto] sm:items-center sm:gap-6 lg:grid-cols-[minmax(0,1fr)_12rem_20rem]">
                     <span className={cn("text-sm", !d && "text-muted-foreground")}>{s.name}</span>
                     {d ? (
                       <div className="flex items-center gap-3">
@@ -235,6 +250,12 @@ function SubjectMap({ subject, defaultOpen }: { subject: ProgressSubject; defaul
                       <span className="hidden sm:block" />
                     )}
                     <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                      {d && d.history.length >= 2 && (
+                        <Sparkline
+                          values={d.history.map((h) => h.rolling)}
+                          label={`Tren akurasi ${s.name}: ${d.history[0].rolling}% menjadi ${d.history[d.history.length - 1].rolling}% dalam ${d.history.length} tes/latihan`}
+                        />
+                      )}
                       {d && <span className="text-xs text-muted-foreground tabular-nums">{d.windowQuestions} soal</span>}
                       {d && <Delta diagnosis={d} />}
                       <StatusBadge status={d ? d.status : "untested"} />

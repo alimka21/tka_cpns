@@ -9,6 +9,7 @@ import { db } from "@/server/db";
 import { attempts, categories, subjects, subtopics, testPackages, topics } from "@/server/db/schema";
 import { loadDiagnosisRecords } from "./practice";
 import { diagnose, practicePriorities, type SubtopicDiagnosis } from "@/server/services/diagnosis";
+import type { SubtopicTrendOption } from "@/components/analytics/subtopic-trend";
 
 export type ProgressSubdomain = {
   id: number;
@@ -45,6 +46,10 @@ export type StudentProgress = {
   testCount: number;
   /** Sesi latihan yang punya minimal 1 soal terjawab. */
   practiceCount: number;
+  /** Subdomain dengan ≥ 2 tes/latihan — bahan grafik "Tren per subdomain". */
+  trends: SubtopicTrendOption[];
+  /** Subdomain yang dipilih pertama di grafik (prioritas #1 bila punya tren). */
+  trendInitialId: number | null;
 };
 
 const trendLabel = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
@@ -82,7 +87,7 @@ export async function getStudentProgress(userId: number): Promise<StudentProgres
     }));
 
   if (diagnoses.length === 0) {
-    return { subjects: [], priorities: [], strongest: null, scoreTrend, testCount: attemptRows.length, practiceCount };
+    return { subjects: [], priorities: [], strongest: null, scoreTrend, testCount: attemptRows.length, practiceCount, trends: [], trendInitialId: null };
   }
 
   // Mata uji yang pernah diujikan → semua subdomainnya (termasuk yang belum diuji).
@@ -138,9 +143,34 @@ export async function getStudentProgress(userId: number): Promise<StudentProgres
     .filter((d) => d.status === "baik")
     .sort((a, b) => b.accuracy - a.accuracy || b.totalQuestions - a.totalQuestions)[0];
 
+  const subjectsList = [...subjectMap.values()];
+  const trends: SubtopicTrendOption[] = subjectsList.flatMap((sub) =>
+    sub.domains.flatMap((dom) =>
+      dom.subdomains
+        .filter((s) => (s.diagnosis?.history.length ?? 0) >= 2)
+        .map((s) => ({
+          id: s.id,
+          name: s.name,
+          group: `${sub.jenjang} · ${sub.name} — ${dom.name}`,
+          points: s.diagnosis!.history.map((h) => ({
+            label: trendLabel.format(h.at),
+            percentage: h.percentage,
+            rolling: h.rolling,
+            questions: h.questions,
+            source: h.source,
+          })),
+        })),
+    ),
+  );
+  const priorities = practicePriorities(diagnoses).map(withInfo).filter((p): p is PrioritySubdomain => p != null);
+  const trendIds = new Set(trends.map((t) => t.id));
+  const trendInitialId = priorities.find((p) => trendIds.has(p.subtopicId))?.subtopicId ?? trends[0]?.id ?? null;
+
   return {
-    subjects: [...subjectMap.values()],
-    priorities: practicePriorities(diagnoses).map(withInfo).filter((p): p is PrioritySubdomain => p != null),
+    subjects: subjectsList,
+    priorities,
+    trends,
+    trendInitialId,
     strongest: strongestDiag ? withInfo(strongestDiag) : null,
     scoreTrend,
     testCount: attemptRows.length,

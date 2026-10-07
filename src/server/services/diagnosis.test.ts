@@ -32,6 +32,18 @@ describe("diagnose", () => {
     expect(d.accuracy).toBe(50);
     expect(d.windowQuestions).toBe(20);
     expect(d.history.map((h) => h.percentage)).toEqual([0, 20, 40, 60, 80]);
+    // Akurasi berjalan = jendela sampai titik itu; titik terakhir = akurasi diagnosa.
+    expect(d.history.map((h) => h.rolling)).toEqual([0, 10, 20, 30, 50]);
+    expect(d.history.at(-1)!.rolling).toBe(d.accuracy);
+    expect(d.history.every((h) => h.questions === 5)).toBe(true);
+  });
+
+  it("riwayat tren dibatasi 20 titik terakhir & membawa sumber", () => {
+    const recs = Array.from({ length: 25 }, (_, i) => ({ ...rec(5, 1, 2, i), source: i % 2 ? ("practice" as const) : ("test" as const) }));
+    const [d] = diagnose(recs);
+    expect(d.history).toHaveLength(20);
+    expect(d.history[0].at).toEqual(day(5));
+    expect(d.history.at(-1)!.source).toBe("test");
   });
 
   it("data belum cukup dan tanpa pembanding", () => {

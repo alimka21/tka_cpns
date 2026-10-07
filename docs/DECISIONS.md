@@ -94,9 +94,9 @@ terdampak → naik ke 16.3.8 (patch terbaru seri 16.3, bukan 16.4).
 Sekalian: `npm audit fix` non-breaking (sharp 0.35.5 — celah librsvg/SVG),
 dan `compressImage` kini menolak file non-raster dari ISI file (SVG tidak
 pernah sampai ke librsvg; MIME dari browser bisa dipalsukan).
-Sisa temuan audit (sengaja ditunda): pdfjs-dist 5.x (dipakai di BROWSER admin
-saat impor PDF; perbaikan butuh 6.x = breaking, risiko hanya bila admin
-membuka PDF berbahaya), exceljs→uuid (exceljs tidak memakai jalur buf yang
+Sisa temuan audit (sengaja ditunda): pdfjs-dist 5.x — SUDAH dinaikkan ke 6.4.299
+(2026-10-07, render pakai parameter `canvas` + `background`, diuji render 2
+halaman di Impor PDF), exceljs→uuid (exceljs tidak memakai jalur buf yang
 rentan), drizzle-kit/esbuild & shadcn/braces (alat pengembangan, tidak
 berjalan di server produksi).
 

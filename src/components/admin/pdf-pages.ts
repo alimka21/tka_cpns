@@ -19,10 +19,8 @@ export async function renderPage(doc: PDFDocumentProxy, pageNumber: number, widt
   const canvas = document.createElement("canvas");
   canvas.width = Math.round(viewport.width);
   canvas.height = Math.round(viewport.height);
-  const ctx = canvas.getContext("2d")!;
-  ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-  await page.render({ canvas, canvasContext: ctx, viewport }).promise;
+  // pdf.js v6: cukup `canvas`; latar putih supaya JPEG halaman tidak hitam di area transparan.
+  await page.render({ canvas, viewport, background: "#ffffff" }).promise;
   page.cleanup();
   return canvas;
 }

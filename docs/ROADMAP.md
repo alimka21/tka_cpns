@@ -48,6 +48,7 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-07 (6):** builder "Lengkapi soal yang kurang" (batch kurang → AI menambah ke bacaan yang sama); pdfjs-dist 6.4.299; **database dev dipisah dari produksi**: `.env` = MariaDB lokal `pakartka_dev`, `.env.prod` = Hostinger, `npm run db:dev:sync` (konten saja, tanpa data siswa), perintah produksi `prod:*` (WORKFLOW §6). Migrasi 0017 produksi → `npm run prod:migrate`.
 **2026-10-07 (5):** batas akun gratis (1 paket/mapel/jenjang; pembahasan & statistik kelemahan dikunci, kunci jawaban tetap) + popup upgrade di hasil tes + halaman "paket terkunci" (DECISIONS 2026-10-07).
 **2026-10-07 (4):** halaman /privasi & /syarat (UU PDP, QRIS DOKU, tanpa perpanjangan otomatis, kebijakan refund) + tautan di footer & form daftar; env CONTACT_EMAIL.
 **2026-10-07 (3):** admin pilih Gratis|Premium langsung di daftar Paket Tes

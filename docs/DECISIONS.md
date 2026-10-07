@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Database dev terpisah dari produksi
+
+Keputusan: dev memakai MariaDB lokal (`.env`, `pakartka_dev`); produksi hanya lewat
+`.env.prod` dan skrip eksplisit `prod:*` (migrate, seed, user:password/role, db:check).
+Isi lokal dari `npm run db:dev:sync` (`src/server/db/sync-dev.ts`): salin tabel konten
+saja, tujuan wajib localhost; pembuat konten → akun anonim `admin<id>@dev.local`
+(id sama, FK valid); akun `admin@dev.local` dengan sandi acak sekali tampil.
+Alasan: sebelumnya `npm run dev`/uji coba menulis langsung ke database produksi
+(akun uji, percobaan, paket draf) — risiko data siswa & salah hapus. Data pribadi
+(akun, jawaban, order, API key) tidak pernah ikut ke laptop.
+Alternatif yang ditolak: database dev kedua di Hostinger (tetap remote & lambat,
+kuota DB); dump penuh produksi (membawa data pribadi siswa).
+
 ## 2026-10-07 — Batas akun gratis & ajakan Premium di hasil tes
 
 Keputusan pemilik produk. Akun gratis:

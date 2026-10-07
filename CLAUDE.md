@@ -71,7 +71,9 @@ buat baru mengikuti gaya file lain, ringkas dan dalam poin-poin.
 ```bash
 npm run dev          # jalankan dev server
 npm run db:generate   # generate migrasi Drizzle dari schema
-npm run db:migrate    # jalankan migrasi ke database
+npm run db:migrate    # jalankan migrasi ke database LOKAL (.env)
+npm run db:dev:sync   # salin konten produksi → lokal (tanpa data siswa)
+npm run prod:migrate  # migrasi ke PRODUKSI (.env.prod) — lihat WORKFLOW §6
 npm run lint
 npm run build
 ```

@@ -68,12 +68,32 @@ dipakai user asli (supaya tidak ada bug yang langsung tayang).
 - Cek bahwa kunci jawaban tidak muncul di Network tab browser selama tes
   berlangsung (buka DevTools → cek response API soal).
 
-## 6. Database di fase development
+## 6. Database dev (lokal) vs produksi
 
-Sebelum domain & hosting aktif, Anda bisa develop dengan MySQL lokal
-(XAMPP/Laragon) atau database dev gratis (PlanetScale/Railway/Aiven) lalu
-pindahkan `DATABASE_URL` ke database MySQL Hostinger saat siap deploy.
-Skema Drizzle sama persis, tinggal jalankan migrasi ke database baru.
+Sejak 2026-10-07 dev server TIDAK lagi memakai database produksi.
+- `.env` → `DATABASE_URL` ke MariaDB lokal `pakartka_dev` (127.0.0.1). Semua
+  `npm run dev`, `db:migrate`, `db:seed:asesmen`, `user:*` mengenai database lokal.
+- `.env.prod` → salinan env produksi (DATABASE_URL Hostinger, chmod 600, ikut
+  `.gitignore`). Hanya dipakai skrip `prod:*` dan sebagai sumber `db:dev:sync`.
+- Dev server menampilkan peringatan bila `DATABASE_URL` mengarah ke host non-lokal.
+
+Setup sekali (macOS): `brew install mariadb && brew services start mariadb`, lalu
+`mysql -e "CREATE DATABASE pakartka_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'pakartka'@'localhost' IDENTIFIED BY '<acak>'; GRANT ALL ON pakartka_dev.* TO 'pakartka'@'localhost';"`
+→ isi `.env` → `npm run db:migrate` → `npm run db:dev:sync`.
+
+`npm run db:dev:sync` — salin KONTEN produksi ke lokal (baca saja di produksi;
+data lokal dihapus dulu): kerangka asesmen, bacaan, soal, opsi, pembahasan, gambar,
+paket, paket langganan, pengaturan. Tidak disalin: akun/sesi, percobaan & jawaban,
+latihan, order/membership, API key Gemini, laporan soal, log AI. Pembuat konten
+diganti akun anonim `admin<id>@dev.local`; akun `admin@dev.local` dibuat dengan kata
+sandi acak yang tampil sekali di terminal (jalankan ulang sinkron untuk sandi baru).
+API key Gemini produksi tidak bisa dipakai di lokal (terenkripsi dengan
+`ENCRYPTION_SECRET` produksi) — simpan key sendiri di Profil akun dev bila perlu.
+
+Perintah ke PRODUKSI (eksplisit, membaca `.env.prod`): `npm run prod:db:check`,
+`npm run prod:migrate`, `npm run prod:seed:asesmen`,
+`npm run prod:user:password -- <email> [--acak]`, `npm run prod:user:role -- ...`.
 
 ## 7. Menjalankan migrasi ke MySQL Hostinger
 
@@ -84,16 +104,16 @@ Skema Drizzle sama persis, tinggal jalankan migrasi ke database baru.
 2. hPanel → **Databases → Remote MySQL** → tambahkan IP publik komputer
    Anda (atau `%` sementara saat development, hapus lagi setelahnya).
    Catat **hostname MySQL** yang ditampilkan (bukan domain website).
-3. Isi `.env`:
+3. Isi `.env.prod` (bukan `.env` — itu database lokal, lihat §6):
    `DATABASE_URL="mysql://USER:PASSWORD@HOST:3306/NAMA_DB"` —
    karakter khusus di password wajib di-encode (`@`→`%40`, `#`→`%23`,
    `/`→`%2F`, `:`→`%3A`).
-4. `npm run db:check` — tes koneksi (read-only), tampilkan versi server,
+4. `npm run prod:db:check` — tes koneksi (read-only), tampilkan versi server,
    tabel, dan jumlah migrasi yang sudah jalan. Error diberi petunjuk.
-5. `npm run db:migrate` — buat semua tabel (migrasi 0000–dst).
-6. `npm run db:seed:asesmen` — isi jenjang, mata uji, domain, subdomain
+5. `npm run prod:migrate` — buat semua tabel (migrasi 0000–dst).
+6. `npm run prod:seed:asesmen` — isi jenjang, mata uji, domain, subdomain
    dari `asesmen/*.json`.
-7. `npm run db:check` lagi — pastikan tabel & migrasi tercatat.
+7. `npm run prod:db:check` lagi — pastikan tabel & migrasi tercatat.
    **Jumlah migrasi harus = jumlah file `.sql`.** Kalau kurang padahal
    tabel baru sudah ada, migrasi gagal di tengah (DDL MariaDB tidak bisa
    di-rollback): cari statement yang belum jalan, jalankan manual, lalu
@@ -107,10 +127,10 @@ koneksi dari server yang sama (bukan host remote).
 
 Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
 
-**A. `npm run db:migrate` (disarankan, kalau bisa)**
+**A. `npm run prod:migrate` (disarankan, kalau bisa)**
 - Aktifkan **Remote MySQL** di hPanel Hostinger (Databases → Remote MySQL),
-  whitelist IP Anda, lalu arahkan `DATABASE_URL` lokal ke database
-  Hostinger dan jalankan `npm run db:migrate` dari komputer Anda.
+  whitelist IP Anda, lalu jalankan `npm run prod:migrate` dari komputer Anda
+  (memakai `DATABASE_URL` di `.env.prod`).
 - Kelebihan: Drizzle otomatis mencatat migrasi mana yang sudah jalan di
   tabel `__drizzle_migrations`, jadi migrasi berikutnya tidak bentrok.
 
@@ -126,7 +146,7 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
   sed 's/-->[[:space:]]*statement-breakpoint//g' src/server/db/migrations/0000_xxx.sql
   ```
 - **Penting**: karena dijalankan manual, tabel `__drizzle_migrations`
-  tidak otomatis terisi. Kalau nanti `npm run db:migrate` dijalankan ke
+  tidak otomatis terisi. Kalau nanti `npm run prod:migrate` dijalankan ke
   database yang sama, dia akan mencoba `CREATE TABLE` yang sudah ada lagi
   dan gagal. Kalau sudah mulai pakai cara manual, tetap pakai cara manual
   untuk migrasi selanjutnya juga (generate SQL-nya, bersihkan penanda,
@@ -139,7 +159,7 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
    Jangan kirim keduanya lewat chat/email — langsung isi ke env.
 2. hPanel → env: `DOKU_CLIENT_ID=<client id>`, `DOKU_SECRET_KEY=<secret key>`,
    `DOKU_IS_PRODUCTION=false`, pastikan `SITE_URL=https://<domain>`.
-   Hapus env lama `MIDTRANS_*` bila ada. Redeploy, lalu `npm run db:migrate`
+   Hapus env lama `MIDTRANS_*` bila ada. Redeploy, lalu `npm run prod:migrate`
    (migrasi 0017 menghapus kolom `orders.snap_token`) — jalankan SETELAH kode
    baru ter-deploy.
 3. Back Office → Settings → Payment Settings → **Notification URL**:
@@ -251,13 +271,14 @@ membersihkan; sisa run terputus: `npm run loadtest -- --cleanup`).
 
 ## 12. Lupa kata sandi admin
 
-`npm run user:password -- <email>` — mengatur kata sandi baru dari terminal
+`npm run prod:user:password -- <email>` (produksi; `user:password` = database
+lokal) — mengatur kata sandi baru dari terminal
 (diketik tersembunyi, minimal 8 karakter, diketik dua kali). Kata sandi di-hash
 seperti daftar biasa; semua sesi lama user itu dihapus. Kata sandi lama tidak bisa
 dilihat oleh siapa pun (hanya hash yang tersimpan).
 
 Paling aman bila kata sandi ketikan tetap ditolak saat login:
-`npm run user:password -- <email> --acak` — sistem membuat kata sandi sementara
+`npm run prod:user:password -- <email> --acak` — sistem membuat kata sandi sementara
 (mis. `KTRmnpa-4827`) dan menampilkannya SEKALI di terminal; masuk dengan itu,
 lalu ganti di Profil → Ganti kata sandi.
 

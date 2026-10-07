@@ -122,7 +122,7 @@ export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat"
                           size="sm"
                           variant="outline"
                           nativeButton={false}
-                          render={<Link href={`/hasil/${item.attemptId}/pembahasan`} />}
+                          render={<Link href={`/hasil/${item.attemptId}?tab=pembahasan`} />}
                         >
                           <BookOpenText aria-hidden /> Pembahasan
                         </Button>

@@ -19,7 +19,9 @@ function point(index: number, count: number, value: number) {
   // Sumbu pertama tegak ke atas, searah jarum jam.
   const angle = (Math.PI * 2 * index) / count - Math.PI / 2;
   const r = (RADIUS * value) / 100;
-  return { x: CENTER + r * Math.cos(angle), y: CENTER + r * Math.sin(angle), angle };
+  // Dibulatkan: hasil cos/sin bisa beda di digit terakhir antara server & browser → hydration mismatch.
+  const round = (v: number) => Math.round(v * 100) / 100;
+  return { x: round(CENTER + r * Math.cos(angle)), y: round(CENTER + r * Math.sin(angle)), angle };
 }
 
 /**
@@ -76,7 +78,7 @@ export function SubtopicRadar({ data, weakestIndex }: Props) {
             const p = point(i, n, d.percentage);
             const weak = i === weakestIndex;
             return (
-              <g key={d.label}>
+              <g key={i}>
                 <circle
                   cx={p.x}
                   cy={p.y}
@@ -111,7 +113,7 @@ export function SubtopicRadar({ data, weakestIndex }: Props) {
             const weak = i === weakestIndex;
             return (
               <text
-                key={d.label}
+                key={i}
                 x={lx}
                 y={ly}
                 textAnchor={anchor}

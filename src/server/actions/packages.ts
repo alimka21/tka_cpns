@@ -227,3 +227,14 @@ export async function searchUsersAction(query: string) {
   if (!(await getAdminSession())) return [];
   return searchUsersQuery(query);
 }
+
+/** Ubah akses paket: Gratis (semua siswa) atau Premium (pelanggan Premium jenjangnya). */
+export async function setPackagePremiumAction(input: { id: number; isPremium: boolean }): Promise<ActionResult> {
+  if (!(await getAdminSession())) return NOT_ADMIN;
+  if (!Number.isInteger(input.id) || input.id <= 0 || typeof input.isPremium !== "boolean") return { ok: false, errors: ["Data tidak valid."] };
+  await db.update(testPackages).set({ isPremium: input.isPremium }).where(eq(testPackages.id, input.id));
+  invalidatePackageCache();
+  revalidatePath("/admin/paket-tes");
+  revalidatePath("/dashboard");
+  return { ok: true };
+}

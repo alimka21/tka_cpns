@@ -12,6 +12,16 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-07 — Halaman hasil tes bertab & pembahasan berhalaman
+
+Tab di query string (`?tab=ringkasan|analisa|pembahasan`) — bisa dibagikan &
+tombol Kembali browser bekerja; data pembahasan (kunci) hanya dimuat saat tab
+itu dibuka. Pembahasan: satu soal per halaman (`&no=<nomor asli>`), saring
+benar/salah/kosong (`&filter=`), panel nomor berwarna status, stimulus ikut
+tampil di soal grupnya. Navigasi pakai `scroll={false}` agar tidak lompat ke
+atas. Akses paket (Gratis/Premium) diubah langsung dari daftar admin
+(`setPackagePremiumAction`), tanpa membuka form paket.
+
 ## 2026-10-07 — Atur ulang kata sandi oleh admin (bukan kolom "Sandi Teks")
 
 Permintaan: kolom kata sandi asli di Manajemen User agar admin bisa membantu

@@ -48,6 +48,13 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-07 (3):** admin pilih Gratis|Premium langsung di daftar Paket Tes
+(+ saring akses); dashboard siswa saring Gratis/Premium + banner paket
+terkunci; halaman hasil tes jadi 3 tab (Ringkasan · Analisa Kemampuan · Soal &
+Pembahasan, satu soal per halaman dengan panel nomor berwarna). Rute lama
+/hasil/[id]/pembahasan dialihkan ke tab. Bug lama diperbaiki: reportTargetOf
+dipanggil dari server (error di pembahasan & hasil latihan), key ganda &
+hydration mismatch di radar.
 **2026-10-07 (2):** rebrand → **Pakar TKA**, slogan "Kenali Kelemahan,
 Kuasai TKA." — logo di header/footer/auth/ujian, favicon, ikon, manifest,
 gambar pratinjau tautan (UI_UX §0). Grafik tren per subdomain di /progres.

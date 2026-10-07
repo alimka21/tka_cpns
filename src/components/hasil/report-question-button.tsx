@@ -7,7 +7,7 @@ import { REPORT_REASON_LABEL, type ReportReasonKey } from "@/lib/report-reasons"
 import { cn } from "@/lib/utils";
 import { reportQuestionAction } from "@/server/actions/question-reports";
 
-type Target = { questionId: number } | { practiceQuestionId: number };
+import type { ReportTarget as Target } from "@/lib/report-target";
 
 /** Siswa melaporkan soal (kunci salah, ambigu, dst.) → antrean admin /admin/laporan. */
 export function ReportQuestionButton({ target }: { target: Target }) {
@@ -86,9 +86,4 @@ export function ReportQuestionButton({ target }: { target: Target }) {
       </div>
     </form>
   );
-}
-
-/** Target laporan dari ReviewItem (soal bank atau Latihan AI). */
-export function reportTargetOf(item: { questionId: number; aiPracticeId: number | null }): Target {
-  return item.aiPracticeId != null ? { practiceQuestionId: item.aiPracticeId } : { questionId: item.questionId };
 }

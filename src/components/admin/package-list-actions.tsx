@@ -2,7 +2,8 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Trash2, Undo2 } from "lucide-react";
+import { Crown, Gift, Send, Trash2, Undo2 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -15,7 +16,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { deletePackageAction, updatePackageStatusAction } from "@/server/actions/packages";
+import { deletePackageAction, setPackagePremiumAction, updatePackageStatusAction } from "@/server/actions/packages";
 
 export function PackageStatusButton({ id, status }: { id: number; status: "draft" | "published" }) {
   const router = useRouter();
@@ -110,5 +111,59 @@ export function DeletePackageButton({ id, title }: { id: number; title: string }
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>
+  );
+}
+
+/** Pilih akses paket langsung dari daftar: Gratis | Premium (tersimpan seketika). */
+export function PackageAccessToggle({ id, isPremium, title }: { id: number; isPremium: boolean; title: string }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [value, setValue] = useState(isPremium);
+  const [error, setError] = useState<string | null>(null);
+
+  const choose = (premium: boolean) => {
+    if (premium === value || pending) return;
+    const before = value;
+    setValue(premium);
+    startTransition(async () => {
+      const r = await setPackagePremiumAction({ id, isPremium: premium });
+      if (!r.ok) {
+        setValue(before);
+        setError(r.errors[0]);
+      } else {
+        setError(null);
+        router.refresh();
+      }
+    });
+  };
+
+  const option = (premium: boolean) => (
+    <button
+      type="button"
+      aria-pressed={value === premium}
+      disabled={pending}
+      onClick={() => choose(premium)}
+      className={cn(
+        "flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold transition-colors focus-visible:ring-3 focus-visible:ring-ring/25 focus-visible:outline-none disabled:opacity-60",
+        value === premium
+          ? premium
+            ? "bg-cta text-cta-foreground"
+            : "bg-success-strong text-white"
+          : "bg-card text-muted-foreground hover:text-foreground",
+      )}
+    >
+      {premium ? <Crown className="size-3.5" aria-hidden /> : <Gift className="size-3.5" aria-hidden />}
+      {premium ? "Premium" : "Gratis"}
+    </button>
+  );
+
+  return (
+    <span className="flex flex-col items-end gap-1">
+      <span role="group" aria-label={`Akses paket ${title}`} className="inline-flex overflow-hidden rounded-lg border divide-x">
+        {option(false)}
+        {option(true)}
+      </span>
+      {error && <span className="max-w-48 text-right text-xs text-destructive">{error}</span>}
+    </span>
   );
 }

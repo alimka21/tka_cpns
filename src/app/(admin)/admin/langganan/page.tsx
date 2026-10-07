@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { formatDate, formatDateTime, formatRupiah, ORDER_STATUS_META } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
 import { listActiveMembershipsAdmin, listOrdersAdmin, listPlans } from "@/server/services/billing";
-import { DOKU_NOTIFICATION_PATH, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
+import { DokuConnectionTest } from "@/components/billing/doku-connection-test";
+import { DOKU_NOTIFICATION_PATH, dokuPublicInfo, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
 export const dynamic = "force-dynamic";
@@ -16,6 +17,7 @@ export default async function AdminLanggananPage() {
   const [plans, orders, members] = await Promise.all([listPlans({ activeOnly: false }), listOrdersAdmin(), listActiveMembershipsAdmin()]);
   const configured = isDokuConfigured();
   const production = isDokuProduction();
+  const info = dokuPublicInfo();
   const paidTotal = orders.filter((o) => o.order.status === "paid").reduce((n, o) => n + o.order.amount, 0);
 
   return (
@@ -31,6 +33,22 @@ export default async function AdminLanggananPage() {
           DOKU {configured ? `terhubung — mode ${production ? "PRODUKSI" : "Sandbox (uji coba)"}` : "belum dikonfigurasi"}
         </p>
         {!configured && <p className="text-muted-foreground">Isi env DOKU_CLIENT_ID, DOKU_SECRET_KEY (dan DOKU_IS_PRODUCTION) di hPanel, lalu redeploy.</p>}
+        {configured && (
+          <dl className="grid gap-x-4 gap-y-1 text-muted-foreground sm:grid-cols-[auto_1fr]">
+            <dt>Alamat API</dt>
+            <dd>
+              <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{info.apiBase}</code>{" "}
+              {production ? "(Production — pakai key dari Back Office Production)" : "(Sandbox — pakai key dari Back Office Sandbox)"}
+            </dd>
+            <dt>Client ID</dt>
+            <dd>
+              <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{info.clientIdMasked}</code>
+            </dd>
+            <dt>Secret Key</dt>
+            <dd>{info.secretKeyLength ? `terisi (${info.secretKeyLength} karakter)` : "kosong"}</dd>
+          </dl>
+        )}
+        {configured && <DokuConnectionTest />}
         <p className="text-muted-foreground">
           Notification URL (pasang di DOKU Back Office → Settings → Payment Settings):{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{SITE_URL.replace(/\/$/, "")}{DOKU_NOTIFICATION_PATH}</code>

@@ -11,11 +11,17 @@ export class DokuError extends Error {}
 /** Path webhook kita — juga Request-Target saat memverifikasi notifikasi. */
 export const DOKU_NOTIFICATION_PATH = "/api/doku/notification";
 
+/** Nilai env bersih: tanpa spasi/baris baru & tanpa tanda kutip yang ikut tersalin di hPanel. */
+function env(name: string) {
+  const v = process.env[name]?.trim().replace(/^(['"])(.*)\1$/, "$2").trim();
+  return v || undefined;
+}
+
 function config() {
-  const clientId = process.env.DOKU_CLIENT_ID?.trim();
-  const secretKey = process.env.DOKU_SECRET_KEY?.trim();
+  const clientId = env("DOKU_CLIENT_ID");
+  const secretKey = env("DOKU_SECRET_KEY");
   if (!clientId || !secretKey) throw new DokuError("Pembayaran belum dikonfigurasi (DOKU_CLIENT_ID / DOKU_SECRET_KEY belum diisi).");
-  const production = process.env.DOKU_IS_PRODUCTION === "true";
+  const production = isDokuProduction();
   return {
     clientId,
     secretKey,
@@ -30,11 +36,35 @@ export function dokuCredentials() {
 }
 
 export function isDokuConfigured() {
-  return Boolean(process.env.DOKU_CLIENT_ID?.trim() && process.env.DOKU_SECRET_KEY?.trim());
+  return Boolean(env("DOKU_CLIENT_ID") && env("DOKU_SECRET_KEY"));
 }
 
 export function isDokuProduction() {
-  return process.env.DOKU_IS_PRODUCTION === "true";
+  return env("DOKU_IS_PRODUCTION")?.toLowerCase() === "true";
+}
+
+/** Info aman untuk ditampilkan ke admin (tanpa Secret Key). */
+export function dokuPublicInfo() {
+  const id = env("DOKU_CLIENT_ID") ?? "";
+  return {
+    production: isDokuProduction(),
+    apiBase: process.env.DOKU_API_BASE?.trim() || (isDokuProduction() ? "https://api.doku.com" : "https://api-sandbox.doku.com"),
+    clientIdMasked: id ? `${id.slice(0, 8)}…${id.slice(-4)} (${id.length} karakter)` : "(kosong)",
+    secretKeyLength: env("DOKU_SECRET_KEY")?.length ?? 0,
+  };
+}
+
+/**
+ * Tes kredensial tanpa membuat transaksi: Check Status untuk invoice yang
+ * pasti tidak ada. Kredensial benar → DOKU menjawab "tidak ditemukan";
+ * salah → 401 dengan pesan seperti "Invalid Client-Id" / "Invalid Signature".
+ */
+export async function testDokuConnection(): Promise<{ ok: boolean; message: string }> {
+  const { res, json } = await call(`/orders/v1/status/TES-KONEKSI-${randomUUID().slice(0, 8)}`, "GET");
+  const text = errorText(json, res.status);
+  if (res.status === 401 || res.status === 403 || /invalid/i.test(text)) return { ok: false, message: `DOKU menolak kredensial: ${text}` };
+  if (res.status >= 500) return { ok: false, message: `Server DOKU bermasalah (HTTP ${res.status}): ${text}` };
+  return { ok: true, message: `Kredensial diterima DOKU (HTTP ${res.status}).` };
 }
 
 async function call(target: string, method: "GET" | "POST", payload?: unknown) {

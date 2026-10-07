@@ -11,6 +11,7 @@ import { getActiveSession, getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { JENJANG_CODES, orders, plans } from "@/server/db/schema";
 import { createOrder, grantManualMembership, revokeMembership, syncOrder } from "@/server/services/billing";
+import { isDokuConfigured, testDokuConnection } from "@/server/services/doku";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 const NOT_ADMIN = { ok: false as const, error: "Sesi admin berakhir. Silakan masuk lagi." };
@@ -86,4 +87,16 @@ export async function revokeMembershipAction(membershipId: number): Promise<Resu
   await revokeMembership(membershipId);
   revalidatePath("/admin/langganan");
   return { ok: true };
+}
+
+/** Admin: uji Client ID & Secret Key ke DOKU tanpa membuat transaksi. */
+export async function testDokuConnectionAction(): Promise<Result<{ message: string }>> {
+  if (!(await getAdminSession())) return NOT_ADMIN;
+  if (!isDokuConfigured()) return { ok: false, error: "DOKU_CLIENT_ID / DOKU_SECRET_KEY belum diisi di env." };
+  try {
+    const r = await testDokuConnection();
+    return r.ok ? { ok: true, message: r.message } : { ok: false, error: r.message };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Gagal menghubungi DOKU." };
+  }
 }

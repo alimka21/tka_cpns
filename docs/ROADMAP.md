@@ -48,6 +48,7 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-08:** paket #45 TKA SMA Bahasa Inggris — Paket 3 (draf, 30 soal baru `pending_review`, 6 stimulus × 5 soal, 4 gambar baru /gambar/134–137: poster, diagram batang, infografis prosedur, iklan lowongan); semua aturan wajib & saran OK.
 **2026-10-07 (8):** paket SD pertama (draf, semua soal baru, `pending_review`): #43 TKA SD Matematika — Paket 1 (30 soal, 3 stimulus), #44 TKA SD Bahasa Indonesia — Paket 1 (6 bacaan × 5 soal); semua aturan paket OK. Tinggal ditinjau & diterbitkan admin.
 **2026-10-07 (7):** "Lupa kata sandi" via email (nodemailer 10 + SMTP Hostinger, `/lupa-kata-sandi` → `/atur-ulang-kata-sandi`), `npm run mail:test`/`prod:mail:test`; diuji ujung-ke-ujung dengan SMTP tiruan. Migrasi 0017 produksi: sudah (18/18).
 **2026-10-07 (6):** builder "Lengkapi soal yang kurang" (batch kurang → AI menambah ke bacaan yang sama); pdfjs-dist 6.4.299; **database dev dipisah dari produksi**: `.env` = MariaDB lokal `pakartka_dev`, `.env.prod` = Hostinger, `npm run db:dev:sync` (konten saja, tanpa data siswa), perintah produksi `prod:*` (WORKFLOW §6). Migrasi 0017 produksi → `npm run prod:migrate`.

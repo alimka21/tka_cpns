@@ -4,13 +4,11 @@ import {
   BarChart3,
   BookOpenCheck,
   Brain,
-  Check,
   CircleCheck,
   Clock,
   Crosshair,
   Layers,
   ListChecks,
-  Minus,
   Quote,
   Save,
   ShieldCheck,
@@ -19,6 +17,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { BrandLockup, Logo } from "@/components/brand/logo";
+import { PlanComparison } from "@/components/landing/plan-comparison";
 import { Button } from "@/components/ui/button";
 import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 import { cn } from "@/lib/utils";
@@ -107,7 +106,11 @@ const faqs: { q: string; a: string }[] = [
   },
   {
     q: "Apakah gratis?",
-    a: "Daftar dan paket gratis bisa langsung dipakai tanpa biaya. Akses Premium membuka semua paket lengkap dan latihan lanjutan.",
+    a: "Daftar gratis tanpa kartu kredit. Akun gratis bisa mengerjakan 1 paket tes gratis di setiap mata pelajaran dan melihat skor serta kunci jawaban. Premium membuka semua paket tes, pembahasan tiap soal, analisa kelemahan per subtopik, progres, dan Latihan Kelemahan.",
+  },
+  {
+    q: "Bagaimana cara membayar Premium?",
+    a: "Pilih paket di menu Langganan, lalu bayar dengan QRIS (GoPay, OVO, DANA, ShopeePay, atau m-banking) yang diproses oleh DOKU. Premium aktif otomatis begitu pembayaran berhasil dan tidak diperpanjang otomatis — kamu yang memutuskan kapan memperpanjang.",
   },
 ];
 
@@ -132,34 +135,6 @@ const jenjang = [
   },
 ];
 
-const plans = [
-  {
-    name: "Gratis",
-    tagline: "Untuk mencoba sistem ujian dan mulai latihan.",
-    cta: { label: "Daftar Gratis", href: "/daftar", variant: "outline" as const },
-    features: [
-      { text: "Paket latihan gratis tiap jenjang", included: true },
-      { text: "Skor langsung setelah tes", included: true },
-      { text: "Analisis per subtopik", included: true },
-      { text: "Semua paket simulasi lengkap", included: false },
-      { text: "Paket HOTS & latihan lanjutan", included: false },
-    ],
-  },
-  {
-    name: "Premium",
-    tagline: "Akses penuh untuk persiapan intensif.",
-    cta: { label: "Daftar & Minta Akses", href: "/daftar", variant: "cta" as const },
-    featured: true,
-    features: [
-      { text: "Semua yang ada di paket Gratis", included: true },
-      { text: "Semua paket simulasi lengkap", included: true },
-      { text: "Paket HOTS & latihan lanjutan", included: true },
-      { text: "Riwayat & tren skor tiap paket", included: true },
-      { text: "Diaktifkan manual oleh admin", included: true },
-    ],
-  },
-];
-
 const steps = [
   { title: "Daftar & pilih jenjang", text: "Buat akun gratis, lalu pilih paket sesuai jenjangmu." },
   { title: "Kerjakan tes", text: "Satu soal per layar, timer jelas, bisa tandai ragu-ragu." },
@@ -167,7 +142,7 @@ const steps = [
 ];
 
 export default async function LandingPage() {
-  const { testimonials } = await getLandingData();
+  const { testimonials, plan, stats } = await getLandingData();
   return (
     <div className="flex flex-1 flex-col bg-card">
       <header className="sticky top-0 z-50 border-b bg-card/90 backdrop-blur">
@@ -348,51 +323,7 @@ export default async function LandingPage() {
         </section>
 
         {/* Gratis vs Premium */}
-        <section id="paket" className="scroll-mt-20 bg-background">
-          <div className="mx-auto w-full max-w-7xl px-4 py-20 sm:px-6 lg:px-8">
-            <SectionHeading
-              eyebrow="Paket"
-              title="Mulai gratis, upgrade saat butuh"
-              text="Akses premium saat ini diaktifkan manual oleh admin — pembayaran online menyusul."
-            />
-            <div className="mx-auto mt-12 grid max-w-4xl gap-6 md:grid-cols-2">
-              {plans.map((plan) => (
-                <article
-                  key={plan.name}
-                  className={cn(
-                    "surface-card relative flex flex-col gap-6 p-6 sm:p-8",
-                    plan.featured && "border-2 border-primary shadow-md",
-                  )}
-                >
-                  {plan.featured && (
-                    <span className="absolute -top-3 left-6 rounded-full bg-cta px-3 py-1 text-xs font-bold text-cta-foreground">
-                      Paling lengkap
-                    </span>
-                  )}
-                  <div>
-                    <h3 className="text-2xl font-bold">{plan.name}</h3>
-                    <p className="mt-1 text-muted-foreground">{plan.tagline}</p>
-                  </div>
-                  <ul className="flex flex-1 flex-col gap-3">
-                    {plan.features.map((f) => (
-                      <li key={f.text} className={cn("flex items-start gap-3 text-sm", !f.included && "text-muted-foreground")}>
-                        {f.included ? (
-                          <Check className="mt-0.5 size-4 shrink-0 text-success" aria-label="Termasuk" />
-                        ) : (
-                          <Minus className="mt-0.5 size-4 shrink-0" aria-label="Tidak termasuk" />
-                        )}
-                        {f.text}
-                      </li>
-                    ))}
-                  </ul>
-                  <Button size="lg" variant={plan.cta.variant} nativeButton={false} render={<Link href={plan.cta.href} />}>
-                    {plan.cta.label}
-                  </Button>
-                </article>
-              ))}
-            </div>
-          </div>
-        </section>
+        <PlanComparison plan={plan} stats={stats} />
 
         {/* Cara kerja */}
         <section className="bg-card">

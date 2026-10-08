@@ -2,7 +2,7 @@
 // mengubah status order & membuat membership dari pembayaran.
 
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, gt, isNull, or } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
 import { db } from "@/server/db";
 import { memberships, orders, plans, users, type JenjangCode, type OrderStatus } from "@/server/db/schema";
 import { createCheckout, DokuError, getOrderStatus } from "./doku";
@@ -135,6 +135,20 @@ export async function syncOrder(orderCode: string): Promise<Result<{ status: Ord
 
 export async function listUserOrders(userId: number, limit = 20) {
   return db.select().from(orders).where(eq(orders.userId, userId)).orderBy(desc(orders.createdAt)).limit(limit);
+}
+
+/** Admin: penjualan per paket langganan (order lunas & menunggu). */
+export async function planSalesStats() {
+  const rows = await db
+    .select({
+      planId: orders.planId,
+      paid: sql<number>`SUM(${orders.status} = 'paid')`,
+      revenue: sql<number>`COALESCE(SUM(CASE WHEN ${orders.status} = 'paid' THEN ${orders.amount} END), 0)`,
+      pending: sql<number>`SUM(${orders.status} = 'pending')`,
+    })
+    .from(orders)
+    .groupBy(orders.planId);
+  return new Map(rows.map((r) => [r.planId, { paid: Number(r.paid), revenue: Number(r.revenue), pending: Number(r.pending) }]));
 }
 
 export async function listOrdersAdmin(limit = 100) {

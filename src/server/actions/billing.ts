@@ -66,6 +66,7 @@ export async function savePlanAction(input: unknown): Promise<Result> {
   else await db.insert(plans).values(values);
   revalidatePath("/admin/langganan");
   revalidatePath("/langganan");
+  revalidatePath("/"); // harga Premium termurah tampil di landing
   return { ok: true };
 }
 

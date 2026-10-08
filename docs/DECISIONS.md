@@ -12,6 +12,26 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-08 — Landing Gratis vs Premium & halaman admin Langganan
+
+Keputusan:
+- Landing `#paket` diganti `components/landing/plan-comparison.tsx`: kartu Gratis vs
+  Premium (harga + "± Rp/hari"), contoh hasil tes gratis (pembahasan terkunci) vs
+  premium (pembahasan + subtopik lemah + tombol latihan) berlabel "contoh tampilan",
+  tabel perbandingan lengkap, angka nyata dari DB (paket terbit, soal terbit, paket
+  Premium — angka 0 disembunyikan), CTA ganda. Klaim mengikuti aturan akses nyata
+  (DECISIONS 2026-10-07). Tanpa hitung mundur/kelangkaan/testimoni karangan.
+- Harga promosi (landing & popup upgrade) = paket aktif termurah dengan harga ≥
+  Rp5.000 (`lib/plans.ts` `promotedPlan`, `TEST_PLAN_MAX_PRICE`). Paket di bawahnya
+  dianggap paket uji: tetap bisa dibeli bila aktif, tetapi tidak dipromosikan.
+- Admin Langganan: kartu statistik, paket "Sedang dijual" vs "Tidak dijual" (badge
+  Baru < 7 hari, badge harga promosi, penjualan per paket, edit di tempat, tombol
+  hentikan/jual lagi) terpisah dari panel "Buat paket langganan baru" dengan
+  pratinjau kartu siswa.
+Alasan: section lama masih menyebut "diaktifkan manual oleh admin" dan memberi
+analisis ke akun gratis — tidak lagi benar; paket uji Rp1.000 sempat jadi harga
+yang tampil di popup.
+
 ## 2026-10-07 — Database dev terpisah dari produksi
 
 Keputusan: dev memakai MariaDB lokal (`.env`, `pakartka_dev`); produksi hanya lewat

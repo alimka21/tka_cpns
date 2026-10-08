@@ -48,6 +48,7 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-08 (3):** paket #46 TKA SMA Bahasa Inggris — Paket 4 (draf, 30 soal baru `pending_review`, 6 stimulus × 5 soal, 4 gambar baru /gambar/138–141: brosur museum, grafik garis 2 sumbu, label obat, peta jalur taman); semua aturan wajib & saran OK.
 **2026-10-08 (2):** landing Gratis vs Premium baru (harga dari DB, contoh hasil tes, tabel lengkap, FAQ bayar QRIS) + admin Langganan baru (statistik, paket dijual/tidak dijual/baru terpisah dari panel buat paket + pratinjau); paket < Rp5.000 tidak dipromosikan (DECISIONS 2026-10-08).
 **2026-10-08:** paket #45 TKA SMA Bahasa Inggris — Paket 3 (draf, 30 soal baru `pending_review`, 6 stimulus × 5 soal, 4 gambar baru /gambar/134–137: poster, diagram batang, infografis prosedur, iklan lowongan); semua aturan wajib & saran OK.
 **2026-10-07 (8):** paket SD pertama (draf, semua soal baru, `pending_review`): #43 TKA SD Matematika — Paket 1 (30 soal, 3 stimulus), #44 TKA SD Bahasa Indonesia — Paket 1 (6 bacaan × 5 soal); semua aturan paket OK. Tinggal ditinjau & diterbitkan admin.

@@ -23,9 +23,9 @@ import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { getLandingData } from "@/server/queries/landing";
 
-// Testimoni dibaca dari DB, diperbarui tiap 5 menit (dan langsung saat admin
-// menyimpan testimoni).
-export const revalidate = 300;
+// Dirender setiap kunjungan: angka paket & soal, harga Premium, dan testimoni
+// selalu sesuai database (beberapa COUNT kecil — ringan).
+export const dynamic = "force-dynamic";
 
 // Struktur mengikuti docs/UI_UX.md §4.1 & layar Stitch "Landing Page".
 // Semua klaim di halaman ini harus faktual — jangan tambahkan angka pengguna,

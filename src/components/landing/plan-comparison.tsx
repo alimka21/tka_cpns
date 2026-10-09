@@ -319,7 +319,7 @@ export function PlanComparison({
               {(
                 [
                   [stats.packages, "paket tes siap dikerjakan"],
-                  [stats.questions, "soal lengkap dengan pembahasan"],
+                  [stats.questions, "soal di bank, lengkap dengan pembahasan"],
                   [stats.premiumPackages, "paket khusus Premium"],
                 ] as const
               )

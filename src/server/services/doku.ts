@@ -78,6 +78,8 @@ export async function testDokuConnection(): Promise<{ ok: boolean; message: stri
   const text = errorText(json, res.status);
   if (res.status === 401 || res.status === 403 || /invalid/i.test(text)) return { ok: false, message: `DOKU menolak kredensial: ${text}` };
   if (res.status >= 500) return { ok: false, message: `Server DOKU bermasalah (HTTP ${res.status}): ${text}` };
+  // Transaksi uji memang tidak ada → 404 "not found" justru menandakan tanda tangan (kredensial) diterima.
+  if (res.status === 404) return { ok: true, message: "Kredensial valid ✓ — DOKU mengenali Client ID & Secret Key (transaksi uji wajar tidak ditemukan)." };
   return { ok: true, message: `Kredensial diterima DOKU (HTTP ${res.status}).` };
 }
 

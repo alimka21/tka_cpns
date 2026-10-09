@@ -343,9 +343,14 @@ export function QuestionForm({ subdomains, stimuli, images, initial }: Props) {
               id="explanation"
               value={explanation}
               onChange={(e) => setExplanation(e.target.value)}
-              rows={3}
+              rows={5}
+              aria-describedby="explanation-format"
               className="w-full rounded-lg border border-input bg-card px-3.5 py-2.5 text-base focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/15 focus-visible:outline-none"
             />
+            <p id="explanation-format" className="text-xs text-muted-foreground">
+              Format: baris kosong = paragraf baru · <code>1.</code> di awal baris = langkah bernomor · <code>-</code> = bullet ·{" "}
+              <code>| a | b |</code> + <code>|---|---|</code> = tabel · <code>**tebal**</code> · rumus <code>$...$</code>. Lihat hasilnya di pratinjau.
+            </p>
           </div>
         </section>
 

@@ -122,6 +122,17 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 | **Navigasi soal (grid angka)** | Kotak 44px, radius 8px: terjawab=solid biru, belum lengkap (Kategori sebagian)=outline biru putus-putus + latar biru muda, ragu-ragu=solid amber + ikon bendera (teks gelap), belum=outline abu, soal aktif=ring biru 2px, soal grup stimulus=garis kecil di bawah angka |
 | **Chart** | Ikuti palet warna di atas untuk series; radar chart untuk subtopik, bar chart untuk perbandingan, line chart untuk tren waktu |
 
+### 3a. Format teks soal, stimulus & pembahasan
+
+Ditulis teks biasa, dirender `renderRichText` → `<RichHtml>` (gaya `.rich-text`):
+- Baris kosong = paragraf baru; baris tunggal = pindah baris (puisi tetap utuh).
+- `1.` / `1)` di awal baris = list bernomor (langkah); `-` / `•` = bullet (evaluasi
+  pernyataan/opsi, catatan pengecoh).
+- Tabel: `| judul | judul |` lalu `|---|---|`, lalu baris data (gulir horizontal di HP).
+- `**tebal**` seperlunya; rumus `$...$` / `$$...$$`. Tanpa heading.
+- Pembahasan: kalimat pembuka → langkah/bullet → kesimpulan/pengecoh di paragraf
+  terpisah. Jangan menulis catatan internal (asal PDF, perubahan) di pembahasan.
+
 ## 4. Layout per halaman
 
 Ringkasan struktur tiap halaman (detail lengkap ada di prompt Stitch

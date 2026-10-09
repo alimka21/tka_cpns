@@ -12,6 +12,20 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-09 — Format teks soal, stimulus & pembahasan
+
+Keputusan: `renderRichText` (src/lib/math-html.ts) untuk teks soal, stimulus, dan
+pembahasan: baris kosong = paragraf, `1.`/`1)` = list bernomor, `-`/`•`/`*` = bullet,
+`| a | b |` + `|---|` = tabel, `**tebal**`; rumus disamarkan dulu agar `$$…$$` tidak
+terpotong; semua teks tetap di-escape. Gaya `.rich-text` / `.rich-table` di globals.css.
+Pilihan jawaban & cuplikan daftar tetap `renderMathToHtml` (inline, kini juga **tebal**).
+Data: 175 pembahasan dirapikan otomatis (paragraf / bullet langkah, nomor, vonis
+Benar/Salah) dengan cek isi tidak berubah (hanya spasi/baris & penanda list);
+32 catatan internal impor PDF yang terlihat siswa dipindah ke docs/CATATAN_IMPOR.md.
+Prompt AI kini meminta pembahasan berformat list/paragraf & tabel markdown.
+Alasan: 96% pembahasan satu paragraf (152 > 350 karakter), tabel di 5 soal/stimulus
+tampil mentah sebagai `|---|`.
+
 ## 2026-10-08 — Landing Gratis vs Premium & halaman admin Langganan
 
 Keputusan:

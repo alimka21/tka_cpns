@@ -160,6 +160,8 @@ export function buildGenerationContext(req: GenerationRequest): GenerationContex
         "Bahasa Indonesia baku (kecuali mata uji bahasa asing: gunakan bahasa sasaran untuk stimulus & soal).",
         "Rumus matematika memakai KaTeX: $...$ inline, $$...$$ blok.",
         "Setiap soal disertai pembahasan singkat yang menjelaskan kenapa kunci benar.",
+        "Format pembahasan rapi & mudah dibaca di HP: satu kalimat pembuka; langkah perhitungan/penalaran ditulis per baris sebagai list bernomor (`1. ...`); evaluasi tiap pernyataan/opsi ditulis sebagai bullet (`- ...`); kesimpulan atau pengecoh di paragraf terpisah. Pisahkan paragraf/list dengan baris kosong (\\n\\n di JSON). Jangan memakai heading; penekanan cukup **tebal** seperlunya.",
+        "Tabel data di stimulus/soal memakai format baris `| kolom 1 | kolom 2 |` dengan baris pemisah `|---|---|` di bawah baris judul.",
         "Pengecoh harus masuk akal dan mencerminkan miskonsepsi umum murid, bukan jawaban asal.",
         "Soal harus benar-benar mengukur kompetensi & cakupan subdomain di atas pada level kognitif target — bukan sekadar hafalan definisi atau rumus.",
         "Jangan menyalin soal resmi yang sudah dipublikasikan.",

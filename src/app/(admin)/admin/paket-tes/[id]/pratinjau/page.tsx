@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils";
 import { requireAdmin } from "@/server/auth/session";
 import { loadPreviewMeta, type PreviewQuestionMeta } from "@/server/queries/package-preview";
 import { getPackageDetail, listSubjects } from "@/server/queries/packages";
-import { renderMathToHtml, toExamQuestion, toExamStimulus } from "@/server/services/math-render";
+import { renderRichText, toExamQuestion, toExamStimulus } from "@/server/services/math-render";
 import { packageRuleReport } from "@/server/services/package-rules-check";
 import { buildReviewItem } from "@/server/services/review";
 
@@ -243,7 +243,7 @@ export default async function PratinjauPaketPage({ params, searchParams }: PageP
                         <BookOpenText className="size-4 text-primary" aria-hidden /> Stimulus: {stimulus.title}
                       </summary>
                       <div className="mt-3 leading-relaxed">
-                        <RichHtml html={renderMathToHtml(stimulus.content)} />
+                        <RichHtml html={renderRichText(stimulus.content)} />
                         {stimulus.imageUrl && <QuestionImage src={stimulus.imageUrl} alt={`Gambar stimulus ${stimulus.title}`} className="mt-4" />}
                       </div>
                     </details>

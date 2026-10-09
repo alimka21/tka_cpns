@@ -125,6 +125,48 @@
 }
 
 @layer components {
+  /* Teks soal / stimulus / pembahasan dari renderRichText (src/lib/math-html.ts). */
+  .rich-text > * + * {
+    margin-top: 0.75em;
+  }
+  .rich-text ol,
+  .rich-text ul {
+    padding-left: 1.4em;
+  }
+  .rich-text ol {
+    list-style: decimal;
+  }
+  .rich-text ul {
+    list-style: disc;
+  }
+  .rich-text li + li {
+    margin-top: 0.35em;
+  }
+  .rich-text li::marker {
+    color: var(--muted-foreground);
+    font-weight: 600;
+  }
+  .rich-text strong {
+    font-weight: 700;
+  }
+  .rich-table {
+    overflow-x: auto;
+  }
+  .rich-table table {
+    border-collapse: collapse;
+    font-size: 0.95em;
+  }
+  .rich-table th,
+  .rich-table td {
+    border: 1px solid var(--border);
+    padding: 0.35em 0.75em;
+    text-align: left;
+    vertical-align: top;
+  }
+  .rich-table th {
+    background: var(--muted);
+    font-weight: 600;
+  }
   /* Kartu standar: surface putih, border tipis, radius 16px, soft shadow. */
   .surface-card {
     @apply rounded-2xl border bg-card shadow-[0_1px_3px_0_rgb(15_23_42/0.05),0_1px_2px_-1px_rgb(15_23_42/0.05)];

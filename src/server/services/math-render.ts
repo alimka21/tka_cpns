@@ -2,10 +2,10 @@
 // (±270 KB) tidak perlu dikirim ke browser peserta.
 
 import type { ExamQuestion, ExamStimulus } from "@/lib/exam";
-import { renderMathToHtml } from "@/lib/math-html";
+import { renderMathToHtml, renderRichText } from "@/lib/math-html";
 import type { QuestionType } from "@/lib/validation/enums";
 
-export { renderMathToHtml };
+export { renderMathToHtml, renderRichText };
 
 export type RawExamQuestion = {
   id: number;
@@ -24,7 +24,7 @@ export function toExamQuestion(q: RawExamQuestion): ExamQuestion {
   return {
     id: q.id,
     type: q.type,
-    html: renderMathToHtml(q.text),
+    html: renderRichText(q.text),
     imageUrl: q.imageUrl,
     options: q.options.map((o) => ({ id: o.id, label: o.label, html: renderMathToHtml(o.text) })),
     categoryLabels: q.type === "pgk_kategori" ? (q.categoryLabels ?? null) : null,
@@ -33,5 +33,5 @@ export function toExamQuestion(q: RawExamQuestion): ExamQuestion {
 }
 
 export function toExamStimulus(s: RawExamStimulus): ExamStimulus {
-  return { id: s.id, title: s.title, html: renderMathToHtml(s.content), imageUrl: s.imageUrl };
+  return { id: s.id, title: s.title, html: renderRichText(s.content), imageUrl: s.imageUrl };
 }

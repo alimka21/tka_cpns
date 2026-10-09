@@ -5,7 +5,7 @@
 import type { ReviewItem } from "@/lib/review";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import type { QuestionType } from "@/lib/validation/enums";
-import { renderMathToHtml } from "@/server/services/math-render";
+import { renderMathToHtml, renderRichText } from "@/server/services/math-render";
 import { scoreQuestion } from "@/server/services/scoring";
 
 export type ReviewSourceQuestion = {
@@ -49,7 +49,7 @@ export function buildReviewItem(
     number,
     questionId: q.id,
     type: q.type,
-    html: renderMathToHtml(q.questionText),
+    html: renderRichText(q.questionText),
     imageUrl: q.imageUrl,
     subtopicId: q.subtopicId,
     subtopic: subtopicName,
@@ -67,6 +67,6 @@ export function buildReviewItem(
     })),
     completeness: scored.completeness,
     isCorrect: scored.isCorrect,
-    explanationHtml: explanation?.trim() ? renderMathToHtml(explanation) : null,
+    explanationHtml: explanation?.trim() ? renderRichText(explanation) : null,
   };
 }

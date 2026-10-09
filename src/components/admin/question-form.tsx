@@ -9,7 +9,7 @@ import { QuestionImage } from "@/components/tes/question-image";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { renderMathToHtml } from "@/lib/math-html";
+import { renderMathToHtml, renderRichText } from "@/lib/math-html";
 import type { QuestionEditData } from "@/lib/question-bank-types";
 import { QUESTION_TYPE_META } from "@/lib/question-forms";
 import { cn } from "@/lib/utils";
@@ -548,9 +548,9 @@ function QuestionPreview({
   const deferred = useDeferredValue({ questionText, options, explanation });
   const html = useMemo(
     () => ({
-      question: renderMathToHtml(deferred.questionText),
+      question: renderRichText(deferred.questionText),
       options: deferred.options.map((o) => renderMathToHtml(o.text)),
-      explanation: renderMathToHtml(deferred.explanation),
+      explanation: renderRichText(deferred.explanation),
     }),
     [deferred],
   );

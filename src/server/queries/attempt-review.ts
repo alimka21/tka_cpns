@@ -6,7 +6,7 @@ import { eq, inArray } from "drizzle-orm";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { db } from "@/server/db";
 import { attemptAnswers, attempts, questionExplanations, subtopics } from "@/server/db/schema";
-import { renderMathToHtml } from "@/server/services/math-render";
+import { renderRichText } from "@/server/services/math-render";
 import { buildReviewItem } from "@/server/services/review";
 import type { ReviewItem } from "@/lib/review";
 import { getPackageDetailCached } from "./packages";
@@ -57,6 +57,6 @@ export async function getAttemptReview(attemptId: number, userId: number): Promi
     attemptId,
     packageTitle: pkg.title,
     items,
-    stimuli: pkg.stimuli.map((s) => ({ id: s.id, title: s.title, html: renderMathToHtml(s.content), imageUrl: s.imageUrl })),
+    stimuli: pkg.stimuli.map((s) => ({ id: s.id, title: s.title, html: renderRichText(s.content), imageUrl: s.imageUrl })),
   };
 }

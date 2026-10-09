@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { renderMathToHtml, toExamQuestion } from "./math-render";
+import { renderMathToHtml, renderRichText, toExamQuestion } from "./math-render";
 
 describe("renderMathToHtml", () => {
   it("escape teks biasa (cegah XSS dari isi soal)", () => {
@@ -50,5 +50,43 @@ describe("toExamQuestion", () => {
   it("label kategori dibuang untuk bentuk selain Kategori", () => {
     const q = toExamQuestion({ id: 1, type: "pg", text: "Soal", imageUrl: null, categoryLabels: ["Benar", "Salah"], options: [] });
     expect(q.categoryLabels).toBeNull();
+  });
+});
+
+describe("renderRichText", () => {
+  it("paragraf dipisah baris kosong; baris tunggal jadi <br>", () => {
+    const html = renderRichText("Baris satu\nbaris dua\n\nParagraf kedua");
+    expect(html).toBe('<div class="rich-text"><p>Baris satu<br>baris dua</p><p>Paragraf kedua</p></div>');
+  });
+
+  it("list bernomor & bullet", () => {
+    const html = renderRichText("Langkah:\n1. Cari KPK\n2) Ubah ke menit\n\n- poin a\n• poin b");
+    expect(html).toContain("<p>Langkah:</p><ol><li>Cari KPK</li><li>Ubah ke menit</li></ol>");
+    expect(html).toContain("<ul><li>poin a</li><li>poin b</li></ul>");
+  });
+
+  it("list bernomor bisa mulai bukan dari 1", () => {
+    expect(renderRichText("3. tiga\n4. empat")).toContain('<ol start="3">');
+  });
+
+  it("tabel markdown", () => {
+    const html = renderRichText("| Nilai | 6 | 7 |\n|---|---|---|\n| Siswa | 3 | 5 |");
+    expect(html).toContain("<table><thead><tr><th>Nilai</th><th>6</th><th>7</th></tr></thead><tbody><tr><td>Siswa</td><td>3</td><td>5</td></tr></tbody></table>");
+  });
+
+  it("baris berawalan | tanpa pemisah tetap paragraf", () => {
+    expect(renderRichText("| bukan tabel |")).toContain("<p>| bukan tabel |</p>");
+  });
+
+  it("**tebal**, rumus tetap utuh, teks tetap di-escape", () => {
+    const html = renderRichText("**Kunci** <b>x</b> $a|b$ dan\n$$\\frac{1}{2}$$");
+    expect(html).toContain("<strong>Kunci</strong> &lt;b&gt;x&lt;/b&gt;");
+    expect(html).toContain('class="katex"');
+    expect(html).toContain('class="katex-display"');
+    expect(html).not.toContain("\u0000");
+  });
+
+  it("angka negatif di awal baris bukan bullet", () => {
+    expect(renderRichText("-5 adalah bilangan bulat")).toContain("<p>-5 adalah bilangan bulat</p>");
   });
 });

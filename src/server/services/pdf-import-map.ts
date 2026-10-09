@@ -4,7 +4,7 @@
 // admin melihat apa yang gagal; hanya draf tanpa error yang boleh disimpan.
 
 import { z } from "zod";
-import { renderMathToHtml } from "@/lib/math-html";
+import { renderMathToHtml, renderRichText } from "@/lib/math-html";
 import type { PdfCrop, PdfDraftOption, PdfDraftQuestion, PdfDraftStimulus } from "@/lib/pdf-import-types";
 import { CATEGORY_PAIRS, OPTION_LABELS, QUESTION_TYPES } from "@/lib/validation/enums";
 import { questionInput } from "@/lib/validation/question";
@@ -198,7 +198,7 @@ export function mapPdfExtraction(raw: unknown, subject: Subject, pageCount: numb
       key,
       title: (s.data.title ?? "").trim().slice(0, 255) || `Bacaan ${stimuli.length + 1}`,
       content,
-      html: renderMathToHtml(content),
+      html: renderRichText(content),
       image: parseCrop(s.data.image, pageCount),
     });
   }
@@ -234,11 +234,11 @@ export function mapPdfExtraction(raw: unknown, subject: Subject, pageCount: numb
       subtopicName: names.get(code) ?? "",
       type,
       text,
-      html: renderMathToHtml(text),
+      html: renderRichText(text),
       options,
       categoryLabels: pair ? [pair[0], pair[1]] : null,
       explanation,
-      explanationHtml: renderMathToHtml(explanation),
+      explanationHtml: renderRichText(explanation),
       cognitiveLevel: levels.length ? level : null,
       difficulty: d.difficulty === "easy" || d.difficulty === "hard" ? d.difficulty : "medium",
       image: parseCrop(d.image, pageCount),

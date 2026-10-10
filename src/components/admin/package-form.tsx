@@ -84,7 +84,7 @@ export function PackageForm({
   const [subjectId, setSubjectId] = useState(initial?.subjectId ? String(initial.subjectId) : "");
   const [durationMinutes, setDurationMinutes] = useState(String(initial?.durationMinutes ?? 75));
   const [showAllSubjects, setShowAllSubjects] = useState(false);
-  const [isPremium, setIsPremium] = useState(initial?.isPremium ?? false);
+  const [isPremium, setIsPremium] = useState(initial?.isPremium ?? true);
   const [status, setStatus] = useState<"draft" | "published">(initial?.status ?? "draft");
   const [selectedIds, setSelectedIds] = useState<number[]>(initial?.questionIds ?? []);
   const [points, setPoints] = useState<Record<number, string>>(
@@ -286,7 +286,7 @@ export function PackageForm({
             <Switch checked={isPremium} onCheckedChange={setIsPremium} label="Paket premium" />
             <div>
               <div className="text-sm font-semibold">Paket premium</div>
-              <div className="text-xs text-muted-foreground">Siswa butuh akses yang diberikan admin untuk mengerjakan.</div>
+              <div className="text-xs text-muted-foreground">Default untuk paket baru. Terbuka bagi pelanggan Premium atau siswa yang diberi akses admin; matikan untuk paket gratis.</div>
             </div>
           </div>
         </section>

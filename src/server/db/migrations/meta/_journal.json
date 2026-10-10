@@ -134,6 +134,13 @@
       "when": 1791631113522,
       "tag": "0018_harga_normal_plans",
       "breakpoints": true
+    },
+    {
+      "idx": 19,
+      "version": "5",
+      "when": 1791636799573,
+      "tag": "0019_paket_default_premium",
+      "breakpoints": true
     }
   ]
 }

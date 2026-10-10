@@ -117,7 +117,7 @@ tidak disalin ke DB — dibaca dari file kerangka berdasarkan `code`.
 
 **test_packages**
 - id, title, description, category_id (fk), duration_minutes,
-  is_premium (bool),
+  is_premium (bool, default true — paket baru Premium),
   status (`draft`|`published`), created_by, created_at
 
 **test_package_questions**

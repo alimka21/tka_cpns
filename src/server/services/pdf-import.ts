@@ -165,7 +165,7 @@ export async function savePdfImport(userId: number, raw: unknown): Promise<PdfSa
           categoryId: pkgMeta.categoryId,
           subjectId: pkgMeta.subjectId,
           durationMinutes: pkgMeta.duration,
-          isPremium: false,
+          isPremium: true,
           status: "draft",
           createdBy: userId,
         })

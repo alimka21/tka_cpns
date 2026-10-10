@@ -24,7 +24,7 @@ export const testPackages = mysqlTable("test_packages", {
   /** Mata pelajaran paket (aturan jumlah soal & durasi, docs/ATURAN_PAKET.md). NULL = paket lama. */
   subjectId: int("subject_id").references(() => subjects.id),
   durationMinutes: int("duration_minutes").notNull(),
-  isPremium: boolean("is_premium").notNull().default(false),
+  isPremium: boolean("is_premium").notNull().default(true),
   status: mysqlEnum("status", PACKAGE_STATUSES).notNull().default("draft"),
   createdBy: int("created_by")
     .notNull()

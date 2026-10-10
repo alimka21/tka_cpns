@@ -19,7 +19,7 @@ export const testPackageInput = z
       .int()
       .min(1, "Durasi minimal 1 menit")
       .max(600, "Durasi maksimal 600 menit"),
-    isPremium: z.boolean().default(false),
+    isPremium: z.boolean().default(true),
     status: z.enum(PACKAGE_STATUSES).default("draft"),
     questions: z.array(testPackageQuestionInput),
   })

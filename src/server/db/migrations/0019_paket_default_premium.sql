@@ -1,0 +1,1 @@
+ALTER TABLE `test_packages` MODIFY COLUMN `is_premium` boolean NOT NULL DEFAULT true;

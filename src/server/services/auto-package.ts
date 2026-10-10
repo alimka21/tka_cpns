@@ -299,7 +299,7 @@ export async function createAutoPackage(
         categoryId: p.categoryId,
         subjectId: p.subjectId,
         durationMinutes: ctx.rule!.durationMinutes,
-        isPremium: false,
+        isPremium: true,
         status: "draft",
         createdBy: userId,
       })

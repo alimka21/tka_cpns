@@ -144,7 +144,7 @@ export type StudentHistoryItem = {
 };
 
 /** Tes yang sudah selesai (dikirim atau waktu habis), terbaru dulu. */
-export async function listStudentHistory(userId: number, limit = 10): Promise<StudentHistoryItem[]> {
+export async function listStudentHistory(userId: number, limit = 10, subjectId: number | null = null): Promise<StudentHistoryItem[]> {
   const rows = await db
     .select({
       attemptId: attempts.id,
@@ -159,7 +159,7 @@ export async function listStudentHistory(userId: number, limit = 10): Promise<St
     .from(attempts)
     .innerJoin(testPackages, eq(testPackages.id, attempts.testPackageId))
     .innerJoin(categories, eq(categories.id, testPackages.categoryId))
-    .where(and(eq(attempts.userId, userId), ne(attempts.status, "in_progress")))
+    .where(and(eq(attempts.userId, userId), ne(attempts.status, "in_progress"), subjectId ? eq(testPackages.subjectId, subjectId) : undefined))
     .orderBy(desc(attempts.startedAt))
     .limit(limit);
   if (rows.length === 0) return [];

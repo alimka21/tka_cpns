@@ -13,24 +13,33 @@ import { PremiumLock } from "@/components/billing/premium-lock";
 import { isPremiumUser } from "@/server/services/access";
 import { getStudentProgress, type PrioritySubdomain, type ProgressSubject } from "@/server/queries/progress";
 import type { SubtopicDiagnosis } from "@/server/services/diagnosis";
+import { listSubjectOptions, selectedSubject, type SubjectOption } from "@/server/queries/subject-filter";
+import { SubjectFilter } from "@/components/student/subject-filter";
 
 export const metadata: Metadata = { title: "Progres Kemampuan" };
 export const dynamic = "force-dynamic";
 
 const LEGEND: DiagnosisStatusKey[] = ["baik", "cukup", "perlu_latihan", "insufficient", "untested"];
 
-export default async function ProgresPage() {
+export default async function ProgresPage({ searchParams }: PageProps<"/progres">) {
   const { user } = await requireUser("/progres");
-  const progress = await getStudentProgress(Number(user.id));
-  const premium = await isPremiumUser({ id: Number(user.id), role: user.role }, user.role === "admin" ? null : (user.jenjang ?? null));
+  const userId = Number(user.id);
+  const jenjang = user.role === "admin" ? null : (user.jenjang ?? null);
+  const subjectOptions = await listSubjectOptions(userId, jenjang);
+  const subject = await selectedSubject((await searchParams).mapel, subjectOptions);
+  const [progress, premium] = await Promise.all([
+    getStudentProgress(userId, subject?.id ?? null),
+    isPremiumUser({ id: userId, role: user.role }, jenjang),
+  ]);
+  const header = <Header options={subjectOptions} subject={subject} showJenjang={jenjang == null} />;
 
   if (progress.testCount === 0) {
     return (
       <div className="flex flex-col gap-6">
-        <Header />
+        {header}
         <section className="surface-card flex flex-col items-center gap-4 px-6 py-16 text-center">
           <p className="max-w-md text-sm text-muted-foreground">
-            Peta kemampuanmu muncul setelah kamu menyelesaikan tes pertama. Setiap tes memperbarui diagnosa per subdomain.
+            {subject ? `Belum ada tes ${subject.name} yang selesai. ` : ""}Peta kemampuanmu muncul setelah kamu menyelesaikan tes pertama. Setiap tes memperbarui diagnosa per subdomain.
           </p>
           <Button nativeButton={false} render={<Link href="/dashboard#paket-heading" />}>
             Pilih paket tes <ArrowRight aria-hidden />
@@ -44,7 +53,7 @@ export default async function ProgresPage() {
     const tested = progress.subjects.reduce((n, sub) => n + sub.tested, 0);
     return (
       <div className="flex flex-col gap-8">
-        <Header />
+        {header}
         <section aria-label="Ringkasan" className="surface-card p-6 text-base leading-relaxed">
           <p>
             Kamu sudah menyelesaikan <strong>{progress.testCount} tes</strong>. Diagnosa kemampuanmu di{" "}
@@ -72,7 +81,7 @@ export default async function ProgresPage() {
 
   return (
     <div className="flex flex-col gap-8">
-      <Header />
+      {header}
 
       <section aria-label="Ringkasan" className="surface-card p-6 text-base leading-relaxed">
         <Summary progress={progress} />
@@ -168,16 +177,19 @@ export default async function ProgresPage() {
   );
 }
 
-function Header() {
+function Header({ options, subject, showJenjang }: { options: SubjectOption[]; subject: SubjectOption | null; showJenjang: boolean }) {
   return (
-    <header>
+    <header className="flex flex-col gap-5">
+      <div>
       <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Progres Kemampuan</h1>
       <p className="mt-1 text-muted-foreground">
         Diagnosa kekuatan dan kelemahanmu per subdomain dari seluruh tes dan latihan yang sudah kamu kerjakan.{" "}
-        <Link href="/riwayat" className="font-semibold text-primary hover:underline">
+        <Link href={subject ? `/riwayat?mapel=${subject.code}` : "/riwayat"} className="font-semibold text-primary hover:underline">
           Lihat riwayat tes
         </Link>
       </p>
+      </div>
+      <SubjectFilter options={options} selected={subject?.code ?? null} basePath="/progres" showJenjang={showJenjang} />
     </header>
   );
 }

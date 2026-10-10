@@ -12,22 +12,26 @@ import { listStudentHistory } from "@/server/queries/attempts";
 import { listPackagesForStudent } from "@/server/queries/packages";
 import { hasPremium } from "@/server/services/billing";
 import { getStudentProgress, type PrioritySubdomain } from "@/server/queries/progress";
+import { listSubjectOptions, selectedSubject } from "@/server/queries/subject-filter";
+import { SubjectFilter } from "@/components/student/subject-filter";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
 
-export default async function DashboardPage() {
+export default async function DashboardPage({ searchParams }: PageProps<"/dashboard">) {
   const { user } = await requireUser("/dashboard");
   const userId = Number(user.id);
   const firstName = user.name.split(" ")[0];
 
   const jenjang = user.role === "admin" ? null : (user.jenjang ?? null);
-  const premium = await hasPremium({ id: userId, role: user.role }, jenjang);
-  const [packages, history, progress] = await Promise.all([
+  const [premium, subjectOptions] = await Promise.all([hasPremium({ id: userId, role: user.role }, jenjang), listSubjectOptions(userId, jenjang)]);
+  const subject = await selectedSubject((await searchParams).mapel, subjectOptions);
+  const [allPackages, history, progress] = await Promise.all([
     listPackagesForStudent(userId, jenjang, premium),
-    listStudentHistory(userId, 10),
-    getStudentProgress(userId),
+    listStudentHistory(userId, 10, subject?.id ?? null),
+    getStudentProgress(userId, subject?.id ?? null),
   ]);
+  const packages = subject ? allPackages.filter((p) => p.subjectId === subject.id) : allPackages;
   const weakest = progress.priorities[0];
   const average = history.length > 0 ? Math.round(history.reduce((sum, h) => sum + h.score, 0) / history.length) : null;
 
@@ -40,6 +44,7 @@ export default async function DashboardPage() {
             Lanjutkan latihanmu. Fokus ke subtopik terlemah dulu supaya skormu naik paling cepat.
           </p>
         </div>
+        <SubjectFilter options={subjectOptions} selected={subject?.code ?? null} basePath="/dashboard" showJenjang={jenjang == null} />
         <div className="grid gap-4 sm:grid-cols-3">
           <StatCard label="Paket tersedia" value={String(packages.length)} icon={Layers} hint="Paket tes yang sudah diterbitkan" />
           <StatCard label="Tes selesai" value={String(progress.testCount)} unit="sesi" icon={BookOpenCheck} tone="success" />
@@ -68,13 +73,18 @@ export default async function DashboardPage() {
         <div>
           <h2 id="paket-heading" className="text-xl font-bold">
             Paket Latihan TKA{user.role !== "admin" && user.jenjang ? ` ${user.jenjang}` : ""}
+            {subject ? ` — ${subject.name}` : ""}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             {user.role === "admin" ? "Semua jenjang (tampilan admin). " : "Sesuai jenjangmu — ganti di Pengaturan bila keliru. "}
             Paket gratis bisa langsung dikerjakan; paket premium terbuka dengan langganan Premium.
           </p>
         </div>
-        <PackageGrid packages={packages} />
+        {subject && packages.length === 0 ? (
+          <p className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">Belum ada paket tes {subject.name} yang terbit.</p>
+        ) : (
+          <PackageGrid packages={packages} />
+        )}
       </section>
 
       <section aria-labelledby="riwayat-heading" className="flex flex-col gap-5">
@@ -83,14 +93,14 @@ export default async function DashboardPage() {
             Riwayat Pengerjaan
           </h2>
           {history.length > 0 && (
-            <Link href="/riwayat" className="text-sm font-semibold text-primary hover:underline">
+            <Link href={subject ? `/riwayat?mapel=${subject.code}` : "/riwayat"} className="text-sm font-semibold text-primary hover:underline">
               Lihat semua
             </Link>
           )}
         </div>
         {history.length === 0 ? (
           <p className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">
-            Belum ada percobaan yang selesai. Kerjakan paket tes pertamamu di atas.
+            {subject ? `Belum ada tes ${subject.name} yang selesai.` : "Belum ada percobaan yang selesai."} Kerjakan paket tes pertamamu di atas.
           </p>
         ) : (
           <ul className="surface-card divide-y">

@@ -8,6 +8,8 @@ import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/session";
 import { listStudentHistory } from "@/server/queries/attempts";
 import { listPracticeHistory, type PracticeHistoryItem } from "@/server/queries/practice";
+import { listSubjectOptions, selectedSubject, type SubjectOption } from "@/server/queries/subject-filter";
+import { SubjectFilter } from "@/components/student/subject-filter";
 
 export const metadata: Metadata = { title: "Riwayat Tes" };
 export const dynamic = "force-dynamic";
@@ -16,16 +18,25 @@ const HISTORY_LIMIT = 200;
 
 export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat">) {
   const { user } = await requireUser("/riwayat");
+  const userId = Number(user.id);
+  const myJenjang = user.role === "admin" ? null : (user.jenjang ?? null);
+  const { jenjang: jenjangParam, jenis, mapel } = await searchParams;
+  const subjectOptions = await listSubjectOptions(userId, myJenjang);
+  const subject = await selectedSubject(mapel, subjectOptions);
   const [history, practice] = await Promise.all([
-    listStudentHistory(Number(user.id), HISTORY_LIMIT),
-    listPracticeHistory(Number(user.id), HISTORY_LIMIT),
+    listStudentHistory(userId, HISTORY_LIMIT, subject?.id ?? null),
+    listPracticeHistory(userId, HISTORY_LIMIT, subject?.id ?? null),
   ]);
 
-  const { jenjang: jenjangParam, jenis } = await searchParams;
   const tab = jenis === "latihan" ? "latihan" : "tes";
   const jenjangs = [...new Set(history.map((h) => h.jenjang))];
   const jenjang = typeof jenjangParam === "string" && jenjangs.includes(jenjangParam) ? jenjangParam : null;
   const visible = jenjang ? history.filter((h) => h.jenjang === jenjang) : history;
+  // Link tab/jenjang tetap membawa mapel yang dipilih.
+  const link = (q: Record<string, string | null>) => {
+    const sp = new URLSearchParams(Object.entries({ ...q, mapel: subject?.code ?? null }).filter((e): e is [string, string] => !!e[1]));
+    return sp.size ? `/riwayat?${sp}` : "/riwayat";
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -33,17 +44,25 @@ export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat"
         <h1 className="text-2xl font-bold tracking-tight sm:text-[1.75rem]">Riwayat Tes</h1>
         <p className="mt-1 text-muted-foreground">
           Semua tes resmi dan sesi latihan. Buka hasil untuk analisis per subdomain, atau pembahasan untuk belajar dari kesalahan.{" "}
-          <Link href="/progres" className="font-semibold text-primary hover:underline">
+          <Link href={link({}).replace("/riwayat", "/progres")} className="font-semibold text-primary hover:underline">
             Lihat progres kemampuan
           </Link>
         </p>
       </header>
 
+      <SubjectFilter
+        options={subjectOptions}
+        selected={subject?.code ?? null}
+        basePath="/riwayat"
+        params={{ jenis: tab === "latihan" ? "latihan" : undefined, jenjang: jenjang ?? undefined }}
+        showJenjang={myJenjang == null}
+      />
+
       <nav aria-label="Jenis riwayat" className="flex gap-1 border-b">
         {(
           [
-            ["tes", `Tes resmi (${history.length})`, "/riwayat"],
-            ["latihan", `Latihan (${practice.length})`, "/riwayat?jenis=latihan"],
+            ["tes", `Tes resmi (${history.length})`, link({})],
+            ["latihan", `Latihan (${practice.length})`, link({ jenis: "latihan" })],
           ] as const
         ).map(([key, label, href]) => (
           <Link
@@ -61,7 +80,7 @@ export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat"
       </nav>
 
       {tab === "latihan" ? (
-        <PracticeList items={practice} />
+        <PracticeList items={practice} subject={subject} />
       ) : (
         <>
           {jenjangs.length > 1 && (
@@ -69,7 +88,7 @@ export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat"
               {[null, ...jenjangs].map((j) => (
                 <Link
                   key={j ?? "semua"}
-                  href={j ? `/riwayat?jenjang=${j}` : "/riwayat"}
+                  href={link({ jenjang: j })}
                   aria-current={jenjang === j ? "page" : undefined}
                   className={cn(
                     "rounded-full border px-4 py-1.5 text-sm font-medium transition-colors",
@@ -84,8 +103,8 @@ export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat"
 
           {visible.length === 0 ? (
             <section className="surface-card flex flex-col items-center gap-4 px-6 py-16 text-center">
-              <p className="text-sm text-muted-foreground">Belum ada tes yang selesai.</p>
-              <Button nativeButton={false} render={<Link href="/dashboard#paket-heading" />}>
+              <p className="text-sm text-muted-foreground">Belum ada tes{subject ? ` ${subject.name}` : ""} yang selesai.</p>
+              <Button nativeButton={false} render={<Link href={subject ? `/dashboard?mapel=${subject.code}#paket-heading` : "/dashboard#paket-heading"} />}>
                 Pilih paket tes <ArrowRight aria-hidden />
               </Button>
             </section>
@@ -142,12 +161,12 @@ export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat"
   );
 }
 
-function PracticeList({ items }: { items: PracticeHistoryItem[] }) {
+function PracticeList({ items, subject }: { items: PracticeHistoryItem[]; subject: SubjectOption | null }) {
   if (items.length === 0) {
     return (
       <section className="surface-card flex flex-col items-center gap-4 px-6 py-16 text-center">
-        <p className="text-sm text-muted-foreground">Belum ada sesi latihan.</p>
-        <Button nativeButton={false} render={<Link href="/latihan" />}>
+        <p className="text-sm text-muted-foreground">Belum ada sesi latihan{subject ? ` ${subject.name}` : ""}.</p>
+        <Button nativeButton={false} render={<Link href={subject ? `/latihan?mapel=${subject.code}` : "/latihan"} />}>
           Mulai latihan kelemahan <ArrowRight aria-hidden />
         </Button>
       </section>

@@ -7,7 +7,7 @@
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/server/db";
 import { attempts, categories, subjects, subtopics, testPackages, topics } from "@/server/db/schema";
-import { loadDiagnosisRecords } from "./practice";
+import { loadDiagnosisRecords, subtopicIdsOfSubject } from "./practice";
 import { diagnose, practicePriorities, type SubtopicDiagnosis } from "@/server/services/diagnosis";
 import type { SubtopicTrendOption } from "@/components/analytics/subtopic-trend";
 
@@ -54,10 +54,11 @@ export type StudentProgress = {
 
 const trendLabel = new Intl.DateTimeFormat("id-ID", { day: "numeric", month: "short", timeZone: "Asia/Jakarta" });
 
-export async function getStudentProgress(userId: number): Promise<StudentProgress> {
-  const finished = and(eq(attempts.userId, userId), ne(attempts.status, "in_progress"));
+/** `subjectId` terisi = hanya data mata uji itu (filter mapel di dashboard/progres/latihan). */
+export async function getStudentProgress(userId: number, subjectId: number | null = null): Promise<StudentProgress> {
+  const finished = and(eq(attempts.userId, userId), ne(attempts.status, "in_progress"), subjectId ? eq(testPackages.subjectId, subjectId) : undefined);
 
-  const [records, attemptRows] = await Promise.all([
+  const [allRecords, attemptRows, subjectSubtopics] = await Promise.all([
     loadDiagnosisRecords(userId),
     db
       .select({
@@ -71,7 +72,10 @@ export async function getStudentProgress(userId: number): Promise<StudentProgres
       .innerJoin(testPackages, eq(testPackages.id, attempts.testPackageId))
       .where(finished)
       .orderBy(asc(attempts.startedAt)),
+    subjectId ? subtopicIdsOfSubject(subjectId) : Promise.resolve(null),
   ]);
+  const inSubject = subjectSubtopics ? new Set(subjectSubtopics) : null;
+  const records = inSubject ? allRecords.filter((r) => inSubject.has(r.subtopicId)) : allRecords;
 
   const diagnoses = diagnose(records);
   const practiceCount = new Set(records.filter((r) => r.source === "practice").map((r) => r.sourceId)).size;

@@ -11,6 +11,8 @@ import { countPublishedBySubtopic, listPracticeHistory } from "@/server/queries/
 import { getStudentProgress } from "@/server/queries/progress";
 import { getMaskedGeminiKey } from "@/server/services/ai-key";
 import { hasPremium } from "@/server/services/billing";
+import { listSubjectOptions, selectedSubject } from "@/server/queries/subject-filter";
+import { SubjectFilter } from "@/components/student/subject-filter";
 
 export const metadata: Metadata = { title: "Latihan Kelemahan" };
 export const dynamic = "force-dynamic";
@@ -21,16 +23,21 @@ const STATUS_ORDER = { perlu_latihan: 0, cukup: 1, insufficient: 2, baik: 3 } as
 export default async function LatihanPage({ searchParams }: PageProps<"/latihan">) {
   const { user } = await requireUser("/latihan");
   const userId = Number(user.id);
-  const [progress, history, maskedKey] = await Promise.all([
-    getStudentProgress(userId),
-    listPracticeHistory(userId, 20),
+  // Hanya mata uji jenjang siswa saat ini (riwayat jenjang lain tetap terlihat di /progres).
+  const myJenjang = user.role === "admin" ? null : (user.jenjang ?? null);
+  const params = await searchParams;
+  const subjectOptions = await listSubjectOptions(userId, myJenjang);
+  const subject = await selectedSubject(params.mapel, subjectOptions);
+  const [progress, history, latest, maskedKey, premium] = await Promise.all([
+    getStudentProgress(userId, subject?.id ?? null),
+    listPracticeHistory(userId, 20, subject?.id ?? null),
+    // Latihan yang sedang berjalan tetap tampil walau mapelnya beda dengan filter.
+    subject ? listPracticeHistory(userId, 5) : null,
     getMaskedGeminiKey(userId),
+    hasPremium({ id: userId, role: user.role }, myJenjang),
   ]);
   const hasKey = maskedKey != null;
-  const premium = await hasPremium({ id: userId, role: user.role }, user.role === "admin" ? null : (user.jenjang ?? null));
 
-  // Hanya mata uji jenjang siswa saat ini (riwayat jenjang lain tetap terlihat di /progres).
-  const myJenjang = user.role === "admin" ? null : user.jenjang;
   const diagnosed = progress.subjects
     .filter((s) => !myJenjang || s.jenjang === myJenjang)
     .flatMap((subject) =>
@@ -66,7 +73,7 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
     );
 
   // Pilihan awal: ?sub=ID (dari tombol di dashboard/progres), atau prioritas diagnosa.
-  const { sub } = await searchParams;
+  const { sub } = params;
   const requested = Number(sub);
   // Dengan key Gemini, subdomain tanpa soal bank tetap bisa dilatih (Latihan AI).
   const withBank = (id: number) => hasKey || (counts.get(id) ?? 0) > 0;
@@ -78,7 +85,7 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
       ? [requested]
       : (fromPriorities.length > 0 ? fromPriorities : fallback).slice(0, MAX_PRACTICE_TARGETS);
 
-  const active = history.find((h) => h.status === "in_progress");
+  const active = (latest ?? history).find((h) => h.status === "in_progress");
   const past = history.filter((h) => h.status !== "in_progress");
 
   return (
@@ -104,6 +111,8 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
           </Link>
         </p>
       </header>
+
+      <SubjectFilter options={subjectOptions} selected={subject?.code ?? null} basePath="/latihan" showJenjang={myJenjang == null} />
 
       {active && (
         <section className="surface-card flex flex-col gap-4 border-primary/40 p-6 sm:flex-row sm:items-center sm:justify-between">
@@ -149,9 +158,11 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
           {options.length === 0 ? (
             <div className="mt-4 flex flex-col items-start gap-3">
               <p className="text-sm text-muted-foreground">
-                Kerjakan minimal satu paket tes dulu supaya sistem tahu subdomain mana yang perlu kamu latih.
+                {subject
+                  ? `Belum ada diagnosa ${subject.name}. Kerjakan minimal satu paket tes ${subject.name} dulu supaya sistem tahu subdomain mana yang perlu kamu latih.`
+                  : "Kerjakan minimal satu paket tes dulu supaya sistem tahu subdomain mana yang perlu kamu latih."}
               </p>
-              <Button nativeButton={false} render={<Link href="/dashboard#paket-heading" />}>
+              <Button nativeButton={false} render={<Link href={subject ? `/dashboard?mapel=${subject.code}#paket-heading` : "/dashboard#paket-heading"} />}>
                 Pilih paket tes <ArrowRight aria-hidden />
               </Button>
             </div>

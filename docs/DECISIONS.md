@@ -12,6 +12,17 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-10 — Filter Mata Pelajaran di halaman siswa
+Keputusan: chip "Semua" + mapel (`SubjectFilter`) di Dashboard, Latihan,
+Progres, dan Riwayat. Nilai di `?mapel=<kode subject>`; pilihan terakhir
+disimpan di cookie `mapel` (dibaca server) supaya keempat halaman konsisten.
+Pilihan = mapel jenjang siswa yang punya paket terbit atau pernah dikerjakan
+(`server/queries/subject-filter.ts`). Filter di query: paket & riwayat tes
+lewat `test_packages.subject_id`; latihan & diagnosa lewat subtopik milik mapel.
+Latihan yang sedang berjalan tetap tampil walau beda mapel.
+Alasan: siswa SMA punya ≥3 mapel; diagnosa campur membuat prioritas kabur.
+Alternatif yang ditolak: state client saja (hilang saat pindah halaman).
+
 ## 2026-10-10 — Harga normal (coret) di paket langganan
 
 Keputusan: kolom `plans.normal_price` (opsional, wajib > `price`, migrasi 0018).

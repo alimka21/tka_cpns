@@ -17,6 +17,7 @@ import {
   questions,
   stimuli,
   subtopics,
+  topics,
 } from "@/server/db/schema";
 import { diagnose, type SubtopicDiagnosis, type SubtopicRecord } from "@/server/services/diagnosis";
 import { toExamQuestion, toExamStimulus } from "@/server/services/math-render";
@@ -304,13 +305,18 @@ export type PracticeHistoryItem = {
   subtopics: string[];
 };
 
-export async function listPracticeHistory(userId: number, limit = 50): Promise<PracticeHistoryItem[]> {
-  const sessions = await db
+export async function listPracticeHistory(userId: number, limit = 50, subjectId: number | null = null): Promise<PracticeHistoryItem[]> {
+  let sessions = await db
     .select()
     .from(practiceSessions)
     .where(eq(practiceSessions.userId, userId))
     .orderBy(desc(practiceSessions.startedAt))
-    .limit(limit);
+    .limit(subjectId ? limit * 3 : limit);
+  // Filter mapel: sesi yang target subdomainnya ada di mapel itu.
+  if (subjectId && sessions.length) {
+    const inSubject = new Set(await subtopicIdsOfSubject(subjectId));
+    sessions = sessions.filter((s) => s.targetSubtopicIds.some((id) => inSubject.has(id))).slice(0, limit);
+  }
   if (sessions.length === 0) return [];
   const ids = sessions.map((s) => s.id);
   const [stats, names] = await Promise.all([
@@ -382,4 +388,14 @@ export async function getPracticeChanges(userId: number, view: PracticeSessionVi
       };
     })
     .filter((c) => c.answered > 0 || view.targetSubtopicIds.includes(c.subtopicId));
+}
+
+/** Semua id subdomain milik satu mata uji (filter mapel). */
+export async function subtopicIdsOfSubject(subjectId: number): Promise<number[]> {
+  const rows = await db
+    .select({ id: subtopics.id })
+    .from(subtopics)
+    .innerJoin(topics, eq(topics.id, subtopics.topicId))
+    .where(eq(topics.subjectId, subjectId));
+  return rows.map((r) => r.id);
 }

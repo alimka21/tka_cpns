@@ -244,6 +244,7 @@ export type StudentPackageRow = {
   questionCount: number;
   unlocked: boolean;
   lastScore: number | null;
+  subjectId: number | null;
   subjectName: string | null;
   /** Akun gratis: kuota 1 paket gratis untuk mapel ini sudah dipakai di paket lain (judulnya). */
   freeQuotaUsedBy: string | null;
@@ -298,6 +299,7 @@ export async function listPackagesForStudent(userId: number, jenjang: string | n
     title: r.title,
     description: r.description,
     categoryCode: r.categoryCode,
+    subjectId: r.subjectId ?? null,
     durationMinutes: r.durationMinutes,
     isPremium: r.isPremium,
     questionCount: Number(r.questionCount),

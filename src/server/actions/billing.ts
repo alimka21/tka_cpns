@@ -52,10 +52,11 @@ const planInput = z.object({
   description: z.string().trim().max(1000).optional().nullable(),
   jenjang: z.enum(JENJANG_CODES).nullable(),
   price: z.number().int().min(1000, "Harga minimal Rp1.000").max(100_000_000),
+  normalPrice: z.number().int().max(100_000_000).nullable().default(null),
   durationDays: z.number().int().min(1).max(3650).nullable(),
   isActive: z.boolean(),
   sortOrder: z.number().int().min(0).max(999).default(0),
-});
+}).refine((p) => p.normalPrice == null || p.normalPrice > p.price, { message: "Harga normal (coret) harus lebih besar dari harga jual", path: ["normalPrice"] });
 
 export async function savePlanAction(input: unknown): Promise<Result> {
   if (!(await getAdminSession())) return NOT_ADMIN;

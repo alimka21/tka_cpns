@@ -127,6 +127,13 @@
       "when": 1791339150298,
       "tag": "0017_hapus_snap_token_doku",
       "breakpoints": true
+    },
+    {
+      "idx": 18,
+      "version": "5",
+      "when": 1791631113522,
+      "tag": "0018_harga_normal_plans",
+      "breakpoints": true
     }
   ]
 }

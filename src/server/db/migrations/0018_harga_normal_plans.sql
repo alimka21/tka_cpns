@@ -1,0 +1,1 @@
+ALTER TABLE `plans` ADD `normal_price` int;

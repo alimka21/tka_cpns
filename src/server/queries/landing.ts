@@ -7,7 +7,7 @@ import { db } from "@/server/db";
 import { plans, questionExplanations, questions, testPackages } from "@/server/db/schema";
 import { getSetting, type Testimonial } from "@/server/services/app-settings";
 
-export type LandingPlan = { name: string; price: number; durationDays: number | null };
+export type LandingPlan = { name: string; price: number; normalPrice: number | null; durationDays: number | null };
 export type LandingStats = { packages: number; premiumPackages: number; questions: number };
 
 export type LandingData = {
@@ -24,7 +24,7 @@ export async function getLandingData(): Promise<LandingData> {
     const [testimonials, [plan], [pkg], [q]] = await Promise.all([
       getSetting("landing.testimonials"),
       db
-        .select({ name: plans.name, price: plans.price, durationDays: plans.durationDays })
+        .select({ name: plans.name, price: plans.price, normalPrice: plans.normalPrice, durationDays: plans.durationDays })
         .from(plans)
         .where(and(eq(plans.isActive, true), gte(plans.price, TEST_PLAN_MAX_PRICE)))
         .orderBy(asc(plans.price))

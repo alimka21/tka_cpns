@@ -8,3 +8,9 @@ export const TEST_PLAN_MAX_PRICE = 5000;
 export function promotedPlan<T extends { price: number; isActive?: boolean }>(plans: T[]): T | undefined {
   return plans.filter((p) => p.isActive !== false && p.price >= TEST_PLAN_MAX_PRICE).sort((a, b) => a.price - b.price)[0];
 }
+
+/** Persen potongan dari harga normal (dibulatkan); null bila tanpa harga coret yang valid. */
+export function discountPercent(p: { price: number; normalPrice?: number | null }) {
+  if (!p.normalPrice || p.normalPrice <= p.price) return null;
+  return Math.round((1 - p.price / p.normalPrice) * 100);
+}

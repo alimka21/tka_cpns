@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { formatRupiah } from "@/lib/format";
-import { TEST_PLAN_MAX_PRICE } from "@/lib/plans";
+import { discountPercent, TEST_PLAN_MAX_PRICE } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import { savePlanAction } from "@/server/actions/billing";
 
@@ -21,6 +21,8 @@ export type PlanFormData = {
   description: string | null;
   jenjang: "SD" | "SMP" | "SMA" | null;
   price: number;
+  /** Harga normal (dicoret). null = tanpa harga coret. */
+  normalPrice: number | null;
   durationDays: number | null;
   isActive: boolean;
   sortOrder: number;
@@ -36,7 +38,7 @@ export type PlanCardData = PlanFormData & {
 };
 
 const field = "h-9 w-full rounded-md border border-input bg-card px-2.5 text-sm";
-const EMPTY: PlanFormData = { name: "", description: "", jenjang: null, price: 49000, durationDays: 30, isActive: true, sortOrder: 0 };
+const EMPTY: PlanFormData = { name: "", description: "", jenjang: null, price: 49000, normalPrice: null, durationDays: 30, isActive: true, sortOrder: 0 };
 
 function perDay(p: { price: number; durationDays: number | null }) {
   return p.durationDays ? formatRupiah(Math.ceil(p.price / p.durationDays)) : null;
@@ -65,8 +67,21 @@ function PlanFields({ v, set }: { v: PlanFormData; set: <K extends keyof PlanFor
         <Input value={v.name} onChange={(e) => set("name", e.target.value)} placeholder="Premium SMA 60 hari" className="h-9" />
       </label>
       <label className="flex flex-col gap-1 text-xs font-semibold">
-        Harga (Rp)
+        Harga normal (Rp, dicoret — opsional)
+        <input
+          type="number"
+          min={1000}
+          step={500}
+          placeholder="mis. 120000"
+          className={field}
+          value={v.normalPrice ?? ""}
+          onChange={(e) => set("normalPrice", e.target.value ? Number(e.target.value) : null)}
+        />
+      </label>
+      <label className="flex flex-col gap-1 text-xs font-semibold">
+        Harga jual / promo (Rp, tampil besar & dibayar)
         <input type="number" min={1000} step={500} className={field} value={v.price} onChange={(e) => set("price", Number(e.target.value))} />
+        {v.normalPrice != null && v.normalPrice <= v.price && <span className="font-normal text-destructive">Harga normal harus lebih besar dari harga jual.</span>}
       </label>
       <label className="flex flex-col gap-1 text-xs font-semibold">
         Durasi (hari, kosong = selamanya)
@@ -165,6 +180,12 @@ export function PlanCard({ plan }: { plan: PlanCardData }) {
             {plan.description && <p className="mt-0.5 line-clamp-2 text-sm text-muted-foreground">{plan.description}</p>}
           </div>
           <div>
+            {discountPercent(plan) != null && (
+              <p className="flex items-center gap-2 text-sm">
+                <span className="text-muted-foreground line-through">{formatRupiah(plan.normalPrice!)}</span>
+                <Badge variant="danger">Hemat {discountPercent(plan)}%</Badge>
+              </p>
+            )}
             <span className="text-2xl font-extrabold tracking-tight">{formatRupiah(plan.price)}</span>
             <span className="ml-1 text-sm text-muted-foreground">/ {plan.durationDays ? `${plan.durationDays} hari` : "selamanya"}</span>
             {perDay(plan) && <p className="text-xs text-muted-foreground">± {perDay(plan)} per hari</p>}
@@ -266,6 +287,12 @@ export function NewPlanPanel() {
               {v.description?.trim() && <p className="mt-1 text-sm whitespace-pre-line text-muted-foreground">{v.description}</p>}
             </div>
             <div>
+              {discountPercent(v) != null && (
+                <p className="flex items-center gap-2 text-sm">
+                  <span className="text-muted-foreground line-through">{formatRupiah(v.normalPrice!)}</span>
+                  <Badge variant="danger">Hemat {discountPercent(v)}%</Badge>
+                </p>
+              )}
               <span className="text-3xl font-extrabold tracking-tight">{formatRupiah(v.price || 0)}</span>
               <span className="ml-1 text-sm text-muted-foreground">/ {v.durationDays ? `${v.durationDays} hari` : "selamanya"}</span>
               {perDay(v) && <p className="text-xs text-muted-foreground">± {perDay(v)} per hari</p>}

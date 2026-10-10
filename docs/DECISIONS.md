@@ -12,6 +12,16 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-10 — Harga normal (coret) di paket langganan
+
+Keputusan: kolom `plans.normal_price` (opsional, wajib > `price`, migrasi 0018).
+Bila diisi: landing (kartu Premium), halaman Langganan siswa, kartu & pratinjau
+admin, dan popup upgrade menampilkan harga normal dicoret + "Hemat N%"
+(`discountPercent` di lib/plans.ts) + teks "Ambil harga promo hari ini!".
+Harga yang dibayar tetap `price`. Catatan: harga normal sebaiknya harga yang
+benar-benar berlaku/akan berlaku agar tidak menyesatkan konsumen (UU Perlindungan
+Konsumen) — tidak ada hitung mundur palsu.
+
 ## 2026-10-09 — Format teks soal, stimulus & pembahasan
 
 Keputusan: `renderRichText` (src/lib/math-html.ts) untuk teks soal, stimulus, dan

@@ -28,7 +28,7 @@ import { PremiumLock } from "@/components/billing/premium-lock";
 import { UpgradeModal } from "@/components/billing/upgrade-modal";
 import { canSeeFullResults } from "@/server/services/access";
 import { listPlans } from "@/server/services/billing";
-import { promotedPlan } from "@/lib/plans";
+import { discountPercent, promotedPlan } from "@/lib/plans";
 import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { attempts } from "@/server/db/schema";
@@ -223,6 +223,7 @@ export default async function HasilPage({
           wrong={r.wrong}
           weakCount={weakCount}
           priceText={cheapest ? `mulai ${formatRupiah(cheapest.price)}` : null}
+          promo={cheapest && discountPercent(cheapest) != null ? { normal: formatRupiah(cheapest.normalPrice!), percent: discountPercent(cheapest)! } : null}
         />
       )}
     </div>

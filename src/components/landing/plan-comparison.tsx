@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { formatRupiah } from "@/lib/format";
+import { discountPercent } from "@/lib/plans";
 import { cn } from "@/lib/utils";
 import type { LandingPlan, LandingStats } from "@/server/queries/landing";
 
@@ -201,6 +202,12 @@ export function PlanComparison({
             </div>
             {plan ? (
               <div>
+                {discountPercent(plan) != null && (
+                  <p className="mb-1 flex flex-wrap items-center gap-2">
+                    <span className="text-lg text-primary-foreground/70 line-through decoration-2">{formatRupiah(plan.normalPrice!)}</span>
+                    <span className="rounded-full bg-destructive px-2.5 py-0.5 text-xs font-extrabold text-white">Hemat {discountPercent(plan)}%</span>
+                  </p>
+                )}
                 <p>
                   <span className="text-4xl font-extrabold tracking-tight">
                     {formatRupiah(plan.price)}
@@ -217,6 +224,9 @@ export function PlanComparison({
                     <Zap className="size-3.5 text-cta" aria-hidden /> Hanya ±{" "}
                     {formatRupiah(perDay)} per hari
                   </p>
+                )}
+                {discountPercent(plan) != null && (
+                  <p className="mt-2 text-sm font-bold text-cta">Ambil harga promo hari ini!</p>
                 )}
               </div>
             ) : (

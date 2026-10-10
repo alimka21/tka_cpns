@@ -13,8 +13,10 @@ export const plans = mysqlTable("plans", {
   description: text("description"),
   /** NULL = berlaku untuk semua jenjang. */
   jenjang: mysqlEnum("jenjang", JENJANG_CODES),
-  /** Rupiah, tanpa desimal. */
+  /** Harga jual (yang dibayar & tampil besar). Rupiah, tanpa desimal. */
   price: int("price").notNull(),
+  /** Harga normal sebelum promo — tampil dicoret. NULL = tanpa harga coret. Harus > price. */
+  normalPrice: int("normal_price"),
   /** NULL = selamanya. */
   durationDays: int("duration_days"),
   isActive: boolean("is_active").notNull().default(true),

@@ -48,6 +48,7 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-10:** harga normal (coret) + "Hemat N%" + "Ambil harga promo hari ini!" di landing, Langganan siswa, popup upgrade & admin (kolom `plans.normal_price`, migrasi 0018 — jalankan `npm run prod:migrate` setelah deploy).
 **2026-10-09 (5):** landing page dirender setiap kunjungan (`force-dynamic`): angka paket terbit, paket Premium, dan soal terbit berpembahasan di bank selalu real-time (sebelumnya cache 5 menit & hanya menghitung soal di dalam paket).
 **2026-10-09 (4):** paket #50 TKA SMA Bahasa Indonesia — Paket 5 & #51 TKA SMA Bahasa Inggris — Paket 5 (draf, 30 soal baru masing-masing, tema digitalisasi pembelajaran, kebakaran hutan, musim hujan, sampah plastik; 4 gambar /gambar/165–168); semua aturan wajib & saran OK.
 **2026-10-09 (3):** tampilan teks soal/stimulus/pembahasan berformat (paragraf, list bernomor & bullet, tabel, tebal) + 175 pembahasan dirapikan + 32 catatan impor dipindah dari pembahasan ke docs/CATATAN_IMPOR.md + petunjuk format di form soal admin & prompt AI (DECISIONS 2026-10-09).

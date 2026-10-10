@@ -5,6 +5,7 @@ import { BuyPlanButton } from "@/components/billing/buy-plan-button";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDateTime, formatRupiah, ORDER_STATUS_META } from "@/lib/format";
+import { discountPercent } from "@/lib/plans";
 import { requireUser } from "@/server/auth/session";
 import { getActiveMembership, listPlans, listUserOrders } from "@/server/services/billing";
 import { isDokuConfigured } from "@/server/services/doku";
@@ -103,6 +104,12 @@ export default async function LanggananPage() {
                   {p.description && <p className="mt-1 text-sm whitespace-pre-line text-muted-foreground">{p.description}</p>}
                 </div>
                 <div>
+                  {discountPercent(p) != null && (
+                    <p className="mb-0.5 flex flex-wrap items-center gap-2 text-sm">
+                      <span className="text-muted-foreground line-through">{formatRupiah(p.normalPrice!)}</span>
+                      <Badge variant="danger">Hemat {discountPercent(p)}%</Badge>
+                    </p>
+                  )}
                   <span className="text-3xl font-extrabold tracking-tight">{formatRupiah(p.price)}</span>
                   <span className="ml-1 text-sm text-muted-foreground">/ {p.durationDays ? `${p.durationDays} hari` : "selamanya"}</span>
                 </div>

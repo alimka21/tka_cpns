@@ -27,6 +27,7 @@ export function UpgradeModal({
   wrong,
   weakCount,
   priceText,
+  promo = null,
 }: {
   storageKey: string;
   delayMs?: number;
@@ -35,6 +36,8 @@ export function UpgradeModal({
   wrong: number;
   weakCount: number;
   priceText: string | null;
+  /** Harga normal (dicoret) & persen hemat dari paket termurah, bila ada. */
+  promo?: { normal: string; percent: number } | null;
 }) {
   const [open, setOpen] = useState(false);
 
@@ -96,6 +99,13 @@ export function UpgradeModal({
           </ul>
 
           <div className="flex flex-col gap-2">
+            {promo && (
+              <p className="flex flex-wrap items-center justify-center gap-2 text-sm">
+                <span className="text-muted-foreground line-through">{promo.normal}</span>
+                <span className="rounded-full bg-destructive px-2 py-0.5 text-xs font-extrabold text-white">Hemat {promo.percent}%</span>
+                <span className="font-bold text-cta-hover">Ambil harga promo hari ini!</span>
+              </p>
+            )}
             <Button size="lg" variant="cta" className="w-full" nativeButton={false} render={<Link href="/langganan" />}>
               <Crown aria-hidden /> Tingkatkan ke Premium{priceText ? ` — ${priceText}` : ""}
             </Button>

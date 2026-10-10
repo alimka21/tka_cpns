@@ -30,8 +30,9 @@ updated_at
   bila pengaturan `registration.requireApproval` aktif saat daftar
   (Better Auth `databaseHooks.user.create.before`).
 
-**plans** — paket langganan Premium (admin): name, description, jenjang, price (harga jual, dibayar), normal_price (harga normal dicoret, opsional, > price; migrasi 0018)
-(NULL = semua), price (Rupiah), duration_days (NULL = selamanya),
+**plans** — paket langganan Premium (admin): name, description, jenjang
+(NULL = semua), price (harga jual yang dibayar, Rupiah), normal_price (harga normal
+dicoret, opsional, > price; migrasi 0018), duration_days (NULL = selamanya),
 is_active, sort_order.
 
 **orders** — satu pembelian = satu order DOKU Checkout: order_code (unique,

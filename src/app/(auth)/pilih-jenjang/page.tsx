@@ -24,8 +24,8 @@ export default async function PilihJenjangPage({ searchParams }: PageProps<"/pil
         <div>
           <h1 className="text-2xl font-bold tracking-tight">Pilih jenjangmu</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Setiap jenjang punya soal & kerangka asesmen TKA yang berbeda. Paket tes dan latihan akan menyesuaikan pilihanmu —
-            bisa diganti nanti di Pengaturan.
+            Setiap jenjang punya soal & kerangka asesmen TKA yang berbeda. Paket tes dan latihan akan menyesuaikan pilihanmu.
+            Pilih dengan teliti — setelah tersimpan, jenjang hanya bisa diganti oleh admin.
           </p>
         </div>
       </div>

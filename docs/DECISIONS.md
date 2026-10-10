@@ -12,6 +12,19 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-10 — Jenjang siswa dikunci, hanya admin yang mengganti
+Keputusan: jenjang dipilih sekali (form daftar atau /pilih-jenjang untuk akun
+tanpa jenjang). `setMyJenjangAction` hanya mengisi bila `jenjang IS NULL`;
+`/api/auth/update-user` berisi `jenjang` ditolak (hooks.before Better Auth).
+Pengaturan menampilkan jenjang read-only. Admin mengganti di /admin/users.
+Alasan: akses Premium & paket per jenjang — ganti jenjang sendiri membuka
+paket/kuota jenjang lain. (databaseHooks.user.update tidak cukup: field tetap lolos.)
+
+## 2026-10-10 — Paket tes baru default Premium
+Keputusan: `test_packages.is_premium` default true (migrasi 0019); form admin,
+impor PDF, dan susun otomatis membuat paket Premium. Paket gratis = matikan
+saklar "Paket premium" / toggle di daftar paket.
+
 ## 2026-10-10 — Filter Mata Pelajaran di halaman siswa
 Keputusan: chip "Semua" + mapel (`SubjectFilter`) di Dashboard, Latihan,
 Progres, dan Riwayat. Nilai di `?mapel=<kode subject>`; pilihan terakhir

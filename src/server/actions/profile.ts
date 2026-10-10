@@ -1,10 +1,10 @@
 "use server";
 
-// Profil akun sendiri: nama tampilan (siswa & admin), jenjang (siswa), kata sandi.
+// Profil akun sendiri: nama tampilan (siswa & admin), jenjang (siswa, sekali saja), kata sandi.
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { eq } from "drizzle-orm";
+import { and, eq, isNull } from "drizzle-orm";
 import { isAPIError } from "better-auth/api";
 import { z } from "zod";
 import { auth } from "@/server/auth";
@@ -13,12 +13,17 @@ import { db } from "@/server/db";
 import { JENJANG_CODES, users } from "@/server/db/schema";
 import { hasCredentialPassword } from "@/server/services/account-password";
 
+/** Siswa hanya bisa memilih jenjang sekali (akun tanpa jenjang); menggantinya hanya lewat admin. */
 export async function setMyJenjangAction(jenjang: string): Promise<{ ok: true } | { ok: false; error: string }> {
   const session = await getActiveSession();
   if (!session) return { ok: false, error: "Sesi berakhir atau akun belum aktif." };
   const parsed = z.enum(JENJANG_CODES).safeParse(jenjang);
   if (!parsed.success) return { ok: false, error: "Pilih jenjang SD, SMP, atau SMA." };
-  await db.update(users).set({ jenjang: parsed.data }).where(eq(users.id, Number(session.user.id)));
+  const [res] = await db
+    .update(users)
+    .set({ jenjang: parsed.data })
+    .where(and(eq(users.id, Number(session.user.id)), isNull(users.jenjang)));
+  if (res.affectedRows === 0) return { ok: false, error: "Jenjang sudah ditetapkan. Hubungi admin untuk menggantinya." };
   revalidatePath("/", "layout");
   return { ok: true };
 }

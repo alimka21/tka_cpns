@@ -8,7 +8,6 @@ import { GeminiKeyForm } from "@/components/pengaturan/gemini-key-form";
 import { JenjangForm } from "@/components/profile/jenjang-form";
 import { NameForm } from "@/components/profile/name-form";
 import { PasswordForm } from "@/components/profile/password-form";
-import type { Jenjang } from "@/lib/jenjang";
 
 type Props = {
   user: { name: string; email: string; role?: string | null; jenjang?: string | null };
@@ -40,7 +39,14 @@ export function ProfileSettings({ user, masked, hasPassword }: Props) {
           <div className="flex flex-col gap-1.5">
             <Label>Jenjang</Label>
             <p className="text-xs text-muted-foreground">Menentukan paket tes, soal, dan latihan yang tampil untukmu.</p>
-            <JenjangForm current={(user.jenjang as Jenjang | null) ?? null} />
+            {user.jenjang ? (
+              <>
+                <Input value={`TKA ${user.jenjang}`} disabled />
+                <p className="text-xs text-muted-foreground">Jenjang hanya bisa diganti oleh admin. Hubungi admin bila jenjangmu perlu diubah.</p>
+              </>
+            ) : (
+              <JenjangForm current={null} />
+            )}
           </div>
         )}
       </CardContent>

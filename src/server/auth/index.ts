@@ -3,6 +3,7 @@
 
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/server/db";
 import { accounts, sessions, users, verifications } from "@/server/db/schema";
@@ -68,7 +69,7 @@ export const auth = betterAuth({
       // input: false → tidak bisa diisi dari form daftar; admin ditetapkan
       // lewat `npm run user:role -- <email> admin`.
       role: { type: ["student", "admin"], required: false, defaultValue: "student", input: false },
-      // Dipilih siswa saat daftar (wajib di form); bisa diganti di Pengaturan.
+      // Dipilih siswa saat daftar (wajib di form); setelah itu hanya admin yang bisa mengganti.
       jenjang: { type: ["SD", "SMP", "SMA"], required: false, input: true },
       // Diatur sistem/admin saja (lihat databaseHooks & /admin/users).
       status: { type: ["active", "pending", "rejected"], required: false, defaultValue: "active", input: false },
@@ -84,6 +85,14 @@ export const auth = betterAuth({
         },
       },
     },
+  },
+  hooks: {
+    // Jenjang hanya diisi saat daftar; sesudahnya hanya admin (/admin/users) yang bisa mengganti.
+    before: createAuthMiddleware(async (ctx) => {
+      if (ctx.path === "/update-user" && ctx.body && typeof ctx.body === "object" && "jenjang" in ctx.body) {
+        throw new APIError("FORBIDDEN", { message: "Jenjang hanya bisa diganti oleh admin." });
+      }
+    }),
   },
   // Batasi permintaan email reset (anti-spam/pemborosan kuota SMTP).
   rateLimit: {

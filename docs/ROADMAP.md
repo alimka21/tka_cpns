@@ -48,6 +48,7 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-14:** paket #49 SMA Matematika kini 14/25 berbasis stimulus (6 gambar + stimulus grup baru) — semua aturan & saran OK. Backup otomatis database (WORKFLOW §14).
 **2026-10-13 (2):** SEO — halaman materi publik `/tka/[jenjang]/[mapel]` dari kerangka asesmen, JSON-LD, sitemap 32 URL, metadata & canonical. Langkah Search Console: WORKFLOW §13.
 **2026-10-13:** Midtrans Snap dipasang lagi (penyedia utama, DOKU tetap alternatif via `PAYMENT_PROVIDER`); mode Sandbox hanya admin/`PAYMENT_TEST_EMAILS`. Langkah env & dashboard: WORKFLOW §8a.
 **2026-10-10 (3):** paket tes baru default Premium (migrasi 0019 — `npm run prod:migrate`); jenjang siswa dikunci (pilih sekali saat daftar, ganti hanya oleh admin).
@@ -402,7 +403,7 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       detail paket + autosave 1 query lebih sedikit (DECISIONS 2026-10-03)
 - [x] Manajemen User: filter, tab status, statistik & paginasi (50/hal) di server via query string (2026-10-06)
 - [ ] Rencana migrasi ke VPS Hostinger kalau trafik naik
-- [ ] Backup otomatis database
+- [x] Backup otomatis database — 2026-10-14: `/api/cron/backup` (cron hPanel) + `/admin/backup` + `prod:db:backup`; aktif setelah env CRON_SECRET & cron dipasang (WORKFLOW §14). Email salinan belum diuji dengan SMTP asli
 
 ## Prinsip urutan kerja
 

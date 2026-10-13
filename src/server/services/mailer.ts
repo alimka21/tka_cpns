@@ -36,7 +36,7 @@ function fromAddress() {
   return env("EMAIL_FROM") ?? `"${SITE_NAME}" <${env("SMTP_USER")}>`;
 }
 
-export async function sendMail(message: { to: string; subject: string; text: string; html: string }) {
+export async function sendMail(message: { to: string; subject: string; text: string; html: string; attachments?: { filename: string; path: string }[] }) {
   if (!isMailConfigured()) throw new Error("SMTP belum dikonfigurasi (SMTP_HOST / SMTP_USER / SMTP_PASS).");
   await getTransporter().sendMail({ from: fromAddress(), ...message });
 }

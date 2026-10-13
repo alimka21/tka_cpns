@@ -330,3 +330,30 @@ lalu ganti di Profil → Ganti kata sandi.
 6. Halaman materi otomatis ikut berubah bila `asesmen/*.json` diperbarui; angka
    paket/soal diperbarui tiap jam.
 
+## 14. Backup database otomatis
+
+Isi: dump SQL lengkap (struktur + data, termasuk gambar soal) → `.sql.gz`.
+Tabel `sessions` & `verifications` hanya strukturnya. Admin → **Backup Database**
+menampilkan status, tombol "Buat backup sekarang", dan unduhan.
+
+**Pasang (sekali):**
+1. Di Mac: `openssl rand -hex 32` → salin hasilnya.
+2. hPanel → env: `CRON_SECRET=<hasil tadi>`; opsional `BACKUP_EMAIL_TO=<email>`
+   (butuh SMTP §10), `BACKUP_KEEP=14`, `BACKUP_DIR` (default `~/backups/pakartka`,
+   di luar folder web). Redeploy.
+3. hPanel → **Lanjutan → Cron Jobs** → tipe *Custom* →
+   - Harian 02:00: `curl -fsS -H "Authorization: Bearer <CRON_SECRET>" https://pakartka.com/api/cron/backup`
+   - Mingguan (Minggu 03:00) + salinan email: `… /api/cron/backup?email=1`
+   Bila Cron Jobs tidak tersedia di paket: pakai cron-job.org (gratis) dengan
+   header `Authorization: Bearer <CRON_SECRET>`.
+4. Besoknya cek Admin → Backup Database: "Backup terakhir …" berwarna hijau.
+
+**Salinan di luar server (disarankan, berkala):** `npm run prod:db:backup` di Mac
+→ file ke `~/backups/pakartka` (hanya membaca DB produksi). Atau unduh dari admin.
+
+**Memulihkan:**
+- Produksi: hPanel → Databases → phpMyAdmin → pilih DB → **Import** file `.sql.gz`
+  (menimpa semua tabel; lakukan saat sepi, sebaiknya backup dulu kondisi sekarang).
+- Lokal/uji: `npm run db:restore -- <file.sql.gz> [--db=<nama_db_baru>]`
+  (hanya host lokal). Uji pulih 2026-10-14: checksum 28 tabel identik.
+

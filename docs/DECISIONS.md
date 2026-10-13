@@ -12,6 +12,26 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-14 — Backup database: dump Node + cron HTTP
+Keputusan: `services/db-backup.ts` men-dump DB sendiri (mysql2, snapshot
+konsisten, dateStrings + UTC, blob X'..', batch INSERT) → `.sql.gz` di
+`BACKUP_DIR` (default ~/backups/pakartka, di luar web), rotasi `BACKUP_KEEP`.
+Dipicu cron hPanel via `GET /api/cron/backup` + `Authorization: Bearer CRON_SECRET`
+(timing-safe), tombol admin `/admin/backup`, atau `npm run (prod:)db:backup`.
+`?email=1` mengirim salinan ke `BACKUP_EMAIL_TO` (≤18 MB). sessions/verifications
+hanya struktur. Pulih: phpMyAdmin Import / `db:restore` (lokal saja).
+Alasan: `mysqldump` belum tentu ada di hosting Node; dump sendiri portabel dan
+teruji pulih identik. Backup di server yang sama tidak melindungi dari hilangnya
+akun → salinan email/unduhan/prod:db:backup.
+Alternatif yang ditolak: hanya mengandalkan backup bawaan Hostinger (jadwal &
+retensi tidak terkendali); upload ke S3/Drive (butuh kredensial pihak ketiga).
+
+## 2026-10-14 — Paket #49 SMA Matematika: mayoritas berbasis stimulus
+6 gambar baru (/gambar/169–174: kandang, kubus, es krim, mercusuar, ember,
+bidang koordinat) + stimulus #200 "Persiapan Pentas Seni Sekolah" (soal 1119,
+1124, 1126 lintas subtopik); stimulus #145 diterbitkan. Kunci & opsi tidak
+berubah, belum ada attempt. Hasil: 14/25 berbasis stimulus, semua aturan OK.
+
 ## 2026-10-13 — SEO: halaman materi TKA publik + data terstruktur
 Keputusan: halaman publik `/tka/{sd,smp,sma}` dan `/tka/{jenjang}/{mapel}` (32 URL)
 dibangun dari file kerangka (asesmen/*.json): mata uji, elemen/subelemen + cakupan,

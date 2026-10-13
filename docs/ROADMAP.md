@@ -384,7 +384,11 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       (`/admin/langganan`: paket langganan, anggota, beri/cabut manual)
 - [x] Gating: akun gratis = paket `is_premium=false`; Premium = semua paket
       premium jenjangnya + Latihan Kelemahan
-- [ ] Uji dengan Sandbox DOKU asli (Client ID/Secret Key user, env) lalu pindah Production
+- [x] Midtrans Snap dipasang lagi berdampingan DOKU (`PAYMENT_PROVIDER`) — 2026-10-13;
+      uji Sandbox asli oleh admin berhasil (QRIS via simulator → Premium aktif)
+- [ ] Midtrans Production: menunggu review bisnis disetujui → ganti Server Key
+      Production + `MIDTRANS_IS_PRODUCTION=true`, uji QRIS asli (WORKFLOW §8a)
+- [ ] DOKU: QRIS belum aktif di akun DOKU (cadangan; tidak menghalangi)
 - [ ] Email/WA notifikasi pembayaran (opsional)
 - [x] Ganti kata sandi di Pengaturan/Profil (+ "Buat kata sandi" untuk akun Google-only) — 2026-10-02
 - [x] Admin: atur ulang kata sandi user (kata sandi sementara tampil sekali, hanya hash disimpan) — 2026-10-07

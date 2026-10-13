@@ -317,3 +317,16 @@ Paling aman bila kata sandi ketikan tetap ditolak saat login:
 (mis. `KTRmnpa-4827`) dan menampilkannya SEKALI di terminal; masuk dengan itu,
 lalu ganti di Profil → Ganti kata sandi.
 
+## 13. SEO & Google Search Console
+
+1. hPanel → env `SITE_URL=https://pakartka.com` (tanpa garis miring akhir).
+2. https://search.google.com/search-console → Tambah properti **Awalan URL**
+   `https://pakartka.com` → metode **Tag HTML** → salin isi `content="…"` saja →
+   env `GOOGLE_SITE_VERIFICATION=<kode>` → redeploy → klik **Verifikasi**.
+   (Alternatif: properti **Domain** via record TXT di DNS Hostinger.)
+3. Search Console → **Sitemap** → kirim `sitemap.xml`.
+4. **Inspeksi URL** → minta pengindeksan untuk `/`, `/tka/sd`, `/tka/smp`, `/tka/sma`.
+5. Uji data terstruktur: https://search.google.com/test/rich-results (FAQ, breadcrumb).
+6. Halaman materi otomatis ikut berubah bila `asesmen/*.json` diperbarui; angka
+   paket/soal diperbarui tiap jam.
+

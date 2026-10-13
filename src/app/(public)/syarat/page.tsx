@@ -5,6 +5,7 @@ import { SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Syarat & Ketentuan",
+  alternates: { canonical: "/syarat" },
   description: `Ketentuan penggunaan layanan latihan TKA ${SITE_NAME}, termasuk langganan Premium dan pembayaran.`,
 };
 

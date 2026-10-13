@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -16,16 +17,25 @@ import {
   TriangleAlert,
   type LucideIcon,
 } from "lucide-react";
-import { BrandLockup, Logo } from "@/components/brand/logo";
 import { PlanComparison } from "@/components/landing/plan-comparison";
+import { PublicFooter, PublicHeader } from "@/components/landing/public-shell";
+import { faqLd, JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
-import { SITE_NAME, SITE_TAGLINE } from "@/lib/site";
+import { jenjangPath } from "@/lib/seo";
+import { SITE_DESCRIPTION, SITE_NAME, SITE_URL } from "@/lib/site";
 import { cn } from "@/lib/utils";
 import { getLandingData } from "@/server/queries/landing";
 
 // Dirender setiap kunjungan: angka paket & soal, harga Premium, dan testimoni
 // selalu sesuai database (beberapa COUNT kecil — ringan).
 export const dynamic = "force-dynamic";
+
+export const metadata: Metadata = {
+  title: { absolute: `Latihan Soal TKA SD, SMP, SMA Online + Pembahasan | ${SITE_NAME}` },
+  description:
+    "Latihan soal TKA (Tes Kemampuan Akademik) SD, SMP, dan SMA online sesuai Kerangka Asesmen resmi: tryout ber-timer, pembahasan tiap soal, dan analisis kelemahan per subtopik. Daftar gratis.",
+  alternates: { canonical: "/" },
+};
 
 // Struktur mengikuti docs/UI_UX.md §4.1 & layar Stitch "Landing Page".
 // Semua klaim di halaman ini harus faktual — jangan tambahkan angka pengguna,
@@ -145,32 +155,9 @@ export default async function LandingPage() {
   const { testimonials, plan, stats } = await getLandingData();
   return (
     <div className="flex flex-1 flex-col bg-card">
-      <header className="sticky top-0 z-50 border-b bg-card/90 backdrop-blur">
-        <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:h-20 lg:px-8">
-          <Logo priority />
-          <nav aria-label="Navigasi utama" className="hidden items-center gap-1 md:flex">
-            {[
-              ["#kerangka", "Kerangka TKA"],
-              ["#fitur", "Fitur"],
-              ["#jenjang", "Jenjang"],
-              ["#paket", "Paket"],
-              ["#faq", "FAQ"],
-            ].map(([href, label]) => (
-              <a key={href} href={href} className="rounded-lg px-3 py-2 text-sm font-semibold text-muted-foreground hover:text-foreground">
-                {label}
-              </a>
-            ))}
-          </nav>
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" className="hidden sm:inline-flex" nativeButton={false} render={<Link href="/masuk" />}>
-              Masuk
-            </Button>
-            <Button variant="cta" nativeButton={false} render={<Link href="/daftar" />}>
-              Daftar Gratis
-            </Button>
-          </div>
-        </div>
-      </header>
+      <JsonLd data={landingLd(plan)} />
+      <JsonLd data={faqLd(faqs)} />
+      <PublicHeader onLanding />
 
       <main className="flex-1">
         {/* Hero */}
@@ -306,7 +293,11 @@ export default async function LandingPage() {
                     {j.level}
                   </span>
                   <div>
-                    <h3 className="text-xl font-bold">{j.title}</h3>
+                    <h3 className="text-xl font-bold">
+                      <Link href={jenjangPath(j.level)} className="hover:text-primary">
+                        {j.title}
+                      </Link>
+                    </h3>
                     <p className="mt-1 text-muted-foreground">{j.text}</p>
                   </div>
                   <ul className="flex flex-wrap gap-2">
@@ -316,6 +307,9 @@ export default async function LandingPage() {
                       </li>
                     ))}
                   </ul>
+                  <Link href={jenjangPath(j.level)} className="mt-auto inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                    Lihat kisi-kisi & materi {j.title} <ArrowRight className="size-4" aria-hidden />
+                  </Link>
                 </article>
               ))}
             </div>
@@ -405,30 +399,7 @@ export default async function LandingPage() {
         </section>
       </main>
 
-      <footer className="border-t bg-background">
-        <div className="mx-auto flex w-full max-w-7xl flex-col gap-6 px-4 py-10 sm:px-6 md:flex-row md:items-center md:justify-between lg:px-8">
-          <div className="flex flex-col gap-3">
-            <BrandLockup className="h-auto w-44" />
-            <p className="text-base font-bold text-primary">{SITE_TAGLINE}</p>
-            <p className="max-w-md text-sm text-muted-foreground">
-              Platform latihan Tes Kemampuan Akademik untuk siswa SD, SMP, dan SMA — disusun mengikuti Kerangka Asesmen TKA.
-            </p>
-          </div>
-          <div className="flex flex-col gap-2 text-sm text-muted-foreground md:items-end">
-            <nav aria-label="Tautan legal" className="flex flex-wrap gap-x-4 gap-y-1">
-              <Link href="/syarat" className="hover:text-foreground">
-                Syarat & Ketentuan
-              </Link>
-              <Link href="/privasi" className="hover:text-foreground">
-                Kebijakan Privasi
-              </Link>
-            </nav>
-            <p>
-              © {new Date().getFullYear()} {SITE_NAME}
-            </p>
-          </div>
-        </div>
-      </footer>
+      <PublicFooter />
     </div>
   );
 }
@@ -579,4 +550,33 @@ function HeroPreview() {
       </div>
     </div>
   );
+}
+
+/** Organization + WebSite + layanan Premium (harga nyata dari DB) untuk mesin pencari. */
+function landingLd(plan: Awaited<ReturnType<typeof getLandingData>>["plan"]) {
+  const org = { "@type": "Organization", "@id": `${SITE_URL}/#organization`, name: SITE_NAME, url: SITE_URL, logo: `${SITE_URL}/icon.png` };
+  return {
+    "@context": "https://schema.org",
+    "@graph": [
+      org,
+      { "@type": "WebSite", "@id": `${SITE_URL}/#website`, name: SITE_NAME, url: SITE_URL, inLanguage: "id-ID", description: SITE_DESCRIPTION, publisher: { "@id": org["@id"] } },
+      {
+        "@type": "EducationalOrganization",
+        "@id": `${SITE_URL}/#layanan`,
+        name: `${SITE_NAME} — Latihan TKA SD, SMP, SMA`,
+        url: SITE_URL,
+        description: SITE_DESCRIPTION,
+        ...(plan && {
+          makesOffer: {
+            "@type": "Offer",
+            name: plan.name,
+            price: plan.price,
+            priceCurrency: "IDR",
+            availability: "https://schema.org/InStock",
+            url: `${SITE_URL}/daftar`,
+          },
+        }),
+      },
+    ],
+  };
 }

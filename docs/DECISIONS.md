@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-13 — SEO: halaman materi TKA publik + data terstruktur
+Keputusan: halaman publik `/tka/{sd,smp,sma}` dan `/tka/{jenjang}/{mapel}` (32 URL)
+dibangun dari file kerangka (asesmen/*.json): mata uji, elemen/subelemen + cakupan,
+bentuk soal, level kognitif, format paket (package-rules), FAQ, dan angka paket/soal
+nyata dari DB (ISR 1 jam, tanpa angka bila DB tak terjangkau). JSON-LD: Organization,
+WebSite, EducationalOrganization (+Offer harga Premium nyata), FAQPage, BreadcrumbList.
+Landing: judul berkata kunci, canonical, kartu jenjang & footer menaut ke halaman
+materi. sitemap memuat semua URL publik; robots menutup halaman akun/ujian.
+`SITE_URL` fallback ke https://pakartka.com di produksi. Verifikasi Search Console
+lewat env `GOOGLE_SITE_VERIFICATION`. Tanpa tahun di judul (konten evergreen).
+Alternatif yang ditolak: artikel/blog tulisan bebas (butuh penulis; rawan klaim tak faktual).
+
 ## 2026-10-13 — Midtrans Snap kembali, berdampingan dengan DOKU
 Keputusan pemilik produk: DOKU belum bisa menampilkan QRIS → Midtrans Snap
 (redirect) dipasang lagi dan jadi penyedia utama. `PAYMENT_PROVIDER` memilih

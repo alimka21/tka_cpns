@@ -5,6 +5,7 @@ import { SITE_NAME } from "@/lib/site";
 
 export const metadata: Metadata = {
   title: "Kebijakan Privasi",
+  alternates: { canonical: "/privasi" },
   description: `Bagaimana ${SITE_NAME} mengumpulkan, memakai, menyimpan, dan melindungi data pribadi pengguna.`,
 };
 

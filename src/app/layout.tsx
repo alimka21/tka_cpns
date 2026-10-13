@@ -17,6 +17,11 @@ export const metadata: Metadata = {
   openGraph: { type: "website", locale: "id_ID", siteName: SITE_NAME, title: `${SITE_NAME} — ${SITE_TAGLINE}`, description: SITE_DESCRIPTION },
   twitter: { card: "summary_large_image", title: `${SITE_NAME} — ${SITE_TAGLINE}`, description: SITE_DESCRIPTION },
   description: SITE_DESCRIPTION,
+  keywords: ["TKA", "Tes Kemampuan Akademik", "latihan soal TKA", "soal TKA SD", "soal TKA SMP", "soal TKA SMA", "kisi-kisi TKA", "tryout TKA", "pembahasan soal TKA"],
+  category: "education",
+  formatDetection: { telephone: false },
+  // Isi env GOOGLE_SITE_VERIFICATION (kode dari Google Search Console → Verifikasi → tag HTML).
+  ...(process.env.GOOGLE_SITE_VERIFICATION && { verification: { google: process.env.GOOGLE_SITE_VERIFICATION } }),
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

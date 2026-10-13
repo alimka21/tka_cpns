@@ -12,6 +12,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-13 — Midtrans Snap kembali, berdampingan dengan DOKU
+Keputusan pemilik produk: DOKU belum bisa menampilkan QRIS → Midtrans Snap
+(redirect) dipasang lagi dan jadi penyedia utama. `PAYMENT_PROVIDER` memilih
+penyedia; kosong → Midtrans bila `MIDTRANS_SERVER_KEY` terisi. Order Midtrans
+berprefix `PTM-` (DOKU `WTP-`) → `syncOrder` & halaman selesai menanyai penyedia
+pembuat order, jadi ganti penyedia tidak merusak order lama. Webhook
+`/api/midtrans/notification`: signature SHA-512 → ambil ulang Status API →
+`applyPaymentUpdate` (netral, idempoten, nominal wajib sama). Mode Sandbox:
+hanya admin + `PAYMENT_TEST_EMAILS` boleh membuat order (siswa tidak bisa
+mendapat Premium dari simulator). Tanpa migrasi (kolom orders sudah cukup).
+Menggantikan keputusan 2026-10-07 "Midtrans dihapus".
+
 ## 2026-10-10 — Jenjang siswa dikunci, hanya admin yang mengganti
 Keputusan: jenjang dipilih sekali (form daftar atau /pilih-jenjang untuk akun
 tanpa jenjang). `setMyJenjangAction` hanya mengisi bila `jenjang IS NULL`;

@@ -12,12 +12,13 @@ import { db } from "@/server/db";
 import { JENJANG_CODES, orders, plans } from "@/server/db/schema";
 import { createOrder, grantManualMembership, revokeMembership, syncOrder } from "@/server/services/billing";
 import { isDokuConfigured, testDokuConnection } from "@/server/services/doku";
+import { isMidtransConfigured, testMidtransConnection } from "@/server/services/midtrans";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 const NOT_ADMIN = { ok: false as const, error: "Sesi admin berakhir. Silakan masuk lagi." };
 const id = z.number().int().positive();
 
-/** URL situs untuk callback DOKU: env SITE_URL, atau host request (fallback). */
+/** URL situs untuk halaman kembali dari pembayaran: env SITE_URL, atau host request (fallback). */
 async function siteUrl() {
   if (process.env.SITE_URL) return SITE_URL;
   const h = await headers();
@@ -30,11 +31,11 @@ export async function createOrderAction(planId: number): Promise<Result<{ redire
   if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
   if (!id.safeParse(planId).success) return { ok: false, error: "Paket tidak valid." };
   const u = session.user;
-  const result = await createOrder({ id: Number(u.id), name: u.name, email: u.email, jenjang: u.jenjang ?? null }, planId, await siteUrl());
+  const result = await createOrder({ id: Number(u.id), name: u.name, email: u.email, role: u.role, jenjang: u.jenjang ?? null }, planId, await siteUrl());
   return result.ok ? { ok: true, redirectUrl: result.redirectUrl } : result;
 }
 
-/** Siswa/admin mengecek ulang status order ke DOKU. Siswa hanya untuk order miliknya. */
+/** Siswa/admin mengecek ulang status order ke penyedia pembayaran. Siswa hanya untuk order miliknya. */
 export async function syncOrderAction(orderCode: string): Promise<Result<{ status: string }>> {
   const session = await getActiveSession();
   if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
@@ -100,5 +101,17 @@ export async function testDokuConnectionAction(): Promise<Result<{ message: stri
     return r.ok ? { ok: true, message: r.message } : { ok: false, error: r.message };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Gagal menghubungi DOKU." };
+  }
+}
+
+/** Admin: uji Server Key Midtrans tanpa membuat transaksi. */
+export async function testMidtransConnectionAction(): Promise<Result<{ message: string }>> {
+  if (!(await getAdminSession())) return NOT_ADMIN;
+  if (!isMidtransConfigured()) return { ok: false, error: "MIDTRANS_SERVER_KEY belum diisi di env." };
+  try {
+    const r = await testMidtransConnection();
+    return r.ok ? { ok: true, message: r.message } : { ok: false, error: r.message };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Gagal menghubungi Midtrans." };
   }
 }

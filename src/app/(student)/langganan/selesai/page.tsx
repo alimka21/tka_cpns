@@ -10,13 +10,13 @@ import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { orders } from "@/server/db/schema";
 import { getActiveMembership, syncOrder } from "@/server/services/billing";
-import { isDokuConfigured } from "@/server/services/doku";
+import { isProviderConfigured, providerOfOrder } from "@/server/services/payment-provider";
 
 export const metadata: Metadata = { title: "Status Pembayaran" };
 export const dynamic = "force-dynamic";
 
-// Halaman kembali dari DOKU Checkout (callback_url) — juga "URL Halaman Sukses"
-// di dashboard DOKU. Status dicek ulang ke DOKU (cadangan bila webhook belum
+// Halaman kembali dari Midtrans Snap (callbacks.finish) / DOKU Checkout
+// (callback_url). Status dicek ulang ke penyedianya (cadangan bila webhook belum
 // sampai), lalu ditampilkan. Tanpa nomor invoice (URL polos dari dashboard)
 // → transaksi terbaru milik user; belum pernah transaksi → /langganan.
 export default async function LanggananSelesaiPage({ searchParams }: PageProps<"/langganan/selesai">) {
@@ -29,7 +29,7 @@ export default async function LanggananSelesaiPage({ searchParams }: PageProps<"
   if (!owned && !code) redirect("/langganan");
   if (!owned || owned.userId !== Number(user.id)) notFound();
 
-  if (isDokuConfigured() && owned.status === "pending") await syncOrder(owned.orderCode);
+  if (isProviderConfigured(providerOfOrder(owned.orderCode)) && owned.status === "pending") await syncOrder(owned.orderCode);
   const [order] = await db.select().from(orders).where(eq(orders.id, owned.id));
   const membership = order.status === "paid" ? await getActiveMembership(Number(user.id), order.jenjang) : null;
   const meta = ORDER_STATUS_META[order.status];
@@ -58,7 +58,7 @@ export default async function LanggananSelesaiPage({ searchParams }: PageProps<"
         )}
         {order.status === "pending" && (
           <p className="mt-2 text-sm text-muted-foreground">
-            Selesaikan pembayaran dengan memindai kode QRIS di halaman DOKU. Premium aktif otomatis begitu pembayaran kami terima — halaman ini bisa
+            Selesaikan pembayaran di halaman {providerOfOrder(order.orderCode) === "midtrans" ? "Midtrans" : "DOKU"} sesuai instruksinya. Premium aktif otomatis begitu pembayaran kami terima — halaman ini bisa
             dicek ulang.
           </p>
         )}

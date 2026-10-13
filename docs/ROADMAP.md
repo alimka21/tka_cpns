@@ -48,6 +48,7 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-13:** Midtrans Snap dipasang lagi (penyedia utama, DOKU tetap alternatif via `PAYMENT_PROVIDER`); mode Sandbox hanya admin/`PAYMENT_TEST_EMAILS`. Langkah env & dashboard: WORKFLOW §8a.
 **2026-10-10 (3):** paket tes baru default Premium (migrasi 0019 — `npm run prod:migrate`); jenjang siswa dikunci (pilih sekali saat daftar, ganti hanya oleh admin).
 **2026-10-10 (2):** filter Mata Pelajaran ("Semua" + mapel) di Dashboard, Latihan, Progres, Riwayat — `?mapel=` + cookie, konsisten antarhalaman.
 **2026-10-10:** harga normal (coret) + "Hemat N%" + "Ambil harga promo hari ini!" di landing, Langganan siswa, popup upgrade & admin (kolom `plans.normal_price`, migrasi 0018 — jalankan `npm run prod:migrate` setelah deploy).

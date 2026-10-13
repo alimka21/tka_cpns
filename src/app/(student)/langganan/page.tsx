@@ -8,7 +8,7 @@ import { formatDate, formatDateTime, formatRupiah, ORDER_STATUS_META } from "@/l
 import { discountPercent } from "@/lib/plans";
 import { requireUser } from "@/server/auth/session";
 import { getActiveMembership, listPlans, listUserOrders } from "@/server/services/billing";
-import { isDokuConfigured } from "@/server/services/doku";
+import { paymentAvailability } from "@/server/services/payment-provider";
 
 export const metadata: Metadata = { title: "Langganan Premium" };
 export const dynamic = "force-dynamic";
@@ -29,7 +29,7 @@ export default async function LanggananPage() {
     listPlans({ activeOnly: true, jenjang }),
     listUserOrders(userId),
   ]);
-  const configured = isDokuConfigured();
+  const pay = paymentAvailability(user);
   const pendingOrder = orders.find((o) => o.status === "pending" && o.redirectUrl);
 
   return (
@@ -86,9 +86,15 @@ export default async function LanggananPage() {
         <h2 id="pilih-heading" className="text-xl font-bold">
           {membership ? "Perpanjang Premium" : "Pilih paket Premium"}
         </h2>
-        {!configured ? (
+        {pay.canPay && pay.testMode && (
+          <p className="rounded-xl border border-warning/50 bg-warning-soft px-4 py-3 text-sm text-warning-strong">
+            <strong>Mode uji ({pay.label} Sandbox):</strong> transaksi tidak memakai uang sungguhan. Hanya admin & email penguji
+            (PAYMENT_TEST_EMAILS) yang bisa membayar; siswa lain melihat pesan &ldquo;segera dibuka&rdquo;.
+          </p>
+        )}
+        {!pay.canPay ? (
           <p className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">
-            Pembayaran online sedang disiapkan. Hubungi admin untuk membuka Premium.
+            Pembayaran online sedang disiapkan dan segera dibuka. Hubungi admin untuk membuka Premium.
           </p>
         ) : plans.length === 0 ? (
           <p className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">Belum ada paket Premium untuk jenjangmu.</p>
@@ -121,7 +127,9 @@ export default async function LanggananPage() {
           </ul>
         )}
         <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <Lock className="size-3.5" aria-hidden /> Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Diproses aman oleh DOKU.
+          <Lock className="size-3.5" aria-hidden /> {pay.provider === "midtrans"
+            ? "Bayar dengan QRIS, transfer bank (Virtual Account), atau e-wallet. Diproses aman oleh Midtrans."
+            : "Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Diproses aman oleh DOKU."}
         </p>
       </section>
 

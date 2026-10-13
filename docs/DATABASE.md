@@ -35,11 +35,11 @@ updated_at
 dicoret, opsional, > price; migrasi 0018), duration_days (NULL = selamanya),
 is_active, sort_order.
 
-**orders** — satu pembelian = satu order DOKU Checkout: order_code (unique,
-= `invoice_number` DOKU, `WTP-<userId>-<waktu>-<acak>`), user_id, plan_id +
+**orders** — satu pembelian = satu order Midtrans Snap / DOKU Checkout: order_code (unique,
+= `order_id` Midtrans `PTM-…` / `invoice_number` DOKU `WTP-<userId>-<waktu>-<acak>`), user_id, plan_id +
 salinan plan_name/jenjang/duration_days/amount, status (`pending`|`paid`|
-`expired`|`failed`|`cancelled`|`refunded`), redirect_url (halaman bayar DOKU),
-payment_type (channel, mis. `QRIS`), transaction_id (tidak dipakai DOKU),
+`expired`|`failed`|`cancelled`|`refunded`), redirect_url (halaman bayar Midtrans/DOKU),
+payment_type (channel, mis. `QRIS`), transaction_id (Midtrans; tidak dipakai DOKU),
 paid_at, last_payload (JSON audit). `snap_token` dihapus (migrasi 0017).
 
 **memberships** — masa Premium: user_id, order_id (unique, NULL = manual),

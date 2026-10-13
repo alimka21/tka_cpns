@@ -5,7 +5,7 @@ import { CreditCard, LoaderCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { createOrderAction } from "@/server/actions/billing";
 
-/** Buat order lalu pindah ke halaman pembayaran DOKU Checkout (QRIS). */
+/** Buat order lalu pindah ke halaman pembayaran (Midtrans Snap / DOKU Checkout). */
 export function BuyPlanButton({ planId, label = "Bayar sekarang" }: { planId: number; label?: string }) {
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();

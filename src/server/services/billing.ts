@@ -1,5 +1,6 @@
-// Langganan Premium & pembayaran (DOKU Checkout, QRIS). Satu-satunya tempat yang
-// mengubah status order & membuat membership dari pembayaran.
+// Langganan Premium & pembayaran (Midtrans Snap atau DOKU Checkout — lihat
+// payment-provider.ts). Satu-satunya tempat yang mengubah status order & membuat
+// membership dari pembayaran.
 
 import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
@@ -7,6 +8,9 @@ import { db } from "@/server/db";
 import { memberships, orders, plans, users, type JenjangCode, type OrderStatus } from "@/server/db/schema";
 import { createCheckout, DokuError, getOrderStatus } from "./doku";
 import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
+import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
+import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
+import { MIDTRANS_ORDER_PREFIX, paymentAvailability, providerOfOrder } from "./payment-provider";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -41,13 +45,13 @@ export async function hasPremium(user: { id: number; role?: string | null }, jen
   return (await getActiveMembership(user.id, jenjang)) != null;
 }
 
-function newOrderCode(userId: number) {
-  return `WTP-${userId}-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`;
+function newOrderCode(userId: number, prefix: string) {
+  return `${prefix}${userId}-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 }
 
-/** Buat order + halaman bayar DOKU Checkout (QRIS); kembalikan URL-nya. */
+/** Buat order + halaman bayar penyedia aktif (Midtrans Snap / DOKU Checkout); kembalikan URL-nya. */
 export async function createOrder(
-  user: { id: number; name: string; email: string; jenjang: string | null },
+  user: { id: number; name: string; email: string; role?: string | null; jenjang: string | null },
   planId: number,
   siteUrl: string,
 ): Promise<Result<{ redirectUrl: string; orderCode: string }>> {
@@ -55,45 +59,101 @@ export async function createOrder(
   if (!plan || !plan.isActive) return { ok: false, error: "Paket langganan tidak tersedia." };
   if (plan.jenjang && plan.jenjang !== user.jenjang) return { ok: false, error: `Paket ini untuk jenjang ${plan.jenjang}.` };
   if (plan.price < 1000) return { ok: false, error: "Harga paket belum valid." };
+  const pay = paymentAvailability(user);
+  if (!pay.configured) return { ok: false, error: "Pembayaran belum tersedia. Hubungi admin." };
+  if (!pay.canPay) return { ok: false, error: "Pembayaran online sedang dalam tahap uji coba dan segera dibuka. Hubungi admin untuk aktivasi Premium." };
 
-  const orderCode = newOrderCode(user.id);
+  const orderCode = newOrderCode(user.id, pay.provider === "midtrans" ? MIDTRANS_ORDER_PREFIX : "WTP-");
+  const finishUrl = `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`;
   const [{ id }] = await db
     .insert(orders)
     .values({ orderCode, userId: user.id, planId: plan.id, planName: plan.name, jenjang: plan.jenjang, durationDays: plan.durationDays, amount: plan.price })
     .$returningId();
   try {
-    const checkout = await createCheckout({
-      invoiceNumber: orderCode,
-      amount: plan.price,
-      itemName: plan.name,
-      customer: { id: String(user.id), name: user.name, email: user.email },
-      callbackUrl: `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`,
-    });
-    await db.update(orders).set({ redirectUrl: checkout.url }).where(eq(orders.id, id));
-    return { ok: true, redirectUrl: checkout.url, orderCode };
+    const url =
+      pay.provider === "midtrans"
+        ? (
+            await createSnapTransaction({
+              orderCode,
+              amount: plan.price,
+              itemName: plan.name,
+              customer: { name: user.name, email: user.email },
+              finishUrl,
+            })
+          ).redirectUrl
+        : (
+            await createCheckout({
+              invoiceNumber: orderCode,
+              amount: plan.price,
+              itemName: plan.name,
+              customer: { id: String(user.id), name: user.name, email: user.email },
+              callbackUrl: finishUrl,
+            })
+          ).url;
+    await db.update(orders).set({ redirectUrl: url }).where(eq(orders.id, id));
+    return { ok: true, redirectUrl: url, orderCode };
   } catch (e) {
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, id));
-    return { ok: false, error: e instanceof DokuError ? e.message : "Gagal membuat transaksi." };
+    return { ok: false, error: e instanceof DokuError || e instanceof MidtransError ? e.message : "Gagal membuat transaksi." };
   }
 }
 
+/** Status pembayaran dalam bentuk netral (dari DOKU maupun Midtrans). */
+type PaymentUpdate = {
+  orderCode: string;
+  amount: number;
+  status: OrderStatus;
+  channel: string | null;
+  transactionId: string | null;
+  paidAt: Date | null;
+  raw: unknown;
+};
+
+/** Terapkan status DOKU (webhook / Check Status). */
+export function applyDokuStatus(payload: DokuStatus) {
+  return applyPaymentUpdate({
+    orderCode: payload.invoiceNumber,
+    amount: payload.amount,
+    status: mapDokuStatus(payload.status),
+    channel: payload.channel,
+    transactionId: null,
+    paidAt: payload.date ? new Date(payload.date) : null,
+    raw: payload.raw,
+  });
+}
+
+/** Terapkan status Midtrans (webhook / Status API). */
+export function applyMidtransStatus(payload: MidtransPayload) {
+  const settled = payload.settlement_time ? new Date(`${payload.settlement_time.replace(" ", "T")}+07:00`) : null;
+  return applyPaymentUpdate({
+    orderCode: payload.order_id,
+    amount: Number(payload.gross_amount),
+    status: mapMidtransStatus(payload.transaction_status, payload.fraud_status),
+    channel: payload.payment_type ?? null,
+    transactionId: payload.transaction_id ?? null,
+    paidAt: settled && !Number.isNaN(settled.getTime()) ? settled : null,
+    raw: payload,
+  });
+}
+
 /**
- * Terapkan status DOKU ke order (dari webhook atau Check Status). Idempoten:
- * membership hanya dibuat sekali per order (unique order_id). Nominal harus sama.
+ * Terapkan status pembayaran ke order. Idempoten: membership hanya dibuat
+ * sekali per order (unique order_id). Nominal harus sama.
  */
-export async function applyDokuStatus(payload: DokuStatus): Promise<Result<{ status: OrderStatus }>> {
-  const [order] = await db.select().from(orders).where(eq(orders.orderCode, payload.invoiceNumber));
+async function applyPaymentUpdate(payload: PaymentUpdate): Promise<Result<{ status: OrderStatus }>> {
+  const [order] = await db.select().from(orders).where(eq(orders.orderCode, payload.orderCode));
   if (!order) return { ok: false, error: "Order tidak ditemukan." };
   if (Math.round(payload.amount) !== order.amount) return { ok: false, error: "Nominal tidak cocok." };
 
-  const status = nextOrderStatus(order.status, mapDokuStatus(payload.status));
+  const status = nextOrderStatus(order.status, payload.status);
   await db.transaction(async (tx) => {
     await tx
       .update(orders)
       .set({
         status,
         paymentType: payload.channel ?? order.paymentType,
-        paidAt: status === "paid" && !order.paidAt ? (payload.date ? new Date(payload.date) : new Date()) : order.paidAt,
+        transactionId: payload.transactionId ?? order.transactionId,
+        paidAt: status === "paid" && !order.paidAt ? (payload.paidAt ?? new Date()) : order.paidAt,
         lastPayload: payload.raw,
       })
       .where(eq(orders.id, order.id));
@@ -119,17 +179,18 @@ export async function applyDokuStatus(payload: DokuStatus): Promise<Result<{ sta
   return { ok: true, status };
 }
 
-/** Tarik status terbaru dari DOKU lalu terapkan (halaman selesai & tombol cek status). */
+/** Tarik status terbaru dari penyedia yang membuat order lalu terapkan (halaman selesai & tombol cek status). */
 export async function syncOrder(orderCode: string): Promise<Result<{ status: OrderStatus }>> {
   try {
-    const payload = await getOrderStatus(orderCode);
-    if (!payload) {
-      const [order] = await db.select({ status: orders.status }).from(orders).where(eq(orders.orderCode, orderCode));
-      return order ? { ok: true, status: order.status } : { ok: false, error: "Order tidak ditemukan." };
-    }
-    return applyDokuStatus(payload);
+    const result =
+      providerOfOrder(orderCode) === "midtrans"
+        ? await getTransactionStatus(orderCode).then((p) => (p ? applyMidtransStatus(p) : null))
+        : await getOrderStatus(orderCode).then((p) => (p ? applyDokuStatus(p) : null));
+    if (result) return result;
+    const [order] = await db.select({ status: orders.status }).from(orders).where(eq(orders.orderCode, orderCode));
+    return order ? { ok: true, status: order.status } : { ok: false, error: "Order tidak ditemukan." };
   } catch (e) {
-    return { ok: false, error: e instanceof DokuError ? e.message : "Gagal mengecek status." };
+    return { ok: false, error: e instanceof DokuError || e instanceof MidtransError ? e.message : "Gagal mengecek status." };
   }
 }
 

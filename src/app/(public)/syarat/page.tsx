@@ -74,7 +74,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <ul>
-          <li>Pembayaran diproses oleh DOKU melalui metode yang tersedia (mis. QRIS). Biaya dari bank atau dompet digital, bila ada, menjadi tanggungan pembayar.</li>
+          <li>Pembayaran diproses oleh penyedia jasa pembayaran resmi (Midtrans atau DOKU) melalui metode yang tersedia (mis. QRIS, transfer bank, atau e-wallet). Biaya dari bank atau dompet digital, bila ada, menjadi tanggungan pembayar.</li>
           <li>Premium aktif otomatis setelah pembayaran dikonfirmasi. Status transaksi dapat dilihat di halaman Premium.</li>
           <li>Karena berupa produk digital yang langsung dapat dipakai, pembayaran yang berhasil <strong>tidak dapat dibatalkan atau dikembalikan</strong>, kecuali:
             <ul>

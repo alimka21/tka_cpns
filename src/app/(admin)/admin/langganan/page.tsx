@@ -11,6 +11,8 @@ import { SITE_URL } from "@/lib/site";
 import { listActiveMembershipsAdmin, listOrdersAdmin, listPlans, planSalesStats } from "@/server/services/billing";
 import { DokuConnectionTest } from "@/components/billing/doku-connection-test";
 import { DOKU_NOTIFICATION_PATH, dokuPublicInfo, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
+import { isMidtransConfigured, MIDTRANS_NOTIFICATION_PATH, midtransPublicInfo } from "@/server/services/midtrans";
+import { activeProvider, PROVIDER_LABEL } from "@/server/services/payment-provider";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
 export const dynamic = "force-dynamic";
@@ -22,6 +24,10 @@ export default async function AdminLanggananPage() {
   const configured = isDokuConfigured();
   const production = isDokuProduction();
   const info = dokuPublicInfo();
+  const provider = activeProvider();
+  const mtConfigured = isMidtransConfigured();
+  const mt = midtransPublicInfo();
+  const site = SITE_URL.replace(/\/$/, "");
   const paidTotal = [...sales.values()].reduce((n, s) => n + s.revenue, 0);
   const pendingTotal = [...sales.values()].reduce((n, s) => n + s.pending, 0);
   const cheapest = promotedPlan(plans);
@@ -48,7 +54,7 @@ export default async function AdminLanggananPage() {
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Langganan & Pembayaran"
-        description="Akun gratis: 1 paket tes gratis per mapel. Premium (dibayar lewat QRIS DOKU atau diberikan admin) membuka semua paket tes jenjangnya, pembahasan, analisa kelemahan, dan Latihan Kelemahan — aktif otomatis setelah pembayaran berhasil."
+        description="Akun gratis: 1 paket tes gratis per mapel. Premium (dibayar online lewat Midtrans/DOKU atau diberikan admin) membuka semua paket tes jenjangnya, pembahasan, analisa kelemahan, dan Latihan Kelemahan — aktif otomatis setelah pembayaran berhasil."
       />
 
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
@@ -63,10 +69,62 @@ export default async function AdminLanggananPage() {
         ))}
       </dl>
 
-      <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${configured ? "border-success/40" : "border-warning/50"}`}>
-        <p className="flex items-center gap-2 font-semibold">
+      <p className="-mb-4 text-sm">
+        Penyedia pembayaran aktif: <strong>{PROVIDER_LABEL[provider]}</strong>{" "}
+        <span className="text-muted-foreground">
+          (env PAYMENT_PROVIDER = midtrans / doku; kosong → Midtrans bila MIDTRANS_SERVER_KEY terisi). Mode Sandbox: hanya admin & email di
+          PAYMENT_TEST_EMAILS yang bisa membayar.
+        </span>
+      </p>
+
+      <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "midtrans" ? "opacity-80" : mtConfigured ? "border-success/40" : "border-warning/50"}`}>
+        <p className="flex flex-wrap items-center gap-2 font-semibold">
+          {mtConfigured ? <CircleCheck className="size-4 text-success-strong" aria-hidden /> : <CircleAlert className="size-4 text-warning-strong" aria-hidden />}
+          Midtrans {mtConfigured ? `terhubung — mode ${mt.production ? "PRODUKSI" : "Sandbox (uji coba)"}` : "belum dikonfigurasi"}
+          {provider === "midtrans" && <Badge variant="success">Dipakai</Badge>}
+        </p>
+        {!mtConfigured && (
+          <p className="text-muted-foreground">
+            Isi env MIDTRANS_SERVER_KEY (Dashboard Midtrans → Pengaturan → Akses Key) dan MIDTRANS_IS_PRODUCTION di hPanel, lalu redeploy.
+          </p>
+        )}
+        {mtConfigured && (
+          <dl className="grid gap-x-4 gap-y-1 text-muted-foreground sm:grid-cols-[auto_1fr]">
+            <dt>Alamat API</dt>
+            <dd>
+              <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{mt.apiBase}</code>
+            </dd>
+            <dt>Server Key</dt>
+            <dd>
+              terisi ({mt.keyLength} karakter, key {mt.keyKind})
+              {mt.keyMismatch && (
+                <span className="ml-1 font-semibold text-destructive">
+                  — tidak cocok dengan MIDTRANS_IS_PRODUCTION={mt.production ? "true" : "false"}
+                </span>
+              )}
+            </dd>
+            <dt>Metode bayar</dt>
+            <dd>
+              {mt.enabledPayments.length ? mt.enabledPayments.join(", ") : "Semua metode yang aktif di akun Midtrans"}{" "}
+              <span className="text-xs">(env MIDTRANS_ENABLED_PAYMENTS, opsional)</span>
+            </dd>
+          </dl>
+        )}
+        {mtConfigured && <DokuConnectionTest provider="midtrans" />}
+        <p className="text-muted-foreground">
+          URL notifikasi pembayaran (Dashboard Midtrans → Pengaturan → Pembayaran → URL notifikasi, di Sandbox & Production):{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">
+            {site}
+            {MIDTRANS_NOTIFICATION_PATH}
+          </code>
+        </p>
+      </section>
+
+      <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "doku" ? "opacity-80" : configured ? "border-success/40" : "border-warning/50"}`}>
+        <p className="flex flex-wrap items-center gap-2 font-semibold">
           {configured ? <CircleCheck className="size-4 text-success-strong" aria-hidden /> : <CircleAlert className="size-4 text-warning-strong" aria-hidden />}
           DOKU {configured ? `terhubung — mode ${production ? "PRODUKSI" : "Sandbox (uji coba)"}` : "belum dikonfigurasi"}
+          {provider === "doku" && <Badge variant="success">Dipakai</Badge>}
         </p>
         {!configured && <p className="text-muted-foreground">Isi env DOKU_CLIENT_ID, DOKU_SECRET_KEY (dan DOKU_IS_PRODUCTION) di hPanel, lalu redeploy.</p>}
         {configured && (
@@ -92,7 +150,7 @@ export default async function AdminLanggananPage() {
         {configured && <DokuConnectionTest />}
         <p className="text-muted-foreground">
           Notification URL (pasang di DOKU Back Office → Settings → Payment Settings):{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{SITE_URL.replace(/\/$/, "")}{DOKU_NOTIFICATION_PATH}</code>
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{site}{DOKU_NOTIFICATION_PATH}</code>
         </p>
       </section>
 

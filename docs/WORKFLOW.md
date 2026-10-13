@@ -152,6 +152,29 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
   untuk migrasi selanjutnya juga (generate SQL-nya, bersihkan penanda,
   paste ke phpMyAdmin).
 
+## 8a. Pembayaran Midtrans Snap (Premium) — penyedia utama sejak 2026-10-13
+
+Penyedia dipilih env `PAYMENT_PROVIDER` (`midtrans` / `doku`; kosong → Midtrans
+bila `MIDTRANS_SERVER_KEY` terisi). DOKU (§8) tetap ada sebagai alternatif.
+
+1. Dashboard Midtrans → Environment **Sandbox** → Pengaturan → **Akses Key** →
+   salin **Server Key** (`SB-Mid-server-…`). Jangan kirim ke chat.
+2. hPanel → env: `MIDTRANS_SERVER_KEY=<server key>`, `MIDTRANS_IS_PRODUCTION=false`,
+   `PAYMENT_TEST_EMAILS=<email akun siswa uji>` (opsional; admin selalu boleh).
+   Redeploy.
+3. Pengaturan → Pembayaran → **URL notifikasi pembayaran** (kotak pertama saja):
+   `https://pakartka.com/api/midtrans/notification` — isi di Sandbox **dan** Production.
+4. Admin → Langganan → **Tes koneksi Midtrans** → harus "Server Key valid ✓".
+5. Uji: masuk sebagai admin/akun penguji → Premium → Bayar sekarang → halaman
+   Snap Sandbox → bayar lewat simulator (https://simulator.sandbox.midtrans.com)
+   → kembali ke `/langganan/selesai` → Premium aktif.
+   Selama Sandbox, siswa lain melihat "Pembayaran … segera dibuka" (tidak bisa
+   mendapat Premium dari simulator).
+6. Review bisnis disetujui → Environment **Production** → Akses Key → ganti
+   `MIDTRANS_SERVER_KEY` (`Mid-server-…`) + `MIDTRANS_IS_PRODUCTION=true` → redeploy
+   → tes koneksi lagi. Semua siswa bisa membayar.
+7. Opsional `MIDTRANS_ENABLED_PAYMENTS=other_qris,gopay,bca_va,…` untuk membatasi metode.
+
 ## 8. Pembayaran DOKU Checkout — QRIS (Premium)
 
 1. Daftar/masuk DOKU Back Office **Sandbox** (https://sandbox.doku.com/bo) →

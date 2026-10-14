@@ -12,6 +12,17 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-15 — Unduh paket tes = lembar cetak browser, bukan PDF server
+Keputusan: "Unduh PDF" membuka `/unduh/[id]` (layout A4 + CSS `@page`) lalu
+`window.print()` → Simpan sebagai PDF. Hanya Premium (membership/admin);
+akun gratis melihat tombol tapi dapat popup Premium, akses langsung ke URL
+dialihkan ke `/langganan`. Kunci jawaban tidak dirender; nama pengunduh
+dicetak di kaki halaman sebagai pencegah penyebaran.
+Alasan: rumus KaTeX, tabel, gambar tampil persis seperti di web tanpa
+headless Chrome/library PDF berat di hosting Hostinger.
+Alternatif yang ditolak: generate PDF server (puppeteer/pdf-lib) — berat,
+tidak tersedia di shared hosting, dan render rumus jadi rumit.
+
 ## 2026-10-14 — Submit tes tanpa revalidatePath + pengaman buka-ulang
 Masalah (ditemukan load test HTTP): `submitAttemptAction` memanggil
 `revalidatePath("/dashboard")` → Next me-render ulang halaman pemanggil

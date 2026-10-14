@@ -88,7 +88,7 @@ async function main() {
       const [rows] = await prod.query<mysql.RowDataPacket[]>("SELECT * FROM ?? ORDER BY 1 LIMIT ? OFFSET ?", [table, chunk, offset]);
       if (rows.length === 0) break;
       const cols = Object.keys(rows[0]);
-      await dev.query("INSERT INTO ?? (??) VALUES ?", [table, cols, rows.map((r) => cols.map((c) => r[c]))]);
+      await dev.query("INSERT INTO ?? (??) VALUES ?", [table, cols, rows.map((r) => cols.map((c) => toSqlValue(r[c])))]);
       copied += rows.length;
       offset += chunk;
     }
@@ -116,3 +116,8 @@ main().then(
     process.exit(1);
   },
 );
+
+/** Kolom JSON terbaca sebagai objek/array — mysql2 akan memecah array jadi banyak operand, jadi serialkan lagi. */
+function toSqlValue(v: unknown) {
+  return v !== null && typeof v === "object" && !(v instanceof Date) && !Buffer.isBuffer(v) ? JSON.stringify(v) : v;
+}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Clock, Crown, FileQuestion, Gift, Lock, Play } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { DownloadPackageButton } from "@/components/student/download-package-button";
 import type { StudentPackageRow } from "@/server/queries/packages";
 import { cn } from "@/lib/utils";
 
@@ -17,7 +18,8 @@ const chip = (active: boolean) =>
     active && "border-primary bg-primary text-primary-foreground hover:text-primary-foreground",
   );
 
-export function PackageGrid({ packages }: { packages: StudentPackageRow[] }) {
+/** `premium` = membership aktif (atau admin) → boleh mengunduh naskah soal. */
+export function PackageGrid({ packages, premium }: { packages: StudentPackageRow[]; premium: boolean }) {
   const jenjangs = [ALL, ...new Set(packages.map((p) => p.categoryCode))];
   const [jenjang, setJenjang] = useState(ALL);
   const [access, setAccess] = useState<Access>("semua");
@@ -81,7 +83,7 @@ export function PackageGrid({ packages }: { packages: StudentPackageRow[] }) {
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
           {visible.map((pkg) => (
-            <PackageCard key={pkg.id} pkg={pkg} />
+            <PackageCard key={pkg.id} pkg={pkg} premium={premium} />
           ))}
         </div>
       )}
@@ -89,7 +91,7 @@ export function PackageGrid({ packages }: { packages: StudentPackageRow[] }) {
   );
 }
 
-function PackageCard({ pkg }: { pkg: StudentPackageRow }) {
+function PackageCard({ pkg, premium }: { pkg: StudentPackageRow; premium: boolean }) {
   const quotaLocked = pkg.freeQuotaUsedBy != null;
   const locked = (pkg.isPremium && !pkg.unlocked) || quotaLocked;
   return (
@@ -140,15 +142,18 @@ function PackageCard({ pkg }: { pkg: StudentPackageRow }) {
           </div>
         )}
       </dl>
-      {locked ? (
-        <Button variant="cta" className="w-full" nativeButton={false} render={<Link href="/langganan" />}>
-          <Crown aria-hidden /> Buka dengan Premium
-        </Button>
-      ) : (
-        <Button nativeButton={false} className="w-full" render={<Link href={`/tes/${pkg.id}`} />}>
-          <Play aria-hidden /> Mulai Tes
-        </Button>
-      )}
+      <div className="flex gap-2">
+        {locked ? (
+          <Button variant="cta" className="flex-1" nativeButton={false} render={<Link href="/langganan" />}>
+            <Crown aria-hidden /> Buka dengan Premium
+          </Button>
+        ) : (
+          <Button nativeButton={false} className="flex-1" render={<Link href={`/tes/${pkg.id}`} />}>
+            <Play aria-hidden /> Mulai Tes
+          </Button>
+        )}
+        <DownloadPackageButton packageId={pkg.id} premium={premium} />
+      </div>
     </article>
   );
 }

@@ -83,7 +83,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         {subject && packages.length === 0 ? (
           <p className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">Belum ada paket tes {subject.name} yang terbit.</p>
         ) : (
-          <PackageGrid packages={packages} />
+          <PackageGrid packages={packages} premium={premium} />
         )}
       </section>
 

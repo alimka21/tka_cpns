@@ -53,6 +53,13 @@ export async function listSubjects(): Promise<SubjectOption[]> {
   return subs.map((s) => ({ ...s, outline: outlines.get(s.id) ?? [] }));
 }
 
+/** Nama mata pelajaran (untuk kop lembar soal unduhan). */
+export async function getSubjectName(subjectId: number | null): Promise<string | null> {
+  if (subjectId == null) return null;
+  const [row] = await db.select({ name: subjects.name }).from(subjects).where(eq(subjects.id, subjectId));
+  return row?.name ?? null;
+}
+
 /** subjectId → topik (urut) → subtopik (urut). */
 export async function loadSubjectOutlines(subjectIds?: number[]): Promise<Map<number, SubjectOutline>> {
   const rows = await db

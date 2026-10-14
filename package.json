@@ -18,6 +18,8 @@
     "db:studio": "drizzle-kit studio",
     "test": "vitest run",
     "loadtest": "tsx --env-file=.env scripts/load-test.ts",
+    "loadtest:http": "tsx --env-file=.env scripts/load-test-http.ts",
+    "prod:loadtest:http": "tsx --env-file=.env.prod scripts/load-test-http.ts",
     "user:password": "tsx --env-file=.env src/server/db/set-password.ts",
     "db:dev:sync": "tsx --env-file=.env src/server/db/sync-dev.ts",
     "db:backup": "tsx --env-file=.env src/server/db/backup.ts",

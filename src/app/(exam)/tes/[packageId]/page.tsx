@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { notFound } from "next/navigation";
+import { notFound, redirect } from "next/navigation";
 import { eq } from "drizzle-orm";
 import Link from "next/link";
 import { Check, Crown, Lock } from "lucide-react";
@@ -18,7 +18,7 @@ import { toExamQuestion, toExamStimulus } from "@/server/services/math-render";
 export const metadata: Metadata = { title: "Mengerjakan Tes" };
 export const dynamic = "force-dynamic";
 
-export default async function TesPackagePage({ params }: PageProps<"/tes/[packageId]">) {
+export default async function TesPackagePage({ params, searchParams }: PageProps<"/tes/[packageId]">) {
   const { packageId: packageIdParam } = await params;
   const packageId = Number(packageIdParam);
   if (!Number.isInteger(packageId) || packageId <= 0) notFound();
@@ -29,7 +29,8 @@ export default async function TesPackagePage({ params }: PageProps<"/tes/[packag
   const pkg = await getPackageDetailCached(packageId);
   if (!pkg) notFound();
 
-  const started = await startOrResumeAttempt(userId, packageId, user.role === "admin" ? null : (user.jenjang ?? null), user.role === "admin");
+  const started = await startOrResumeAttempt(userId, packageId, user.role === "admin" ? null : (user.jenjang ?? null), user.role === "admin", (await searchParams).ulang === "1");
+  if (!started.ok && "justSubmittedId" in started) redirect(`/hasil/${started.justSubmittedId}`);
   if (!started.ok && started.reason) {
     return <PremiumGate reason={started.reason} message={started.error} />;
   }

@@ -161,7 +161,7 @@ export default async function HasilPage({
           <Button
             variant="outline"
             nativeButton={false}
-            render={<Link href={`/tes/${r.packageId}`} />}
+            render={<Link href={`/tes/${r.packageId}?ulang=1`} />}
           >
             <RotateCcw aria-hidden /> Kerjakan lagi
           </Button>

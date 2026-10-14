@@ -2,7 +2,7 @@
 // Dipanggil dari Server Component halaman ujian & dari server actions
 // (src/server/actions/attempts.ts) — bukan action itu sendiri.
 
-import { and, eq } from "drizzle-orm";
+import { and, desc, eq } from "drizzle-orm";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { db } from "@/server/db";
 import { attemptAnswers, attemptSubtopicScores, attempts } from "@/server/db/schema";
@@ -65,8 +65,12 @@ export async function finalizeAttempt(attemptId: number, status: "submitted" | "
   });
 }
 
+const JUST_SUBMITTED_MS = 30_000;
+
 export type StartAttemptResult =
   | { ok: true; attemptId: number }
+  /** Paket ini baru saja dikumpulkan — tampilkan hasilnya, jangan mulai attempt baru. */
+  | { ok: false; justSubmittedId: number; error: string; reason?: undefined }
   /** `reason` dipakai halaman untuk menampilkan ajakan Premium yang sesuai. */
   | { ok: false; error: string; reason?: "premium" | "free_quota" };
 
@@ -82,6 +86,8 @@ export async function startOrResumeAttempt(
   testPackageId: number,
   jenjang: string | null,
   isAdmin = false,
+  /** Tombol "Kerjakan lagi": boleh mulai baru walau baru saja dikumpulkan. */
+  restart = false,
 ): Promise<StartAttemptResult> {
   const pkg = await getPackageDetailCached(testPackageId);
   if (!pkg || pkg.status !== "published") return { ok: false, error: "Paket tes tidak ditemukan." };
@@ -112,6 +118,18 @@ export async function startOrResumeAttempt(
   if (existing) {
     if (existing.endsAt.getTime() > Date.now()) return { ok: true, attemptId: existing.id };
     await finalizeAttempt(existing.id, "expired");
+  } else if (!restart) {
+    // Halaman ujian dirender lagi tepat setelah submit (refresh, tombol Back, atau
+    // render ulang server action) → jangan langsung membuat attempt baru yang kosong.
+    const [last] = await db
+      .select({ id: attempts.id, submittedAt: attempts.submittedAt })
+      .from(attempts)
+      .where(and(eq(attempts.userId, userId), eq(attempts.testPackageId, testPackageId)))
+      .orderBy(desc(attempts.id))
+      .limit(1);
+    if (last?.submittedAt && Date.now() - last.submittedAt.getTime() < JUST_SUBMITTED_MS) {
+      return { ok: false, justSubmittedId: last.id, error: "Tes ini baru saja dikumpulkan." };
+    }
   }
 
   const endsAt = new Date(Date.now() + pkg.durationMinutes * 60_000);

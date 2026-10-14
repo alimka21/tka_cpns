@@ -5,7 +5,6 @@
 // SaveAnswerFn/SubmitAttemptFn). Setiap panggilan mengecek ulang kepemilikan
 // attempt — jangan percaya `attemptId` dari client begitu saja.
 
-import { revalidatePath } from "next/cache";
 import { and, eq } from "drizzle-orm";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { saveAnswerInput, submitAttemptInput } from "@/lib/validation/attempt";
@@ -72,6 +71,8 @@ export async function submitAttemptAction(attemptId: number): Promise<{ ok: bool
   if (!submitAttemptInput.safeParse({ attemptId }).success) return { ok: false, error: "Percobaan tidak valid." };
   if (attempt.status === "in_progress") await finalizeAttempt(attemptId, "submitted");
 
-  revalidatePath("/dashboard");
+  // Sengaja TANPA revalidatePath: action ini dipanggil dari /tes/[id], dan revalidate
+  // membuat Next me-render ulang halaman itu di respons action → startOrResumeAttempt
+  // membuat attempt kosong baru (bug 2026-10-14). Dashboard & riwayat force-dynamic.
   return { ok: true, redirectTo: `/hasil/${attemptId}` };
 }

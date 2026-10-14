@@ -304,6 +304,35 @@ membersihkan; sisa run terputus: `npm run loadtest -- --cleanup`).
   belum diukur: CPU/memori Node di Hostinger saat render halaman — uji HTTP
   ke domain produksi (k6/autocannon) di jam sepi bila perlu.
 
+### 11b. Load test HTTP (server sungguhan)
+
+`scripts/load-test-http.ts` — request HTTP asli ke Next.js (render halaman,
+server action autosave & submit), bukan langsung ke DB.
+
+- Publik: `npm run prod:loadtest:http -- --base=https://pakartka.com --mode=public --concurrency=20 --duration=30`
+- Ujian (akun uji `loadtest-http+…@example.invalid` dibuat di DB + cookie sesi
+  ditandatangani BETTER_AUTH_SECRET, selalu dihapus):
+  `npm run prod:loadtest:http -- --base=https://pakartka.com --mode=exam --students=10 --package=13 --think=3000`
+  Naikkan bertahap (10 → 30 → 75). `--reopen=0` bila kode di server belum memuat
+  fix 2026-10-14. Sisa run terputus: `… --cleanup`. Selalu pakai `--base`
+  (BETTER_AUTH_URL di .env.prod = localhost).
+- **Batas CDN Hostinger (hcdn):** lalu lintas tinggi dari **satu IP** → HTTP 403
+  untuk IP itu ±20 menit. Jangan melebihi ±20 pengunjung bersamaan / ±130 req/dtk
+  dari satu komputer.
+- Hasil 2026-10-14 (halaman publik, satu IP):
+
+  | Bersamaan | req/dtk | Landing p95 | /tka/* p95 | /masuk p95 | Error |
+  |---|---|---|---|---|---|
+  | 5 | 48 | 0,33 dtk | 0,15 dtk | 0,29 dtk | 0 |
+  | 20 | 137 | 0,63 dtk | 0,14 dtk | 0,50 dtk | 0 |
+  | 50 | — | — | — | — | 403 dari CDN (blokir IP ±20 mnt) |
+
+- Uji lokal (`next start`) menemukan bug: submit tes memanggil `revalidatePath`
+  → Next me-render ulang /tes/[id] → attempt kosong baru (terlihat juga di
+  produksi: #378, #383, #387). Sudah diperbaiki (DECISIONS 2026-10-14).
+- **Tryout massal satu sekolah (satu IP publik):** minta support Hostinger
+  me-whitelist IP sekolah / longgarkan rate limit, atau mulai per kelas bergiliran.
+
 ## 12. Lupa kata sandi admin
 
 `npm run prod:user:password -- <email>` (produksi; `user:password` = database

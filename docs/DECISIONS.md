@@ -12,6 +12,17 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-14 — Submit tes tanpa revalidatePath + pengaman buka-ulang
+Masalah (ditemukan load test HTTP): `submitAttemptAction` memanggil
+`revalidatePath("/dashboard")` → Next me-render ulang halaman pemanggil
+(/tes/[id]) di respons action → `startOrResumeAttempt` membuat attempt kosong
+baru setiap submit (produksi: #378, #383, #387; satu siswa sempat mengerjakan
+attempt hantu #386). Keputusan: (1) submit tanpa revalidatePath (dashboard &
+riwayat force-dynamic); (2) `startOrResumeAttempt` tidak membuat attempt baru
+bila paket yang sama dikumpulkan < 30 dtk lalu → halaman diarahkan ke hasil;
+tombol "Kerjakan lagi" memakai `?ulang=1` untuk melewati pengaman.
+Data lama: attempt kosong #378/#383/#387 masih in_progress di produksi (belum dihapus).
+
 ## 2026-10-14 — Backup database: dump Node + cron HTTP
 Keputusan: `services/db-backup.ts` men-dump DB sendiri (mysql2, snapshot
 konsisten, dateStrings + UTC, blob X'..', batch INSERT) → `.sql.gz` di

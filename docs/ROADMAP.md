@@ -398,7 +398,7 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
 ## Fase 4 — Pengerasan (sebelum ramai dipakai)
 
 - [x] Load test alur pengerjaan tes bersamaan — `npm run loadtest` (2026-10-03;
-      150 siswa stres tanpa error, WORKFLOW §11). Belum: uji HTTP ke produksi
+      150 siswa stres tanpa error, WORKFLOW §11). Uji HTTP publik ke produksi 2026-10-14 (20 bersamaan / 137 req/dtk tanpa error; batas = CDN per IP). Belum: uji HTTP alur ujian ke produksi (perlu izin user, WORKFLOW §11b)
 - [x] Review index database & query lambat — migrasi 0016 (12 index) + cache
       detail paket + autosave 1 query lebih sedikit (DECISIONS 2026-10-03)
 - [x] Manajemen User: filter, tab status, statistik & paginasi (50/hal) di server via query string (2026-10-06)

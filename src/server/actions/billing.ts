@@ -76,7 +76,7 @@ export async function grantMembershipAction(input: unknown): Promise<Result> {
   const session = await getAdminSession();
   if (!session) return NOT_ADMIN;
   const parsed = z
-    .object({ email: z.email("Email tidak valid"), jenjang: z.enum(JENJANG_CODES).nullable(), durationDays: z.number().int().min(1).max(3650).nullable() })
+    .object({ email: z.string().trim().min(3, "Isi email atau username siswa.").max(255), jenjang: z.enum(JENJANG_CODES).nullable(), durationDays: z.number().int().min(1).max(3650).nullable() })
     .safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
   const r = await grantManualMembership(Number(session.user.id), parsed.data.email, parsed.data.jenjang, parsed.data.durationDays);

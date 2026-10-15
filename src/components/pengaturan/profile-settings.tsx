@@ -5,12 +5,14 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { GeminiKeyForm } from "@/components/pengaturan/gemini-key-form";
+import { ContactForm } from "@/components/profile/contact-form";
 import { JenjangForm } from "@/components/profile/jenjang-form";
+import { visibleEmail } from "@/lib/identity";
 import { NameForm } from "@/components/profile/name-form";
 import { PasswordForm } from "@/components/profile/password-form";
 
 type Props = {
-  user: { name: string; email: string; role?: string | null; jenjang?: string | null };
+  user: { name: string; email: string; username?: string | null; phone?: string | null; role?: string | null; jenjang?: string | null };
   masked: string | null;
   hasPassword: boolean;
 };
@@ -25,15 +27,19 @@ export function ProfileSettings({ user, masked, hasPassword }: Props) {
       </CardHeader>
       <CardContent className="flex flex-col gap-4">
         <NameForm current={user.name} />
+        <ContactForm username={user.username ?? null} phone={user.phone ?? null} />
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="email">Email</Label>
           <Input
             id="email"
             type="email"
-            defaultValue={user.email}
+            defaultValue={visibleEmail(user.email) ?? ""}
+            placeholder="Tidak ada email"
             disabled
           />
-          <p className="text-xs text-muted-foreground">Email dipakai untuk masuk dan tidak bisa diubah.</p>
+          <p className="text-xs text-muted-foreground">
+            {visibleEmail(user.email) ? "Email juga bisa dipakai untuk masuk dan tidak bisa diubah." : "Akunmu tidak memakai email — masuk dengan username atau No. HP."}
+          </p>
         </div>
         {user.role !== "admin" && (
           <div className="flex flex-col gap-1.5">
@@ -55,7 +61,9 @@ export function ProfileSettings({ user, masked, hasPassword }: Props) {
     <Card>
       <CardHeader>
         <CardTitle>Kata Sandi</CardTitle>
-        <CardDescription>{hasPassword ? "Ganti kata sandi untuk masuk dengan email." : "Buat kata sandi untuk masuk dengan email."}</CardDescription>
+        <CardDescription>
+          {hasPassword ? "Ganti kata sandi untuk masuk dengan username, No. HP, atau email." : "Buat kata sandi supaya bisa masuk dengan username, No. HP, atau email."}
+        </CardDescription>
       </CardHeader>
       <CardContent>
         <PasswordForm hasPassword={hasPassword} />

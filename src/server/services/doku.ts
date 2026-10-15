@@ -121,7 +121,7 @@ export async function createCheckout(input: {
   invoiceNumber: string;
   amount: number;
   itemName: string;
-  customer: { id: string; name: string; email: string };
+  customer: { id: string; name: string; email?: string };
   callbackUrl: string;
   dueMinutes?: number;
 }): Promise<{ url: string; tokenId: string | null }> {
@@ -137,7 +137,7 @@ export async function createCheckout(input: {
       line_items: [{ id: input.invoiceNumber.slice(0, 50), name: input.itemName.slice(0, 255), quantity: 1, price: input.amount }],
     },
     payment: { payment_due_date: input.dueMinutes ?? 60, ...(methods.length > 0 && { payment_method_types: methods }) },
-    customer: { id: input.customer.id, name: input.customer.name.slice(0, 255), email: input.customer.email },
+    customer: { id: input.customer.id, name: input.customer.name.slice(0, 255), ...(input.customer.email && { email: input.customer.email }) },
   });
   const payment = (json.response as { payment?: { url?: unknown; token_id?: unknown } } | undefined)?.payment;
   if (!res.ok || typeof payment?.url !== "string") {

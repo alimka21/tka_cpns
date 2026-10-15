@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { CreditCard, MessageSquareQuote, UserCheck } from "lucide-react";
 import { ApprovalSetting } from "@/components/admin/approval-setting";
+import { SupportWhatsappSetting } from "@/components/admin/support-whatsapp-setting";
 import { TestimonialsSetting } from "@/components/admin/testimonials-setting";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -12,7 +13,11 @@ export const metadata: Metadata = { title: "Pengaturan Sistem" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPengaturanPage() {
-  const [requireApproval, testimonials] = await Promise.all([getSetting("registration.requireApproval"), getSetting("landing.testimonials")]);
+  const [requireApproval, testimonials, supportWhatsapp] = await Promise.all([
+    getSetting("registration.requireApproval"),
+    getSetting("landing.testimonials"),
+    getSetting("support.whatsapp"),
+  ]);
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
       <PageHeader title="Pengaturan Sistem" description="Aturan pendaftaran, akses, dan konten halaman depan." />
@@ -22,6 +27,7 @@ export default async function AdminPengaturanPage() {
           <UserCheck className="size-5 text-primary" aria-hidden /> Pendaftaran
         </h2>
         <ApprovalSetting enabled={requireApproval} />
+        <SupportWhatsappSetting initial={supportWhatsapp} />
         <Link href="/admin/users" className="w-fit text-sm font-semibold text-primary hover:underline">
           Buka Manajemen User
         </Link>

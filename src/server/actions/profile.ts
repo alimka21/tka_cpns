@@ -1,12 +1,13 @@
 "use server";
 
-// Profil akun sendiri: nama tampilan (siswa & admin), jenjang (siswa, sekali saja), kata sandi.
+// Profil akun sendiri: nama tampilan, username & No. HP (siswa & admin), jenjang (siswa, sekali saja), kata sandi.
 
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
-import { and, eq, isNull } from "drizzle-orm";
+import { and, eq, isNull, ne } from "drizzle-orm";
 import { isAPIError } from "better-auth/api";
 import { z } from "zod";
+import { optionalPhoneSchema, usernameSchema } from "@/lib/identity";
 import { auth } from "@/server/auth";
 import { getActiveSession } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -43,6 +44,35 @@ export async function updateMyNameAction(name: string): Promise<{ ok: true; name
   // Nama tampil di header siswa & panel admin.
   revalidatePath("/", "layout");
   return { ok: true, name: parsed.data };
+}
+
+const contactInput = z.object({ username: usernameSchema, phone: optionalPhoneSchema });
+
+/** Ubah username (wajib, unik) & No. HP (opsional) — keduanya bisa dipakai untuk masuk. */
+export async function updateMyContactAction(
+  input: z.input<typeof contactInput>,
+): Promise<{ ok: true; username: string; phone: string | null } | { ok: false; error: string }> {
+  const session = await getActiveSession();
+  if (!session) return { ok: false, error: "Sesi berakhir atau akun belum aktif." };
+  const parsed = contactInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const { username, phone } = parsed.data;
+  const userId = Number(session.user.id);
+  const [taken] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.username, username), ne(users.id, userId)));
+  if (taken) return { ok: false, error: "Username sudah dipakai. Coba yang lain." };
+  try {
+    await db.update(users).set({ username, phone }).where(eq(users.id, userId));
+  } catch (error) {
+    if (typeof error === "object" && error && "code" in error && (error as { code: string }).code === "ER_DUP_ENTRY") {
+      return { ok: false, error: "Username sudah dipakai. Coba yang lain." };
+    }
+    throw error;
+  }
+  revalidatePath("/", "layout");
+  return { ok: true, username, phone };
 }
 
 const passwordInput = z.object({

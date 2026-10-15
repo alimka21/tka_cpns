@@ -48,6 +48,7 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-15 (2):** masuk dengan username / No. HP / email (satu kolom), daftar tanpa email (username wajib, HP opsional), lupa kata sandi → tombol WhatsApp admin (nomor diatur di Pengaturan Sistem), admin reset → kirim sandi sementara via WA ke No. HP tercatat, ubah username/HP di Pengaturan & Manajemen User. Migrasi 0020 (backfill username akun lama) — jalankan `npm run prod:migrate` setelah deploy, lalu isi No. WA admin.
 **2026-10-15:** unduh paket tes (PDF) — tombol unduh di kartu paket dashboard; Premium → lembar cetak A4 `/unduh/[id]` (kop + petunjuk, tanpa sampul & tanpa kunci, nama pengunduh di kaki halaman); akun gratis → popup ajakan Premium. Perbaikan `db:dev:sync` (kolom JSON).
 **2026-10-14:** paket #49 SMA Matematika kini 14/25 berbasis stimulus (6 gambar + stimulus grup baru) — semua aturan & saran OK. Backup otomatis database (WORKFLOW §14).
 **2026-10-13 (2):** SEO — halaman materi publik `/tka/[jenjang]/[mapel]` dari kerangka asesmen, JSON-LD, sitemap 32 URL, metadata & canonical. Langkah Search Console: WORKFLOW §13.

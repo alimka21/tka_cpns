@@ -19,6 +19,8 @@ export type Testimonial = z.infer<typeof testimonialSchema>;
 const SETTINGS = {
   /** Pendaftar baru (siswa) berstatus `pending` sampai dikonfirmasi admin. */
   "registration.requireApproval": { schema: z.boolean(), default: false },
+  /** No. WhatsApp admin (`628…`) untuk tombol "Hubungi admin" di Lupa kata sandi. "" = belum diatur. */
+  "support.whatsapp": { schema: z.string().regex(/^(628\d{7,11})?$/), default: "" },
   "landing.testimonials": { schema: z.array(testimonialSchema).max(12), default: [] as Testimonial[] },
 } as const;
 

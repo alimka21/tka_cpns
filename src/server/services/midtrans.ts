@@ -94,7 +94,7 @@ export async function createSnapTransaction(input: {
   orderCode: string;
   amount: number;
   itemName: string;
-  customer: { name: string; email: string };
+  customer: { name: string; email?: string };
   finishUrl: string;
 }): Promise<{ token: string; redirectUrl: string }> {
   const enabled = midtransEnabledPayments();
@@ -103,7 +103,7 @@ export async function createSnapTransaction(input: {
     body: JSON.stringify({
       transaction_details: { order_id: input.orderCode, gross_amount: input.amount },
       item_details: [{ id: input.orderCode.slice(0, 50), price: input.amount, quantity: 1, name: input.itemName.slice(0, 50) }],
-      customer_details: { first_name: input.customer.name.slice(0, 255), email: input.customer.email },
+      customer_details: { first_name: input.customer.name.slice(0, 255), ...(input.customer.email && { email: input.customer.email }) },
       callbacks: { finish: input.finishUrl },
       expiry: { unit: "hours", duration: 24 },
       ...(enabled.length > 0 && { enabled_payments: enabled }),

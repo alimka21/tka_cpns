@@ -1,11 +1,13 @@
 import { z } from "zod";
+import { optionalPhoneSchema, usernameSchema } from "@/lib/identity";
 
 // Dipakai form client & (nanti) handler Better Auth di server.
 
 const email = z.string().trim().toLowerCase().email("Format email tidak valid.");
 
 export const signInInput = z.object({
-  email,
+  // Username, No. HP, atau email — diterjemahkan ke email di server (server/auth hooks).
+  identifier: z.string().trim().min(1, "Isi username, nomor HP, atau email.").max(255),
   password: z.string().min(1, "Kata sandi wajib diisi."),
 });
 
@@ -20,7 +22,10 @@ export const signUpInput = z
   .object({
     name: z.string().trim().min(2, "Nama minimal 2 karakter.").max(255),
     jenjang: z.enum(["SD", "SMP", "SMA"], "Pilih jenjangmu."),
-    email,
+    username: usernameSchema,
+    phone: optionalPhoneSchema,
+    // Opsional: siswa tanpa email tetap bisa daftar (masuk dengan username / No. HP).
+    email: z.string().trim().toLowerCase().pipe(z.union([z.literal(""), z.email("Format email tidak valid.")])),
     password: newPassword,
     confirmPassword: z.string(),
   })

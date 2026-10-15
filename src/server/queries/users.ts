@@ -1,4 +1,5 @@
 import { and, count, desc, eq, isNull, like, not, or, sql, type SQL } from "drizzle-orm";
+import { normalizePhone } from "@/lib/identity";
 import type { UserFilters } from "@/lib/user-filters";
 import { USERS_PAGE_SIZE } from "@/lib/user-filters";
 import { db } from "@/server/db";
@@ -8,6 +9,8 @@ export type AdminUserRow = {
   id: number;
   name: string;
   email: string;
+  username: string | null;
+  phone: string | null;
   role: "student" | "admin";
   jenjang: "SD" | "SMP" | "SMA" | null;
   status: "active" | "pending" | "rejected";
@@ -29,8 +32,10 @@ export type AdminUsersPage = {
 export async function listUsersAdmin(f: UserFilters = {}): Promise<AdminUsersPage> {
   const hasEntitlement = sql`exists (select 1 from ${entitlements} where ${entitlements.userId} = ${users.id})`;
   const term = f.q ? `%${f.q.replace(/[%_\\]/g, (c) => `\\${c}`)}%` : null;
+  // "0812 3456…" dicari sebagai 62812… (bentuk tersimpan).
+  const phoneTerm = f.q ? normalizePhone(f.q) : null;
   const base = [
-    term && or(like(users.name, term), like(users.email, term)),
+    term && or(like(users.name, term), like(users.email, term), like(users.username, term), phoneTerm ? like(users.phone, `${phoneTerm}%`) : undefined),
     f.role && eq(users.role, f.role),
     f.jenjang && (f.jenjang === "none" ? isNull(users.jenjang) : eq(users.jenjang, f.jenjang)),
     f.akses && (f.akses === "premium" ? hasEntitlement : not(hasEntitlement)),
@@ -44,6 +49,8 @@ export async function listUsersAdmin(f: UserFilters = {}): Promise<AdminUsersPag
         id: users.id,
         name: users.name,
         email: users.email,
+        username: users.username,
+        phone: users.phone,
         role: users.role,
         jenjang: users.jenjang,
         status: users.status,

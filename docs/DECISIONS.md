@@ -12,6 +12,30 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-15 — Masuk dengan username / No. HP; lupa sandi via WhatsApp admin
+Keputusan: kolom login tunggal "Username / No. HP / Email". `hooks.before`
+Better Auth di `/sign-in/email` menerjemahkan username/No. HP → email akun,
+jadi rate limit, cookie & pesan error tetap jalur bawaan. Daftar: username
+wajib (3–20, a-z0-9_. , minimal 1 huruf supaya tak tertukar dengan HP), No. HP
+& email opsional. Tanpa email → email pengganti `u<hex>@tanpa-email.pakartka.invalid`
+(`lib/identity`; disembunyikan di UI, tidak dikirimi email, tidak dikirim ke
+Midtrans/DOKU). `users.phone` (bentuk `628…`) TIDAK unik — boleh nomor orang
+tua untuk kakak-adik; nomor milik >1 akun ditolak saat login (`PHONE_SHARED`,
+"masuk dengan username"). Username & HP hanya diubah lewat server action
+(Pengaturan siswa / dialog admin); `/update-user` diblokir. Migrasi 0020
+mengisi username akun lama dari depan email (kembar/pendek → `.id`).
+Lupa sandi: tombol WA ke nomor admin (`app_settings.support.whatsapp`,
+diatur di Pengaturan Sistem) dengan pesan terisi; admin reset → tombol
+"Kirim lewat WhatsApp" ke No. HP tercatat. Aturan verifikasi: kata sandi
+sementara hanya dikirim ke No. HP tercatat; akun tanpa HP diverifikasi
+dulu (nama, sekolah, guru).
+Alasan: siswa SD/SMP banyak yang belum punya/ingat email; SMTP belum ada.
+Alternatif yang ditolak: plugin `username`/`phoneNumber` Better Auth (endpoint
+login terpisah, kolom `displayUsername`, phoneNumber butuh OTP SMS berbayar);
+`users.email` nullable (melawan skema Better Auth); HP unik (menolak HP
+orang tua bersama). Menyusul: siswa tanpa email belum bisa menambah email
+sendiri (perlu alur verifikasi email).
+
 ## 2026-10-15 — Unduh paket tes = lembar cetak browser, bukan PDF server
 Keputusan: "Unduh PDF" membuka `/unduh/[id]` (layout A4 + CSS `@page`) lalu
 `window.print()` → Simpan sebagai PDF. Hanya Premium (membership/admin);

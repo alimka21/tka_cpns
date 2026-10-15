@@ -4,6 +4,7 @@
 
 import { randomBytes } from "node:crypto";
 import { and, asc, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
+import { PLACEHOLDER_EMAIL_DOMAIN, visibleEmail } from "@/lib/identity";
 import { db } from "@/server/db";
 import { memberships, orders, plans, users, type JenjangCode, type OrderStatus } from "@/server/db/schema";
 import { createCheckout, DokuError, getOrderStatus } from "./doku";
@@ -77,7 +78,7 @@ export async function createOrder(
               orderCode,
               amount: plan.price,
               itemName: plan.name,
-              customer: { name: user.name, email: user.email },
+              customer: { name: user.name, email: visibleEmail(user.email) ?? undefined },
               finishUrl,
             })
           ).redirectUrl
@@ -86,7 +87,7 @@ export async function createOrder(
               invoiceNumber: orderCode,
               amount: plan.price,
               itemName: plan.name,
-              customer: { id: String(user.id), name: user.name, email: user.email },
+              customer: { id: String(user.id), name: user.name, email: visibleEmail(user.email) ?? undefined },
               callbackUrl: finishUrl,
             })
           ).url;
@@ -212,9 +213,12 @@ export async function planSalesStats() {
   return new Map(rows.map((r) => [r.planId, { paid: Number(r.paid), revenue: Number(r.revenue), pending: Number(r.pending) }]));
 }
 
+/** Kontak di daftar admin: email, atau @username untuk akun tanpa email. */
+const userContact = sql<string>`CASE WHEN ${users.email} LIKE ${`%@${PLACEHOLDER_EMAIL_DOMAIN}`} THEN CONCAT('@', ${users.username}) ELSE ${users.email} END`;
+
 export async function listOrdersAdmin(limit = 100) {
   return db
-    .select({ order: orders, userName: users.name, userEmail: users.email })
+    .select({ order: orders, userName: users.name, userEmail: userContact })
     .from(orders)
     .innerJoin(users, eq(users.id, orders.userId))
     .orderBy(desc(orders.createdAt))
@@ -222,9 +226,10 @@ export async function listOrdersAdmin(limit = 100) {
 }
 
 /** Admin memberi Premium manual (mis. kerja sama sekolah). */
-export async function grantManualMembership(adminId: number, email: string, jenjang: JenjangCode | null, durationDays: number | null): Promise<Result> {
-  const [user] = await db.select({ id: users.id }).from(users).where(eq(users.email, email.trim().toLowerCase()));
-  if (!user) return { ok: false, error: "Email tidak terdaftar." };
+export async function grantManualMembership(adminId: number, emailOrUsername: string, jenjang: JenjangCode | null, durationDays: number | null): Promise<Result> {
+  const key = emailOrUsername.trim().toLowerCase().replace(/^@/, "");
+  const [user] = await db.select({ id: users.id }).from(users).where(key.includes("@") ? eq(users.email, key) : eq(users.username, key));
+  if (!user) return { ok: false, error: "Email/username tidak terdaftar." };
   const active = await getActiveMembership(user.id, jenjang);
   const window = membershipWindow(new Date(), active?.jenjang === jenjang ? active?.endsAt : null, durationDays);
   await db.insert(memberships).values({ userId: user.id, jenjang, ...window, grantedBy: "admin_manual", grantedByUserId: adminId });
@@ -238,7 +243,7 @@ export async function revokeMembership(membershipId: number) {
 export async function listActiveMembershipsAdmin() {
   const now = new Date();
   return db
-    .select({ m: memberships, userName: users.name, userEmail: users.email })
+    .select({ m: memberships, userName: users.name, userEmail: userContact })
     .from(memberships)
     .innerJoin(users, eq(users.id, memberships.userId))
     .where(and(isNull(memberships.revokedAt), or(isNull(memberships.endsAt), gt(memberships.endsAt, now))))

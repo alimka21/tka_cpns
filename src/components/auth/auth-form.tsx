@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, CircleCheck, Eye, EyeOff, Info, Lock, Mail, User, type LucideIcon } from "lucide-react";
+import { ArrowRight, AtSign, CircleCheck, Eye, EyeOff, Info, Lock, Mail, Phone, User, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { JenjangPicker } from "@/components/profile/jenjang-picker";
 import { Button } from "@/components/ui/button";
@@ -20,7 +20,11 @@ type Errors = Partial<Record<string, string>>;
 
 // Kode error Better Auth → pesan Bahasa Indonesia.
 const AUTH_ERRORS: Record<string, string> = {
-  INVALID_EMAIL_OR_PASSWORD: "Email atau kata sandi salah.",
+  INVALID_EMAIL_OR_PASSWORD: "Username/nomor HP/email atau kata sandi salah.",
+  PHONE_SHARED: "Nomor HP ini dipakai beberapa akun. Masuk dengan username.",
+  USERNAME_TAKEN: "Username sudah dipakai. Coba yang lain.",
+  INVALID_USERNAME: "Username tidak valid.",
+  INVALID_PHONE: "Nomor HP tidak valid.",
   USER_ALREADY_EXISTS: "Email ini sudah terdaftar. Silakan masuk.",
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "Email ini sudah terdaftar. Silakan masuk.",
   PASSWORD_TOO_SHORT: "Kata sandi minimal 8 karakter.",
@@ -41,7 +45,7 @@ const OAUTH_ERRORS: Record<string, string> = {
 const copy = {
   signin: {
     title: "Masuk ke Akun",
-    subtitle: "Masukkan email dan kata sandi untuk melanjutkan latihan.",
+    subtitle: "Masuk dengan username, nomor HP, atau email untuk melanjutkan latihan.",
     submit: "Masuk",
     switchText: "Belum punya akun?",
     switchLabel: "Daftar sekarang",
@@ -116,10 +120,18 @@ export function AuthForm({
     setErrors({});
     setNotice(null);
     setPending(true);
-    const { email, password } = parsed.data;
+    const { password } = parsed.data;
+    // Username/No. HP dikirim di kolom `email`; server menerjemahkannya (server/auth hooks).
     const { data, error } = signUp?.success
-      ? await authClient.signUp.email({ name: signUp.data.name, email, password, jenjang: signUp.data.jenjang })
-      : await authClient.signIn.email({ email, password });
+      ? await authClient.signUp.email({
+          name: signUp.data.name,
+          email: signUp.data.email,
+          password,
+          jenjang: signUp.data.jenjang,
+          username: signUp.data.username,
+          phone: signUp.data.phone ?? undefined,
+        })
+      : await authClient.signIn.email({ email: (parsed.data as { identifier: string }).identifier, password });
     if (error) {
       setPending(false);
       setNotice(
@@ -159,7 +171,7 @@ export function AuthForm({
             <p className="mt-2 text-center text-xs text-muted-foreground">Tanpa kata sandi — jenjang dipilih setelah masuk.</p>
           )}
           <div className="mt-6 flex items-center gap-3 text-xs text-muted-foreground">
-            <span className="h-px flex-1 bg-border" /> atau dengan email <span className="h-px flex-1 bg-border" />
+            <span className="h-px flex-1 bg-border" /> {mode === "signin" ? "atau dengan username" : "atau buat akun"} <span className="h-px flex-1 bg-border" />
           </div>
         </>
       )}
@@ -187,9 +199,69 @@ export function AuthForm({
             )}
           </div>
         )}
-        <Field id="email" label="Alamat email" icon={Mail} error={errors.email}>
-          <Input id="email" name="email" type="email" autoComplete="email" placeholder="nama@email.com" className="pl-10" aria-invalid={!!errors.email} aria-describedby={errors.email ? "email-error" : undefined} />
-        </Field>
+        {mode === "signin" ? (
+          <Field id="identifier" label="Username / No. HP / Email" icon={User} error={errors.identifier}>
+            <Input
+              id="identifier"
+              name="identifier"
+              autoComplete="username"
+              autoCapitalize="none"
+              spellCheck={false}
+              placeholder="Contoh: rina.k atau 0812…"
+              className="pl-10"
+              aria-invalid={!!errors.identifier}
+              aria-describedby={errors.identifier ? "identifier-error" : undefined}
+            />
+          </Field>
+        ) : (
+          <>
+            <Field id="username" label="Username" icon={AtSign} error={errors.username} hint="Dipakai untuk masuk. 3–20 huruf kecil/angka, boleh titik & garis bawah.">
+              <Input
+                id="username"
+                name="username"
+                autoComplete="username"
+                autoCapitalize="none"
+                spellCheck={false}
+                maxLength={20}
+                placeholder="Contoh: rina.k"
+                className="pl-10"
+                aria-invalid={!!errors.username}
+                aria-describedby={errors.username ? "username-error" : "username-hint"}
+              />
+            </Field>
+            <Field
+              id="phone"
+              label="No. HP / WhatsApp (opsional)"
+              icon={Phone}
+              error={errors.phone}
+              hint="Boleh nomor orang tua. Dipakai admin untuk mengirim kata sandi baru bila kamu lupa."
+            >
+              <Input
+                id="phone"
+                name="phone"
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel"
+                placeholder="0812 3456 7890"
+                className="pl-10"
+                aria-invalid={!!errors.phone}
+                aria-describedby={errors.phone ? "phone-error" : "phone-hint"}
+              />
+            </Field>
+            <Field id="email" label="Email (opsional)" icon={Mail} error={errors.email} hint="Boleh dikosongkan bila belum punya email.">
+              <Input
+                id="email"
+                name="email"
+                type="email"
+                autoComplete="email"
+                placeholder="nama@email.com"
+                className="pl-10"
+                aria-invalid={!!errors.email}
+                aria-describedby={errors.email ? "email-error" : "email-hint"}
+              />
+            </Field>
+          </>
+        )}
         <Field
           id="password"
           label="Kata sandi"

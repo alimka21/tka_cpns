@@ -4,6 +4,7 @@
 // service & halaman ujian) — jangan pernah kirim hasilnya utuh ke client.
 
 import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
+import { visibleEmail } from "@/lib/identity";
 import { db } from "@/server/db";
 import {
   attempts,
@@ -329,16 +330,21 @@ export async function hasEntitlement(userId: number, testPackageId: number) {
   return Boolean(row);
 }
 
+/** Label kontak di daftar admin: email asli, atau @username untuk akun tanpa email. */
+function contactLabel(email: string, username: string | null) {
+  return visibleEmail(email) ?? (username ? `@${username}` : "—");
+}
+
 export type EntitledUser = { id: number; name: string; email: string; grantedAt: string };
 
 export async function listEntitledUsers(testPackageId: number): Promise<EntitledUser[]> {
   const rows = await db
-    .select({ id: users.id, name: users.name, email: users.email, grantedAt: entitlements.grantedAt })
+    .select({ id: users.id, name: users.name, email: users.email, username: users.username, grantedAt: entitlements.grantedAt })
     .from(entitlements)
     .innerJoin(users, eq(users.id, entitlements.userId))
     .where(eq(entitlements.testPackageId, testPackageId))
     .orderBy(desc(entitlements.grantedAt));
-  return rows.map((r) => ({ ...r, grantedAt: r.grantedAt.toISOString() }));
+  return rows.map(({ username, ...r }) => ({ ...r, email: contactLabel(r.email, username), grantedAt: r.grantedAt.toISOString() }));
 }
 
 export type UserSearchResult = { id: number; name: string; email: string };
@@ -348,9 +354,10 @@ export async function searchUsers(query: string, limit = 8): Promise<UserSearchR
   const q = query.trim();
   if (q.length < 2) return [];
   const like_ = `%${q}%`;
-  return db
-    .select({ id: users.id, name: users.name, email: users.email })
+  const rows = await db
+    .select({ id: users.id, name: users.name, email: users.email, username: users.username })
     .from(users)
-    .where(or(like(users.name, like_), like(users.email, like_)))
+    .where(or(like(users.name, like_), like(users.email, like_), like(users.username, like_)))
     .limit(limit);
+  return rows.map(({ username, ...r }) => ({ ...r, email: contactLabel(r.email, username) }));
 }

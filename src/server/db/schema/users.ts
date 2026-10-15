@@ -22,8 +22,17 @@ export type UserStatus = (typeof USER_STATUSES)[number];
 export const users = mysqlTable("users", {
   id: int("id").autoincrement().primaryKey(),
   name: varchar("name", { length: 255 }).notNull(),
+  /** Siswa tanpa email memakai alamat pengganti `@tanpa-email.pakartka.invalid` (lib/identity). */
   email: varchar("email", { length: 255 }).notNull().unique(),
   emailVerified: boolean("email_verified").notNull().default(false),
+  /** Untuk masuk selain email (huruf kecil, lib/identity). NULL = akun Google yang belum membuatnya. */
+  username: varchar("username", { length: 20 }).unique(),
+  /**
+   * No. HP/WA bentuk `628…` — boleh milik orang tua, jadi TIDAK unik (kakak-adik
+   * bisa sama). Tujuan admin mengirim kata sandi baru; masuk dengan nomor HP
+   * hanya bila nomor itu milik satu akun.
+   */
+  phone: varchar("phone", { length: 16 }),
   image: text("image"),
   role: mysqlEnum("role", ["student", "admin"]).notNull().default("student"),
   /** Jenjang siswa — menentukan paket tes, soal & kurikulum. NULL = belum memilih (akun lama). */
@@ -39,6 +48,7 @@ export const users = mysqlTable("users", {
   // Badge "menunggu konfirmasi" di setiap halaman admin + tab status.
   index("users_status_idx").on(t.status),
   index("users_created_at_idx").on(t.createdAt),
+  index("users_phone_idx").on(t.phone),
 ]);
 
 export const sessions = mysqlTable(

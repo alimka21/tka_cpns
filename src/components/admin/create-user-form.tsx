@@ -17,22 +17,26 @@ function randomPassword() {
   return Array.from(bytes, (b) => chars[b % chars.length]).join("");
 }
 
-/** Admin membuatkan akun siswa: nama, email, jenjang, kata sandi awal. */
+/** Admin membuatkan akun siswa: nama, username, No. HP & email (opsional), jenjang, kata sandi awal. */
 export function CreateUserForm() {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [jenjang, setJenjang] = useState<Jenjang | null>(null);
   const [password, setPassword] = useState("");
   const [show, setShow] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [created, setCreated] = useState<{ email: string; password: string } | null>(null);
+  const [created, setCreated] = useState<{ username: string; password: string } | null>(null);
   const [copied, setCopied] = useState(false);
   const [pending, startTransition] = useTransition();
 
   const reset = () => {
     setName("");
+    setUsername("");
+    setPhone("");
     setEmail("");
     setJenjang(null);
     setPassword("");
@@ -56,8 +60,8 @@ export function CreateUserForm() {
             Tambah akun siswa
           </h2>
           <p className="text-sm text-muted-foreground">
-            Akun langsung aktif. Berikan email &amp; kata sandi awal ke siswa — siswa bisa menggantinya sendiri di
-            Pengaturan.
+            Akun langsung aktif. Berikan username &amp; kata sandi awal ke siswa — siswa bisa masuk dengan username,
+            No. HP, atau email, dan mengganti kata sandi di Pengaturan.
           </p>
         </div>
         <Button variant="ghost" size="sm" aria-label="Tutup" onClick={() => { setOpen(false); reset(); setCreated(null); }}>
@@ -71,7 +75,7 @@ export function CreateUserForm() {
             <CircleCheck className="size-4" aria-hidden /> Akun dibuat.
           </span>
           <span>
-            Email: <strong>{created.email}</strong> · Kata sandi: <code className="rounded bg-card px-1.5 py-0.5">{created.password}</code>
+            Username: <strong>{created.username}</strong> · Kata sandi: <code className="rounded bg-card px-1.5 py-0.5">{created.password}</code>
           </span>
           <span className="text-xs text-muted-foreground">
             Kata sandi ini hanya tampil sekarang — salin dan berikan ke siswa. Sistem tidak menyimpan kata sandi dalam bentuk teks.
@@ -81,11 +85,11 @@ export function CreateUserForm() {
             size="sm"
             className="w-fit"
             onClick={async () => {
-              await navigator.clipboard.writeText(`Email: ${created.email}\nKata sandi: ${created.password}`);
+              await navigator.clipboard.writeText(`Username: ${created.username}\nKata sandi: ${created.password}`);
               setCopied(true);
             }}
           >
-            <Copy aria-hidden /> {copied ? "Tersalin" : "Salin email & kata sandi"}
+            <Copy aria-hidden /> {copied ? "Tersalin" : "Salin username & kata sandi"}
           </Button>
         </div>
       )}
@@ -97,9 +101,9 @@ export function CreateUserForm() {
           setError(null);
           if (!jenjang) return setError("Pilih jenjang siswa.");
           startTransition(async () => {
-            const r = await createUserAction({ name, email, jenjang, password });
+            const r = await createUserAction({ name, username, phone, email, jenjang, password });
             if (!r.ok) return setError(r.error);
-            setCreated({ email: email.trim().toLowerCase(), password });
+            setCreated({ username: username.trim().toLowerCase(), password });
             setCopied(false);
             reset();
             router.refresh();
@@ -112,8 +116,25 @@ export function CreateUserForm() {
             <Input id="new-user-name" value={name} maxLength={100} autoComplete="off" required onChange={(e) => setName(e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5">
-            <Label htmlFor="new-user-email">Email</Label>
-            <Input id="new-user-email" type="email" value={email} maxLength={255} autoComplete="off" required onChange={(e) => setEmail(e.target.value)} />
+            <Label htmlFor="new-user-username">Username</Label>
+            <Input
+              id="new-user-username"
+              value={username}
+              maxLength={20}
+              autoComplete="off"
+              autoCapitalize="none"
+              placeholder="Contoh: rina.k"
+              required
+              onChange={(e) => setUsername(e.target.value)}
+            />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="new-user-phone">No. HP / WhatsApp (opsional)</Label>
+            <Input id="new-user-phone" type="tel" value={phone} placeholder="Boleh nomor orang tua" autoComplete="off" onChange={(e) => setPhone(e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="new-user-email">Email (opsional)</Label>
+            <Input id="new-user-email" type="email" value={email} maxLength={255} autoComplete="off" onChange={(e) => setEmail(e.target.value)} />
           </div>
         </div>
 

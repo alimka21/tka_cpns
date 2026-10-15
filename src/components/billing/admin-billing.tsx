@@ -44,8 +44,8 @@ export function GrantMembershipForm() {
       }}
     >
       <label className="flex flex-col gap-1 text-xs font-semibold">
-        Email siswa
-        <Input type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder="siswa@email.com" className="h-9" />
+        Email / username siswa
+        <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="siswa@email.com / username" className="h-9" />
       </label>
       <label className="flex flex-col gap-1 text-xs font-semibold">
         Jenjang

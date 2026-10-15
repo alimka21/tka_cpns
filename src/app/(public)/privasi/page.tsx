@@ -18,7 +18,9 @@ const sections: LegalSection[] = [
         <p>Kami hanya mengumpulkan data yang diperlukan untuk menjalankan layanan latihan TKA:</p>
         <ul>
           <li>
-            <strong>Data akun:</strong> nama, alamat email, jenjang (SD/SMP/SMA), dan kata sandi. Kata sandi disimpan dalam bentuk
+            <strong>Data akun:</strong> nama, username, jenjang (SD/SMP/SMA), kata sandi, serta alamat email dan nomor HP/WhatsApp bila
+            kamu mengisinya (keduanya opsional; nomor HP boleh milik orang tua/wali). Nomor HP hanya dipakai untuk masuk dan agar admin
+            dapat mengirim kata sandi baru saat kamu lupa — tidak untuk promosi. Kata sandi disimpan dalam bentuk
             terenkripsi satu arah (hash) sehingga tidak dapat dibaca oleh siapa pun, termasuk admin.
           </li>
           <li>

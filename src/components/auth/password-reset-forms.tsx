@@ -49,7 +49,8 @@ function rateLimited(status?: number) {
   return status === 429 ? "Terlalu banyak permintaan. Tunggu 15 menit lalu coba lagi." : null;
 }
 
-export function ForgotPasswordForm() {
+/** `children`: bantuan lain di bawah form (mis. tombol WhatsApp admin). */
+export function ForgotPasswordForm({ children }: { children?: React.ReactNode }) {
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
@@ -133,6 +134,7 @@ export function ForgotPasswordForm() {
           {pending ? "Mengirim…" : "Kirim tautan reset"} {!pending && <ArrowRight aria-hidden />}
         </Button>
       </form>
+      {children && <div className="mt-6">{children}</div>}
       <BackToSignIn />
     </div>
   );

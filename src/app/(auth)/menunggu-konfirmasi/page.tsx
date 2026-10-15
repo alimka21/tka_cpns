@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { Clock, XCircle } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "@/components/brand/logo";
+import { visibleEmail } from "@/lib/identity";
 import { getSession, homeFor } from "@/server/auth/session";
 
 export const metadata: Metadata = { title: "Menunggu Konfirmasi" };
@@ -27,7 +28,7 @@ export default async function MenungguKonfirmasiPage() {
             ? "Admin belum dapat menyetujui pendaftaran akun ini. Hubungi pihak sekolah/penyelenggara bila menurutmu ini keliru."
             : `Halo ${session.user.name}, pendaftaranmu sudah kami terima. Admin akan memeriksa dan mengaktifkan akunmu — coba masuk lagi nanti.`}
         </p>
-        <p className="mt-3 text-xs text-muted-foreground">{session.user.email}</p>
+        <p className="mt-3 text-xs text-muted-foreground">{visibleEmail(session.user.email) ?? `@${session.user.username}`}</p>
       </div>
       <SignOutButton className="border" />
     </div>

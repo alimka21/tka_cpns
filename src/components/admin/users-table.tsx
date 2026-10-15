@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight, Clock, Copy, KeyRound, Crown, GraduationCap, Search, Settings, Trash2, Users, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, Copy, KeyRound, Crown, GraduationCap, MessageCircle, Pencil, Search, Settings, Trash2, TriangleAlert, Users, X } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -27,8 +27,18 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { formatDate } from "@/lib/format";
+import { formatPhone, visibleEmail, whatsappLink } from "@/lib/identity";
+import { SITE_NAME } from "@/lib/site";
+import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
-import { approveAllPendingAction, deleteUserAction, resetUserPasswordAction, setUserJenjangAction, setUserStatusAction } from "@/server/actions/users";
+import {
+  approveAllPendingAction,
+  deleteUserAction,
+  resetUserPasswordAction,
+  setUserContactAction,
+  setUserJenjangAction,
+  setUserStatusAction,
+} from "@/server/actions/users";
 import { USERS_PAGE_SIZE, usersHref, type UserFilters } from "@/lib/user-filters";
 import type { AdminUserRow, AdminUsersPage } from "@/server/queries/users";
 
@@ -153,7 +163,7 @@ export function UsersTable({
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama atau email…"
+              placeholder="Cari nama, username, email, atau No. HP…"
               aria-label="Cari user"
               maxLength={100}
               className="pl-10"
@@ -230,6 +240,7 @@ export function UsersTable({
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <span className="inline-flex items-center gap-1">
+                      <EditContact user={user} />
                       <ResetPassword user={user} disabled={user.id === currentUserId} />
                       <DeleteUser user={user} disabled={user.id === currentUserId} />
                     </span>
@@ -247,7 +258,8 @@ export function UsersTable({
               <div className="flex items-start justify-between gap-3">
                 <UserIdentity user={user} />
                 <span className="flex items-center gap-1">
-                  <ResetPassword user={user} disabled={user.id === currentUserId} />
+                  <EditContact user={user} />
+                      <ResetPassword user={user} disabled={user.id === currentUserId} />
                   <DeleteUser user={user} disabled={user.id === currentUserId} />
                 </span>
               </div>
@@ -303,9 +315,88 @@ function UserIdentity({ user }: { user: AdminUserRow }) {
         <div className="flex items-center gap-2 font-semibold">
           <span className="truncate">{user.name}</span>
         </div>
-        <div className="truncate text-xs text-muted-foreground">{user.email}</div>
+        <div className="truncate text-xs text-muted-foreground">
+          {[user.username && `@${user.username}`, visibleEmail(user.email), user.phone && formatPhone(user.phone)].filter(Boolean).join(" · ")}
+        </div>
       </div>
     </div>
+  );
+}
+
+/** Label singkat user di dialog: email asli, atau @username untuk akun tanpa email. */
+function contactOf(user: AdminUserRow) {
+  return visibleEmail(user.email) ?? (user.username ? `@${user.username}` : "tanpa email");
+}
+
+/** Admin mengubah username & No. HP (mis. siswa minta reset tapi belum mencatat nomor). */
+function EditContact({ user }: { user: AdminUserRow }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [username, setUsername] = useState(user.username ?? "");
+  const [phone, setPhone] = useState(formatPhone(user.phone));
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) {
+          setUsername(user.username ?? "");
+          setPhone(formatPhone(user.phone));
+          setError(null);
+        }
+      }}
+    >
+      <AlertDialogTrigger
+        render={
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            title="Ubah username & No. HP"
+            aria-label={`Ubah username & No. HP ${user.name}`}
+            className="text-muted-foreground hover:text-primary"
+          >
+            <Pencil aria-hidden />
+          </Button>
+        }
+      />
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Username & No. HP {user.name}</AlertDialogTitle>
+          <AlertDialogDescription>Keduanya bisa dipakai untuk masuk. No. HP juga tujuan pengiriman kata sandi baru.</AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`username-${user.id}`}>Username</Label>
+            <Input id={`username-${user.id}`} value={username} maxLength={20} autoComplete="off" onChange={(e) => setUsername(e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`phone-${user.id}`}>No. HP / WhatsApp</Label>
+            <Input id={`phone-${user.id}`} type="tel" value={phone} placeholder="Kosongkan bila tidak ada" onChange={(e) => setPhone(e.target.value)} />
+          </div>
+          {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={pending}
+            onClick={(e) => {
+              e.preventDefault();
+              startTransition(async () => {
+                const r = await setUserContactAction({ userId: user.id, username, phone });
+                if (!r.ok) return setError(r.error);
+                setOpen(false);
+                router.refresh();
+              });
+            }}
+          >
+            {pending ? "Menyimpan…" : "Simpan"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
   );
 }
 
@@ -362,8 +453,8 @@ function ResetPassword({ user, disabled }: { user: AdminUserRow; disabled?: bool
             <AlertDialogHeader>
               <AlertDialogTitle>Kata sandi sementara {user.name}</AlertDialogTitle>
               <AlertDialogDescription>
-                Berikan kata sandi ini ke {user.email}. Kata sandi <strong>hanya ditampilkan sekarang</strong> — tidak
-                disimpan dan tidak bisa dilihat lagi. Minta user menggantinya di Profil setelah masuk.
+                Berikan kata sandi ini ke {contactOf(user)}. Kata sandi <strong>hanya ditampilkan sekarang</strong> — tidak
+                disimpan dan tidak bisa dilihat lagi. Minta user menggantinya di Pengaturan setelah masuk.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <div className="flex items-center gap-2 rounded-lg border bg-muted/50 p-3">
@@ -381,6 +472,26 @@ function ResetPassword({ user, disabled }: { user: AdminUserRow; disabled?: bool
                 <Copy aria-hidden /> {copied ? "Tersalin" : "Salin"}
               </Button>
             </div>
+            {user.phone && (
+              <Button
+                className="w-full"
+                nativeButton={false}
+                render={
+                  <a
+                    href={whatsappLink(
+                      user.phone,
+                      `Halo ${user.name}, kata sandi akun ${SITE_NAME} kamu sudah diatur ulang.\n` +
+                        `${user.username ? `Username: ${user.username}\n` : ""}Kata sandi sementara: ${password}\n\n` +
+                        "Segera ganti kata sandi di menu Pengaturan setelah masuk.",
+                    )}
+                    target="_blank"
+                    rel="noreferrer"
+                  />
+                }
+              >
+                <MessageCircle aria-hidden /> Kirim lewat WhatsApp ke {formatPhone(user.phone)}
+              </Button>
+            )}
             <AlertDialogFooter>
               <AlertDialogCancel>Selesai</AlertDialogCancel>
             </AlertDialogFooter>
@@ -390,8 +501,21 @@ function ResetPassword({ user, disabled }: { user: AdminUserRow; disabled?: bool
             <AlertDialogHeader>
               <AlertDialogTitle>Atur ulang kata sandi?</AlertDialogTitle>
               <AlertDialogDescription>
-                Sistem membuat kata sandi sementara baru untuk {user.name} ({user.email}). Kata sandi lama langsung tidak
+                Sistem membuat kata sandi sementara baru untuk {user.name} ({contactOf(user)}). Kata sandi lama langsung tidak
                 berlaku dan user dikeluarkan dari semua perangkat.
+                <span className="mt-3 flex gap-2 rounded-lg border border-warning/40 bg-warning-soft p-2.5 text-warning-strong">
+                  <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden />
+                  <span>
+                    {user.phone ? (
+                      <>
+                        Pastikan permintaan datang dari No. HP tercatat <strong>{formatPhone(user.phone)}</strong>, dan kirim kata sandi
+                        hanya ke nomor itu.
+                      </>
+                    ) : (
+                      <>Akun ini belum punya No. HP. Pastikan identitasnya dulu (nama lengkap, sekolah, atau lewat guru) sebelum memberi kata sandi.</>
+                    )}
+                  </span>
+                </span>
                 {error && <span className="mt-2 block font-semibold text-destructive">{error}</span>}
               </AlertDialogDescription>
             </AlertDialogHeader>
@@ -443,7 +567,7 @@ function DeleteUser({ user, disabled }: { user: AdminUserRow; disabled?: boolean
         <AlertDialogHeader>
           <AlertDialogTitle>Hapus user ini?</AlertDialogTitle>
           <AlertDialogDescription>
-            {user.name} ({user.email}) akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.
+            {user.name} ({contactOf(user)}) akan dihapus permanen. Tindakan ini tidak bisa dibatalkan.
             {error && <span className="mt-2 block font-semibold text-destructive">{error}</span>}
           </AlertDialogDescription>
         </AlertDialogHeader>

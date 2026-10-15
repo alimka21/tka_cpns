@@ -30,6 +30,14 @@ updated_at
   bila pengaturan `registration.requireApproval` aktif saat daftar
   (Better Auth `databaseHooks.user.create.before`).
 
+**users** (tambahan 2026-10-15, migrasi 0020)
+- `username` varchar(20) unique nullable — huruf kecil a-z0-9_. , min. 1
+  huruf; dipakai masuk. NULL = akun Google yang belum membuatnya.
+- `phone` varchar(16) nullable, index (tidak unik) — bentuk `628…`, boleh
+  milik orang tua. Masuk via HP hanya bila nomor milik satu akun.
+- Akun tanpa email: `email` = `u<hex>@tanpa-email.pakartka.invalid`
+  (`lib/identity.isPlaceholderEmail`). DECISIONS 2026-10-15.
+
 **plans** — paket langganan Premium (admin): name, description, jenjang
 (NULL = semua), price (harga jual yang dibayar, Rupiah), normal_price (harga normal
 dicoret, opsional, > price; migrasi 0018), duration_days (NULL = selamanya),

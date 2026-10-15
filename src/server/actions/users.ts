@@ -1,13 +1,16 @@
 "use server";
 
-// Kelola user (admin): tambah akun siswa, hapus, setujui/tolak pendaftar, ubah jenjang, dan
+// Kelola user (admin): tambah akun siswa, hapus, setujui/tolak pendaftar, ubah jenjang,
+// username/No. HP, kontak WA admin, dan
 // pengaturan konfirmasi pendaftar. Ubah role SENGAJA tidak ada di sini — hanya lewat
 // `npm run user:role` (docs/DECISIONS.md 2026-09-25), supaya menjadikan
 // admin selalu lewat jalur yang jelas & tercatat di terminal, bukan klik UI.
 
 import { revalidatePath } from "next/cache";
-import { and, eq, inArray } from "drizzle-orm";
+import { randomBytes } from "node:crypto";
+import { and, eq, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
+import { PLACEHOLDER_EMAIL_DOMAIN, isPlaceholderEmail, optionalPhoneSchema, usernameSchema } from "@/lib/identity";
 import { auth } from "@/server/auth";
 import { getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -38,6 +41,10 @@ export async function deleteUserAction(userId: number): Promise<ActionResult> {
   return { ok: true };
 }
 
+function isDupError(error: unknown) {
+  return typeof error === "object" && error !== null && "code" in error && (error as { code: string }).code === "ER_DUP_ENTRY";
+}
+
 const NOT_ADMIN = { ok: false as const, error: "Sesi admin berakhir. Silakan masuk lagi." };
 const id = z.number().int().positive();
 
@@ -46,11 +53,15 @@ const createUserInput = z.object({
     .string()
     .transform((v) => v.trim().replace(/\s+/g, " "))
     .pipe(z.string().min(2, "Nama minimal 2 karakter.").max(100, "Nama maksimal 100 karakter.")),
+  username: usernameSchema,
+  // Opsional: siswa tanpa email masuk dengan username / No. HP.
   email: z
     .string()
     .trim()
     .toLowerCase()
-    .pipe(z.email("Format email tidak valid.").max(255)),
+    .pipe(z.union([z.literal(""), z.email("Format email tidak valid.").max(255)]))
+    .refine((v) => !isPlaceholderEmail(v), "Format email tidak valid."),
+  phone: optionalPhoneSchema,
   jenjang: z.enum(JENJANG_CODES, "Pilih jenjang SD, SMP, atau SMA."),
   password: z.string().min(8, "Kata sandi minimal 8 karakter.").max(128, "Kata sandi maksimal 128 karakter."),
 });
@@ -66,8 +77,11 @@ export async function createUserAction(input: unknown): Promise<ActionResult> {
   if (!session) return NOT_ADMIN;
   const parsed = createUserInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-  const { name, email, jenjang, password } = parsed.data;
+  const { name, username, phone, jenjang, password } = parsed.data;
+  const email = parsed.data.email || `u${randomBytes(8).toString("hex")}@${PLACEHOLDER_EMAIL_DOMAIN}`;
 
+  const [usernameTaken] = await db.select({ id: users.id }).from(users).where(eq(users.username, username));
+  if (usernameTaken) return { ok: false, error: "Username sudah dipakai." };
   const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.email, email));
   if (taken) return { ok: false, error: "Email ini sudah terdaftar." };
 
@@ -76,15 +90,13 @@ export async function createUserAction(input: unknown): Promise<ActionResult> {
     await db.transaction(async (tx) => {
       const [{ id: userId }] = await tx
         .insert(users)
-        .values({ name, email, jenjang, role: "student", status: "active", emailVerified: false })
+        .values({ name, email, username, phone, jenjang, role: "student", status: "active", emailVerified: false })
         .$returningId();
       await tx.insert(accounts).values({ userId, accountId: String(userId), providerId: "credential", password: hash });
     });
   } catch (error) {
-    // Dua admin membuat email yang sama bersamaan.
-    if (typeof error === "object" && error && "code" in error && (error as { code: string }).code === "ER_DUP_ENTRY") {
-      return { ok: false, error: "Email ini sudah terdaftar." };
-    }
+    // Dua admin membuat email/username yang sama bersamaan.
+    if (isDupError(error)) return { ok: false, error: "Email atau username ini sudah terdaftar." };
     throw error;
   }
   revalidatePath("/admin/users");
@@ -125,6 +137,28 @@ export async function setUserJenjangAction(input: { userId: number; jenjang: str
   return { ok: true };
 }
 
+/** Admin mengubah username / No. HP user (mis. sebelum mengirim kata sandi baru lewat WA). */
+export async function setUserContactAction(input: { userId: number; username: string; phone: string }): Promise<ActionResult> {
+  const session = await getAdminSession();
+  if (!session) return NOT_ADMIN;
+  const parsed = z.object({ userId: id, username: usernameSchema, phone: optionalPhoneSchema }).safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const { userId, username, phone } = parsed.data;
+  const [taken] = await db
+    .select({ id: users.id })
+    .from(users)
+    .where(and(eq(users.username, username), ne(users.id, userId)));
+  if (taken) return { ok: false, error: "Username sudah dipakai." };
+  try {
+    await db.update(users).set({ username, phone }).where(eq(users.id, userId));
+  } catch (error) {
+    if (isDupError(error)) return { ok: false, error: "Username sudah dipakai." };
+    throw error;
+  }
+  revalidatePath("/admin/users");
+  return { ok: true };
+}
+
 export async function setRequireApprovalAction(enabled: boolean): Promise<ActionResult> {
   const session = await getAdminSession();
   if (!session) return NOT_ADMIN;
@@ -132,6 +166,19 @@ export async function setRequireApprovalAction(enabled: boolean): Promise<Action
   revalidatePath("/admin/pengaturan");
   revalidatePath("/admin/users");
   return { ok: true };
+}
+
+/** No. WA admin untuk "Lupa kata sandi" — kosong = tombol WhatsApp disembunyikan. */
+export async function setSupportWhatsappAction(raw: string): Promise<ActionResult<{ phone: string }>> {
+  const session = await getAdminSession();
+  if (!session) return NOT_ADMIN;
+  const parsed = optionalPhoneSchema.safeParse(raw);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const phone = parsed.data ?? "";
+  await setSetting("support.whatsapp", phone, Number(session.user.id));
+  revalidatePath("/admin/pengaturan");
+  revalidatePath("/lupa-kata-sandi");
+  return { ok: true, phone };
 }
 
 /**

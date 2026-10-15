@@ -25,6 +25,12 @@ export const testPackages = mysqlTable("test_packages", {
   subjectId: int("subject_id").references(() => subjects.id),
   durationMinutes: int("duration_minutes").notNull(),
   isPremium: boolean("is_premium").notNull().default(true),
+  /**
+   * Simulasi penuh = meniru tes resmi: durasi WAJIB sama dengan durasi regulasi
+   * (lib/package-rules). Paket lain (mis. drill per subtopik) durasinya bebas —
+   * selisih durasi hanya peringatan.
+   */
+  isFullSimulation: boolean("is_full_simulation").notNull().default(false),
   status: mysqlEnum("status", PACKAGE_STATUSES).notNull().default("draft"),
   createdBy: int("created_by")
     .notNull()

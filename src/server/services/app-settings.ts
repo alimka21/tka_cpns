@@ -3,6 +3,7 @@
 
 import { eq } from "drizzle-orm";
 import { z } from "zod";
+import { DEFAULT_SCORING_CONVERSION, scoringConversionSchema } from "@/lib/scoring-config";
 import { db } from "@/server/db";
 import { appSettings } from "@/server/db/schema";
 
@@ -21,6 +22,8 @@ const SETTINGS = {
   "registration.requireApproval": { schema: z.boolean(), default: false },
   /** No. WhatsApp admin (`628…`) untuk tombol "Hubungi admin" di Lupa kata sandi. "" = belum diatur. */
   "support.whatsapp": { schema: z.string().regex(/^(628\d{7,11})?$/), default: "" },
+  /** Rumus konversi skor mentah → nilai skala (lib/scoring-config). */
+  "scoring.conversion": { schema: scoringConversionSchema, default: DEFAULT_SCORING_CONVERSION },
   "landing.testimonials": { schema: z.array(testimonialSchema).max(12), default: [] as Testimonial[] },
 } as const;
 

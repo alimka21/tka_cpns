@@ -7,7 +7,9 @@ import {
   mysqlTable,
   timestamp,
   uniqueIndex,
+  varchar,
 } from "drizzle-orm/mysql-core";
+import { SCORE_SCALES } from "@/lib/score-scale";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { subtopics } from "./content";
 import { jsonText } from "./json-text";
@@ -31,9 +33,17 @@ export const attempts = mysqlTable("attempts", {
   endsAt: timestamp("ends_at").notNull(),
   submittedAt: timestamp("submitted_at"),
   status: mysqlEnum("status", ATTEMPT_STATUSES).notNull().default("in_progress"),
-  /** Diisi saat finalize (submit atau auto-expire). */
+  /** Skor MENTAH (jumlah poin benar & maksimum) — diisi saat finalize (submit atau auto-expire). */
   totalScore: int("total_score"),
   maxScore: int("max_score"),
+  /**
+   * Nilai skala (docs/PENSKORAN-DAN-PELAPORAN-TKA.md §1), dibekukan saat finalize:
+   * skala dari jenjang paket, nilai 2 desimal (string desimal, bukan float), dan
+   * versi rumus konversi yang dipakai (services/scoring-config.ts).
+   */
+  scoreScale: mysqlEnum("score_scale", SCORE_SCALES),
+  scaledScore: decimal("scaled_score", { precision: 6, scale: 2 }),
+  scoringConfigVersion: varchar("scoring_config_version", { length: 64 }),
 }, (t) => [
   // Lanjutkan attempt berjalan & riwayat per paket (user + paket + status).
   index("attempts_user_pkg_status_idx").on(t.userId, t.testPackageId, t.status),

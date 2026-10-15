@@ -36,6 +36,7 @@ tugas saat ini. Urutan baca yang disarankan:
 | `docs/AI_GENERATION.md` | Generate soal AI (admin) & latihan adaptif per siswa (diagnosa, progres) | Saat kerja fitur AI, Gemini, diagnosa kelemahan, latihan |
 | `docs/ATURAN_PAKET.md` | Aturan resmi paket tes: jumlah soal, durasi, rasio bentuk soal per jenjang & mapel | Saat membuat/menyusun paket tes atau soal |
 | `docs/UI_UX.md` | Design tokens, komponen, peta layar Stitch → kode | Sebelum membuat/mengubah UI |
+| `docs/PENSKORAN-DAN-PELAPORAN-TKA.md` | Regulasi skor (Kepmendikdasmen 56/2026): skala 0–100 vs 200–800, kategori capaian, predikat istimewa, durasi resmi | Saat kerja penskoran, halaman hasil, analisis capaian, skema `attempts`, durasi paket |
 | `asesmen/README.md` | Kerangka asesmen TKA (JSON) = sumber hierarki konten & kode subdomain | Saat kerja soal, import, AI generate, analisis |
 
 Kalau salah satu file di atas belum ada, itu berarti belum dibuat —

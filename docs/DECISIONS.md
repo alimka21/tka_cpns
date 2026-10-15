@@ -12,6 +12,26 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-15 — Paket 6 SMA Matematika, B. Indonesia, B. Inggris (#52–#54, draf, ditulis Claude)
+Semua soal baru (`generated_by` manual, `pending_review`, stimulus `draft`), diimpor
+lewat `scripts/import-package.ts` (validasi impor Excel + kerangka + aturan paket;
+dry run dulu, `--commit` dalam satu transaksi). Tema bacaan dipilih yang belum ada di bank.
+- **#52 Matematika** (soal #1447–#1471, stimulus #201–#205): tabungan & deposito
+  (deret, bunga majemuk), katering (program linear, fungsi ongkos kirim), taman
+  segitiga (Pythagoras, luas, trigonometri, sudut elevasi), motif batik (transformasi,
+  kesebangunan), data waktu membaca (data kelompok, peluang) + 5 soal tunggal.
+  15 PG · 6 MCMA · 4 Kategori, 10/10 subtopik, L1 20% · L3 32%, 20/25 berbasis stimulus.
+  Hitungan dicek skrip, 272 rumus KaTeX valid.
+- **#53 B. Indonesia** (soal #1472–#1501, stimulus #206–#211): eksplanasi mikroplastik,
+  cerpen "Sepatu untuk Laras", berita fiktif alat peringatan banjir, prosedur kompos
+  Takakura, drama "Jala yang Robek", dua pandangan sekolah lima hari. 18 PG · 6 MCMA ·
+  6 Kategori, 11/11 subtopik, mudah 20% · sulit 30%. Data survei berlabel ilustratif.
+- **#54 B. Inggris** (soal #1502–#1531, stimulus #212–#217): narrative kite, explanation
+  fireflies, notice robotics (fiktif), exposition cooking lessons, recount animal shelter,
+  artikel + tabel motor listrik. 18 PG · 7 MCMA · 5 Kategori, 17/17 subtopik, tiap
+  bacaan lintas subtopik, pembahasan berbahasa Inggris.
+Ketiganya lolos semua aturan wajib & saran (dicek ulang `packageRuleReport` di produksi).
+
 ## 2026-10-15 — Masuk dengan username / No. HP; lupa sandi via WhatsApp admin
 Keputusan: kolom login tunggal "Username / No. HP / Email". `hooks.before`
 Better Auth di `/sign-in/email` menerjemahkan username/No. HP → email akun,

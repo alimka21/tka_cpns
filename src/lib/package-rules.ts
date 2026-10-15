@@ -15,7 +15,7 @@ export type SubjectOutline = { code: string; name: string; subtopics: { code: st
  * Jumlah soal (ketetapan pemilik produk) & durasi (Kepmendikdasmen 56/2026,
  * docs/PENSKORAN-DAN-PELAPORAN-TKA.md §4) per mata pelajaran:
  * - SD & SMP: Matematika 30 soal/75 menit, Bahasa Indonesia 30 soal/75 menit.
- * - SMA/SMK: Bahasa Indonesia 30/60, Bahasa Inggris 30/50,
+ * - SMA/SMK: Bahasa Indonesia 30/60, Bahasa Inggris 25/50,
  *   Matematika (& Numerasi) 25/70, mapel pilihan masing-masing 25/50.
  * Durasi = default paket baru; wajib sama hanya untuk paket simulasi penuh.
  */
@@ -29,7 +29,8 @@ export function packageRuleFor(jenjang: string, subject: SubjectInfo): PackageRu
   if (jenjang === "SMA") {
     if (subject.type === "pilihan") return { questionCount: 25, durationMinutes: 50, label: "Mata pelajaran pilihan" };
     if (code === "SMA-BIND") return { questionCount: 30, durationMinutes: 60, label: "Bahasa Indonesia" };
-    if (code === "SMA-BING") return { questionCount: 30, durationMinutes: 50, label: "Bahasa Inggris" };
+    // 25 soal (bukan 30): 50 menit regulasi → 120 detik/soal (DECISIONS 2026-10-16).
+    if (code === "SMA-BING") return { questionCount: 25, durationMinutes: 50, label: "Bahasa Inggris" };
     if (code === "SMA-MTK") return { questionCount: 25, durationMinutes: 70, label: "Matematika & Numerasi" };
     return null;
   }

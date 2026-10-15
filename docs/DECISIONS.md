@@ -53,6 +53,24 @@ Acuan: docs/PENSKORAN-DAN-PELAPORAN-TKA.md. Migrasi 0021 (hanya menambah, idempo
   dan mata uji pilihan ke-20 *Teori Kompetensi Kejuruan* — kerangka asesmen
   (domain/subdomain) belum terbit, sedangkan setiap soal wajib tertaut ke
   subdomain. Penanda asal butir TKA/AN juga dilewati (opsional).
+- **Diterapkan di produksi (2026-10-16)** setelah backup: migrasi 0019–0021 +
+  `prod:db:rescore` (10 attempt SMA). Durasi semua paket bermapel disamakan
+  dengan regulasi dan ditandai simulasi penuh (SMA BIND 60, MTK 70, BING &
+  pilihan 50; SD/SMP tetap 75). **B. Inggris SMA jadi 25 soal** (50 menit →
+  120 dtk/soal; kurangi soal, bukan tambah waktu): satu bacaan utuh dikeluarkan
+  dari paket (#38 "Why Teenagers Need Enough Sleep", #45 "Riverside Clean-Up
+  Day", #46 "Nusantara Science Center", #51 "Digital Learning: A Classroom
+  Revolution?", #54 "Schools Should Teach Cooking"); #16 (grup 6 soal) keluar 1
+  soal per grup (#177, #182, #189, #194, #202). Soal tetap di bank. Hanya paket
+  tanpa attempt yang dikurangi soalnya — halaman hasil menghitung ulang dari isi
+  paket saat ini. Semua tetap 17/17 subtopik & lolos aturan; #16 masih tanpa
+  soal sulit (sudah begitu sejak impor PDF).
+- **Ambang internal awal** (`is_official` = false): Memadai ≥ 50% dan Baik ≥
+  75% setara rumus linear → 0–100: 50,00 / 75,00; 200–800: 500,00 / 650,00.
+  Sama dengan batas diagnosa (Cukup 50%, Kuat 75%) supaya tidak bertentangan.
+  Ditinjau ulang bila data sudah ratusan attempt. Catatan: dengan rumus linear,
+  Istimewa SMA (725) = 87,5% benar vs SD/SMP 95% — bila ingin setara, tambah
+  jangkar 95% → 725 pada rumus SMA (belum dilakukan).
 Alternatif yang ditolak: mengubah `total_score` jadi desimal skala (kehilangan
 skor mentah); menghitung nilai skala saat tampil saja (nilai lama ikut berubah
 bila rumus diganti); ambang kategori bawaan kode (menebak angka resmi).

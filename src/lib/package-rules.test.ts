@@ -15,7 +15,7 @@ describe("packageRuleFor", () => {
   });
   it("SMA: durasi regulasi BIND 60, BING 50, MTK 70, pilihan 50", () => {
     expect(packageRuleFor("SMA", { code: "SMA-BIND", type: "wajib" })).toMatchObject({ questionCount: 30, durationMinutes: 60 });
-    expect(packageRuleFor("SMA", { code: "SMA-BING", type: "wajib" })).toMatchObject({ questionCount: 30, durationMinutes: 50 });
+    expect(packageRuleFor("SMA", { code: "SMA-BING", type: "wajib" })).toMatchObject({ questionCount: 25, durationMinutes: 50 });
     expect(packageRuleFor("SMA", { code: "SMA-MTK", type: "wajib" })).toMatchObject({ questionCount: 25, durationMinutes: 70 });
     expect(packageRuleFor("SMA", { code: "SMA-FIS", type: "pilihan" })).toMatchObject({ questionCount: 25, durationMinutes: 50 });
     expect(packageRuleFor("SMA", { code: "SMA-MTK-L", type: "pilihan" })).toMatchObject({ questionCount: 25, durationMinutes: 50 });

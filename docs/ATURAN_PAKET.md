@@ -15,7 +15,7 @@ berlaku sejak 2026-10-16 (sebelumnya SMA 75/75/75, pilihan 60):
   sama dengan regulasi (memblokir terbit).
 - Paket lain (mis. drill per subtopik): durasi bebas, selisih hanya
   **peringatan**. Soal terlalu padat diperbaiki dengan mengurangi soal,
-  bukan menambah waktu.
+  bukan menambah waktu — karena itu B. Inggris SMA 25 soal (sebelumnya 30).
 
 | Jenjang | Mata pelajaran | Soal | Durasi |
 |---|---|---|---|
@@ -24,7 +24,7 @@ berlaku sejak 2026-10-16 (sebelumnya SMA 75/75/75, pilihan 60):
 | SMP | Matematika | 30 | 75 menit |
 | SMP | Bahasa Indonesia | 30 | 75 menit |
 | SMA/SMK | Bahasa Indonesia | 30 | 60 menit |
-| SMA/SMK | Bahasa Inggris | 30 | 50 menit |
+| SMA/SMK | Bahasa Inggris | 25 | 50 menit |
 | SMA/SMK | Matematika & Numerasi | 25 | 70 menit |
 | SMA/SMK | Mata pelajaran pilihan 1 & 2 (semua mapel `pilihan`) | 25 per mapel | 50 menit per mapel |
 

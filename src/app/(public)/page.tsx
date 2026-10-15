@@ -508,7 +508,7 @@ function HeroPreview() {
   return (
     <div
       role="img"
-      aria-label="Contoh tampilan hasil: skor 72 dari 100, subtopik terlemah Pecahan dengan akurasi 38 persen"
+      aria-label="Contoh tampilan hasil: nilai 72,00 dari 100, subtopik terlemah Pecahan dengan akurasi 38 persen"
       className="surface-card relative mx-auto w-full max-w-md p-6 shadow-xl lg:ml-auto"
     >
       <div className="flex items-start justify-between">
@@ -519,7 +519,7 @@ function HeroPreview() {
         <span className="rounded-full bg-success-soft px-2.5 py-0.5 text-xs font-semibold text-success">Selesai</span>
       </div>
       <div className="mt-5 flex items-baseline gap-2">
-        <span className="text-5xl font-extrabold text-primary">72</span>
+        <span className="text-5xl font-extrabold text-primary">72,00</span>
         <span className="text-muted-foreground">/ 100</span>
       </div>
       <div className="mt-6 flex flex-col gap-3">

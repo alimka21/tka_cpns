@@ -11,6 +11,7 @@ export async function packageRuleReport(p: {
   categoryId: number;
   subjectId: number | null | undefined;
   durationMinutes: number;
+  isFullSimulation: boolean;
   questionIds: number[];
 }): Promise<PackageRuleReport> {
   const [cat] = await db.select({ code: categories.code }).from(categories).where(eq(categories.id, p.categoryId));
@@ -41,6 +42,7 @@ export async function packageRuleReport(p: {
     // Mapel dari jenjang lain dianggap tidak dipilih.
     subject: subject && subject.categoryId === p.categoryId ? { code: subject.code, type: subject.type } : null,
     durationMinutes: p.durationMinutes,
+    isFullSimulation: p.isFullSimulation,
     questions: rows.map((r) => ({ type: r.type, subjectCode: r.subjectCode, subtopicCode: r.subtopicCode, stimulusKey: r.stimulusId, hasImage: r.imageUrl != null, difficulty: r.difficulty, cognitiveLevel: r.cognitiveLevel })),
     outline,
   });

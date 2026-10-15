@@ -4,7 +4,10 @@
 // mencakup mis. "admin mengimpor soal").
 
 import { and, desc, eq, gte, sql } from "drizzle-orm";
+import type { ScoreView } from "@/lib/score-display";
 import { db } from "@/server/db";
+import { buildScoreView } from "@/server/services/score-view";
+import { getThresholdsByScale } from "./achievement-thresholds";
 import { attempts, categories, entitlements, questions, testPackages, users } from "@/server/db/schema";
 
 export type AdminStats = {
@@ -70,7 +73,7 @@ export type RecentAttempt = {
   userName: string;
   packageTitle: string;
   jenjang: string;
-  score: number;
+  score: ScoreView;
   submittedAt: string;
 };
 
@@ -83,6 +86,8 @@ export async function getRecentAttempts(limit = 8): Promise<RecentAttempt[]> {
       jenjang: categories.code,
       totalScore: attempts.totalScore,
       maxScore: attempts.maxScore,
+      scoreScale: attempts.scoreScale,
+      scaledScore: attempts.scaledScore,
       submittedAt: attempts.submittedAt,
     })
     .from(attempts)
@@ -92,12 +97,13 @@ export async function getRecentAttempts(limit = 8): Promise<RecentAttempt[]> {
     .where(eq(attempts.status, "submitted"))
     .orderBy(desc(attempts.submittedAt))
     .limit(limit);
+  const thresholds = await getThresholdsByScale();
   return rows.map((r) => ({
     id: r.id,
     userName: r.userName,
     packageTitle: r.packageTitle,
     jenjang: r.jenjang,
-    score: r.maxScore ? Math.round(((r.totalScore ?? 0) / r.maxScore) * 100) : 0,
+    score: buildScoreView(r, thresholds),
     submittedAt: (r.submittedAt ?? new Date()).toISOString(),
   }));
 }

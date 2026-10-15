@@ -23,7 +23,10 @@ import { ScoreTrend } from "@/components/analytics/score-trend";
 import { SubtopicRadar } from "@/components/analytics/subtopic-radar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, formatRupiah, scoreTone } from "@/lib/format";
+import { AchievementBadge } from "@/components/analytics/achievement-badge";
+import { formatDateTime, formatRupiah, masteryTone } from "@/lib/format";
+import { formatScore, scoreDiff, SIMULATION_NOTE } from "@/lib/score-display";
+import { SCALE_LABEL, SCALE_RANGE } from "@/lib/score-scale";
 import { PremiumLock } from "@/components/billing/premium-lock";
 import { UpgradeModal } from "@/components/billing/upgrade-modal";
 import { canSeeFullResults } from "@/server/services/access";
@@ -272,8 +275,7 @@ function SummaryTab({
   const weakest = sorted[0];
   const strongest = sorted[sorted.length - 1];
   const firstScore = r.trend[0]?.score ?? r.score;
-  const delta = r.score - firstScore;
-  const tone = scoreTone(r.score);
+  const delta = scoreDiff(r.score, firstScore);
   return (
     <>
       {/* Skor utama */}
@@ -283,21 +285,29 @@ function SummaryTab({
       >
         <div className="flex flex-col items-start gap-2">
           <span className="text-sm font-medium text-muted-foreground">
-            Skor akhir
+            Nilai mata uji (skala {SCALE_LABEL[r.score.scale]})
           </span>
           <div className="flex items-baseline gap-2">
-            <span className="text-6xl font-extrabold tracking-tight text-primary">
-              {r.score}
+            <span className="text-6xl font-extrabold tracking-tight text-primary tabular-nums">
+              {formatScore(r.score.value)}
             </span>
-            <span className="text-lg text-muted-foreground">/ 100</span>
+            <span className="text-lg text-muted-foreground">/ {SCALE_RANGE[r.score.scale].max}</span>
           </div>
-          <Badge variant={tone.variant}>{tone.label}</Badge>
-          {delta !== 0 && r.trend.length > 1 && (
-            <span className="text-sm text-muted-foreground">
-              {delta > 0 ? "+" : ""}
-              {delta} poin dibanding percobaan pertama
-            </span>
+          <AchievementBadge score={r.score} />
+          <span className="text-sm text-muted-foreground tabular-nums">
+            Skor mentah {r.rawScore} dari {r.maxScore} poin
+          </span>
+          {delta && delta !== "0,00" && r.trend.length > 1 && (
+            <span className="text-sm text-muted-foreground tabular-nums">{delta} dibanding percobaan pertama</span>
           )}
+          <p className="max-w-xs text-xs text-muted-foreground">
+            {SIMULATION_NOTE}{" "}
+            {r.score.category
+              ? r.thresholdOfficial
+                ? "Kategori memakai ambang resmi."
+                : "Ambang kategori adalah ketetapan internal platform selama ambang resmi belum dipublikasikan."
+              : "Kategori Baik/Memadai/Kurang tampil setelah admin menetapkan ambangnya."}
+          </p>
         </div>
         <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
           <ResultStat
@@ -422,7 +432,7 @@ function SummaryTab({
           <div className="surface-card p-6">
             <h2 className="text-lg font-bold">Tren Skor Paket Ini</h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {r.trend.length} percobaan terakhir, skala 0–100.
+              {r.trend.length} percobaan terakhir, skala {SCALE_LABEL[r.score.scale]}.
             </p>
             <div className="mt-6">
               <ScoreTrend points={r.trend} />
@@ -433,7 +443,7 @@ function SummaryTab({
             <ol className="mt-4 flex flex-col divide-y">
               {[...r.trend].reverse().map((t, i, arr) => {
                 const prev = arr[i + 1];
-                const diff = prev ? t.score - prev.score : null;
+                const diff = prev ? scoreDiff(t.score, prev.score) : null;
                 return (
                   <li
                     key={`${t.label}-${i}`}
@@ -454,12 +464,10 @@ function SummaryTab({
                     </div>
                     <div className="text-right">
                       <div className="text-lg font-bold tabular-nums">
-                        {t.score}
+                        {formatScore(t.score.value)}
                       </div>
                       <div className="text-xs text-muted-foreground tabular-nums">
-                        {diff == null
-                          ? "Awal"
-                          : `${diff >= 0 ? "+" : ""}${diff} poin`}
+                        {diff == null ? "Awal" : diff}
                       </div>
                     </div>
                   </li>
@@ -551,19 +559,19 @@ function AnalysisTab({ r }: { r: AttemptResult }) {
           </div>
           <ul className="flex flex-wrap gap-2 text-xs">
             <li>
-              <Badge variant="success">≥75% Baik</Badge>
+              <Badge variant="success">≥75% Kuat</Badge>
             </li>
             <li>
               <Badge variant="warning">50–74% Cukup</Badge>
             </li>
             <li>
-              <Badge variant="danger">&lt;50% Perlu latihan</Badge>
+              <Badge variant="danger">&lt;50% Perlu Latihan</Badge>
             </li>
           </ul>
         </div>
         <ul className="mt-6 flex flex-col divide-y">
           {sorted.map((s) => {
-            const t = scoreTone(s.percentage);
+            const t = masteryTone(s.percentage);
             return (
               <li
                 key={s.subtopic}

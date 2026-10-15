@@ -82,6 +82,7 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
       categoryId: p.categoryId,
       subjectId: p.subjectId,
       durationMinutes: p.durationMinutes,
+      isFullSimulation: p.isFullSimulation,
       questionIds: p.questions.map((q) => q.questionId),
     });
     if (!report.publishable) return { ok: false, errors: ruleErrors(report) };
@@ -99,6 +100,7 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
           subjectId: p.subjectId ?? null,
           durationMinutes: p.durationMinutes,
           isPremium: p.isPremium,
+          isFullSimulation: p.isFullSimulation,
           status: p.status,
         })
         .where(eq(testPackages.id, packageId));
@@ -113,6 +115,7 @@ export async function savePackageAction(input: unknown & { id?: number }): Promi
           subjectId: p.subjectId ?? null,
           durationMinutes: p.durationMinutes,
           isPremium: p.isPremium,
+          isFullSimulation: p.isFullSimulation,
           status: p.status,
           createdBy: Number(session.user.id),
         })
@@ -164,7 +167,12 @@ export async function updatePackageStatusAction(input: {
     const orderErrors = validatePackageOrder(ids, bank);
     if (orderErrors.length > 0) return { ok: false, errors: orderErrors };
     const [pkg] = await db
-      .select({ categoryId: testPackages.categoryId, subjectId: testPackages.subjectId, durationMinutes: testPackages.durationMinutes })
+      .select({
+        categoryId: testPackages.categoryId,
+        subjectId: testPackages.subjectId,
+        durationMinutes: testPackages.durationMinutes,
+        isFullSimulation: testPackages.isFullSimulation,
+      })
       .from(testPackages)
       .where(eq(testPackages.id, input.id));
     if (!pkg) return { ok: false, errors: ["Paket tidak ditemukan."] };

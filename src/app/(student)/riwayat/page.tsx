@@ -3,7 +3,9 @@ import Link from "next/link";
 import { ArrowRight, BookOpenText, ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, scoreTone } from "@/lib/format";
+import { AchievementBadge } from "@/components/analytics/achievement-badge";
+import { formatDateTime } from "@/lib/format";
+import { formatScore } from "@/lib/score-display";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/session";
 import { listStudentHistory } from "@/server/queries/attempts";
@@ -111,7 +113,6 @@ export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat"
           ) : (
             <ul className="surface-card divide-y">
               {visible.map((item) => {
-                const tone = scoreTone(item.score);
                 return (
                   <li key={item.attemptId} className="flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:gap-6">
                     <div className="min-w-0 flex-1">
@@ -130,8 +131,8 @@ export default async function RiwayatPage({ searchParams }: PageProps<"/riwayat"
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="text-2xl font-bold tabular-nums">{item.score}</div>
-                        <Badge variant={tone.variant}>{tone.label}</Badge>
+                        <div className="text-2xl font-bold tabular-nums">{formatScore(item.score.value)}</div>
+                        <AchievementBadge score={item.score} showMissing={false} />
                       </div>
                       <div className="flex flex-col gap-1.5">
                         <Button size="sm" nativeButton={false} render={<Link href={`/hasil/${item.attemptId}`} />}>

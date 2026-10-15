@@ -32,6 +32,8 @@ type PackageData = {
   subjectCode: string;
   durationMinutes: number;
   isPremium: boolean;
+  /** Simulasi penuh → durasi wajib sama dengan regulasi (default false). */
+  isFullSimulation?: boolean;
   /** Id admin pembuat (questions.created_by, test_packages.created_by). */
   createdBy: number;
   stimuli: { code: string; title: string; content: string; imageUrl?: string }[];
@@ -75,6 +77,7 @@ async function main() {
     jenjang: data.jenjang,
     subject: { code: subject.code, type: subject.type },
     durationMinutes: data.durationMinutes,
+    isFullSimulation: data.isFullSimulation ?? false,
     outline,
     questions: linked.valid.map((r) => ({
       type: r.type,
@@ -148,6 +151,7 @@ async function main() {
         subjectId: subject.id,
         durationMinutes: data.durationMinutes,
         isPremium: data.isPremium,
+        isFullSimulation: data.isFullSimulation ?? false,
         status: "draft",
         createdBy: data.createdBy,
       })

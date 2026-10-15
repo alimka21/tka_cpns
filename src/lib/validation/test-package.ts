@@ -20,6 +20,8 @@ export const testPackageInput = z
       .min(1, "Durasi minimal 1 menit")
       .max(600, "Durasi maksimal 600 menit"),
     isPremium: z.boolean().default(true),
+    /** Simulasi penuh: durasi wajib sama dengan regulasi (lib/package-rules). */
+    isFullSimulation: z.boolean().default(false),
     status: z.enum(PACKAGE_STATUSES).default("draft"),
     questions: z.array(testPackageQuestionInput),
   })

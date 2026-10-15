@@ -4,7 +4,7 @@
 // - Akurasi dihitung dari ±20 soal TERBARU per subdomain (per attempt utuh,
 //   dari yang terbaru mundur) supaya kemajuan cepat terlihat.
 // - Status butuh minimal 3 soal; di bawah itu "data belum cukup".
-// - Ambang status sama dengan `scoreTone` (docs/UI_UX.md §3).
+// - Ambang status sama dengan `masteryTone` (docs/UI_UX.md §3).
 
 export type SubtopicRecord = {
   subtopicId: number;
@@ -28,7 +28,7 @@ export type HistoryPoint = {
   source: "test" | "practice" | null;
 };
 
-export type DiagnosisStatus = "insufficient" | "perlu_latihan" | "cukup" | "baik";
+export type DiagnosisStatus = "insufficient" | "perlu_latihan" | "cukup" | "kuat";
 
 export type SubtopicDiagnosis = {
   subtopicId: number;
@@ -52,7 +52,7 @@ export const HISTORY_LIMIT = 20;
 
 export function statusFor(accuracy: number, questions: number): DiagnosisStatus {
   if (questions < MIN_QUESTIONS) return "insufficient";
-  if (accuracy >= 75) return "baik";
+  if (accuracy >= 75) return "kuat";
   if (accuracy >= 50) return "cukup";
   return "perlu_latihan";
 }

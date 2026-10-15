@@ -4,9 +4,10 @@ import { ArrowRight, FileUp, Library, Package, Timer, Users } from "lucide-react
 import { ActivityBars } from "@/components/analytics/activity-bars";
 import { PageHeader } from "@/components/layout/page-header";
 import { StatCard } from "@/components/layout/stat-card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, scoreTone } from "@/lib/format";
+import { AchievementBadge } from "@/components/analytics/achievement-badge";
+import { formatDateTime } from "@/lib/format";
+import { formatScore } from "@/lib/score-display";
 import { getAdminStats, getAttemptsPerDay, getRecentAttempts } from "@/server/queries/admin-dashboard";
 
 export const metadata: Metadata = { title: "Dashboard Admin" };
@@ -112,7 +113,6 @@ export default async function AdminDashboardPage() {
                 </thead>
                 <tbody className="divide-y">
                   {recent.map((a) => {
-                    const tone = scoreTone(a.score);
                     return (
                       <tr key={a.id} className="hover:bg-muted/40">
                         <td className="px-6 py-4 font-semibold">{a.userName}</td>
@@ -121,7 +121,8 @@ export default async function AdminDashboardPage() {
                           <div className="text-xs text-muted-foreground">{a.jenjang}</div>
                         </td>
                         <td className="px-6 py-4">
-                          <Badge variant={tone.variant}>Skor {a.score}</Badge>
+                          <span className="mr-2 font-semibold tabular-nums">{formatScore(a.score.value)}</span>
+                          <AchievementBadge score={a.score} showMissing={false} />
                         </td>
                         <td className="px-6 py-4 text-right whitespace-nowrap text-muted-foreground">{formatDateTime(a.submittedAt)}</td>
                       </tr>
@@ -132,7 +133,6 @@ export default async function AdminDashboardPage() {
             </div>
             <ul className="divide-y border-t md:hidden">
               {recent.map((a) => {
-                const tone = scoreTone(a.score);
                 return (
                   <li key={a.id} className="flex flex-col gap-1.5 px-6 py-4">
                     <div className="flex items-center justify-between gap-2">
@@ -142,7 +142,10 @@ export default async function AdminDashboardPage() {
                     <div className="text-sm">
                       {a.packageTitle} · {a.jenjang}
                     </div>
-                    <Badge variant={tone.variant}>Skor {a.score}</Badge>
+                    <span className="flex items-center gap-2 text-sm">
+                      <span className="font-semibold tabular-nums">Nilai {formatScore(a.score.value)}</span>
+                      <AchievementBadge score={a.score} showMissing={false} />
+                    </span>
                   </li>
                 );
               })}

@@ -27,22 +27,24 @@ export function formatDate(iso: string) {
 export type ScoreTone = { variant: "success" | "warning" | "danger"; label: string };
 
 /**
- * Kategori penguasaan untuk skor/persentase 0–100 (docs/UI_UX.md §3):
- * ≥75 baik, 50–74 cukup, <50 perlu latihan.
+ * Tingkat penguasaan untuk PERSENTASE benar 0–100 (subtopik, latihan;
+ * docs/UI_UX.md §3): ≥75 kuat, 50–74 cukup, <50 perlu latihan.
+ * Kosakatanya sengaja berbeda dari kategori capaian resmi Baik/Memadai/Kurang,
+ * yang HANYA dipakai untuk nilai per mata uji (lib/score-display).
  */
-export function scoreTone(percentage: number): ScoreTone {
-  if (percentage >= 75) return { variant: "success", label: "Baik" };
+export function masteryTone(percentage: number): ScoreTone {
+  if (percentage >= 75) return { variant: "success", label: "Kuat" };
   if (percentage >= 50) return { variant: "warning", label: "Cukup" };
-  return { variant: "danger", label: "Perlu latihan" };
+  return { variant: "danger", label: "Perlu Latihan" };
 }
 
-export type DiagnosisStatusKey = "untested" | "insufficient" | "perlu_latihan" | "cukup" | "baik";
+export type DiagnosisStatusKey = "untested" | "insufficient" | "perlu_latihan" | "cukup" | "kuat";
 
 /** Label & warna status diagnosa per subdomain (docs/AI_GENERATION.md §4). */
 export const DIAGNOSIS_STATUS: Record<DiagnosisStatusKey, { label: string; variant: "success" | "warning" | "danger" | "muted" | "outline" }> = {
-  baik: { label: "Baik", variant: "success" },
+  kuat: { label: "Kuat", variant: "success" },
   cukup: { label: "Cukup", variant: "warning" },
-  perlu_latihan: { label: "Perlu latihan", variant: "danger" },
+  perlu_latihan: { label: "Perlu Latihan", variant: "danger" },
   insufficient: { label: "Data belum cukup", variant: "outline" },
   untested: { label: "Belum diuji", variant: "muted" },
 };

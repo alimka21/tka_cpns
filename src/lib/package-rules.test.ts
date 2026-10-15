@@ -13,12 +13,12 @@ describe("packageRuleFor", () => {
       expect(packageRuleFor(j, { code: `${j}-BIND`, type: "wajib" })).toMatchObject({ questionCount: 30, durationMinutes: 75 });
     }
   });
-  it("SMA: BIND & BING 30/75, MTK 25/75, pilihan 25/60", () => {
-    expect(packageRuleFor("SMA", { code: "SMA-BIND", type: "wajib" })).toMatchObject({ questionCount: 30, durationMinutes: 75 });
-    expect(packageRuleFor("SMA", { code: "SMA-BING", type: "wajib" })).toMatchObject({ questionCount: 30, durationMinutes: 75 });
-    expect(packageRuleFor("SMA", { code: "SMA-MTK", type: "wajib" })).toMatchObject({ questionCount: 25, durationMinutes: 75 });
-    expect(packageRuleFor("SMA", { code: "SMA-FIS", type: "pilihan" })).toMatchObject({ questionCount: 25, durationMinutes: 60 });
-    expect(packageRuleFor("SMA", { code: "SMA-MTK-L", type: "pilihan" })).toMatchObject({ questionCount: 25, durationMinutes: 60 });
+  it("SMA: durasi regulasi BIND 60, BING 50, MTK 70, pilihan 50", () => {
+    expect(packageRuleFor("SMA", { code: "SMA-BIND", type: "wajib" })).toMatchObject({ questionCount: 30, durationMinutes: 60 });
+    expect(packageRuleFor("SMA", { code: "SMA-BING", type: "wajib" })).toMatchObject({ questionCount: 30, durationMinutes: 50 });
+    expect(packageRuleFor("SMA", { code: "SMA-MTK", type: "wajib" })).toMatchObject({ questionCount: 25, durationMinutes: 70 });
+    expect(packageRuleFor("SMA", { code: "SMA-FIS", type: "pilihan" })).toMatchObject({ questionCount: 25, durationMinutes: 50 });
+    expect(packageRuleFor("SMA", { code: "SMA-MTK-L", type: "pilihan" })).toMatchObject({ questionCount: 25, durationMinutes: 50 });
   });
   it("rentang PG 50–60%", () => {
     expect(pgRange(30)).toEqual({ min: 15, max: 18 });
@@ -36,13 +36,23 @@ describe("checkPackageRules", () => {
 
   it("jumlah, durasi, rasio PG, & mapel lain → gagal dengan pesan jelas", () => {
     const qs = [...make({ pg: 20, mcma: 5, kat: 3 }, "SD-MTK"), ...make({ pg: 0, mcma: 0, kat: 1 }, "SD-BIND")];
-    const r = checkPackageRules({ jenjang: "SD", subject: { code: "SD-MTK", type: "wajib" }, durationMinutes: 60, questions: qs });
+    const r = checkPackageRules({ jenjang: "SD", subject: { code: "SD-MTK", type: "wajib" }, durationMinutes: 60, isFullSimulation: true, questions: qs });
     expect(r.publishable).toBe(false);
     const msg = ruleErrors(r).join(" ");
     expect(msg).toMatch(/29 dari 30/);
     expect(msg).toMatch(/60 menit/);
     expect(msg).toMatch(/20 soal PG/);
     expect(msg).toMatch(/1 soal dari mata pelajaran lain/);
+  });
+
+  it("durasi berbeda dari regulasi: peringatan untuk paket biasa, blokir untuk simulasi penuh", () => {
+    const qs = make({ pg: 17, mcma: 7, kat: 6 }, "SD-MTK");
+    const drill = checkPackageRules({ jenjang: "SD", subject: { code: "SD-MTK", type: "wajib" }, durationMinutes: 40, questions: qs });
+    expect(drill.publishable).toBe(true);
+    expect(drill.recommended.find((c) => c.label.startsWith("Durasi"))?.ok).toBe(false);
+    const full = checkPackageRules({ jenjang: "SD", subject: { code: "SD-MTK", type: "wajib" }, durationMinutes: 40, isFullSimulation: true, questions: qs });
+    expect(full.publishable).toBe(false);
+    expect(ruleErrors(full).join(" ")).toMatch(/Durasi 75 menit/);
   });
 
   it("tanpa mapel → tidak bisa diterbitkan", () => {
@@ -52,13 +62,13 @@ describe("checkPackageRules", () => {
   it("SMA: saran mayoritas stimulus & grup 3–5 soal (tidak memblokir)", () => {
     // 25 soal pilihan: 14 PG, 6 MCMA, 5 Kategori; 15 soal dalam 3 grup berisi 5.
     const qs = make({ pg: 14, mcma: 6, kat: 5 }, "SMA-FIS", (i) => (i < 15 ? Math.floor(i / 5) + 1 : null));
-    const r = checkPackageRules({ jenjang: "SMA", subject: { code: "SMA-FIS", type: "pilihan" }, durationMinutes: 60, questions: qs });
+    const r = checkPackageRules({ jenjang: "SMA", subject: { code: "SMA-FIS", type: "pilihan" }, durationMinutes: 50, questions: qs });
     expect(r.publishable).toBe(true);
-    expect(r.recommended.map((c) => c.ok)).toEqual([true, true, true]);
+    expect(r.recommended.map((c) => c.ok)).toEqual([true, true, true, true]);
     const sedikit = checkPackageRules({
       jenjang: "SMA",
       subject: { code: "SMA-FIS", type: "pilihan" },
-      durationMinutes: 60,
+      durationMinutes: 50,
       questions: make({ pg: 14, mcma: 6, kat: 5 }, "SMA-FIS", (i) => (i < 2 ? 9 : null)),
     });
     expect(sedikit.publishable).toBe(true);

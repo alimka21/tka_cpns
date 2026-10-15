@@ -27,7 +27,7 @@ describe("tes demo", () => {
 
   it("semua benar → 100, semua subdomain 100%", () => {
     const r = scoreDemo(correctAnswers());
-    expect(r.score).toBe(100);
+    expect(r.percentage).toBe(100);
     expect(r.correct).toBe(DEMO_QUESTIONS.length);
     expect(r.subdomains.every((s) => s.percentage === 100)).toBe(true);
     expect(r.items.every((i) => i.isCorrect && i.explanationHtml)).toBe(true);
@@ -35,7 +35,7 @@ describe("tes demo", () => {
 
   it("kosong → 0 dan dihitung sebagai kosong", () => {
     const r = scoreDemo({});
-    expect(r.score).toBe(0);
+    expect(r.percentage).toBe(0);
     expect(r.blank).toBe(DEMO_QUESTIONS.length);
     expect(r.wrong).toBe(0);
   });
@@ -48,7 +48,7 @@ describe("tes demo", () => {
     expect(r.subdomains.find((s) => s.id === 1)!.percentage).toBe(50);
     expect(r.subdomains.find((s) => s.id === 2)!.percentage).toBe(50);
     expect(r.subjects.find((s) => s.name === "Matematika")).toMatchObject({ correct: 4, total: 6 });
-    expect(r).toMatchObject({ correct: 8, wrong: 1, blank: 1, score: 80 });
+    expect(r).toMatchObject({ correct: 8, wrong: 1, blank: 1, percentage: 80 });
   });
 
   it("soal untuk halaman ujian tidak membawa kunci", () => {

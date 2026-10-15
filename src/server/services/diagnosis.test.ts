@@ -5,9 +5,9 @@ const day = (n: number) => new Date(Date.UTC(2026, 8, n));
 const rec = (subtopicId: number, correct: number, total: number, d: number): SubtopicRecord => ({ subtopicId, correct, total, at: day(d) });
 
 describe("statusFor", () => {
-  it("mengikuti ambang scoreTone dan minimal 3 soal", () => {
+  it("mengikuti ambang masteryTone dan minimal 3 soal", () => {
     expect(statusFor(100, 2)).toBe("insufficient");
-    expect(statusFor(75, 3)).toBe("baik");
+    expect(statusFor(75, 3)).toBe("kuat");
     expect(statusFor(74, 3)).toBe("cukup");
     expect(statusFor(50, 10)).toBe("cukup");
     expect(statusFor(49, 10)).toBe("perlu_latihan");
@@ -21,7 +21,7 @@ describe("diagnose", () => {
     expect(d.accuracy).toBe(90);
     expect(d.windowQuestions).toBe(20);
     expect(d.totalQuestions).toBe(40);
-    expect(d.status).toBe("baik");
+    expect(d.status).toBe("kuat");
     expect(d.previousAccuracy).toBe(0);
     expect(d.lastTestedAt).toEqual(day(10));
   });

@@ -49,7 +49,13 @@ export default async function PratinjauPaketPage({ params, searchParams }: PageP
   const questionIds = pkg.questions.map((q) => q.id);
   const [meta, report, subjects] = await Promise.all([
     loadPreviewMeta(questionIds),
-    packageRuleReport({ categoryId: pkg.categoryId, subjectId: pkg.subjectId, durationMinutes: pkg.durationMinutes, questionIds }),
+    packageRuleReport({
+      categoryId: pkg.categoryId,
+      subjectId: pkg.subjectId,
+      durationMinutes: pkg.durationMinutes,
+      isFullSimulation: pkg.isFullSimulation,
+      questionIds,
+    }),
     listSubjects(),
   ]);
   const subjectName = subjects.find((s) => s.id === pkg.subjectId)?.name;

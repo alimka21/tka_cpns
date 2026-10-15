@@ -1,8 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { CreditCard, MessageSquareQuote, UserCheck } from "lucide-react";
+import { Calculator, CreditCard, MessageSquareQuote, UserCheck } from "lucide-react";
 import { ApprovalSetting } from "@/components/admin/approval-setting";
+import { ConversionSettings, ThresholdSettings, type ThresholdState } from "@/components/admin/scoring-settings";
 import { SupportWhatsappSetting } from "@/components/admin/support-whatsapp-setting";
+import { getThresholdsByScale } from "@/server/queries/achievement-thresholds";
+import { SCORE_SCALES } from "@/lib/score-scale";
 import { TestimonialsSetting } from "@/components/admin/testimonials-setting";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
@@ -13,14 +16,24 @@ export const metadata: Metadata = { title: "Pengaturan Sistem" };
 export const dynamic = "force-dynamic";
 
 export default async function AdminPengaturanPage() {
-  const [requireApproval, testimonials, supportWhatsapp] = await Promise.all([
+  const [requireApproval, testimonials, supportWhatsapp, conversion, thresholds] = await Promise.all([
     getSetting("registration.requireApproval"),
     getSetting("landing.testimonials"),
     getSetting("support.whatsapp"),
+    getSetting("scoring.conversion"),
+    getThresholdsByScale(),
   ]);
+  const thresholdState = Object.fromEntries(
+    SCORE_SCALES.map((s) => {
+      const rows = thresholds[s].rows;
+      const memadai = rows.find((r) => r.category === "memadai");
+      const baik = rows.find((r) => r.category === "baik");
+      return [s, memadai && baik ? { memadaiFrom: memadai.minScore, baikFrom: baik.minScore, official: thresholds[s].official } : null];
+    }),
+  ) as ThresholdState;
   return (
     <div className="mx-auto flex w-full max-w-3xl flex-col gap-6">
-      <PageHeader title="Pengaturan Sistem" description="Aturan pendaftaran, akses, dan konten halaman depan." />
+      <PageHeader title="Pengaturan Sistem" description="Aturan pendaftaran, penskoran, akses, dan konten halaman depan." />
 
       <section className="surface-card flex flex-col gap-4 p-6">
         <h2 className="flex items-center gap-2 text-lg font-bold">
@@ -31,6 +44,20 @@ export default async function AdminPengaturanPage() {
         <Link href="/admin/users" className="w-fit text-sm font-semibold text-primary hover:underline">
           Buka Manajemen User
         </Link>
+      </section>
+
+      <section className="surface-card flex flex-col gap-6 p-6">
+        <h2 className="flex items-center gap-2 text-lg font-bold">
+          <Calculator className="size-5 text-primary" aria-hidden /> Penskoran & Kategori Capaian
+        </h2>
+        <div className="flex flex-col gap-2">
+          <h3 className="font-semibold">Ambang kategori Baik / Memadai / Kurang</h3>
+          <ThresholdSettings initial={thresholdState} />
+        </div>
+        <div className="flex flex-col gap-2 border-t pt-6">
+          <h3 className="font-semibold">Rumus konversi skor mentah → nilai</h3>
+          <ConversionSettings version={conversion.version} scales={conversion.scales} />
+        </div>
       </section>
 
       <section className="surface-card flex flex-col gap-3 p-6">

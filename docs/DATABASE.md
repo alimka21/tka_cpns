@@ -58,7 +58,16 @@ berjalan. `entitlements` per paket tetap berlaku (akses manual satu paket).
 
 **app_settings** — key (pk, varchar 64), value (JSON), updated_by, updated_at.
 Daftar key + default + skema Zod di `services/app-settings.ts`
-(`registration.requireApproval`: boolean, default false).
+(`registration.requireApproval`: boolean, default false; `support.whatsapp`;
+`scoring.conversion`: rumus konversi skor mentah → nilai skala per skala
+berupa titik jangkar + `version` + `history` rumus lama, lib/scoring-config.ts).
+
+**achievement_thresholds** (migrasi 0021) — ambang kategori capaian per
+skala, diatur admin (Pengaturan Sistem): id, score_scale (`0_100`|`200_800`),
+category (`baik`|`memadai`|`kurang`), min_score & max_score `DECIMAL(6,2)`
+(inklusif), is_official (bool), updated_by, updated_at; unique (score_scale,
+category). Kosong = kategori tidak ditampilkan. Admin mengisi 2 titik potong;
+tiga rentang diturunkan tanpa celah (lib/achievement-thresholds.ts).
 
 **user_ai_settings**
 - id (pk), user_id (fk users, **unique**, cascade), gemini_api_key_encrypted
@@ -126,6 +135,8 @@ tidak disalin ke DB — dibaca dari file kerangka berdasarkan `code`.
 **test_packages**
 - id, title, description, category_id (fk), duration_minutes,
   is_premium (bool, default true — paket baru Premium),
+  is_full_simulation (bool, default false, migrasi 0021 — simulasi penuh:
+  durasi wajib = durasi regulasi; paket lain hanya diberi peringatan),
   status (`draft`|`published`), created_by, created_at
 
 **test_package_questions**
@@ -163,8 +174,17 @@ via `setEntitlementAction`. Manajemen User hanya menampilkan ringkasan
 **attempts**
 - id, user_id (fk, cascade), test_package_id (fk), started_at, ends_at,
   submitted_at (nullable), status (`in_progress`|`submitted`|`expired`),
-  total_score (nullable), max_score (nullable) — keduanya diisi saat
-  finalize; skor 0–100 yang ditampilkan = `round(total_score/max_score*100)`
+  total_score (nullable), max_score (nullable) — **skor mentah** (poin
+  benar & maksimum, int), diisi saat finalize
+- (migrasi 0021, docs/PENSKORAN-DAN-PELAPORAN-TKA.md) **dibekukan saat
+  finalize**: score_scale (`0_100` SD/SMP | `200_800` SMA, dari jenjang
+  paket), scaled_score `DECIMAL(6,2)` (Drizzle mode string — tanpa float),
+  scoring_config_version (mis. `v1-200_800-d8079da4`: versi + sidik jari
+  kurva rumus konversi yang dipakai). Attempt lama diisi `npm run
+  db:rescore` / `prod:db:rescore` (idempoten: hanya yang masih NULL).
+- Tampilan nilai HANYA lewat `buildScoreView` (services/score-view.ts):
+  nilai beku + kategori (dihitung saat tampil dari `achievement_thresholds`)
+  + predikat istimewa. Tidak ada lagi `total/max*100` di query.
 
 **attempt_answers**
 - id, attempt_id (fk, cascade), question_id, response (JSON nullable —
@@ -177,12 +197,15 @@ via `setEntitlementAction`. Manajemen User hanya menampilkan ringkasan
 
 **attempt_subtopic_scores** (tabel ringkasan, diisi saat finalize)
 - id, attempt_id (fk, cascade), subtopic_id (fk), correct_count,
-  total_count, score, percentage (`decimal(5,2)`)
+  total_count, score, percentage (`decimal(5,2)`) — `score` = poin mentah
+  per subtopik, **sengaja tidak diskalakan** (regulasi menskalakan per mata
+  uji; DECISIONS 2026-10-16)
 - unique (attempt_id, subtopic_id) — finalize idempoten (delete+insert ulang)
 
 **Alur finalize** (`finalizeAttempt`, dipanggil dari submit siswa & dari
 auto-expire): baca semua `attempt_answers` → `scoreAttempt()` →
-`summarizeBySubtopic()` → simpan `total_score`/`max_score` di `attempts`
+`summarizeBySubtopic()` → simpan `total_score`/`max_score` + nilai skala
+(`scaledScorer()`, rumus konversi aktif) di `attempts`
 + tulis ulang `attempt_subtopic_scores`, dalam satu transaksi. Halaman
 hasil (`getAttemptResult`) **tidak** membaca `correct`/`wrong`/`blank`
 dari kolom tersimpan (tidak ada kolomnya) — dihitung ulang dari

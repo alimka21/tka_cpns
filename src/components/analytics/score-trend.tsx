@@ -1,22 +1,30 @@
 "use client";
 
 import { useState } from "react";
+import { formatScore, type ScoreView } from "@/lib/score-display";
+import { SCALE_RANGE } from "@/lib/score-scale";
 
-type Point = { label: string; score: number };
+type Point = { label: string; score: ScoreView };
 
 const W = 480;
 const H = 200;
-const PAD = { top: 16, right: 20, bottom: 28, left: 32 };
-const TICKS = [0, 50, 100];
+const PAD = { top: 16, right: 20, bottom: 28, left: 40 };
 
-/** Tren skor antar percobaan (satu seri, skala 0–100). */
+/**
+ * Tren nilai antar percobaan (satu seri). Sumbu-y mengikuti skala titik:
+ * 0–100 (SD/SMP) atau 200–800 (SMA). Semua titik harus satu skala.
+ */
 export function ScoreTrend({ points }: { points: Point[] }) {
   const [active, setActive] = useState<number | null>(null);
+  const range = SCALE_RANGE[points[0]?.score.scale ?? "0_100"];
+  const ticks = [range.min, (range.min + range.max) / 2, range.max];
   const plotW = W - PAD.left - PAD.right;
   const plotH = H - PAD.top - PAD.bottom;
   const x = (i: number) => PAD.left + (points.length === 1 ? plotW / 2 : (plotW * i) / (points.length - 1));
-  const y = (v: number) => PAD.top + plotH - (plotH * v) / 100;
-  const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(p.score)}`).join(" ");
+  /** `position` = 0–100 di rentang skala; `t` = nilai sumbu. */
+  const y = (position: number) => PAD.top + plotH - (plotH * position) / 100;
+  const tickY = (t: number) => y(((t - range.min) / (range.max - range.min)) * 100);
+  const path = points.map((p, i) => `${i === 0 ? "M" : "L"}${x(i)},${y(p.score.position)}`).join(" ");
   const last = points.length - 1;
   // Maks ±6 label sumbu-x supaya tidak bertabrakan; detail tiap titik di tooltip.
   const labelStep = Math.ceil(points.length / 6);
@@ -27,14 +35,14 @@ export function ScoreTrend({ points }: { points: Point[] }) {
       <svg
         viewBox={`0 0 ${W} ${H}`}
         role="img"
-        aria-label={`Tren skor: ${points.map((p) => `${p.label} ${p.score}`).join(", ")}`}
+        aria-label={`Tren nilai: ${points.map((p) => `${p.label} ${formatScore(p.score.value)}`).join(", ")}`}
         className="w-full overflow-visible"
         onMouseLeave={() => setActive(null)}
       >
-        {TICKS.map((t) => (
+        {ticks.map((t) => (
           <g key={t}>
-            <line x1={PAD.left} x2={W - PAD.right} y1={y(t)} y2={y(t)} stroke="var(--border)" strokeWidth={1} />
-            <text x={PAD.left - 8} y={y(t)} textAnchor="end" dominantBaseline="middle" className="fill-muted-foreground text-[11px] tabular-nums">
+            <line x1={PAD.left} x2={W - PAD.right} y1={tickY(t)} y2={tickY(t)} stroke="var(--border)" strokeWidth={1} />
+            <text x={PAD.left - 8} y={tickY(t)} textAnchor="end" dominantBaseline="middle" className="fill-muted-foreground text-[11px] tabular-nums">
               {t}
             </text>
           </g>
@@ -45,7 +53,7 @@ export function ScoreTrend({ points }: { points: Point[] }) {
         <path d={path} fill="none" stroke="var(--primary)" strokeWidth={2} strokeLinejoin="round" strokeLinecap="round" />
         {points.map((p, i) => (
           <g key={i}>
-            <circle cx={x(i)} cy={y(p.score)} r={i === last ? 5 : 4} fill="var(--primary)" stroke="var(--card)" strokeWidth={2} />
+            <circle cx={x(i)} cy={y(p.score.position)} r={i === last ? 5 : 4} fill="var(--primary)" stroke="var(--card)" strokeWidth={2} />
             {showLabel(i) && (
               <text x={x(i)} y={H - 6} textAnchor="middle" className="fill-muted-foreground text-[11px]">
                 {p.label}
@@ -59,7 +67,7 @@ export function ScoreTrend({ points }: { points: Point[] }) {
               height={plotH}
               fill="transparent"
               tabIndex={0}
-              aria-label={`${p.label}: skor ${p.score}`}
+              aria-label={`${p.label}: nilai ${formatScore(p.score.value)}`}
               className="outline-none"
               onMouseEnter={() => setActive(i)}
               onFocus={() => setActive(i)}
@@ -68,8 +76,8 @@ export function ScoreTrend({ points }: { points: Point[] }) {
           </g>
         ))}
         {/* Label langsung hanya di titik terakhir */}
-        <text x={x(last)} y={y(points[last].score) - 12} textAnchor="middle" className="fill-foreground text-[12px] font-bold">
-          {points[last].score}
+        <text x={x(last)} y={y(points[last].score.position) - 12} textAnchor="middle" className="fill-foreground text-[12px] font-bold">
+          {formatScore(points[last].score.value)}
         </text>
       </svg>
       {active != null && (
@@ -79,7 +87,7 @@ export function ScoreTrend({ points }: { points: Point[] }) {
           style={{ left: `${(x(active) / W) * 100}%`, transform: "translateX(-50%)" }}
         >
           <span className="font-semibold">{points[active].label}</span>
-          <span className="ml-2 tabular-nums text-muted-foreground">Skor {points[active].score}</span>
+          <span className="ml-2 tabular-nums text-muted-foreground">Nilai {formatScore(points[active].score.value)}</span>
         </div>
       )}
     </div>

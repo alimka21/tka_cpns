@@ -7,6 +7,8 @@
 import { and, asc, eq, inArray, ne } from "drizzle-orm";
 import { db } from "@/server/db";
 import { attempts, categories, subjects, subtopics, testPackages, topics } from "@/server/db/schema";
+import type { ScoreView } from "@/lib/score-display";
+import { buildScoreView } from "@/server/services/score-view";
 import { loadDiagnosisRecords, subtopicIdsOfSubject } from "./practice";
 import { diagnose, practicePriorities, type SubtopicDiagnosis } from "@/server/services/diagnosis";
 import type { SubtopicTrendOption } from "@/components/analytics/subtopic-trend";
@@ -42,7 +44,8 @@ export type StudentProgress = {
   priorities: PrioritySubdomain[];
   strongest: PrioritySubdomain | null;
   /** Skor per tes (0–100), lama → baru, maks 20 terakhir. */
-  scoreTrend: { label: string; score: number; title: string }[];
+  /** Nilai skala per tes (satu skala saja — skala tes terakhir). */
+  scoreTrend: { label: string; score: ScoreView; title: string }[];
   testCount: number;
   /** Sesi latihan yang punya minimal 1 soal terjawab. */
   practiceCount: number;
@@ -66,10 +69,14 @@ export async function getStudentProgress(userId: number, subjectId: number | nul
         startedAt: attempts.startedAt,
         totalScore: attempts.totalScore,
         maxScore: attempts.maxScore,
+        scoreScale: attempts.scoreScale,
+        scaledScore: attempts.scaledScore,
+        jenjang: categories.code,
         title: testPackages.title,
       })
       .from(attempts)
       .innerJoin(testPackages, eq(testPackages.id, attempts.testPackageId))
+      .innerJoin(categories, eq(categories.id, testPackages.categoryId))
       .where(finished)
       .orderBy(asc(attempts.startedAt)),
     subjectId ? subtopicIdsOfSubject(subjectId) : Promise.resolve(null),
@@ -81,14 +88,14 @@ export async function getStudentProgress(userId: number, subjectId: number | nul
   const practiceCount = new Set(records.filter((r) => r.source === "practice").map((r) => r.sourceId)).size;
   const byId = new Map(diagnoses.map((d) => [d.subtopicId, d]));
 
-  const scoreTrend = attemptRows
-    .filter((a) => a.maxScore)
+  // Tren hanya memuat satu skala (skala tes terakhir) — 0–100 dan 200–800
+  // tidak boleh tercampur di satu grafik (mis. bila jenjang siswa diganti admin).
+  const scored = attemptRows.filter((a) => a.maxScore).map((a) => ({ ...a, view: buildScoreView(a, null) }));
+  const lastScale = scored.at(-1)?.view.scale;
+  const scoreTrend = scored
+    .filter((a) => a.view.scale === lastScale)
     .slice(-20)
-    .map((a) => ({
-      label: trendLabel.format(a.submittedAt ?? a.startedAt),
-      score: Math.round(((a.totalScore ?? 0) / a.maxScore!) * 100),
-      title: a.title,
-    }));
+    .map((a) => ({ label: trendLabel.format(a.submittedAt ?? a.startedAt), score: a.view, title: a.title }));
 
   if (diagnoses.length === 0) {
     return { subjects: [], priorities: [], strongest: null, scoreTrend, testCount: attemptRows.length, practiceCount, trends: [], trendInitialId: null };
@@ -144,7 +151,7 @@ export async function getStudentProgress(userId: number, subjectId: number | nul
     return i ? { ...i, diagnosis: d } : null;
   };
   const strongestDiag = diagnoses
-    .filter((d) => d.status === "baik")
+    .filter((d) => d.status === "kuat")
     .sort((a, b) => b.accuracy - a.accuracy || b.totalQuestions - a.totalQuestions)[0];
 
   const subjectsList = [...subjectMap.values()];

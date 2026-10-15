@@ -10,6 +10,7 @@ import { getPackageDetailCached, hasEntitlement, type PackageDetail } from "@/se
 import { getActiveMembership } from "@/server/services/billing";
 import { freeUsageBySubject } from "@/server/queries/free-usage";
 import { summarizeBySubtopic } from "./analytics";
+import { scaledScorer } from "./scaled-result";
 import { scoreAttempt, type AnswerMap, type ScorableQuestion } from "./scoring";
 
 function toScorable(pkg: PackageDetail): ScorableQuestion[] {
@@ -43,11 +44,13 @@ export async function finalizeAttempt(attemptId: number, status: "submitted" | "
 
   const result = scoreAttempt(toScorable(pkg), answers);
   const subtopicSummaries = summarizeBySubtopic(result.questions);
+  // Nilai skala dibekukan bersama versi rumusnya (docs/PENSKORAN-DAN-PELAPORAN-TKA.md §1).
+  const scaled = (await scaledScorer())(pkg.categoryCode, result.totalScore, result.maxScore);
 
   await db.transaction(async (tx) => {
     await tx
       .update(attempts)
-      .set({ status, submittedAt: new Date(), totalScore: result.totalScore, maxScore: result.maxScore })
+      .set({ status, submittedAt: new Date(), totalScore: result.totalScore, maxScore: result.maxScore, ...scaled })
       .where(eq(attempts.id, attemptId));
     await tx.delete(attemptSubtopicScores).where(eq(attemptSubtopicScores.attemptId, attemptId));
     if (subtopicSummaries.length > 0) {

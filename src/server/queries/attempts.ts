@@ -15,6 +15,9 @@ import {
   testPackages,
   topics,
 } from "@/server/db/schema";
+import type { ScoreView } from "@/lib/score-display";
+import { buildScoreView } from "@/server/services/score-view";
+import { getThresholdsByScale } from "./achievement-thresholds";
 import { getPackageDetailCached } from "./packages";
 import { scoreAttempt, type AnswerMap, type ScorableQuestion } from "@/server/services/scoring";
 
@@ -32,14 +35,19 @@ export type AttemptResult = {
   finishedAt: string;
   durationUsedMinutes: number;
   durationMinutes: number;
-  /** 0–100. */
-  score: number;
+  /** Nilai skala per mata uji (0–100 SD/SMP, 200–800 SMA) + kategori & predikat. */
+  score: ScoreView;
+  /** Skor mentah (poin benar / maksimum). */
+  rawScore: number;
+  maxScore: number;
+  /** Ambang kategori skala ini sudah ditandai resmi (is_official). */
+  thresholdOfficial: boolean;
   correct: number;
   wrong: number;
   blank: number;
   total: number;
   subtopics: { subtopic: string; short: string; topic: string; correct: number; total: number; percentage: number }[];
-  trend: { label: string; score: number }[];
+  trend: { label: string; score: ScoreView }[];
 };
 
 /** `null` bila attempt tidak ada, bukan milik `userId`, atau belum selesai. */
@@ -94,7 +102,13 @@ export async function getAttemptResult(attemptId: number, userId: number): Promi
     .orderBy(attemptSubtopicScores.percentage);
 
   const trendRows = await db
-    .select({ submittedAt: attempts.submittedAt, totalScore: attempts.totalScore, maxScore: attempts.maxScore })
+    .select({
+      submittedAt: attempts.submittedAt,
+      totalScore: attempts.totalScore,
+      maxScore: attempts.maxScore,
+      scoreScale: attempts.scoreScale,
+      scaledScore: attempts.scaledScore,
+    })
     .from(attempts)
     .where(and(eq(attempts.userId, userId), eq(attempts.testPackageId, attempt.testPackageId), eq(attempts.status, "submitted")))
     .orderBy(attempts.submittedAt)
@@ -102,7 +116,8 @@ export async function getAttemptResult(attemptId: number, userId: number): Promi
 
   const finishedAt = attempt.submittedAt ?? attempt.startedAt;
   const durationUsedMinutes = Math.max(1, Math.round((finishedAt.getTime() - attempt.startedAt.getTime()) / 60_000));
-  const score = attempt.maxScore ? Math.round(((attempt.totalScore ?? 0) / attempt.maxScore) * 100) : 0;
+  const thresholds = await getThresholdsByScale();
+  const score = buildScoreView({ ...attempt, jenjang: pkgRow.jenjang }, thresholds);
 
   return {
     attemptId: attempt.id,
@@ -113,6 +128,9 @@ export async function getAttemptResult(attemptId: number, userId: number): Promi
     durationUsedMinutes,
     durationMinutes: pkgRow.durationMinutes,
     score,
+    rawScore: attempt.totalScore ?? 0,
+    maxScore: attempt.maxScore ?? 0,
+    thresholdOfficial: thresholds[score.scale].official,
     correct,
     wrong,
     blank,
@@ -127,7 +145,7 @@ export async function getAttemptResult(attemptId: number, userId: number): Promi
     })),
     trend: trendRows
       .filter((t): t is typeof t & { submittedAt: Date; maxScore: number } => t.submittedAt != null && !!t.maxScore)
-      .map((t) => ({ label: dateLabel.format(t.submittedAt), score: Math.round(((t.totalScore ?? 0) / t.maxScore) * 100) })),
+      .map((t) => ({ label: dateLabel.format(t.submittedAt), score: buildScoreView({ ...t, jenjang: pkgRow.jenjang }, thresholds) })),
   };
 }
 
@@ -140,7 +158,7 @@ export type StudentHistoryItem = {
   finishedAt: string;
   correct: number;
   total: number;
-  score: number;
+  score: ScoreView;
 };
 
 /** Tes yang sudah selesai (dikirim atau waktu habis), terbaru dulu. */
@@ -155,6 +173,8 @@ export async function listStudentHistory(userId: number, limit = 10, subjectId: 
       submittedAt: attempts.submittedAt,
       totalScore: attempts.totalScore,
       maxScore: attempts.maxScore,
+      scoreScale: attempts.scoreScale,
+      scaledScore: attempts.scaledScore,
     })
     .from(attempts)
     .innerJoin(testPackages, eq(testPackages.id, attempts.testPackageId))
@@ -173,6 +193,7 @@ export async function listStudentHistory(userId: number, limit = 10, subjectId: 
     .from(attemptSubtopicScores)
     .where(inArray(attemptSubtopicScores.attemptId, rows.map((r) => r.attemptId)))
     .groupBy(attemptSubtopicScores.attemptId);
+  const thresholds = await getThresholdsByScale();
   const totalsByAttempt = new Map(totals.map((t) => [t.attemptId, { correct: Number(t.correct), total: Number(t.total) }]));
 
   return rows.map((r) => ({
@@ -183,6 +204,6 @@ export async function listStudentHistory(userId: number, limit = 10, subjectId: 
     finishedAt: (r.submittedAt ?? r.startedAt).toISOString(),
     correct: totalsByAttempt.get(r.attemptId)?.correct ?? 0,
     total: totalsByAttempt.get(r.attemptId)?.total ?? 0,
-    score: r.maxScore ? Math.round(((r.totalScore ?? 0) / r.maxScore) * 100) : 0,
+    score: buildScoreView(r, thresholds),
   }));
 }

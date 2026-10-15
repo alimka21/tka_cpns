@@ -98,9 +98,9 @@ Satuan diagnosa = **subdomain** (sama dengan analisis hasil tes).
   dikerjakan siswa di subdomain itu, dengan **bobot lebih besar untuk
   yang terbaru** (mis. hanya 20 soal terakhir per subdomain), supaya
   kemajuan cepat terlihat.
-- **Status** (selaras `scoreTone`, `docs/UI_UX.md` §3):
-  `Belum diuji` · `Perlu latihan` (<50%) · `Cukup` (50–74%) ·
-  `Baik` (≥75%). Status butuh minimal 3 soal; di bawah itu tampil
+- **Status** (selaras `masteryTone`, `docs/UI_UX.md` §3):
+  `Belum diuji` · `Perlu Latihan` (<50%) · `Cukup` (50–74%) ·
+  `Kuat` (≥75%) — sengaja bukan "Baik" (kategori capaian resmi per mata uji). Status butuh minimal 3 soal; di bawah itu tampil
   "data belum cukup".
 - **Sumber data**: tes resmi **dan** latihan dihitung, tetapi di UI
   keduanya bisa dipisah (filter) karena latihan AI tidak direview.

@@ -8,7 +8,7 @@ import { ReviewCard } from "@/components/hasil/review-card";
 import { RichHtml } from "@/components/tes/rich-html";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { DIAGNOSIS_STATUS, formatDateTime, scoreTone } from "@/lib/format";
+import { DIAGNOSIS_STATUS, formatDateTime, masteryTone } from "@/lib/format";
 import { requireUser } from "@/server/auth/session";
 import { getPracticeChanges, getPracticeSession, type PracticeSubtopicChange } from "@/server/queries/practice";
 import type { SubtopicDiagnosis } from "@/server/services/diagnosis";
@@ -30,7 +30,7 @@ export default async function LatihanHasilPage({ params }: PageProps<"/latihan/[
   const answered = session.items.filter((i) => i.review);
   const correct = answered.filter((i) => i.review!.isCorrect).length;
   const score = answered.length ? Math.round((correct / answered.length) * 100) : 0;
-  const tone = scoreTone(score);
+  const tone = masteryTone(score);
   const stimuli = new Map(session.stimuli.map((s) => [s.id, s]));
   const reviews = answered.map((i) => i.review!);
 

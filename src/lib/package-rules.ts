@@ -12,10 +12,12 @@ export type SubjectInfo = { code: string; type: "wajib" | "pilihan" };
 export type SubjectOutline = { code: string; name: string; subtopics: { code: string; name: string }[] }[];
 
 /**
- * Jumlah soal & durasi per mata pelajaran:
+ * Jumlah soal (ketetapan pemilik produk) & durasi (Kepmendikdasmen 56/2026,
+ * docs/PENSKORAN-DAN-PELAPORAN-TKA.md §4) per mata pelajaran:
  * - SD & SMP: Matematika 30 soal/75 menit, Bahasa Indonesia 30 soal/75 menit.
- * - SMA/SMK: Bahasa Indonesia 30/75, Bahasa Inggris 30/75,
- *   Matematika (& Numerasi) 25/75, mapel pilihan masing-masing 25/60.
+ * - SMA/SMK: Bahasa Indonesia 30/60, Bahasa Inggris 30/50,
+ *   Matematika (& Numerasi) 25/70, mapel pilihan masing-masing 25/50.
+ * Durasi = default paket baru; wajib sama hanya untuk paket simulasi penuh.
  */
 export function packageRuleFor(jenjang: string, subject: SubjectInfo): PackageRule | null {
   const code = subject.code;
@@ -25,10 +27,10 @@ export function packageRuleFor(jenjang: string, subject: SubjectInfo): PackageRu
     return null;
   }
   if (jenjang === "SMA") {
-    if (subject.type === "pilihan") return { questionCount: 25, durationMinutes: 60, label: "Mata pelajaran pilihan" };
-    if (code === "SMA-BIND") return { questionCount: 30, durationMinutes: 75, label: "Bahasa Indonesia" };
-    if (code === "SMA-BING") return { questionCount: 30, durationMinutes: 75, label: "Bahasa Inggris" };
-    if (code === "SMA-MTK") return { questionCount: 25, durationMinutes: 75, label: "Matematika & Numerasi" };
+    if (subject.type === "pilihan") return { questionCount: 25, durationMinutes: 50, label: "Mata pelajaran pilihan" };
+    if (code === "SMA-BIND") return { questionCount: 30, durationMinutes: 60, label: "Bahasa Indonesia" };
+    if (code === "SMA-BING") return { questionCount: 30, durationMinutes: 50, label: "Bahasa Inggris" };
+    if (code === "SMA-MTK") return { questionCount: 25, durationMinutes: 70, label: "Matematika & Numerasi" };
     return null;
   }
   return null;
@@ -86,6 +88,8 @@ export function checkPackageRules(input: {
   jenjang: string;
   subject: SubjectInfo | null;
   durationMinutes: number;
+  /** Simulasi penuh → durasi WAJIB sama dengan regulasi; selain itu hanya peringatan. */
+  isFullSimulation?: boolean;
   questions: RuleQuestion[];
   /** Topik mapel (beserta subtopiknya); tanpa outline, cakupan topik tidak dicek. */
   outline?: SubjectOutline;
@@ -113,9 +117,10 @@ export function checkPackageRules(input: {
       label: `Jumlah soal tepat ${rule.questionCount}`,
       detail: `${stats.total} dari ${rule.questionCount} soal`,
     });
-    required.push({
+    // Durasi regulasi: wajib untuk simulasi penuh, peringatan untuk paket lain (mis. drill).
+    (input.isFullSimulation ? required : recommended).push({
       ok: input.durationMinutes === rule.durationMinutes,
-      label: `Durasi ${rule.durationMinutes} menit`,
+      label: `Durasi ${rule.durationMinutes} menit (regulasi)${input.isFullSimulation ? " — simulasi penuh" : ""}`,
       detail: `${input.durationMinutes} menit`,
     });
     const range = pgRange(rule.questionCount);

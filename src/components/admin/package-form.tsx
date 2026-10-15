@@ -39,6 +39,7 @@ type InitialPackage = {
   subjectId: number | null;
   durationMinutes: number;
   isPremium: boolean;
+  isFullSimulation: boolean;
   status: "draft" | "published";
   questionIds: number[];
   pointsOverrideByQuestion: Record<number, number | null>;
@@ -85,6 +86,7 @@ export function PackageForm({
   const [durationMinutes, setDurationMinutes] = useState(String(initial?.durationMinutes ?? 75));
   const [showAllSubjects, setShowAllSubjects] = useState(false);
   const [isPremium, setIsPremium] = useState(initial?.isPremium ?? true);
+  const [isFullSimulation, setIsFullSimulation] = useState(initial?.isFullSimulation ?? false);
   const [status, setStatus] = useState<"draft" | "published">(initial?.status ?? "draft");
   const [selectedIds, setSelectedIds] = useState<number[]>(initial?.questionIds ?? []);
   const [points, setPoints] = useState<Record<number, string>>(
@@ -112,6 +114,7 @@ export function PackageForm({
     jenjang: category?.code ?? "",
     subject,
     durationMinutes: Number(durationMinutes),
+    isFullSimulation,
     questions: selectedIds.flatMap((id) => {
       const row = byId.get(id);
       return row
@@ -125,7 +128,7 @@ export function PackageForm({
     setSubjectId(value);
     const s = subjectOptions.find((x) => String(x.id) === value);
     const r = category && s ? packageRuleFor(category.code, s) : null;
-    // Durasi mengikuti aturan resmi mata pelajaran.
+    // Durasi regulasi = default; bisa diubah kecuali paket simulasi penuh.
     if (r) setDurationMinutes(String(r.durationMinutes));
     setSaved(false);
   }
@@ -173,6 +176,7 @@ export function PackageForm({
       subjectId: subjectId ? Number(subjectId) : null,
       durationMinutes: Number(durationMinutes),
       isPremium,
+      isFullSimulation,
       status,
       questions: selectedIds.map((id, i) => ({
         questionId: id,
@@ -270,14 +274,15 @@ export function PackageForm({
                 min={1}
                 max={600}
                 value={durationMinutes}
-                readOnly={rule != null}
+                readOnly={rule != null && isFullSimulation}
                 onChange={(e) => setDurationMinutes(e.target.value)}
-                className={rule ? "bg-muted" : undefined}
+                className={rule && isFullSimulation ? "bg-muted" : undefined}
               />
               {rule && (
                 <p className="text-xs text-muted-foreground">
-                  Aturan {category?.code} {rule.label}: <strong>{rule.questionCount} soal</strong>, <strong>{rule.durationMinutes} menit</strong>, PG
-                  sederhana {pgRange(rule.questionCount).min}–{pgRange(rule.questionCount).max} soal (50–60%).
+                  Aturan {category?.code} {rule.label}: <strong>{rule.questionCount} soal</strong>, durasi regulasi <strong>{rule.durationMinutes} menit</strong>
+                  {isFullSimulation ? " (wajib — simulasi penuh)" : " (default; boleh diubah)"}, PG sederhana {pgRange(rule.questionCount).min}–
+                  {pgRange(rule.questionCount).max} soal (50–60%).
                 </p>
               )}
             </div>
@@ -287,6 +292,24 @@ export function PackageForm({
             <div>
               <div className="text-sm font-semibold">Paket premium</div>
               <div className="text-xs text-muted-foreground">Default untuk paket baru. Terbuka bagi pelanggan Premium atau siswa yang diberi akses admin; matikan untuk paket gratis.</div>
+            </div>
+          </div>
+          <div className="flex items-center gap-3 rounded-lg border p-3">
+            <Switch
+              checked={isFullSimulation}
+              onCheckedChange={(on) => {
+                setIsFullSimulation(on);
+                // Simulasi penuh memakai durasi regulasi.
+                if (on && rule) setDurationMinutes(String(rule.durationMinutes));
+                setSaved(false);
+              }}
+              label="Simulasi penuh"
+            />
+            <div>
+              <div className="text-sm font-semibold">Simulasi penuh</div>
+              <div className="text-xs text-muted-foreground">
+                Meniru tes resmi: durasi wajib sama dengan regulasi (Kepmendikdasmen 56/2026). Matikan untuk paket latihan/drill yang durasinya bebas — selisih durasi hanya jadi peringatan.
+              </div>
             </div>
           </div>
         </section>

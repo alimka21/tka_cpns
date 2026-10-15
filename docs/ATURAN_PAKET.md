@@ -5,7 +5,17 @@ Sumber: ketentuan dari pemilik produk (2026-10-01). Diterapkan di sistem:
 diterbitkan** bila aturan **wajib** belum terpenuhi; draft boleh disimpan.
 Setiap paket = **satu jenjang + satu mata pelajaran**.
 
-## Jumlah soal & durasi (wajib)
+## Jumlah soal (wajib) & durasi (regulasi)
+
+Jumlah soal = ketetapan pemilik produk (regulasi tidak mengaturnya).
+Durasi = **Kepmendikdasmen 56/2026** (docs/PENSKORAN-DAN-PELAPORAN-TKA.md §4),
+berlaku sejak 2026-10-16 (sebelumnya SMA 75/75/75, pilihan 60):
+- Durasi regulasi = **default** saat admin membuat paket.
+- Paket bertanda **Simulasi penuh** (`is_full_simulation`): durasi **wajib**
+  sama dengan regulasi (memblokir terbit).
+- Paket lain (mis. drill per subtopik): durasi bebas, selisih hanya
+  **peringatan**. Soal terlalu padat diperbaiki dengan mengurangi soal,
+  bukan menambah waktu.
 
 | Jenjang | Mata pelajaran | Soal | Durasi |
 |---|---|---|---|
@@ -13,10 +23,10 @@ Setiap paket = **satu jenjang + satu mata pelajaran**.
 | SD | Bahasa Indonesia | 30 | 75 menit |
 | SMP | Matematika | 30 | 75 menit |
 | SMP | Bahasa Indonesia | 30 | 75 menit |
-| SMA/SMK | Bahasa Indonesia | 30 | 75 menit |
-| SMA/SMK | Bahasa Inggris | 30 | 75 menit |
-| SMA/SMK | Matematika & Numerasi | 25 | 75 menit |
-| SMA/SMK | Mata pelajaran pilihan 1 & 2 (semua mapel `pilihan`) | 25 per mapel | 60 menit per mapel |
+| SMA/SMK | Bahasa Indonesia | 30 | 60 menit |
+| SMA/SMK | Bahasa Inggris | 30 | 50 menit |
+| SMA/SMK | Matematika & Numerasi | 25 | 70 menit |
+| SMA/SMK | Mata pelajaran pilihan 1 & 2 (semua mapel `pilihan`) | 25 per mapel | 50 menit per mapel |
 
 SD dan SMP strukturnya sama; bedanya hanya kompleksitas materi dan panjang
 stimulus bacaan sesuai perkembangan kognitif.

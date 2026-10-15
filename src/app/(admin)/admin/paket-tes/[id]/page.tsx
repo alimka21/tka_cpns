@@ -46,6 +46,7 @@ export default async function AdminPaketEditPage({ params }: PageProps<"/admin/p
           subjectId: pkg.subjectId,
           durationMinutes: pkg.durationMinutes,
           isPremium: pkg.isPremium,
+          isFullSimulation: pkg.isFullSimulation,
           status: pkg.status,
           questionIds: pkg.questions.map((q) => q.id),
           pointsOverrideByQuestion: Object.fromEntries(pkg.questions.map((q) => [q.id, q.pointsOverride])),

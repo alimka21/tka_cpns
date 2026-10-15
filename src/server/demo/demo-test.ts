@@ -231,7 +231,11 @@ export function demoExamStimuli() {
 export type DemoSubdomainResult = DemoSubdomain & { correct: number; total: number; percentage: number };
 
 export type DemoResult = {
-  score: number;
+  /** Persentase benar 0–100 (untuk headline & tingkat penguasaan). */
+  percentage: number;
+  /** Skor mentah — nilai skala dihitung halaman dengan rumus konversi aktif (skala SMP 0–100). */
+  rawScore: number;
+  maxScore: number;
   correct: number;
   wrong: number;
   blank: number;
@@ -274,7 +278,9 @@ export function scoreDemo(answers: Record<number, AnswerResponse | null>): DemoR
   const blank = scored.questions.filter((q) => q.completeness === "blank").length;
 
   return {
-    score: pct(scored.totalScore, scored.maxScore),
+    percentage: pct(scored.totalScore, scored.maxScore),
+    rawScore: scored.totalScore,
+    maxScore: scored.maxScore,
     correct,
     blank,
     wrong: scored.questions.length - correct - blank,

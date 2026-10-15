@@ -116,7 +116,8 @@ baru, sama seperti membaca `ARCHITECTURE.md` sebelum membuat modul baru.
 | **Opsi PGK MCMA** | Sama dengan opsi PG, tapi badge huruf kotak (bukan bulat) berisi centang saat dipilih; petunjuk "Jawaban benar bisa lebih dari satu" + penghitung "n opsi dipilih" |
 | **Pernyataan PGK Kategori** | Desktop: tabel pernyataan × 2 kolom kategori (tombol segmen). HP: kartu per pernyataan dengan 2 tombol penuh lebar. Klik kategori yang sama = kosongkan; penghitung "n dari m pernyataan dijawab" |
 | **Panel stimulus (soal grup)** | Semua ukuran layar: panel **di atas** kartu soal (bukan kiri-kanan), judul + "Bacaan untuk soal 4–5", bisa dilipat (default terbuka), isi scroll sendiri maks 40–45% tinggi layar, ikut ukuran teks A/A/A |
-| **Kategori skor** | `scoreTone()` di `src/lib/format.ts`: ≥75% Baik (hijau), 50–74% Cukup (amber), <50% Perlu latihan (merah) |
+| **Penguasaan (persentase)** | `masteryTone()` di `src/lib/format.ts` untuk subtopik/latihan: ≥75% **Kuat** (hijau), 50–74% **Cukup** (amber), <50% **Perlu Latihan** (merah) |
+| **Kategori capaian (nilai mata uji)** | `AchievementBadge` (components/analytics): **Baik / Memadai / Kurang** dari ambang admin + badge Istimewa. Kosakata ini HANYA untuk nilai per mata uji; ambang kosong → "Ambang kategori belum ditetapkan" |
 | **Input/Form** | Border `neutral-border`, radius 8px, focus ring warna `primary` |
 | **Tabel (admin)** | Header sticky, baris zebra tipis opsional, aksi di kolom kanan (ikon edit/toggle), hover row highlight ringan |
 | **Navigasi soal (grid angka)** | Kotak 44px, radius 8px: terjawab=solid biru, belum lengkap (Kategori sebagian)=outline biru putus-putus + latar biru muda, ragu-ragu=solid amber + ikon bendera (teks gelap), belum=outline abu, soal aktif=ring biru 2px, soal grup stimulus=garis kecil di bawah angka |
@@ -182,7 +183,9 @@ Layout minim distraksi. Topbar: judul tes + timer besar (berubah merah
 navigasi soal dengan kode warna status.
 
 ### 4.9 Student — Hasil & Analisis
-Skor besar (0–100) di atas dengan badge kategori skor + stat
+Nilai besar sesuai skala jenjang (0–100 SD/SMP, 200–800 SMA, 2 desimal)
++ skor mentah + kategori capaian/istimewa + keterangan "simulasi, bukan skor
+resmi TKA", lalu stat
 benar/salah/kosong/durasi. Radar chart per subtopik dengan subtopik
 terlemah ditandai merah + ikon ⚠ (bukan warna saja), kartu "Prioritas
 latihan #1" dan "Kekuatan tertinggi". Rincian per subtopik (bar + angka,

@@ -24,7 +24,9 @@ import { ReviewCard } from "@/components/hasil/review-card";
 import { RichHtml } from "@/components/tes/rich-html";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { scoreTone } from "@/lib/format";
+import { masteryTone } from "@/lib/format";
+import { formatScore, SIMULATION_NOTE } from "@/lib/score-display";
+import { scaledScorer } from "@/server/services/scaled-result";
 import { getSession } from "@/server/auth/session";
 import { scoreDemo, type DemoResult } from "@/server/demo/demo-test";
 import { DEMO_ANSWERS_COOKIE, parseDemoAnswers } from "../demo-answers";
@@ -43,8 +45,9 @@ export default async function DemoHasilPage() {
   if (!answers) redirect("/tes/demo");
 
   const [r, session] = [scoreDemo(answers), await getSession()];
-  const tone = scoreTone(r.score);
-  const head = headline(r.score);
+  // Demo memuat soal TKA SMP → skala 0–100, rumus konversi yang sama dengan tes asli.
+  const scaled = (await scaledScorer())("SMP", r.rawScore, r.maxScore);
+  const head = headline(r.percentage);
   // Urut terlemah → terkuat; seri → urutan kerangka.
   const ranked = [...r.subdomains].sort((a, b) => a.percentage - b.percentage || a.id - b.id);
   const weakest = ranked[0];
@@ -68,12 +71,15 @@ export default async function DemoHasilPage() {
         <section aria-label="Skor demo" className="surface-card grid gap-6 p-6 sm:p-8 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12">
           <div className="flex flex-col items-start gap-2">
             <Badge variant="info">Hasil Demo · TKA SMP</Badge>
-            <span className="mt-2 text-sm font-medium text-muted-foreground">Skor kamu</span>
+            <span className="mt-2 text-sm font-medium text-muted-foreground">Nilai kamu (skala 0–100)</span>
             <div className="flex items-baseline gap-2">
-              <span className="text-6xl font-extrabold tracking-tight text-primary">{r.score}</span>
+              <span className="text-6xl font-extrabold tracking-tight text-primary tabular-nums">{formatScore(scaled.scaledScore)}</span>
               <span className="text-lg text-muted-foreground">/ 100</span>
             </div>
-            <Badge variant={tone.variant}>{tone.label}</Badge>
+            <span className="text-sm text-muted-foreground tabular-nums">
+              {r.rawScore} dari {r.maxScore} soal benar
+            </span>
+            <p className="max-w-xs text-xs text-muted-foreground">{SIMULATION_NOTE}</p>
           </div>
           <div className="flex flex-col gap-5">
             <div>
@@ -168,7 +174,7 @@ export default async function DemoHasilPage() {
           </h2>
           <ul className="mt-4 flex flex-col divide-y">
             {ranked.map((s) => {
-              const t = scoreTone(s.percentage);
+              const t = masteryTone(s.percentage);
               return (
                 <li key={s.id} className="grid gap-2 py-4 sm:grid-cols-[minmax(0,16rem)_1fr_auto] sm:items-center sm:gap-6">
                   <div>

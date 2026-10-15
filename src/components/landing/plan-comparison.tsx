@@ -434,7 +434,7 @@ function ResultMock({ premium }: { premium: boolean }) {
           Akun {premium ? "Premium" : "Gratis"}
         </span>
         <span className="text-xs font-semibold opacity-90">
-          Skor 70 · 21/30 benar
+          Nilai 70,00 · 21/30 benar
         </span>
       </figcaption>
       <div className="flex flex-1 flex-col gap-4 p-5 text-sm">

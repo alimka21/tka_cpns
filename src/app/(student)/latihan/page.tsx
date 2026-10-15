@@ -18,7 +18,7 @@ export const metadata: Metadata = { title: "Latihan Kelemahan" };
 export const dynamic = "force-dynamic";
 
 // Urutan tampilan pilihan: yang paling perlu dilatih dulu.
-const STATUS_ORDER = { perlu_latihan: 0, cukup: 1, insufficient: 2, baik: 3 } as const;
+const STATUS_ORDER = { perlu_latihan: 0, cukup: 1, insufficient: 2, kuat: 3 } as const;
 
 export default async function LatihanPage({ searchParams }: PageProps<"/latihan">) {
   const { user } = await requireUser("/latihan");
@@ -79,7 +79,7 @@ export default async function LatihanPage({ searchParams }: PageProps<"/latihan"
   const withBank = (id: number) => hasKey || (counts.get(id) ?? 0) > 0;
   const fromPriorities = progress.priorities.map((p) => p.subtopicId).filter(withBank);
   // Belum ada prioritas (mis. soal per subdomain masih < 3) → ambil yang akurasinya terendah.
-  const fallback = options.filter((o) => (hasKey || o.available > 0) && o.status !== "baik").map((o) => o.subtopicId);
+  const fallback = options.filter((o) => (hasKey || o.available > 0) && o.status !== "kuat").map((o) => o.subtopicId);
   const preselected =
     Number.isInteger(requested) && withBank(requested)
       ? [requested]

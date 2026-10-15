@@ -14,7 +14,7 @@ const selectClass =
 
 /**
  * Tren akurasi satu subdomain: titik = hasil tiap tes/latihan, garis tebal =
- * akurasi berjalan (dasar status). Garis putus 50% & 75% = batas Cukup & Baik.
+ * akurasi berjalan (dasar status). Garis putus 50% & 75% = batas Cukup & Kuat.
  */
 export function SubtopicTrend({ options, initialId }: { options: SubtopicTrendOption[]; initialId?: number }) {
   const [id, setId] = useState(initialId ?? options[0]?.id);
@@ -114,7 +114,7 @@ export function SubtopicTrend({ options, initialId }: { options: SubtopicTrendOp
             </g>
           ))}
           <text x={PAD.left + 6} y={y(75) - 5} className="fill-muted-foreground text-[10px]">
-            Baik
+            Kuat
           </text>
           <text x={PAD.left + 6} y={y(50) - 5} className="fill-muted-foreground text-[10px]">
             Cukup
@@ -193,7 +193,7 @@ export function SubtopicTrend({ options, initialId }: { options: SubtopicTrendOp
           <span className="inline-block size-2 rotate-45 border-[1.5px] border-muted-foreground" aria-hidden /> Hasil latihan
         </li>
         <li className="flex items-center gap-1.5">
-          <span className="inline-block w-5 border-t border-dashed border-muted-foreground" aria-hidden /> Batas Cukup 50% · Baik 75%
+          <span className="inline-block w-5 border-t border-dashed border-muted-foreground" aria-hidden /> Batas Cukup 50% · Kuat 75%
         </li>
       </ul>
     </div>

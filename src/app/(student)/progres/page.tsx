@@ -7,6 +7,7 @@ import { SubtopicTrend } from "@/components/analytics/subtopic-trend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DIAGNOSIS_STATUS, type DiagnosisStatusKey } from "@/lib/format";
+import { SCALE_LABEL } from "@/lib/score-scale";
 import { cn } from "@/lib/utils";
 import { requireUser } from "@/server/auth/session";
 import { PremiumLock } from "@/components/billing/premium-lock";
@@ -19,7 +20,7 @@ import { SubjectFilter } from "@/components/student/subject-filter";
 export const metadata: Metadata = { title: "Progres Kemampuan" };
 export const dynamic = "force-dynamic";
 
-const LEGEND: DiagnosisStatusKey[] = ["baik", "cukup", "perlu_latihan", "insufficient", "untested"];
+const LEGEND: DiagnosisStatusKey[] = ["kuat", "cukup", "perlu_latihan", "insufficient", "untested"];
 
 export default async function ProgresPage({ searchParams }: PageProps<"/progres">) {
   const { user } = await requireUser("/progres");
@@ -63,7 +64,7 @@ export default async function ProgresPage({ searchParams }: PageProps<"/progres"
         {progress.scoreTrend.length > 1 && (
           <section className="surface-card p-6">
             <h2 className="text-lg font-bold">Tren skor tes</h2>
-            <p className="mt-1 text-sm text-muted-foreground">{progress.scoreTrend.length} tes terakhir, skala 0–100.</p>
+            <p className="mt-1 text-sm text-muted-foreground">{progress.scoreTrend.length} tes terakhir, skala {SCALE_LABEL[progress.scoreTrend[0].score.scale]} (simulasi).</p>
             <div className="mt-6">
               <ScoreTrend points={progress.scoreTrend} />
             </div>
@@ -130,7 +131,7 @@ export default async function ProgresPage({ searchParams }: PageProps<"/progres"
         <section className="surface-card p-6">
           <h2 className="text-lg font-bold">Tren skor tes</h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            {progress.scoreTrend.length} tes terakhir, skala 0–100. Arahkan kursor ke titik untuk detail.
+            {progress.scoreTrend.length} tes terakhir, skala {SCALE_LABEL[progress.scoreTrend[0].score.scale]} (simulasi). Arahkan kursor ke titik untuk detail.
           </p>
           <div className="mt-6">
             <ScoreTrend points={progress.scoreTrend} />
@@ -217,7 +218,7 @@ function Summary({
           , kamu paling kuat di <strong>{strong.name}</strong> ({strong.diagnosis.accuracy}%)
         </>
       ) : (
-        <>, belum ada subdomain yang mencapai kategori Baik</>
+        <>, belum ada subdomain yang mencapai status Kuat</>
       )}
       .{" "}
       {weakest ? (
@@ -234,7 +235,7 @@ function Summary({
       ) : (
         <>
           {strong
-            ? "Tidak ada subdomain yang berstatus Perlu latihan atau Cukup — pertahankan!"
+            ? "Tidak ada subdomain yang berstatus Perlu Latihan atau Cukup — pertahankan!"
             : "Soal per subdomain masih sedikit (minimal 3 soal) — kerjakan tes lagi supaya diagnosanya lebih akurat."}
         </>
       )}

@@ -12,6 +12,51 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-16 — Penskoran sesuai Kepmendikdasmen 56/2026
+Acuan: docs/PENSKORAN-DAN-PELAPORAN-TKA.md. Migrasi 0021 (hanya menambah, idempoten).
+- **Skala per jenjang**: SD/SMP 0–100, SMA 200–800 (SMK belum didukung).
+  `attempts.score_scale` + `scaled_score DECIMAL(6,2)` + `scoring_config_version`
+  **dibekukan saat finalize** (nilai bergantung rumus saat tes). Skor mentah
+  tetap di `total_score`/`max_score` (int). Aritmetika bilangan bulat perseratus
+  (BigInt), pembulatan setengah ke atas — tanpa float.
+- **Rumus konversi (bukan resmi)**: regulasi tidak mempublikasikan rumusnya
+  (IRT/equating). Dipilih rumus paling sederhana yang jujur: **linear**
+  `nilai = batas bawah + (mentah/maksimum) × (batas atas − batas bawah)`
+  (0 benar SMA = 200,00). Disimpan di `app_settings.scoring.conversion` sebagai
+  titik jangkar (admin boleh menambah titik antara; ujung 0%→bawah,
+  100%→atas tetap), dengan `version` naik setiap disimpan + `history` rumus
+  lama; tiap attempt menyimpan `v{versi}-{skala}-{sidik jari kurva}` supaya
+  asal nilai lama selalu bisa dilacak. UI selalu menyebut "simulasi latihan,
+  bukan skor resmi TKA".
+- **Kategori Baik/Memadai/Kurang**: ambang tidak ada di regulasi → tabel
+  `achievement_thresholds` diisi admin (dua titik potong per skala, rentang
+  diturunkan tanpa celah), `is_official` untuk ambang resmi kelak. **Dihitung
+  saat ditampilkan** (bukan dibekukan) karena ambang bisa berubah; ambang
+  kosong → "Ambang kategori belum ditetapkan", tidak menebak.
+- **Predikat Istimewa per mata uji** (opsi a): frasa regulasi "di
+  masing-masing mata uji" ambigu; flag per mata uji lebih informatif dan bisa
+  diagregasi ke tingkat peserta bila perlu. Ambang ≥95,00 / ≥725,00 =
+  konstanta (ditetapkan regulasi, `ISTIMEWA_MIN`).
+- **Skor subtopik tidak diskalakan**: regulasi menskalakan nilai per mata
+  uji, bukan per subtopik; `attempt_subtopic_scores` tetap poin mentah +
+  persentase `decimal(5,2)` untuk diagnosa. Kosakata diagnosa diganti
+  **Kuat / Cukup / Perlu Latihan** (`masteryTone`, status `kuat`) supaya tidak
+  tertukar dengan kategori resmi, yang HANYA dipakai untuk nilai mata uji.
+- **Durasi**: angka regulasi (SMA BIND 60, BING 50, MTK 70, pilihan 50;
+  SD/SMP 75) jadi **default** paket baru, **bukan blokir**. Hanya paket
+  bertanda `is_full_simulation` yang wajib sama; paket lain (drill) cukup
+  peringatan. 25 paket SMA terbit + 3 draf **tidak diubah otomatis** —
+  menunggu keputusan pemilik (kurangi soal, bukan tambah waktu). Jumlah soal
+  tetap ketetapan pemilik (regulasi tidak mengaturnya).
+- **Gap yang diketahui (ditunda, tanpa placeholder)**: jenjang SMK
+  (`categories`/`users.jenjang` hanya SD/SMP/SMA, field program keahlian)
+  dan mata uji pilihan ke-20 *Teori Kompetensi Kejuruan* — kerangka asesmen
+  (domain/subdomain) belum terbit, sedangkan setiap soal wajib tertaut ke
+  subdomain. Penanda asal butir TKA/AN juga dilewati (opsional).
+Alternatif yang ditolak: mengubah `total_score` jadi desimal skala (kehilangan
+skor mentah); menghitung nilai skala saat tampil saja (nilai lama ikut berubah
+bila rumus diganti); ambang kategori bawaan kode (menebak angka resmi).
+
 ## 2026-10-15 — Paket 6 SMA Matematika, B. Indonesia, B. Inggris (#52–#54, draf, ditulis Claude)
 Semua soal baru (`generated_by` manual, `pending_review`, stimulus `draft`), diimpor
 lewat `scripts/import-package.ts` (validasi impor Excel + kerangka + aturan paket;

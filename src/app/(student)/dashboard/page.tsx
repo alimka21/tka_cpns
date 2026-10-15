@@ -4,9 +4,11 @@ import { ArrowRight, BookOpenCheck, ChevronRight, Layers, TrendingUp, TriangleAl
 import { StatCard } from "@/components/layout/stat-card";
 import { PackageGrid } from "@/components/student/package-grid";
 import { PremiumLock } from "@/components/billing/premium-lock";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { formatDateTime, scoreTone } from "@/lib/format";
+import { AchievementBadge } from "@/components/analytics/achievement-badge";
+import { formatDateTime } from "@/lib/format";
+import { averageScore, formatScore } from "@/lib/score-display";
+import { SCALE_RANGE } from "@/lib/score-scale";
 import { requireUser } from "@/server/auth/session";
 import { listStudentHistory } from "@/server/queries/attempts";
 import { listPackagesForStudent } from "@/server/queries/packages";
@@ -33,7 +35,7 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
   ]);
   const packages = subject ? allPackages.filter((p) => p.subjectId === subject.id) : allPackages;
   const weakest = progress.priorities[0];
-  const average = history.length > 0 ? Math.round(history.reduce((sum, h) => sum + h.score, 0) / history.length) : null;
+  const average = averageScore(history.map((h) => h.score));
 
   return (
     <div className="flex flex-col gap-10">
@@ -49,12 +51,12 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
           <StatCard label="Paket tersedia" value={String(packages.length)} icon={Layers} hint="Paket tes yang sudah diterbitkan" />
           <StatCard label="Tes selesai" value={String(progress.testCount)} unit="sesi" icon={BookOpenCheck} tone="success" />
           <StatCard
-            label="Rata-rata skor"
-            value={average == null ? "—" : String(average)}
-            unit="/ 100"
+            label="Rata-rata nilai"
+            value={average == null ? "—" : formatScore(average.value)}
+            unit={average ? `/ ${SCALE_RANGE[average.scale].max}` : undefined}
             icon={TrendingUp}
             tone="cta"
-            hint={history.length > 0 ? `${history.length} tes terakhir` : undefined}
+            hint={average ? `${average.count} tes terakhir · simulasi` : undefined}
           />
         </div>
       </section>
@@ -105,7 +107,6 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
         ) : (
           <ul className="surface-card divide-y">
             {history.slice(0, 5).map((item) => {
-              const tone = scoreTone(item.score);
               return (
                 <li key={item.attemptId}>
                   <Link
@@ -124,8 +125,8 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
                     </div>
                     <div className="flex items-center gap-4">
                       <div className="text-right">
-                        <div className="text-2xl font-bold">{item.score}</div>
-                        <Badge variant={tone.variant}>{tone.label}</Badge>
+                        <div className="text-2xl font-bold tabular-nums">{formatScore(item.score.value)}</div>
+                        <AchievementBadge score={item.score} showMissing={false} />
                       </div>
                       <ChevronRight className="size-5 text-muted-foreground" aria-hidden />
                     </div>

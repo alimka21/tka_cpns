@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DownloadPackageButton } from "@/components/student/download-package-button";
 import type { StudentPackageRow } from "@/server/queries/packages";
+import { formatScore } from "@/lib/score-display";
 import { cn } from "@/lib/utils";
 
 const ALL = "Semua";
@@ -138,7 +139,7 @@ function PackageCard({ pkg, premium }: { pkg: StudentPackageRow; premium: boolea
         {pkg.lastScore != null && (
           <div className="ml-auto">
             <dt className="sr-only">Skor terakhir</dt>
-            <dd className="font-semibold text-foreground">Skor terakhir {pkg.lastScore}</dd>
+            <dd className="font-semibold text-foreground tabular-nums">Nilai terakhir {formatScore(pkg.lastScore.value)}</dd>
           </div>
         )}
       </dl>

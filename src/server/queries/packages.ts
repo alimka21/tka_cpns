@@ -5,6 +5,8 @@
 
 import { and, asc, desc, eq, inArray, like, or, sql } from "drizzle-orm";
 import { visibleEmail } from "@/lib/identity";
+import type { ScoreView } from "@/lib/score-display";
+import { buildScoreView } from "@/server/services/score-view";
 import { db } from "@/server/db";
 import {
   attempts,
@@ -114,6 +116,7 @@ export type PackageDetail = {
   subjectId: number | null;
   durationMinutes: number;
   isPremium: boolean;
+  isFullSimulation: boolean;
   status: "draft" | "published";
   questions: PackageQuestion[];
   stimuli: { id: number; title: string; content: string; imageUrl: string | null }[];
@@ -131,6 +134,7 @@ export async function getPackageDetail(testPackageId: number): Promise<PackageDe
       subjectId: testPackages.subjectId,
       durationMinutes: testPackages.durationMinutes,
       isPremium: testPackages.isPremium,
+      isFullSimulation: testPackages.isFullSimulation,
       status: testPackages.status,
     })
     .from(testPackages)
@@ -251,7 +255,8 @@ export type StudentPackageRow = {
   isPremium: boolean;
   questionCount: number;
   unlocked: boolean;
-  lastScore: number | null;
+  /** Nilai skala tes terakhir paket ini (string 2 desimal, lib/score-display). */
+  lastScore: ScoreView | null;
   subjectId: number | null;
   subjectName: string | null;
   /** Akun gratis: kuota 1 paket gratis untuk mapel ini sudah dipakai di paket lain (judulnya). */
@@ -291,14 +296,22 @@ export async function listPackagesForStudent(userId: number, jenjang: string | n
   const titleById = new Map(rows.map((r) => [r.id, r.title]));
 
   const lastScoreRows = await db
-    .select({ testPackageId: attempts.testPackageId, totalScore: attempts.totalScore, maxScore: attempts.maxScore })
+    .select({
+      testPackageId: attempts.testPackageId,
+      totalScore: attempts.totalScore,
+      maxScore: attempts.maxScore,
+      scoreScale: attempts.scoreScale,
+      scaledScore: attempts.scaledScore,
+    })
     .from(attempts)
     .where(and(eq(attempts.userId, userId), eq(attempts.status, "submitted")))
     .orderBy(desc(attempts.submittedAt));
-  const lastScoreByPackage = new Map<number, number>();
+  const jenjangById = new Map(rows.map((r) => [r.id, r.categoryCode]));
+  const lastScoreByPackage = new Map<number, ScoreView>();
   for (const a of lastScoreRows) {
-    if (!lastScoreByPackage.has(a.testPackageId) && a.totalScore != null && a.maxScore) {
-      lastScoreByPackage.set(a.testPackageId, Math.round((a.totalScore / a.maxScore) * 100));
+    const jenjang = jenjangById.get(a.testPackageId);
+    if (!lastScoreByPackage.has(a.testPackageId) && jenjang && a.totalScore != null && a.maxScore) {
+      lastScoreByPackage.set(a.testPackageId, buildScoreView({ ...a, jenjang }, null));
     }
   }
 

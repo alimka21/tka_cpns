@@ -4,7 +4,7 @@
 // dijalankan ulang di setiap navigasi client).
 
 import { cache } from "react";
-import { headers } from "next/headers";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { safeRedirectPath } from "@/lib/redirect";
 import { auth, type Role, type Session } from "./index";
@@ -25,7 +25,11 @@ export function homeFor(role: Role | string | null | undefined) {
  */
 export async function requireUser(returnTo: string) {
   const session = await getSession();
-  if (!session) redirect(`/masuk?next=${encodeURIComponent(safeRedirectPath(returnTo, "/dashboard"))}`);
+  if (!session) {
+    // Cookie sesi masih ada tapi tidak berlaku → dikeluarkan (login di perangkat lain) atau kedaluwarsa.
+    const ended = (await cookies()).getAll().some((c) => c.name.endsWith("session_token"));
+    redirect(`/masuk?next=${encodeURIComponent(safeRedirectPath(returnTo, "/dashboard"))}${ended ? "&sesi=berakhir" : ""}`);
+  }
   if (session.user.role !== "admin") {
     if (session.user.status !== "active") redirect("/menunggu-konfirmasi");
     if (!session.user.jenjang) redirect(`/pilih-jenjang?next=${encodeURIComponent(safeRedirectPath(returnTo, "/dashboard"))}`);

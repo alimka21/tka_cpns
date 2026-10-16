@@ -4,7 +4,7 @@
 import { randomBytes } from "node:crypto";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { eq } from "drizzle-orm";
+import { and, eq, ne } from "drizzle-orm";
 import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/server/db";
@@ -88,6 +88,19 @@ export const auth = betterAuth({
     },
   },
   databaseHooks: {
+    session: {
+      create: {
+        // Satu akun siswa = satu perangkat (cegah pinjam-meminjam akun Premium):
+        // login baru mengeluarkan semua sesi lain milik user itu. Admin bebas multi-perangkat.
+        // Tanpa cookie cache, sesi lama langsung tidak berlaku di request berikutnya.
+        after: async (session) => {
+          const userId = Number(session.userId);
+          const [user] = await db.select({ role: users.role }).from(users).where(eq(users.id, userId));
+          if (!user || user.role === "admin") return;
+          await db.delete(sessions).where(and(eq(sessions.userId, userId), ne(sessions.token, session.token)));
+        },
+      },
+    },
     user: {
       create: {
         // Bila admin mewajibkan konfirmasi, pendaftar baru menunggu persetujuan.

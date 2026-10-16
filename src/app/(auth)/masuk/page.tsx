@@ -13,7 +13,7 @@ export default async function MasukPage({ searchParams }: PageProps<"/masuk">) {
   // Sudah login → langsung ke tujuan.
   const session = await getSession();
   if (session) redirect(nextPath ?? homeFor(session.user.role));
-  const { error, reset } = await searchParams;
+  const { error, reset, sesi } = await searchParams;
   return (
     <AuthForm
       mode="signin"
@@ -21,6 +21,11 @@ export default async function MasukPage({ searchParams }: PageProps<"/masuk">) {
       googleEnabled={isGoogleEnabled}
       oauthError={typeof error === "string" ? error : undefined}
       success={reset === "berhasil" ? "Kata sandi baru tersimpan. Silakan masuk dengan kata sandi baru." : undefined}
+      info={
+        sesi === "berakhir"
+          ? "Kamu keluar karena akun ini masuk di perangkat lain atau sesinya berakhir. Satu akun hanya bisa aktif di satu perangkat — masuk lagi untuk melanjutkan."
+          : undefined
+      }
     />
   );
 }

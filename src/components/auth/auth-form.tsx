@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, AtSign, CircleCheck, Eye, EyeOff, Info, Lock, Mail, Phone, School, User, type LucideIcon } from "lucide-react";
+import { ArrowRight, AtSign, CircleCheck, Eye, EyeOff, Info, Lock, Mail, Phone, School, TriangleAlert, User, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { JenjangPicker } from "@/components/profile/jenjang-picker";
 import { ProvinceSelect } from "@/components/profile/province-select";
@@ -70,6 +70,7 @@ export function AuthForm({
   googleEnabled = false,
   oauthError,
   success,
+  info,
 }: {
   mode: Mode;
   next?: string;
@@ -77,6 +78,8 @@ export function AuthForm({
   oauthError?: string;
   /** Pesan hijau di atas form (mis. setelah kata sandi berhasil diatur ulang). */
   success?: string;
+  /** Pesan kuning di atas form (mis. dikeluarkan karena login di perangkat lain). */
+  info?: string;
 }) {
   const router = useRouter();
   const [errors, setErrors] = useState<Errors>({});
@@ -179,6 +182,12 @@ export function AuthForm({
             <span className="h-px flex-1 bg-border" /> {mode === "signin" ? "atau dengan username" : "atau buat akun"} <span className="h-px flex-1 bg-border" />
           </div>
         </>
+      )}
+
+      {info && (
+        <p role="status" className="mt-6 flex gap-2 rounded-lg border border-warning/40 bg-warning-soft px-3 py-2.5 text-sm text-warning-strong">
+          <TriangleAlert className="mt-0.5 size-4 shrink-0" aria-hidden /> {info}
+        </p>
       )}
 
       {success && (

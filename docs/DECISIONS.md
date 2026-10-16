@@ -12,6 +12,14 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-16 — Satu akun siswa = satu perangkat (login terakhir menang)
+Mencegah akun Premium dipinjamkan. `databaseHooks.session.create.after` (Better Auth)
+menghapus sesi lain milik user saat login baru (email & Google); admin dikecualikan.
+Tanpa cookie cache → sesi lama gugur di request berikutnya; `requireUser` mendeteksi
+cookie sesi yang tidak berlaku → `/masuk?sesi=berakhir` dengan pesan penjelasan.
+Alternatif ditolak: menolak login baru selama sesi lama aktif (siswa terkunci bila HP
+hilang/ganti perangkat, beban admin naik).
+
 ## 2026-10-16 — Transaksi jadi menu sendiri; akses Premium dikelola di Manajemen User
 - `/admin/transaksi`: antrean verifikasi (default tab menunggu, terlama dulu), pencarian
   nominal persis (`Rp27.023` → 27023) karena kode unik membuat nominal tiap order unik,

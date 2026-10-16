@@ -86,7 +86,7 @@ const sections: LegalSection[] = [
               <li>terjadi pembayaran ganda untuk transaksi yang sama.</li>
             </ul>
           </li>
-          <li>Untuk kendala pembayaran, hubungi kami melalui <ContactLine /> dengan menyertakan nomor transaksi (diawali &ldquo;WTP-&rdquo;).</li>
+          <li>Untuk kendala pembayaran, hubungi kami melalui <ContactLine /> dengan menyertakan nomor transaksi (tertera di menu Langganan, mis. &ldquo;PTX-…&rdquo;).</li>
         </ul>
       </>
     ),

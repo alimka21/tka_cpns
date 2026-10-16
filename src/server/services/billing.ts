@@ -1,4 +1,4 @@
-// Langganan Premium & pembayaran (Midtrans Snap atau DOKU Checkout — lihat
+// Langganan Premium & pembayaran (Xendit Invoice, Midtrans Snap, atau DOKU Checkout — lihat
 // payment-provider.ts). Satu-satunya tempat yang mengubah status order & membuat
 // membership dari pembayaran.
 
@@ -11,7 +11,11 @@ import { createCheckout, DokuError, getOrderStatus } from "./doku";
 import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
 import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
 import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
-import { MIDTRANS_ORDER_PREFIX, paymentAvailability, providerOfOrder } from "./payment-provider";
+import { ORDER_PREFIX, paymentAvailability, providerOfOrder } from "./payment-provider";
+import { createInvoice, getInvoiceByExternalId, XenditError } from "./xendit";
+import { mapXenditStatus, type XenditInvoice } from "./xendit-core";
+
+const isProviderError = (e: unknown) => e instanceof DokuError || e instanceof MidtransError || e instanceof XenditError;
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -50,7 +54,7 @@ function newOrderCode(userId: number, prefix: string) {
   return `${prefix}${userId}-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 }
 
-/** Buat order + halaman bayar penyedia aktif (Midtrans Snap / DOKU Checkout); kembalikan URL-nya. */
+/** Buat order + halaman bayar penyedia aktif (Xendit Invoice / Midtrans Snap / DOKU Checkout); kembalikan URL-nya. */
 export async function createOrder(
   user: { id: number; name: string; email: string; role?: string | null; jenjang: string | null },
   planId: number,
@@ -64,21 +68,33 @@ export async function createOrder(
   if (!pay.configured) return { ok: false, error: "Pembayaran belum tersedia. Hubungi admin." };
   if (!pay.canPay) return { ok: false, error: "Pembayaran online sedang dalam tahap uji coba dan segera dibuka. Hubungi admin untuk aktivasi Premium." };
 
-  const orderCode = newOrderCode(user.id, pay.provider === "midtrans" ? MIDTRANS_ORDER_PREFIX : "WTP-");
+  const orderCode = newOrderCode(user.id, ORDER_PREFIX[pay.provider]);
   const finishUrl = `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`;
   const [{ id }] = await db
     .insert(orders)
     .values({ orderCode, userId: user.id, planId: plan.id, planName: plan.name, jenjang: plan.jenjang, durationDays: plan.durationDays, amount: plan.price })
     .$returningId();
   try {
+    const customer = { name: user.name, email: visibleEmail(user.email) ?? undefined };
     const url =
-      pay.provider === "midtrans"
+      pay.provider === "xendit"
+        ? (
+            await createInvoice({
+              orderCode,
+              amount: plan.price,
+              itemName: plan.name,
+              customer,
+              successUrl: finishUrl,
+              failureUrl: finishUrl,
+            })
+          ).invoiceUrl
+        : pay.provider === "midtrans"
         ? (
             await createSnapTransaction({
               orderCode,
               amount: plan.price,
               itemName: plan.name,
-              customer: { name: user.name, email: visibleEmail(user.email) ?? undefined },
+              customer,
               finishUrl,
             })
           ).redirectUrl
@@ -95,11 +111,11 @@ export async function createOrder(
     return { ok: true, redirectUrl: url, orderCode };
   } catch (e) {
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, id));
-    return { ok: false, error: e instanceof DokuError || e instanceof MidtransError ? e.message : "Gagal membuat transaksi." };
+    return { ok: false, error: isProviderError(e) ? (e as Error).message : "Gagal membuat transaksi." };
   }
 }
 
-/** Status pembayaran dalam bentuk netral (dari DOKU maupun Midtrans). */
+/** Status pembayaran dalam bentuk netral (dari Xendit, Midtrans, maupun DOKU). */
 type PaymentUpdate = {
   orderCode: string;
   amount: number;
@@ -134,6 +150,20 @@ export function applyMidtransStatus(payload: MidtransPayload) {
     transactionId: payload.transaction_id ?? null,
     paidAt: settled && !Number.isNaN(settled.getTime()) ? settled : null,
     raw: payload,
+  });
+}
+
+/** Terapkan status invoice Xendit (webhook / cek status). */
+export function applyXenditStatus(invoice: XenditInvoice) {
+  const paidAt = invoice.paid_at ? new Date(invoice.paid_at) : null;
+  return applyPaymentUpdate({
+    orderCode: invoice.external_id,
+    amount: invoice.amount,
+    status: mapXenditStatus(invoice.status),
+    channel: invoice.payment_channel ?? invoice.payment_method ?? null,
+    transactionId: invoice.id,
+    paidAt: paidAt && !Number.isNaN(paidAt.getTime()) ? paidAt : null,
+    raw: invoice,
   });
 }
 
@@ -183,15 +213,18 @@ async function applyPaymentUpdate(payload: PaymentUpdate): Promise<Result<{ stat
 /** Tarik status terbaru dari penyedia yang membuat order lalu terapkan (halaman selesai & tombol cek status). */
 export async function syncOrder(orderCode: string): Promise<Result<{ status: OrderStatus }>> {
   try {
+    const provider = providerOfOrder(orderCode);
     const result =
-      providerOfOrder(orderCode) === "midtrans"
-        ? await getTransactionStatus(orderCode).then((p) => (p ? applyMidtransStatus(p) : null))
-        : await getOrderStatus(orderCode).then((p) => (p ? applyDokuStatus(p) : null));
+      provider === "xendit"
+        ? await getInvoiceByExternalId(orderCode).then((p) => (p ? applyXenditStatus(p) : null))
+        : provider === "midtrans"
+          ? await getTransactionStatus(orderCode).then((p) => (p ? applyMidtransStatus(p) : null))
+          : await getOrderStatus(orderCode).then((p) => (p ? applyDokuStatus(p) : null));
     if (result) return result;
     const [order] = await db.select({ status: orders.status }).from(orders).where(eq(orders.orderCode, orderCode));
     return order ? { ok: true, status: order.status } : { ok: false, error: "Order tidak ditemukan." };
   } catch (e) {
-    return { ok: false, error: e instanceof DokuError || e instanceof MidtransError ? e.message : "Gagal mengecek status." };
+    return { ok: false, error: isProviderError(e) ? (e as Error).message : "Gagal mengecek status." };
   }
 }
 

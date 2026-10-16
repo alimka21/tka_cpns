@@ -152,7 +152,33 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
   untuk migrasi selanjutnya juga (generate SQL-nya, bersihkan penanda,
   paste ke phpMyAdmin).
 
-## 8a. Pembayaran Midtrans Snap (Premium) — penyedia utama sejak 2026-10-13
+## 8c. Pembayaran Xendit Invoice (Premium) — penyedia utama sejak 2026-10-16
+
+Env `PAYMENT_PROVIDER` kosong → Xendit dipakai begitu `XENDIT_SECRET_KEY`
+terisi (Midtrans §8a & DOKU §8 tetap ada; order lama tetap dicek ke penyedia
+pembuatnya lewat prefix kode: `PTX-` Xendit, `PTM-` Midtrans, `WTP-` DOKU).
+
+1. Dashboard Xendit (mode **Test**) → Settings → **API Keys** → Generate secret
+   key, izin **Write** untuk Money-in/Invoices → salin (`xnd_development_…`).
+   Jangan kirim ke chat.
+2. Settings → **Webhooks** → salin **Verification Token**; di bagian
+   **Invoices** ("Invoices paid") isi `https://pakartka.com/api/xendit/notification`
+   → Test and save.
+3. hPanel → env: `XENDIT_SECRET_KEY=<key>`, `XENDIT_CALLBACK_TOKEN=<token>`,
+   `PAYMENT_TEST_EMAILS=<email akun siswa uji>` (opsional; admin selalu boleh),
+   opsional `PAYMENT_PROVIDER=xendit`. Redeploy.
+4. Admin → Langganan → **Tes koneksi Xendit** → harus "Terhubung … Key bisa
+   membaca invoice".
+5. Uji: admin/akun penguji → Premium → Bayar sekarang → halaman invoice Xendit
+   (mode Test: tombol simulasi bayar) → kembali ke `/langganan/selesai` →
+   Premium aktif. Selama key Test, siswa lain melihat "Pembayaran … segera dibuka".
+6. Akun disetujui (aktivasi Live) → ulangi langkah 1–2 di mode **Live**
+   (key `xnd_production_…` & token Live berbeda) → ganti kedua env → redeploy →
+   tes koneksi lagi. Mode Test/Live ditentukan oleh key, tidak ada env terpisah.
+7. Opsional `XENDIT_PAYMENT_METHODS=QRIS,BCA,BNI,BRI,MANDIRI,OVO,DANA,SHOPEEPAY`
+   untuk membatasi metode (kosong = semua yang aktif di akun).
+
+## 8a. Pembayaran Midtrans Snap (Premium) — alternatif (penyedia utama 2026-10-13 s.d. 2026-10-16)
 
 Penyedia dipilih env `PAYMENT_PROVIDER` (`midtrans` / `doku`; kosong → Midtrans
 bila `MIDTRANS_SERVER_KEY` terisi). DOKU (§8) tetap ada sebagai alternatif.

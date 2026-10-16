@@ -33,7 +33,7 @@ const sections: LegalSection[] = [
           </li>
           <li>
             <strong>Data transaksi:</strong> paket langganan yang dibeli, nominal, status, waktu, dan metode pembayaran (mis. QRIS atau Virtual Account).
-            Kami <strong>tidak</strong> menyimpan data rekening, kartu, atau PIN — pembayaran diproses oleh penyedia jasa pembayaran (Midtrans atau DOKU).
+            Kami <strong>tidak</strong> menyimpan data rekening, kartu, atau PIN — pembayaran diproses oleh penyedia jasa pembayaran (Xendit, Midtrans, atau DOKU).
           </li>
           <li>
             <strong>Data teknis sesi:</strong> alamat IP dan jenis peramban/perangkat saat masuk, untuk keamanan akun.
@@ -68,7 +68,7 @@ const sections: LegalSection[] = [
         <p>Kami tidak menjual atau menyewakan data pribadimu, dan tidak memasang iklan atau pelacak iklan. Data dibagikan hanya sebatas yang diperlukan kepada:</p>
         <ul>
           <li>
-            <strong>Midtrans dan DOKU</strong> — penyedia jasa pembayaran, untuk memproses transaksi (nomor invoice, nominal, nama, dan email).
+            <strong>Xendit, Midtrans, dan DOKU</strong> — penyedia jasa pembayaran, untuk memproses transaksi (nomor invoice, nominal, nama, dan email).
           </li>
           <li>
             <strong>Google</strong> — bila kamu memilih masuk dengan Google, dan layanan Gemini bila kamu memakai Latihan AI dengan API

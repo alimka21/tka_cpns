@@ -12,6 +12,24 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-16 — Xendit Invoice jadi penyedia pembayaran utama
+Keputusan pemilik produk: review DOKU & Midtrans belum lolos → Xendit dipasang
+sebagai penyedia ketiga dan default (`PAYMENT_PROVIDER` kosong → Xendit bila
+`XENDIT_SECRET_KEY` terisi). Xendit **Invoice API** (`POST /v2/invoices`, Basic
+auth secret key) = halaman bayar hosted (QRIS, VA, e-wallet, retail), pola
+redirect sama dengan Midtrans Snap. Order berprefix `PTX-`; `syncOrder` & halaman
+selesai menanyai penyedia pembuat order. Webhook `/api/xendit/notification`:
+header `x-callback-token` dibandingkan konstan-waktu dengan
+`XENDIT_CALLBACK_TOKEN` → invoice diambil ulang lewat `GET /v2/invoices?external_id=`
+(sumber kebenaran) → `applyPaymentUpdate` (netral, idempoten, nominal wajib
+sama). PAID/SETTLED → paid, EXPIRED → expired. Mode Test/Live mengikuti prefix
+key (`xnd_development_`/`xnd_production_`); key Test diperlakukan seperti
+Sandbox (hanya admin + `PAYMENT_TEST_EMAILS`). Tanpa migrasi. Diuji end-to-end
+dengan server tiruan (token salah 403, payload PAID ditolak bila Xendit masih
+PENDING, kirim ulang tidak menggandakan membership).
+Alternatif yang ditolak: Xendit Payment Request/Sessions API (UI bayar dibangun
+sendiri, lebih banyak kode); SDK `xendit-node` (dependensi besar untuk 2 endpoint).
+
 ## 2026-10-16 — Penskoran sesuai Kepmendikdasmen 56/2026
 Acuan: docs/PENSKORAN-DAN-PELAPORAN-TKA.md. Migrasi 0021 (hanya menambah, idempoten).
 - **Skala per jenjang**: SD/SMP 0–100, SMA 200–800 (SMK belum didukung).

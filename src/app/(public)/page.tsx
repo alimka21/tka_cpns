@@ -120,7 +120,7 @@ const faqs: { q: string; a: string }[] = [
   },
   {
     q: "Bagaimana cara membayar Premium?",
-    a: "Pilih paket di menu Langganan, lalu bayar dengan QRIS, transfer bank, atau e-wallet yang diproses oleh penyedia pembayaran resmi (Midtrans/DOKU). Premium aktif otomatis begitu pembayaran berhasil dan tidak diperpanjang otomatis — kamu yang memutuskan kapan memperpanjang.",
+    a: "Pilih paket di menu Langganan, lalu bayar dengan QRIS, transfer bank, atau e-wallet yang diproses oleh penyedia pembayaran resmi (Xendit). Premium aktif otomatis begitu pembayaran berhasil dan tidak diperpanjang otomatis — kamu yang memutuskan kapan memperpanjang.",
   },
 ];
 

@@ -13,6 +13,7 @@ import { DokuConnectionTest } from "@/components/billing/doku-connection-test";
 import { DOKU_NOTIFICATION_PATH, dokuPublicInfo, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
 import { isMidtransConfigured, MIDTRANS_NOTIFICATION_PATH, midtransPublicInfo } from "@/server/services/midtrans";
 import { activeProvider, PROVIDER_LABEL } from "@/server/services/payment-provider";
+import { isXenditConfigured, XENDIT_NOTIFICATION_PATH, xenditPublicInfo } from "@/server/services/xendit";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
 export const dynamic = "force-dynamic";
@@ -27,6 +28,8 @@ export default async function AdminLanggananPage() {
   const provider = activeProvider();
   const mtConfigured = isMidtransConfigured();
   const mt = midtransPublicInfo();
+  const xdConfigured = isXenditConfigured();
+  const xd = xenditPublicInfo();
   const site = SITE_URL.replace(/\/$/, "");
   const paidTotal = [...sales.values()].reduce((n, s) => n + s.revenue, 0);
   const pendingTotal = [...sales.values()].reduce((n, s) => n + s.pending, 0);
@@ -72,10 +75,51 @@ export default async function AdminLanggananPage() {
       <p className="-mb-4 text-sm">
         Penyedia pembayaran aktif: <strong>{PROVIDER_LABEL[provider]}</strong>{" "}
         <span className="text-muted-foreground">
-          (env PAYMENT_PROVIDER = midtrans / doku; kosong → Midtrans bila MIDTRANS_SERVER_KEY terisi). Mode Sandbox: hanya admin & email di
-          PAYMENT_TEST_EMAILS yang bisa membayar.
+          (env PAYMENT_PROVIDER = xendit / midtrans / doku; kosong → Xendit bila XENDIT_SECRET_KEY terisi, lalu Midtrans). Mode uji
+          (Test/Sandbox): hanya admin & email di PAYMENT_TEST_EMAILS yang bisa membayar.
         </span>
       </p>
+
+      <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "xendit" ? "opacity-80" : xdConfigured ? "border-success/40" : "border-warning/50"}`}>
+        <p className="flex flex-wrap items-center gap-2 font-semibold">
+          {xdConfigured ? <CircleCheck className="size-4 text-success-strong" aria-hidden /> : <CircleAlert className="size-4 text-warning-strong" aria-hidden />}
+          Xendit {xdConfigured ? `terhubung — mode ${xd.production ? "LIVE" : "Test (uji coba)"}` : "belum dikonfigurasi"}
+          {provider === "xendit" && <Badge variant="success">Dipakai</Badge>}
+        </p>
+        {!xdConfigured && (
+          <p className="text-muted-foreground">
+            Isi env XENDIT_SECRET_KEY (Dashboard Xendit → Settings → API Keys, izin Write untuk Invoices) dan XENDIT_CALLBACK_TOKEN (Settings →
+            Webhooks → Verification Token) di hPanel, lalu redeploy.
+          </p>
+        )}
+        {xdConfigured && (
+          <dl className="grid gap-x-4 gap-y-1 text-muted-foreground sm:grid-cols-[auto_1fr]">
+            <dt>Secret Key</dt>
+            <dd>terisi (key {xd.keyKind})</dd>
+            <dt>Verification Token</dt>
+            <dd>
+              {xd.callbackTokenSet ? (
+                "terisi"
+              ) : (
+                <span className="font-semibold text-destructive">belum diisi — webhook akan ditolak, status hanya diperbarui saat siswa membuka halaman selesai</span>
+              )}
+            </dd>
+            <dt>Metode bayar</dt>
+            <dd>
+              {xd.paymentMethods.length ? xd.paymentMethods.join(", ") : "Semua metode yang aktif di akun Xendit"}{" "}
+              <span className="text-xs">(env XENDIT_PAYMENT_METHODS, opsional)</span>
+            </dd>
+          </dl>
+        )}
+        {xdConfigured && <DokuConnectionTest provider="xendit" />}
+        <p className="text-muted-foreground">
+          URL webhook (Dashboard Xendit → Settings → Webhooks → Invoices &ldquo;Invoices paid&rdquo;, di mode Test & Live):{" "}
+          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">
+            {site}
+            {XENDIT_NOTIFICATION_PATH}
+          </code>
+        </p>
+      </section>
 
       <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "midtrans" ? "opacity-80" : mtConfigured ? "border-success/40" : "border-warning/50"}`}>
         <p className="flex flex-wrap items-center gap-2 font-semibold">

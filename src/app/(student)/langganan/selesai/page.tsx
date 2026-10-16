@@ -10,12 +10,12 @@ import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { orders } from "@/server/db/schema";
 import { getActiveMembership, syncOrder } from "@/server/services/billing";
-import { isProviderConfigured, providerOfOrder } from "@/server/services/payment-provider";
+import { isProviderConfigured, PROVIDER_LABEL, providerOfOrder } from "@/server/services/payment-provider";
 
 export const metadata: Metadata = { title: "Status Pembayaran" };
 export const dynamic = "force-dynamic";
 
-// Halaman kembali dari Midtrans Snap (callbacks.finish) / DOKU Checkout
+// Halaman kembali dari Xendit Invoice (success/failure redirect) / Midtrans Snap (callbacks.finish) / DOKU Checkout
 // (callback_url). Status dicek ulang ke penyedianya (cadangan bila webhook belum
 // sampai), lalu ditampilkan. Tanpa nomor invoice (URL polos dari dashboard)
 // → transaksi terbaru milik user; belum pernah transaksi → /langganan.
@@ -58,7 +58,7 @@ export default async function LanggananSelesaiPage({ searchParams }: PageProps<"
         )}
         {order.status === "pending" && (
           <p className="mt-2 text-sm text-muted-foreground">
-            Selesaikan pembayaran di halaman {providerOfOrder(order.orderCode) === "midtrans" ? "Midtrans" : "DOKU"} sesuai instruksinya. Premium aktif otomatis begitu pembayaran kami terima — halaman ini bisa
+            Selesaikan pembayaran di halaman {PROVIDER_LABEL[providerOfOrder(order.orderCode)]} sesuai instruksinya. Premium aktif otomatis begitu pembayaran kami terima — halaman ini bisa
             dicek ulang.
           </p>
         )}

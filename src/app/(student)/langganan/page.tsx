@@ -127,9 +127,9 @@ export default async function LanggananPage() {
           </ul>
         )}
         <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <Lock className="size-3.5" aria-hidden /> {pay.provider === "midtrans"
-            ? "Bayar dengan QRIS, transfer bank (Virtual Account), atau e-wallet. Diproses aman oleh Midtrans."
-            : "Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Diproses aman oleh DOKU."}
+          <Lock className="size-3.5" aria-hidden /> {pay.provider === "doku"
+            ? "Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Diproses aman oleh DOKU."
+            : `Bayar dengan QRIS, transfer bank (Virtual Account), atau e-wallet. Diproses aman oleh ${pay.label}.`}
         </p>
       </section>
 

@@ -7,7 +7,8 @@ import { headers } from "next/headers";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { isAPIError } from "better-auth/api";
 import { z } from "zod";
-import { optionalPhoneSchema, usernameSchema } from "@/lib/identity";
+import { optionalPhoneSchema, requiredPhoneSchema, usernameSchema } from "@/lib/identity";
+import { provinceSchema, schoolNameSchema } from "@/lib/provinces";
 import { auth } from "@/server/auth";
 import { getActiveSession } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -25,6 +26,45 @@ export async function setMyJenjangAction(jenjang: string): Promise<{ ok: true } 
     .set({ jenjang: parsed.data })
     .where(and(eq(users.id, Number(session.user.id)), isNull(users.jenjang)));
   if (res.affectedRows === 0) return { ok: false, error: "Jenjang sudah ditetapkan. Hubungi admin untuk menggantinya." };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+const onboardingInput = z.object({
+  jenjang: z.enum(JENJANG_CODES, "Pilih jenjang SD, SMP, atau SMA."),
+  province: provinceSchema,
+  schoolName: schoolNameSchema,
+  phone: requiredPhoneSchema,
+});
+
+/**
+ * Onboarding akun tanpa jenjang (daftar lewat Google / akun lama): jenjang
+ * (sekali saja) + data pendaftaran wajib — provinsi, sekolah, No. HP.
+ */
+export async function completeMyProfileAction(input: z.input<typeof onboardingInput>): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await getActiveSession();
+  if (!session) return { ok: false, error: "Sesi berakhir atau akun belum aktif." };
+  const parsed = onboardingInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  const { jenjang, province, schoolName, phone } = parsed.data;
+  const [res] = await db
+    .update(users)
+    .set({ jenjang, province, schoolName, phone })
+    .where(and(eq(users.id, Number(session.user.id)), isNull(users.jenjang)));
+  if (res.affectedRows === 0) return { ok: false, error: "Jenjang sudah ditetapkan. Hubungi admin untuk menggantinya." };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+const schoolInput = z.object({ province: provinceSchema, schoolName: schoolNameSchema });
+
+/** Ubah provinsi asal & nama sekolah (Pengaturan). */
+export async function updateMySchoolAction(input: z.input<typeof schoolInput>): Promise<{ ok: true } | { ok: false; error: string }> {
+  const session = await getActiveSession();
+  if (!session) return { ok: false, error: "Sesi berakhir atau akun belum aktif." };
+  const parsed = schoolInput.safeParse(input);
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
+  await db.update(users).set(parsed.data).where(eq(users.id, Number(session.user.id)));
   revalidatePath("/", "layout");
   return { ok: true };
 }

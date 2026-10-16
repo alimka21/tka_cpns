@@ -155,6 +155,12 @@
   .rich-table table {
     border-collapse: collapse;
     font-size: 0.95em;
+    /* Mengisi lebar kolom & teks sel boleh terlipat: tabel muat tanpa scroll
+       samping di HP; scroll samping hanya bila benar-benar tidak muat. */
+    width: 100%;
+  }
+  .rich-table td {
+    overflow-wrap: anywhere;
   }
   .rich-table th,
   .rich-table td {

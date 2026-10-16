@@ -9,10 +9,20 @@ import { ContactForm } from "@/components/profile/contact-form";
 import { JenjangForm } from "@/components/profile/jenjang-form";
 import { visibleEmail } from "@/lib/identity";
 import { NameForm } from "@/components/profile/name-form";
+import { SchoolForm } from "@/components/profile/school-form";
 import { PasswordForm } from "@/components/profile/password-form";
 
 type Props = {
-  user: { name: string; email: string; username?: string | null; phone?: string | null; role?: string | null; jenjang?: string | null };
+  user: {
+    name: string;
+    email: string;
+    username?: string | null;
+    phone?: string | null;
+    province?: string | null;
+    schoolName?: string | null;
+    role?: string | null;
+    jenjang?: string | null;
+  };
   masked: string | null;
   hasPassword: boolean;
 };
@@ -28,6 +38,7 @@ export function ProfileSettings({ user, masked, hasPassword }: Props) {
       <CardContent className="flex flex-col gap-4">
         <NameForm current={user.name} />
         <ContactForm username={user.username ?? null} phone={user.phone ?? null} />
+        {user.role !== "admin" && <SchoolForm province={user.province ?? null} schoolName={user.schoolName ?? null} />}
         <div className="flex flex-col gap-1.5">
           <Label htmlFor="email">Email</Label>
           <Input

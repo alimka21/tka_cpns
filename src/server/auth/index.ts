@@ -9,7 +9,8 @@ import { APIError, createAuthMiddleware } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { db } from "@/server/db";
 import { accounts, sessions, users, verifications } from "@/server/db/schema";
-import { PLACEHOLDER_EMAIL_DOMAIN, isPlaceholderEmail, looksLikePhone, normalizePhone, usernameSchema } from "@/lib/identity";
+import { PLACEHOLDER_EMAIL_DOMAIN, isPlaceholderEmail, looksLikePhone, normalizePhone, requiredPhoneSchema, usernameSchema } from "@/lib/identity";
+import { provinceSchema, schoolNameSchema } from "@/lib/provinces";
 import { SITE_NAME } from "@/lib/site";
 import { getSetting } from "@/server/services/app-settings";
 import { isMailConfigured, resetPasswordEmail, sendMail } from "@/server/services/mailer";
@@ -81,6 +82,9 @@ export const auth = betterAuth({
       // hanya lewat server action profil/admin.
       username: { type: "string", required: false, input: true },
       phone: { type: "string", required: false, input: true },
+      // Data pendaftaran (wajib di form daftar email; akun Google melengkapinya di /pilih-jenjang).
+      province: { type: "string", required: false, input: true },
+      schoolName: { type: "string", required: false, input: true },
     },
   },
   databaseHooks: {
@@ -102,7 +106,9 @@ export const auth = betterAuth({
       // Username & No. HP diubah lewat server action (validasi + cek unik).
       if (ctx.path === "/update-user") {
         if ("jenjang" in body) throw new APIError("FORBIDDEN", { message: "Jenjang hanya bisa diganti oleh admin." });
-        if ("username" in body || "phone" in body) throw new APIError("FORBIDDEN", { message: "Ubah username/No. HP di Pengaturan." });
+        if ("username" in body || "phone" in body || "province" in body || "schoolName" in body) {
+          throw new APIError("FORBIDDEN", { message: "Ubah data profil di Pengaturan." });
+        }
       }
       if (ctx.path === "/sign-up/email") return { context: { body: await normalizeSignUp(body) } };
       // Kolom login menerima username / No. HP / email → diterjemahkan ke email
@@ -129,21 +135,25 @@ export const auth = betterAuth({
 
 export type Session = typeof auth.$Infer.Session;
 
-/** Daftar email/password: username wajib & unik, No. HP & email opsional. */
+/** Daftar email/password: username (unik), No. HP, provinsi, sekolah wajib; email opsional. */
 async function normalizeSignUp(body: Record<string, unknown>) {
   const username = usernameSchema.safeParse(body.username ?? "");
   if (!username.success) throw new APIError("BAD_REQUEST", { message: username.error.issues[0].message, code: "INVALID_USERNAME" });
   const [taken] = await db.select({ id: users.id }).from(users).where(eq(users.username, username.data));
   if (taken) throw new APIError("BAD_REQUEST", { message: "Username sudah dipakai.", code: "USERNAME_TAKEN" });
 
-  const rawPhone = typeof body.phone === "string" ? body.phone.trim() : "";
-  const phone = rawPhone ? normalizePhone(rawPhone) : null;
-  if (rawPhone && !phone) throw new APIError("BAD_REQUEST", { message: "Nomor HP tidak valid.", code: "INVALID_PHONE" });
+  // No. HP, provinsi, dan nama sekolah wajib sejak 2026-10-16.
+  const phone = requiredPhoneSchema.safeParse(typeof body.phone === "string" ? body.phone : "");
+  if (!phone.success) throw new APIError("BAD_REQUEST", { message: phone.error.issues[0].message, code: "INVALID_PHONE" });
+  const province = provinceSchema.safeParse(body.province);
+  if (!province.success) throw new APIError("BAD_REQUEST", { message: "Pilih provinsi asal.", code: "INVALID_PROVINCE" });
+  const schoolName = schoolNameSchema.safeParse(typeof body.schoolName === "string" ? body.schoolName : "");
+  if (!schoolName.success) throw new APIError("BAD_REQUEST", { message: schoolName.error.issues[0].message, code: "INVALID_SCHOOL" });
 
   const rawEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   if (isPlaceholderEmail(rawEmail)) throw new APIError("BAD_REQUEST", { message: "Format email tidak valid.", code: "INVALID_EMAIL" });
   const email = rawEmail || `u${randomBytes(8).toString("hex")}@${PLACEHOLDER_EMAIL_DOMAIN}`;
-  return { ...body, username: username.data, phone, email };
+  return { ...body, username: username.data, phone: phone.data, province: province.data, schoolName: schoolName.data, email };
 }
 
 /**

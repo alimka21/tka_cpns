@@ -163,7 +163,7 @@ export function UsersTable({
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Cari nama, username, email, atau No. HP…"
+              placeholder="Cari nama, username, email, No. HP, atau sekolah…"
               aria-label="Cari user"
               maxLength={100}
               className="pl-10"
@@ -318,6 +318,9 @@ function UserIdentity({ user }: { user: AdminUserRow }) {
         <div className="truncate text-xs text-muted-foreground">
           {[user.username && `@${user.username}`, visibleEmail(user.email), user.phone && formatPhone(user.phone)].filter(Boolean).join(" · ")}
         </div>
+        {(user.schoolName || user.province) && (
+          <div className="truncate text-xs text-muted-foreground">{[user.schoolName, user.province].filter(Boolean).join(" · ")}</div>
+        )}
       </div>
     </div>
   );

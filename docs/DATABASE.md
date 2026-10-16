@@ -30,6 +30,12 @@ updated_at
   bila pengaturan `registration.requireApproval` aktif saat daftar
   (Better Auth `databaseHooks.user.create.before`).
 
+**users** (tambahan 2026-10-16, migrasi 0022)
+- `province` varchar(64) nullable, index — nama provinsi dari `lib/provinces.ts`
+  (38 provinsi). `school_name` varchar(150) nullable. Keduanya + `phone`
+  **wajib** di form daftar email & di /pilih-jenjang (onboarding akun Google);
+  NULL = akun lama / akun buatan admin (opsional di form admin).
+
 **users** (tambahan 2026-10-15, migrasi 0020)
 - `username` varchar(20) unique nullable — huruf kecil a-z0-9_. , min. 1
   huruf; dipakai masuk. NULL = akun Google yang belum membuatnya.

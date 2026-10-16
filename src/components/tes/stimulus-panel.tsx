@@ -28,8 +28,9 @@ function Body({ stimulus }: { stimulus: ExamStimulus }) {
 }
 
 /**
- * Panel stimulus di ATAS soal (semua ukuran layar). Bisa dilipat, dan isinya
- * scroll sendiri supaya soal & pilihan jawaban tetap terlihat di bawahnya.
+ * Panel stimulus di ATAS soal (semua ukuran layar). Bisa dilipat. Isinya
+ * tampil utuh TANPA scroll sendiri — halaman yang memanjang, lalu soal &
+ * pilihan jawaban menyusul di bawahnya (permintaan pemilik produk 2026-10-16).
  */
 export function StimulusPanel({ stimulus, questionNumbers, textClass }: Props & { textClass?: string }) {
   return (
@@ -46,7 +47,7 @@ export function StimulusPanel({ stimulus, questionNumbers, textClass }: Props & 
         </span>
         <ChevronDown className="size-4 text-muted-foreground transition-transform group-open:rotate-180" aria-hidden />
       </summary>
-      <div className={`max-h-[40dvh] overflow-y-auto px-5 py-5 sm:px-6 lg:max-h-[45dvh] ${textClass ?? ""}`}>
+      <div className={`px-5 py-5 sm:px-6 ${textClass ?? ""}`}>
         <Body stimulus={stimulus} />
       </div>
     </details>

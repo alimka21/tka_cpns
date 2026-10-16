@@ -1,14 +1,16 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { Logo } from "@/components/brand/logo";
-import { JenjangForm } from "@/components/profile/jenjang-form";
+import { OnboardingForm } from "@/components/profile/onboarding-form";
+import { formatPhone } from "@/lib/identity";
 import { safeRedirectPath } from "@/lib/redirect";
 import { getSession, homeFor } from "@/server/auth/session";
 
-export const metadata: Metadata = { title: "Pilih Jenjang" };
+export const metadata: Metadata = { title: "Lengkapi Profil" };
 export const dynamic = "force-dynamic";
 
-// Onboarding akun lama yang belum punya jenjang (akun baru memilih saat daftar).
+// Onboarding akun tanpa jenjang (daftar lewat Google / akun lama): jenjang +
+// provinsi, sekolah, No. HP — sama dengan isian wajib form daftar.
 export default async function PilihJenjangPage({ searchParams }: PageProps<"/pilih-jenjang">) {
   const session = await getSession();
   if (!session) redirect("/masuk");
@@ -22,14 +24,13 @@ export default async function PilihJenjangPage({ searchParams }: PageProps<"/pil
       <div className="flex flex-col items-center gap-4 text-center">
         <Logo />
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">Pilih jenjangmu</h1>
+          <h1 className="text-2xl font-bold tracking-tight">Lengkapi profilmu</h1>
           <p className="mt-1 text-sm text-muted-foreground">
             Setiap jenjang punya soal & kerangka asesmen TKA yang berbeda. Paket tes dan latihan akan menyesuaikan pilihanmu.
-            Pilih dengan teliti — setelah tersimpan, jenjang hanya bisa diganti oleh admin.
           </p>
         </div>
       </div>
-      <JenjangForm current={null} next={target} submitLabel="Lanjut" />
+      <OnboardingForm next={target} initialPhone={formatPhone(session.user.phone)} />
     </div>
   );
 }

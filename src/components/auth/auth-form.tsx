@@ -3,9 +3,10 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, AtSign, CircleCheck, Eye, EyeOff, Info, Lock, Mail, Phone, User, type LucideIcon } from "lucide-react";
+import { ArrowRight, AtSign, CircleCheck, Eye, EyeOff, Info, Lock, Mail, Phone, School, User, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { JenjangPicker } from "@/components/profile/jenjang-picker";
+import { ProvinceSelect } from "@/components/profile/province-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,6 +26,8 @@ const AUTH_ERRORS: Record<string, string> = {
   USERNAME_TAKEN: "Username sudah dipakai. Coba yang lain.",
   INVALID_USERNAME: "Username tidak valid.",
   INVALID_PHONE: "Nomor HP tidak valid.",
+  INVALID_PROVINCE: "Pilih provinsi asal.",
+  INVALID_SCHOOL: "Isi nama sekolah (minimal 3 karakter).",
   USER_ALREADY_EXISTS: "Email ini sudah terdaftar. Silakan masuk.",
   USER_ALREADY_EXISTS_USE_ANOTHER_EMAIL: "Email ini sudah terdaftar. Silakan masuk.",
   PASSWORD_TOO_SHORT: "Kata sandi minimal 8 karakter.",
@@ -129,7 +132,9 @@ export function AuthForm({
           password,
           jenjang: signUp.data.jenjang,
           username: signUp.data.username,
-          phone: signUp.data.phone ?? undefined,
+          phone: signUp.data.phone,
+          province: signUp.data.province,
+          schoolName: signUp.data.schoolName,
         })
       : await authClient.signIn.email({ email: (parsed.data as { identifier: string }).identifier, password });
     if (error) {
@@ -229,12 +234,35 @@ export function AuthForm({
                 aria-describedby={errors.username ? "username-error" : "username-hint"}
               />
             </Field>
+            <div className="flex flex-col gap-1.5">
+              <Label htmlFor="province" className="text-sm font-semibold">
+                Asal provinsi
+              </Label>
+              <ProvinceSelect id="province" name="province" invalid={!!errors.province} describedBy={errors.province ? "province-error" : undefined} />
+              {errors.province && (
+                <p id="province-error" className="text-xs font-medium text-destructive">
+                  {errors.province}
+                </p>
+              )}
+            </div>
+            <Field id="schoolName" label="Nama sekolah" icon={School} error={errors.schoolName}>
+              <Input
+                id="schoolName"
+                name="schoolName"
+                autoComplete="organization"
+                maxLength={150}
+                placeholder="Contoh: SMP Negeri 1 Bandung"
+                className="pl-10"
+                aria-invalid={!!errors.schoolName}
+                aria-describedby={errors.schoolName ? "schoolName-error" : undefined}
+              />
+            </Field>
             <Field
               id="phone"
-              label="No. HP / WhatsApp (opsional)"
+              label="No. HP / WhatsApp"
               icon={Phone}
               error={errors.phone}
-              hint="Boleh nomor orang tua. Dipakai admin untuk mengirim kata sandi baru bila kamu lupa."
+              hint="Wajib. Boleh nomor orang tua. Dipakai admin untuk mengirim kata sandi baru bila kamu lupa."
             >
               <Input
                 id="phone"

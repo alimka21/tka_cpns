@@ -47,6 +47,20 @@ export function looksLikePhone(identifier: string) {
   return /^\+?[\d\s\-.()]+$/.test(identifier.trim());
 }
 
+/** No. HP wajib (form daftar): harus nomor HP Indonesia yang valid. */
+export const requiredPhoneSchema = z
+  .string()
+  .trim()
+  .min(1, "Nomor HP wajib diisi.")
+  .transform((v, ctx) => {
+    const phone = normalizePhone(v);
+    if (!phone) {
+      ctx.addIssue({ code: "custom", message: "Nomor HP tidak valid. Contoh: 0812 3456 7890." });
+      return z.NEVER;
+    }
+    return phone;
+  });
+
 /** No. HP opsional: kosong → null, selain itu wajib valid. */
 export const optionalPhoneSchema = z
   .string()

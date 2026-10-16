@@ -84,6 +84,32 @@ export async function getQuestionImage(id: number) {
   return row;
 }
 
+/** Lebar varian yang boleh diminta lewat `/gambar/<id>?w=` (kecil untuk HP, sedang untuk tablet). */
+export const IMAGE_VARIANT_WIDTHS = [480, 800, 1200] as const;
+
+// Cache varian di memori (gambar galeri tidak pernah berubah untuk id yang sama).
+const variantCache = new Map<string, Buffer>();
+const VARIANT_CACHE_MAX = 300;
+
+/**
+ * Varian lebih kecil dari gambar galeri: diperkecil proporsional (rasio asli,
+ * tidak pernah diperbesar) & dikompres ulang WebP. Gambar yang sudah lebih
+ * kecil dari lebar diminta dikirim apa adanya.
+ */
+export async function getQuestionImageVariant(id: number, width: (typeof IMAGE_VARIANT_WIDTHS)[number]) {
+  const key = `${id}:${width}`;
+  const cached = variantCache.get(key);
+  if (cached) return { mime: "image/webp", data: cached };
+  const image = await getQuestionImage(id);
+  if (!image) return undefined;
+  const meta = await sharp(image.data).metadata();
+  if (!meta.width || meta.width <= width) return image;
+  const data = await sharp(image.data).resize({ width, withoutEnlargement: true }).webp({ quality: 78 }).toBuffer();
+  if (variantCache.size >= VARIANT_CACHE_MAX) variantCache.delete(variantCache.keys().next().value!);
+  variantCache.set(key, data);
+  return { mime: "image/webp", data };
+}
+
 export async function getQuestionImageMeta(id: number) {
   const [row] = await db
     .select({ id: questionImages.id, title: questionImages.title, width: questionImages.width, height: questionImages.height })

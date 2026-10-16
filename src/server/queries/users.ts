@@ -11,6 +11,8 @@ export type AdminUserRow = {
   email: string;
   username: string | null;
   phone: string | null;
+  province: string | null;
+  schoolName: string | null;
   role: "student" | "admin";
   jenjang: "SD" | "SMP" | "SMA" | null;
   status: "active" | "pending" | "rejected";
@@ -35,7 +37,7 @@ export async function listUsersAdmin(f: UserFilters = {}): Promise<AdminUsersPag
   // "0812 3456…" dicari sebagai 62812… (bentuk tersimpan).
   const phoneTerm = f.q ? normalizePhone(f.q) : null;
   const base = [
-    term && or(like(users.name, term), like(users.email, term), like(users.username, term), phoneTerm ? like(users.phone, `${phoneTerm}%`) : undefined),
+    term && or(like(users.name, term), like(users.email, term), like(users.username, term), like(users.schoolName, term), phoneTerm ? like(users.phone, `${phoneTerm}%`) : undefined),
     f.role && eq(users.role, f.role),
     f.jenjang && (f.jenjang === "none" ? isNull(users.jenjang) : eq(users.jenjang, f.jenjang)),
     f.akses && (f.akses === "premium" ? hasEntitlement : not(hasEntitlement)),
@@ -51,6 +53,8 @@ export async function listUsersAdmin(f: UserFilters = {}): Promise<AdminUsersPag
         email: users.email,
         username: users.username,
         phone: users.phone,
+        province: users.province,
+        schoolName: users.schoolName,
         role: users.role,
         jenjang: users.jenjang,
         status: users.status,

@@ -32,7 +32,7 @@ const sections: LegalSection[] = [
     title: "Akun pengguna",
     body: (
       <ul>
-        <li>Data pendaftaran (nama, username, jenjang, serta email/No. HP bila diisi) harus benar. Satu akun untuk satu orang.</li>
+        <li>Data pendaftaran (nama, username, jenjang, provinsi, nama sekolah, No. HP, serta email bila diisi) harus benar. Satu akun untuk satu orang.</li>
         <li>Pengguna di bawah 18 tahun wajib memakai layanan dengan sepengetahuan dan persetujuan orang tua atau wali.</li>
         <li>Kamu bertanggung jawab menjaga kerahasiaan kata sandi. Jangan meminjamkan atau membagikan akun.</li>
         <li>Admin dapat meninjau dan menyetujui pendaftar baru sebelum akun aktif.</li>

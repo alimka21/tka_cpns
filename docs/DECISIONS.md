@@ -12,6 +12,45 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-16 — Stimulus tanpa scroll sendiri; gambar menyesuaikan bentuk & dikompres per layar
+Permintaan pemilik produk: panel stimulus tidak lagi dibatasi `max-h-[40/45dvh]` +
+scroll dalam — bacaan tampil utuh, halaman memanjang, pilihan jawaban di bawahnya
+(berlaku di ujian, latihan, pratinjau admin karena komponennya sama). Tabel teks
+(`.rich-table`) mengisi lebar kolom & sel boleh terlipat; scroll samping hanya bila
+benar-benar tidak muat.
+Gambar: galeri sudah WebP ≤1600 px saat upload (170 gambar, maks 196 KB). Ditambah
+varian saat disajikan `/gambar/<id>?w=480|800|1200` (sharp, rasio asli, tidak pernah
+diperbesar, cache memori 300 varian + cache browser immutable). `QuestionImage` memakai
+`<picture>` dengan sumber per media query (HP ≤640 px → 800, ≤1024 px → 1200) —
+bukan `srcset` ber-deskriptor `w`, yang mengubah ukuran tampil intrinsik gambar kecil.
+Uji: gambar 1600 px 105 KB → 37 KB di HP. Bentuk ditentukan dari rasio setelah dimuat:
+21 gambar sangat lebar (tabel PDF, rasio 3–6) kini selebar kolom (maks 2× ukuran asli)
+supaya tidak tampak gepeng/kecil di HP; gambar tinggi dibatasi ±80% layar di tengah.
+
+## 2026-10-16 — Daftar: provinsi asal, nama sekolah, No. HP wajib
+Keputusan pemilik produk: form daftar meminta **provinsi** (dropdown 38 provinsi,
+disimpan sebagai nama — kode BPS & Kemendagri untuk provinsi Papua baru berbeda,
+jadi nama lebih tidak ambigu), **nama sekolah** (teks bebas 3–150, spasi dirapikan),
+dan **No. HP wajib** (sebelumnya opsional). Divalidasi di form (Zod) **dan** di
+hook Better Auth `/sign-up/email` (tidak bisa dilewati lewat API); `/update-user`
+menolak field ini (ubah lewat server action Pengaturan). Akun Google tidak
+melewati form daftar → /pilih-jenjang jadi "Lengkapi profil": jenjang + provinsi
++ sekolah + No. HP sekaligus (`completeMyProfileAction`). Akun lama yang sudah
+punya jenjang **tidak dipaksa** mengisi; bisa mengisi di Pengaturan. Form admin
+"Tambah user": provinsi & sekolah opsional. Migrasi 0022 (tambah kolom, idempoten).
+Nama sekolah sengaja teks bebas (belum ada daftar sekolah/NPSN) — rekap per sekolah
+kelak perlu normalisasi.
+
+## 2026-10-16 — Paket TKA SMP Bahasa Indonesia — Paket 2 (#55, draf, ditulis Claude)
+Soal baru #1532–#1561 (`pending_review`, manual), stimulus #218–#223 (draf), Premium,
+simulasi penuh 75 menit — paket Premium pertama SMP B. Indonesia (Paket 1 gratis).
+6 bacaan × 5: teks informasi lebah & penyerbukan (data panen ilustratif), cerpen
+"Kue Lapis untuk Nenek", berita fiktif "Perahu Pustaka di Sungai Biru", puisi
+"Lampu Belajar", prosedur pertolongan mimisan, dua teks bekal vs kantin (antarteks).
+Bacaan prosa ±200 kata sesuai karakteristik teks SMP di kerangka (200–250, puisi
+dikecualikan). 18 PG · 6 MCMA · 6 Kategori, 11/11 subtopik, mudah 20% · sulit 30% —
+semua aturan wajib & saran lolos. Tema dicek tidak kembar dengan stimulus SD/SMP di bank.
+
 ## 2026-10-16 — Xendit Invoice jadi penyedia pembayaran utama
 Keputusan pemilik produk: review DOKU & Midtrans belum lolos → Xendit dipasang
 sebagai penyedia ketiga dan default (`PAYMENT_PROVIDER` kosong → Xendit bila

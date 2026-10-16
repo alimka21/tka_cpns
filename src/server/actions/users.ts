@@ -11,6 +11,7 @@ import { randomBytes } from "node:crypto";
 import { and, eq, inArray, ne } from "drizzle-orm";
 import { z } from "zod";
 import { PLACEHOLDER_EMAIL_DOMAIN, isPlaceholderEmail, optionalPhoneSchema, usernameSchema } from "@/lib/identity";
+import { provinceSchema } from "@/lib/provinces";
 import { auth } from "@/server/auth";
 import { getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
@@ -62,6 +63,9 @@ const createUserInput = z.object({
     .pipe(z.union([z.literal(""), z.email("Format email tidak valid.").max(255)]))
     .refine((v) => !isPlaceholderEmail(v), "Format email tidak valid."),
   phone: optionalPhoneSchema,
+  // Opsional untuk akun buatan admin (wajib hanya di form daftar mandiri).
+  province: z.union([z.literal(""), provinceSchema]).transform((v) => v || null),
+  schoolName: z.string().transform((v) => v.trim().replace(/\s+/g, " ")).pipe(z.string().max(150, "Nama sekolah maksimal 150 karakter.")).transform((v) => v || null),
   jenjang: z.enum(JENJANG_CODES, "Pilih jenjang SD, SMP, atau SMA."),
   password: z.string().min(8, "Kata sandi minimal 8 karakter.").max(128, "Kata sandi maksimal 128 karakter."),
 });
@@ -77,7 +81,7 @@ export async function createUserAction(input: unknown): Promise<ActionResult> {
   if (!session) return NOT_ADMIN;
   const parsed = createUserInput.safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-  const { name, username, phone, jenjang, password } = parsed.data;
+  const { name, username, phone, province, schoolName, jenjang, password } = parsed.data;
   const email = parsed.data.email || `u${randomBytes(8).toString("hex")}@${PLACEHOLDER_EMAIL_DOMAIN}`;
 
   const [usernameTaken] = await db.select({ id: users.id }).from(users).where(eq(users.username, username));
@@ -90,7 +94,7 @@ export async function createUserAction(input: unknown): Promise<ActionResult> {
     await db.transaction(async (tx) => {
       const [{ id: userId }] = await tx
         .insert(users)
-        .values({ name, email, username, phone, jenjang, role: "student", status: "active", emailVerified: false })
+        .values({ name, email, username, phone, province, schoolName, jenjang, role: "student", status: "active", emailVerified: false })
         .$returningId();
       await tx.insert(accounts).values({ userId, accountId: String(userId), providerId: "credential", password: hash });
     });

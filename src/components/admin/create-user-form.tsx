@@ -4,6 +4,7 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { CircleCheck, Copy, Dices, Eye, EyeOff, LoaderCircle, UserPlus, X } from "lucide-react";
 import { JenjangPicker } from "@/components/profile/jenjang-picker";
+import { ProvinceSelect } from "@/components/profile/province-select";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -24,6 +25,8 @@ export function CreateUserForm() {
   const [name, setName] = useState("");
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
+  const [province, setProvince] = useState("");
+  const [schoolName, setSchoolName] = useState("");
   const [email, setEmail] = useState("");
   const [jenjang, setJenjang] = useState<Jenjang | null>(null);
   const [password, setPassword] = useState("");
@@ -37,6 +40,8 @@ export function CreateUserForm() {
     setName("");
     setUsername("");
     setPhone("");
+    setProvince("");
+    setSchoolName("");
     setEmail("");
     setJenjang(null);
     setPassword("");
@@ -101,7 +106,7 @@ export function CreateUserForm() {
           setError(null);
           if (!jenjang) return setError("Pilih jenjang siswa.");
           startTransition(async () => {
-            const r = await createUserAction({ name, username, phone, email, jenjang, password });
+            const r = await createUserAction({ name, username, phone, province, schoolName, email, jenjang, password });
             if (!r.ok) return setError(r.error);
             setCreated({ username: username.trim().toLowerCase(), password });
             setCopied(false);
@@ -131,6 +136,14 @@ export function CreateUserForm() {
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="new-user-phone">No. HP / WhatsApp (opsional)</Label>
             <Input id="new-user-phone" type="tel" value={phone} placeholder="Boleh nomor orang tua" autoComplete="off" onChange={(e) => setPhone(e.target.value)} />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="new-user-province">Asal provinsi (opsional)</Label>
+            <ProvinceSelect id="new-user-province" value={province} onChange={setProvince} allowEmpty />
+          </div>
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor="new-user-school">Nama sekolah (opsional)</Label>
+            <Input id="new-user-school" value={schoolName} maxLength={150} autoComplete="off" onChange={(e) => setSchoolName(e.target.value)} />
           </div>
           <div className="flex flex-col gap-1.5">
             <Label htmlFor="new-user-email">Email (opsional)</Label>

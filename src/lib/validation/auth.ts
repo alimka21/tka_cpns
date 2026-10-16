@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { optionalPhoneSchema, usernameSchema } from "@/lib/identity";
+import { requiredPhoneSchema, usernameSchema } from "@/lib/identity";
+import { provinceSchema, schoolNameSchema } from "@/lib/provinces";
 
 // Dipakai form client & (nanti) handler Better Auth di server.
 
@@ -23,7 +24,9 @@ export const signUpInput = z
     name: z.string().trim().min(2, "Nama minimal 2 karakter.").max(255),
     jenjang: z.enum(["SD", "SMP", "SMA"], "Pilih jenjangmu."),
     username: usernameSchema,
-    phone: optionalPhoneSchema,
+    phone: requiredPhoneSchema,
+    province: provinceSchema,
+    schoolName: schoolNameSchema,
     // Opsional: siswa tanpa email tetap bisa daftar (masuk dengan username / No. HP).
     email: z.string().trim().toLowerCase().pipe(z.union([z.literal(""), z.email("Format email tidak valid.")])),
     password: newPassword,

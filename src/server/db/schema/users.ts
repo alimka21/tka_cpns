@@ -33,6 +33,10 @@ export const users = mysqlTable("users", {
    * hanya bila nomor itu milik satu akun.
    */
   phone: varchar("phone", { length: 16 }),
+  /** Provinsi asal (nama dari lib/provinces). Wajib saat daftar sejak 2026-10-16; NULL = akun lama. */
+  province: varchar("province", { length: 64 }),
+  /** Nama sekolah (teks bebas). Wajib saat daftar sejak 2026-10-16; NULL = akun lama. */
+  schoolName: varchar("school_name", { length: 150 }),
   image: text("image"),
   role: mysqlEnum("role", ["student", "admin"]).notNull().default("student"),
   /** Jenjang siswa — menentukan paket tes, soal & kurikulum. NULL = belum memilih (akun lama). */
@@ -49,6 +53,7 @@ export const users = mysqlTable("users", {
   index("users_status_idx").on(t.status),
   index("users_created_at_idx").on(t.createdAt),
   index("users_phone_idx").on(t.phone),
+  index("users_province_idx").on(t.province),
 ]);
 
 export const sessions = mysqlTable(

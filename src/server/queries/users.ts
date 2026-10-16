@@ -1,9 +1,9 @@
-import { and, count, desc, eq, isNull, like, not, or, sql, type SQL } from "drizzle-orm";
+import { and, count, desc, eq, gt, inArray, isNull, like, lte, not, or, sql, type SQL } from "drizzle-orm";
 import { normalizePhone } from "@/lib/identity";
 import type { UserFilters } from "@/lib/user-filters";
-import { USERS_PAGE_SIZE } from "@/lib/user-filters";
+import { EXPIRING_DAYS, USERS_PAGE_SIZE } from "@/lib/user-filters";
 import { db } from "@/server/db";
-import { entitlements, testPackages, users } from "@/server/db/schema";
+import { entitlements, memberships, testPackages, users } from "@/server/db/schema";
 
 export type AdminUserRow = {
   id: number;
@@ -17,7 +17,21 @@ export type AdminUserRow = {
   jenjang: "SD" | "SMP" | "SMA" | null;
   status: "active" | "pending" | "rejected";
   createdAt: string;
+  /** Akses paket per-paket lama (entitlements) — informasi tambahan. */
   premiumCount: number;
+  /** Premium (membership) aktif saat ini. */
+  premium: {
+    active: boolean;
+    /** Akhir masa aktif terjauh; null = selamanya (bila active). */
+    endsAt: string | null;
+    /** Sisa hari (dibulatkan ke atas) sampai `endsAt`; null = selamanya / tidak aktif. */
+    daysLeft: number | null;
+    /** Cakupan jenjang aktif, mis. ["SMP"] atau ["Semua"]. */
+    scopes: string[];
+    source: "purchase" | "admin_manual" | null;
+    /** Premium terakhir yang sudah berakhir (untuk status "Kedaluwarsa"). */
+    lastEndedAt: string | null;
+  };
 };
 
 export type AdminUsersPage = {
@@ -27,12 +41,24 @@ export type AdminUsersPage = {
   /** Hitungan per tab status — mengikuti filter lain kecuali status. */
   statusCounts: { all: number; pending: number; active: number; rejected: number };
   /** Statistik seluruh user (tanpa filter). */
-  stats: { users: number; students: number; premium: number; pending: number };
+  stats: { users: number; students: number; premium: number; free: number; expiring: number; pending: number };
 };
 
-/** Daftar user dengan filter & paginasi di server (Manajemen User). */
+/** Daftar user dengan filter & paginasi di server (Manajemen User). Akses = membership Premium aktif. */
 export async function listUsersAdmin(f: UserFilters = {}): Promise<AdminUsersPage> {
-  const hasEntitlement = sql`exists (select 1 from ${entitlements} where ${entitlements.userId} = ${users.id})`;
+  const now = new Date();
+  const soon = new Date(now.getTime() + EXPIRING_DAYS * 86_400_000);
+  const own = and(eq(memberships.userId, users.id), isNull(memberships.revokedAt));
+  const activeM = and(own, or(isNull(memberships.endsAt), gt(memberships.endsAt, now)));
+  const hasActive = sql`exists (select 1 from ${memberships} where ${activeM})`;
+  const isStudent = eq(users.role, "student");
+  const access: Record<NonNullable<UserFilters["akses"]>, SQL> = {
+    premium: and(isStudent, hasActive)!,
+    free: and(isStudent, not(hasActive))!,
+    // Aktif, tapi tidak ada membership yang berlaku melewati `soon`.
+    expiring: and(isStudent, hasActive, sql`not exists (select 1 from ${memberships} where ${and(own, or(isNull(memberships.endsAt), gt(memberships.endsAt, soon)))})`)!,
+    expired: and(isStudent, not(hasActive), sql`exists (select 1 from ${memberships} where ${and(own, lte(memberships.endsAt, now))})`)!,
+  };
   const term = f.q ? `%${f.q.replace(/[%_\\]/g, (c) => `\\${c}`)}%` : null;
   // "0812 3456…" dicari sebagai 62812… (bentuk tersimpan).
   const phoneTerm = f.q ? normalizePhone(f.q) : null;
@@ -40,7 +66,7 @@ export async function listUsersAdmin(f: UserFilters = {}): Promise<AdminUsersPag
     term && or(like(users.name, term), like(users.email, term), like(users.username, term), like(users.schoolName, term), phoneTerm ? like(users.phone, `${phoneTerm}%`) : undefined),
     f.role && eq(users.role, f.role),
     f.jenjang && (f.jenjang === "none" ? isNull(users.jenjang) : eq(users.jenjang, f.jenjang)),
-    f.akses && (f.akses === "premium" ? hasEntitlement : not(hasEntitlement)),
+    f.akses && access[f.akses],
   ].filter((c): c is SQL => Boolean(c));
   const where = and(...base, f.status ? eq(users.status, f.status) : undefined);
   const page = f.hal ?? 1;
@@ -75,15 +101,44 @@ export async function listUsersAdmin(f: UserFilters = {}): Promise<AdminUsersPag
     db
       .select({
         users: count(),
-        students: sql<number>`sum(${users.role} = 'student')`,
+        students: sql<number>`sum(${isStudent})`,
         pending: sql<number>`sum(${users.status} = 'pending')`,
-        premium: sql<number>`sum(${hasEntitlement})`,
+        premium: sql<number>`sum(${access.premium})`,
+        expiring: sql<number>`sum(${access.expiring})`,
       })
       .from(users),
   ]);
+
+  // Rincian membership hanya untuk baris di halaman ini.
+  const ids = rows.map((r) => r.id);
+  const ms = ids.length
+    ? await db
+        .select({ userId: memberships.userId, jenjang: memberships.jenjang, endsAt: memberships.endsAt, grantedBy: memberships.grantedBy, createdAt: memberships.createdAt })
+        .from(memberships)
+        .where(and(inArray(memberships.userId, ids), isNull(memberships.revokedAt)))
+    : [];
+  const premiumOf = (userId: number): AdminUserRow["premium"] => {
+    const mine = ms.filter((m) => m.userId === userId);
+    const active = mine.filter((m) => m.endsAt == null || m.endsAt > now);
+    const ended = mine.filter((m) => m.endsAt != null && m.endsAt <= now).map((m) => m.endsAt!.getTime());
+    const latest = [...active].sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0];
+    const forever = active.some((m) => m.endsAt == null);
+    const until = forever ? null : active.reduce<Date | null>((mx, m) => (!mx || m.endsAt! > mx ? m.endsAt : mx), null);
+    return {
+      active: active.length > 0,
+      endsAt: until?.toISOString() ?? null,
+      daysLeft: until ? Math.ceil((until.getTime() - now.getTime()) / 86_400_000) : null,
+      scopes: [...new Set(active.map((m) => m.jenjang ?? "Semua"))],
+      source: latest?.grantedBy ?? null,
+      lastEndedAt: ended.length ? new Date(Math.max(...ended)).toISOString() : null,
+    };
+  };
+
   const by = Object.fromEntries(perStatus.map((r) => [r.status, Number(r.n)])) as Record<string, number>;
+  const students = Number(st.students ?? 0);
+  const premium = Number(st.premium ?? 0);
   return {
-    rows: rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString(), premiumCount: Number(r.premiumCount) })),
+    rows: rows.map((r) => ({ ...r, createdAt: r.createdAt.toISOString(), premiumCount: Number(r.premiumCount), premium: premiumOf(r.id) })),
     total: Number(n),
     statusCounts: {
       all: (by.pending ?? 0) + (by.active ?? 0) + (by.rejected ?? 0),
@@ -91,7 +146,7 @@ export async function listUsersAdmin(f: UserFilters = {}): Promise<AdminUsersPag
       active: by.active ?? 0,
       rejected: by.rejected ?? 0,
     },
-    stats: { users: Number(st.users), students: Number(st.students ?? 0), premium: Number(st.premium ?? 0), pending: Number(st.pending ?? 0) },
+    stats: { users: Number(st.users), students, premium, free: students - premium, expiring: Number(st.expiring ?? 0), pending: Number(st.pending ?? 0) },
   };
 }
 

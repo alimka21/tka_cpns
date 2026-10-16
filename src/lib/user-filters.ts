@@ -4,12 +4,14 @@
 import { z } from "zod";
 
 export const USERS_PAGE_SIZE = 50;
+/** Premium yang berakhir dalam sekian hari dianggap "segera berakhir". */
+export const EXPIRING_DAYS = 7;
 
 export const userFilterSchema = z.object({
   status: z.enum(["pending", "active", "rejected"]).optional().catch(undefined),
   role: z.enum(["student", "admin"]).optional().catch(undefined),
   jenjang: z.enum(["SD", "SMP", "SMA", "none"]).optional().catch(undefined),
-  akses: z.enum(["premium", "free"]).optional().catch(undefined),
+  akses: z.enum(["premium", "free", "expiring", "expired"]).optional().catch(undefined),
   q: z.string().trim().max(100).optional().catch(undefined),
   hal: z.coerce.number().int().min(1).max(10000).optional().catch(undefined),
 });

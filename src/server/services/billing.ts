@@ -3,8 +3,8 @@
 // membership dari pembayaran.
 
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, gt, isNull, like, or, sql } from "drizzle-orm";
-import { PLACEHOLDER_EMAIL_DOMAIN, visibleEmail } from "@/lib/identity";
+import { and, asc, desc, eq, gt, isNull, like, lt, or, sql } from "drizzle-orm";
+import { visibleEmail } from "@/lib/identity";
 import { pickUniqueCode } from "@/lib/manual-payment";
 import { db } from "@/server/db";
 import { memberships, orders, plans, users, type JenjangCode, type OrderStatus } from "@/server/db/schema";
@@ -163,7 +163,7 @@ export async function settleManualOrder(adminId: number, orderCode: string, stat
   if (providerOfOrder(orderCode) !== "manual") return { ok: false, error: "Bukan order QRIS manual." };
   const [order] = await db.select().from(orders).where(eq(orders.orderCode, orderCode));
   if (!order) return { ok: false, error: "Order tidak ditemukan." };
-  if (order.status === "paid" && status === "cancelled") return { ok: false, error: "Order sudah lunas; cabut Premium lewat daftar anggota bila perlu." };
+  if (order.status === "paid" && status === "cancelled") return { ok: false, error: "Order sudah lunas; cabut Premium lewat Manajemen User bila perlu." };
   return applyPaymentUpdate({
     orderCode,
     amount: order.amount,
@@ -308,40 +308,34 @@ export async function planSalesStats() {
   return new Map(rows.map((r) => [r.planId, { paid: Number(r.paid), revenue: Number(r.revenue), pending: Number(r.pending) }]));
 }
 
-/** Kontak di daftar admin: email, atau @username untuk akun tanpa email. */
-const userContact = sql<string>`CASE WHEN ${users.email} LIKE ${`%@${PLACEHOLDER_EMAIL_DOMAIN}`} THEN CONCAT('@', ${users.username}) ELSE ${users.email} END`;
-
-export async function listOrdersAdmin(limit = 100) {
-  return db
-    .select({ order: orders, userName: users.name, userEmail: userContact })
-    .from(orders)
-    .innerJoin(users, eq(users.id, orders.userId))
-    .orderBy(desc(orders.createdAt))
-    .limit(limit);
-}
-
-/** Admin memberi Premium manual (mis. kerja sama sekolah). */
-export async function grantManualMembership(adminId: number, emailOrUsername: string, jenjang: JenjangCode | null, durationDays: number | null): Promise<Result> {
-  const key = emailOrUsername.trim().toLowerCase().replace(/^@/, "");
-  const [user] = await db.select({ id: users.id }).from(users).where(key.includes("@") ? eq(users.email, key) : eq(users.username, key));
-  if (!user) return { ok: false, error: "Email/username tidak terdaftar." };
+/** Beri / perpanjang Premium untuk user tertentu (dari tabel Manajemen User). Diperpanjang dari masa aktif cakupan yang sama. */
+export async function grantMembershipToUser(adminId: number, userId: number, jenjang: JenjangCode | null, durationDays: number | null): Promise<Result<{ endsAt: Date | null }>> {
+  const [user] = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, userId));
+  if (!user) return { ok: false, error: "User tidak ditemukan." };
+  if (user.role === "admin") return { ok: false, error: "Admin selalu punya akses penuh." };
   const active = await getActiveMembership(user.id, jenjang);
   const window = membershipWindow(new Date(), active?.jenjang === jenjang ? active?.endsAt : null, durationDays);
   await db.insert(memberships).values({ userId: user.id, jenjang, ...window, grantedBy: "admin_manual", grantedByUserId: adminId });
-  return { ok: true };
+  return { ok: true, endsAt: window.endsAt };
 }
 
-export async function revokeMembership(membershipId: number) {
-  await db.update(memberships).set({ revokedAt: new Date() }).where(eq(memberships.id, membershipId));
-}
-
-export async function listActiveMembershipsAdmin() {
+/** Cabut semua Premium aktif milik user (akun kembali Gratis). */
+export async function revokeUserPremium(userId: number) {
   const now = new Date();
-  return db
-    .select({ m: memberships, userName: users.name, userEmail: userContact })
-    .from(memberships)
-    .innerJoin(users, eq(users.id, memberships.userId))
-    .where(and(isNull(memberships.revokedAt), or(isNull(memberships.endsAt), gt(memberships.endsAt, now))))
-    .orderBy(desc(memberships.createdAt))
-    .limit(200);
+  await db
+    .update(memberships)
+    .set({ revokedAt: now })
+    .where(and(eq(memberships.userId, userId), isNull(memberships.revokedAt), or(isNull(memberships.endsAt), gt(memberships.endsAt, now))));
+}
+
+/**
+ * Order menunggu lebih dari 3 hari → kedaluwarsa (antrean verifikasi bersih, kode unik
+ * bebas dipakai lagi). Pembayaran yang ternyata masuk tetap bisa dikonfirmasi/disinkron
+ * belakangan (nextOrderStatus: expired → paid diizinkan).
+ */
+export async function expireStalePendingOrders() {
+  await db
+    .update(orders)
+    .set({ status: "expired" })
+    .where(and(eq(orders.status, "pending"), lt(orders.createdAt, new Date(Date.now() - MANUAL_ORDER_TTL_MS))));
 }

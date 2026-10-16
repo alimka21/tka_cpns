@@ -1,19 +1,18 @@
 import type { Metadata } from "next";
-import { CircleAlert, CircleCheck, Clock, CreditCard, Crown, Receipt, Wallet, type LucideIcon } from "lucide-react";
-import { GrantMembershipForm, RevokeMembershipButton, SettleManualOrderButtons } from "@/components/billing/admin-billing";
+import Link from "next/link";
+import { ArrowRight, CircleAlert, CircleCheck, Clock, CreditCard, Users, Wallet, type LucideIcon } from "lucide-react";
 import { NewPlanPanel, PlanCard, type PlanCardData } from "@/components/billing/plan-manager";
-import { SyncOrderButton } from "@/components/billing/sync-order-button";
 import { PageHeader } from "@/components/layout/page-header";
 import { Badge } from "@/components/ui/badge";
 import { promotedPlan } from "@/lib/plans";
-import { formatDate, formatDateTime, formatRupiah, ORDER_STATUS_META } from "@/lib/format";
+import { formatRupiah } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
-import { listActiveMembershipsAdmin, listOrdersAdmin, listPlans, planSalesStats } from "@/server/services/billing";
+import { listPlans, planSalesStats } from "@/server/services/billing";
 import { DokuConnectionTest } from "@/components/billing/doku-connection-test";
 import { DOKU_NOTIFICATION_PATH, dokuPublicInfo, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
 import { isMidtransConfigured, MIDTRANS_NOTIFICATION_PATH, midtransPublicInfo } from "@/server/services/midtrans";
 import { formatWaNumber } from "@/lib/manual-payment";
-import { activeProvider, PROVIDER_LABEL, providerOfOrder } from "@/server/services/payment-provider";
+import { activeProvider, PROVIDER_LABEL } from "@/server/services/payment-provider";
 import { isXenditConfigured, XENDIT_NOTIFICATION_PATH, xenditPublicInfo } from "@/server/services/xendit";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
@@ -22,7 +21,7 @@ export const dynamic = "force-dynamic";
 const NEW_DAYS = 7;
 
 export default async function AdminLanggananPage() {
-  const [plans, orders, members, sales] = await Promise.all([listPlans({ activeOnly: false }), listOrdersAdmin(), listActiveMembershipsAdmin(), planSalesStats()]);
+  const [plans, sales] = await Promise.all([listPlans({ activeOnly: false }), planSalesStats()]);
   const configured = isDokuConfigured();
   const production = isDokuProduction();
   const info = dokuPublicInfo();
@@ -47,29 +46,30 @@ export default async function AdminLanggananPage() {
   }));
   const active = cards.filter((p) => p.isActive);
   const inactive = cards.filter((p) => !p.isActive);
-  const stats: [LucideIcon, string, string, string][] = [
-    [Wallet, "Pendapatan lunas", formatRupiah(paidTotal), "text-success-strong"],
-    [Crown, "Anggota Premium aktif", String(members.length), "text-cta"],
-    [Clock, "Pembayaran menunggu", String(pendingTotal), "text-warning-strong"],
-    [CreditCard, "Paket dijual", `${active.length} dari ${plans.length}`, "text-primary"],
+  const stats: [LucideIcon, string, string, string, string][] = [
+    [Wallet, "Pendapatan lunas", formatRupiah(paidTotal), "text-success-strong", "/admin/transaksi?status=paid"],
+    [Clock, "Pembayaran menunggu", String(pendingTotal), "text-warning-strong", "/admin/transaksi"],
+    [Users, "Akun Premium & Gratis", "Kelola", "text-cta", "/admin/users?akses=premium"],
+    [CreditCard, "Paket dijual", `${active.length} dari ${plans.length}`, "text-primary", "#paket-langganan"],
   ];
 
   return (
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Langganan & Pembayaran"
-        description="Akun gratis: 1 paket tes gratis per mapel. Premium (dibayar online lewat Midtrans/DOKU atau diberikan admin) membuka semua paket tes jenjangnya, pembahasan, analisa kelemahan, dan Latihan Kelemahan — aktif otomatis setelah pembayaran berhasil."
+        description="Atur paket Premium yang dijual dan penyedia pembayaran. Verifikasi pembayaran ada di menu Transaksi; beri/cabut Premium per akun di Manajemen User."
       />
 
       <dl className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        {stats.map(([Icon, label, value, tone]) => (
-          <div key={label} className="surface-card flex items-center gap-2.5 p-3 sm:gap-3 sm:p-4">
+        {stats.map(([Icon, label, value, tone, href]) => (
+          <Link key={label} href={href} className="surface-card group flex items-center gap-2.5 p-3 transition-colors hover:border-primary/40 sm:gap-3 sm:p-4">
             <Icon className={`size-6 shrink-0 sm:size-8 ${tone}`} aria-hidden />
-            <div className="min-w-0">
+            <div className="min-w-0 flex-1">
               <dt className="text-xs text-muted-foreground">{label}</dt>
               <dd className="text-base font-bold break-words tabular-nums sm:text-lg">{value}</dd>
             </div>
-          </div>
+            <ArrowRight className="size-4 shrink-0 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" aria-hidden />
+          </Link>
         ))}
       </dl>
 
@@ -89,8 +89,11 @@ export default async function AdminLanggananPage() {
           </p>
           <p className="text-muted-foreground">
             Siswa transfer harga paket + kode unik 1–999, lalu mengirim bukti ke WhatsApp admin ({formatWaNumber()}). Cocokkan nominal persis di
-            mutasi GoPay Merchant dengan transaksi &ldquo;Menunggu&rdquo; di bawah, lalu tekan <strong>Konfirmasi lunas</strong> — Premium langsung
-            aktif. Order menunggu lebih dari 3 hari tidak lagi mengunci kode unik.
+            mutasi GoPay Merchant di menu{" "}
+            <Link href="/admin/transaksi" className="font-semibold text-primary hover:underline">
+              Transaksi
+            </Link>
+            , lalu tekan <strong>Konfirmasi lunas</strong> — Premium langsung aktif. Order menunggu lebih dari 3 hari otomatis kedaluwarsa.
           </p>
         </section>
       )}
@@ -213,7 +216,7 @@ export default async function AdminLanggananPage() {
         </p>
       </section>
 
-      <section className="flex flex-col gap-4">
+      <section id="paket-langganan" className="flex scroll-mt-20 flex-col gap-4">
         <h2 className="flex items-center gap-2 text-lg font-bold">
           <CreditCard className="size-5 text-primary" aria-hidden /> Paket langganan
         </h2>
@@ -244,64 +247,6 @@ export default async function AdminLanggananPage() {
           </div>
         )}
         <NewPlanPanel />
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="flex items-center gap-2 text-lg font-bold">
-          <Crown className="size-5 text-cta" aria-hidden /> Anggota Premium aktif ({members.length})
-        </h2>
-        <div className="surface-card flex flex-col gap-4 p-4">
-          <GrantMembershipForm />
-          {members.length > 0 && (
-            <ul className="divide-y border-t text-sm">
-              {members.map(({ m, userName, userEmail }) => (
-                <li key={m.id} className="flex flex-wrap items-center gap-3 py-2.5">
-                  <span className="min-w-0 flex-1">
-                    <span className="font-semibold">{userName}</span> <span className="text-xs text-muted-foreground">{userEmail}</span>
-                  </span>
-                  <Badge variant="info">{m.jenjang ?? "Semua"}</Badge>
-                  <Badge variant={m.grantedBy === "purchase" ? "success" : "muted"}>{m.grantedBy === "purchase" ? "Bayar" : "Manual"}</Badge>
-                  <span className="text-xs text-muted-foreground">{m.endsAt ? `s.d. ${formatDate(m.endsAt.toISOString())}` : "Selamanya"}</span>
-                  <RevokeMembershipButton id={m.id} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="flex items-center gap-2 text-lg font-bold">
-          <Receipt className="size-5 text-primary" aria-hidden /> Transaksi terbaru
-        </h2>
-        {orders.length === 0 ? (
-          <p className="surface-card px-6 py-8 text-center text-sm text-muted-foreground">Belum ada transaksi.</p>
-        ) : (
-          <ul className="surface-card divide-y text-sm">
-            {orders.map(({ order: o, userName, userEmail }) => {
-              const meta = ORDER_STATUS_META[o.status];
-              return (
-                <li key={o.id} className="flex flex-wrap items-center gap-3 px-4 py-3">
-                  <span className="min-w-0 flex-1">
-                    <span className="font-semibold">{userName}</span> <span className="text-xs text-muted-foreground">{userEmail}</span>
-                    <span className="block text-xs text-muted-foreground">
-                      {o.planName} · {o.orderCode} · {formatDateTime(o.createdAt.toISOString())}
-                      {o.paymentType && ` · ${o.paymentType}`}
-                    </span>
-                  </span>
-                  <span className="font-semibold tabular-nums">{formatRupiah(o.amount)}</span>
-                  <Badge variant={meta.variant}>{meta.label}</Badge>
-                  {o.status === "pending" &&
-                    (providerOfOrder(o.orderCode) === "manual" ? (
-                      <SettleManualOrderButtons orderCode={o.orderCode} amount={formatRupiah(o.amount)} />
-                    ) : (
-                      configured && <SyncOrderButton orderCode={o.orderCode} label="Cek" />
-                    ))}
-                </li>
-              );
-            })}
-          </ul>
-        )}
       </section>
     </div>
   );

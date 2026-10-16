@@ -3,7 +3,7 @@
 import { useEffect, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Check, ChevronLeft, ChevronRight, Clock, Copy, KeyRound, Crown, GraduationCap, MessageCircle, Pencil, Search, Settings, Trash2, TriangleAlert, Users, X } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight, Clock, Copy, KeyRound, Crown, GraduationCap, Hourglass, MessageCircle, Pencil, Search, Settings, Trash2, TriangleAlert, UserRound, X } from "lucide-react";
 import { StatCard } from "@/components/layout/stat-card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -31,6 +31,7 @@ import { formatPhone, visibleEmail, whatsappLink } from "@/lib/identity";
 import { SITE_NAME } from "@/lib/site";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { grantUserPremiumAction, revokeUserPremiumAction } from "@/server/actions/billing";
 import {
   approveAllPendingAction,
   deleteUserAction,
@@ -39,7 +40,7 @@ import {
   setUserJenjangAction,
   setUserStatusAction,
 } from "@/server/actions/users";
-import { USERS_PAGE_SIZE, usersHref, type UserFilters } from "@/lib/user-filters";
+import { EXPIRING_DAYS, USERS_PAGE_SIZE, usersHref, type UserFilters } from "@/lib/user-filters";
 import type { AdminUserRow, AdminUsersPage } from "@/server/queries/users";
 
 type Role = AdminUserRow["role"];
@@ -55,7 +56,7 @@ const jenjangFilterItems = { all: "Semua jenjang", SD: "SD", SMP: "SMP", SMA: "S
 
 const roleLabel: Record<Role, string> = { student: "Siswa", admin: "Admin" };
 const roleFilterItems = { all: "Semua role", ...roleLabel };
-const accessFilterItems = { all: "Semua akses", premium: "Premium", free: "Gratis" };
+const accessFilterItems = { all: "Semua akses", premium: "Premium aktif", expiring: "Premium segera berakhir", expired: "Premium kedaluwarsa", free: "Gratis" };
 
 /** Tabel user — filter & paginasi di server lewat query string (lib/user-filters). */
 export function UsersTable({
@@ -96,10 +97,17 @@ export function UsersTable({
   return (
     <div className="flex flex-col gap-8">
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Total user" value={String(stats.users)} icon={Users} />
-        <StatCard label="Siswa" value={String(stats.students)} icon={GraduationCap} tone="muted" />
-        <StatCard label="Punya akses premium" value={String(stats.premium)} icon={Crown} tone="cta" />
-        <StatCard label="Menunggu konfirmasi" value={String(stats.pending)} icon={Clock} tone="success" />
+        <StatCard label="Total siswa" value={String(stats.students)} icon={GraduationCap} hint={`${stats.users} akun termasuk admin`} />
+        <AccessStat label="Premium aktif" value={stats.premium} total={stats.students} icon={Crown} tone="cta" active={filters.akses === "premium"} onClick={() => go({ akses: filters.akses === "premium" ? undefined : "premium" })} />
+        <AccessStat label="Akun gratis" value={stats.free} total={stats.students} icon={UserRound} tone="muted" active={filters.akses === "free"} onClick={() => go({ akses: filters.akses === "free" ? undefined : "free" })} />
+        <AccessStat
+          label={`Segera berakhir (≤ ${EXPIRING_DAYS} hari)`}
+          value={stats.expiring}
+          icon={Hourglass}
+          tone="success"
+          active={filters.akses === "expiring"}
+          onClick={() => go({ akses: filters.akses === "expiring" ? undefined : "expiring" })}
+        />
       </div>
 
       {stats.pending > 0 && (
@@ -193,13 +201,15 @@ export function UsersTable({
               </SelectContent>
             </Select>
             <Select items={accessFilterItems} value={filters.akses ?? "all"} onValueChange={(v) => go({ akses: v === "all" ? undefined : String(v) })}>
-              <SelectTrigger className="w-full sm:w-40" aria-label="Filter akses">
+              <SelectTrigger className="w-full sm:w-52" aria-label="Filter akses">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">Semua akses</SelectItem>
-                <SelectItem value="premium">Premium</SelectItem>
-                <SelectItem value="free">Gratis</SelectItem>
+                {Object.entries(accessFilterItems).map(([k, v]) => (
+                  <SelectItem key={k} value={k}>
+                    {v}
+                  </SelectItem>
+                ))}
               </SelectContent>
             </Select>
           </div>
@@ -215,7 +225,7 @@ export function UsersTable({
                 <th className="px-5 py-3">Status</th>
                 <th className="px-5 py-3">Role</th>
                 <th className="px-5 py-3">Terdaftar</th>
-                <th className="px-5 py-3">Akses premium</th>
+                <th className="px-5 py-3">Langganan</th>
                 <th className="px-5 py-3 text-right">Aksi</th>
               </tr>
             </thead>
@@ -236,12 +246,12 @@ export function UsersTable({
                   </td>
                   <td className="px-5 py-3.5 whitespace-nowrap text-muted-foreground">{formatDate(user.createdAt)}</td>
                   <td className="px-5 py-3.5">
-                    <PremiumCount count={user.premiumCount} />
+                    <AccessCell user={user} />
                   </td>
                   <td className="px-5 py-3.5 text-right">
                     <span className="inline-flex items-center gap-1">
                       <EditContact user={user} />
-                      <ResetPassword user={user} disabled={user.id === currentUserId} />
+                  <ResetPassword user={user} disabled={user.id === currentUserId} />
                       <DeleteUser user={user} disabled={user.id === currentUserId} />
                     </span>
                   </td>
@@ -259,7 +269,7 @@ export function UsersTable({
                 <UserIdentity user={user} />
                 <span className="flex items-center gap-1">
                   <EditContact user={user} />
-                      <ResetPassword user={user} disabled={user.id === currentUserId} />
+                  <ResetPassword user={user} disabled={user.id === currentUserId} />
                   <DeleteUser user={user} disabled={user.id === currentUserId} />
                 </span>
               </div>
@@ -267,8 +277,10 @@ export function UsersTable({
                 <JenjangCell user={user} />
                 <StatusCell user={user} />
                 <Badge variant={user.role === "admin" ? "info" : "muted"}>{roleLabel[user.role]}</Badge>
-                <PremiumCount count={user.premiumCount} />
                 <span className="text-muted-foreground">{formatDate(user.createdAt)}</span>
+              </div>
+              <div className="rounded-lg bg-muted/40 p-3">
+                <AccessCell user={user} />
               </div>
             </li>
           ))}
@@ -403,12 +415,209 @@ function EditContact({ user }: { user: AdminUserRow }) {
   );
 }
 
-function PremiumCount({ count }: { count: number }) {
-  if (count === 0) return <span className="text-sm text-muted-foreground">Gratis</span>;
+/** Kartu statistik yang sekaligus jadi filter akses (klik lagi untuk melepas). */
+function AccessStat({
+  label,
+  value,
+  total,
+  icon: Icon,
+  tone,
+  active,
+  onClick,
+}: {
+  label: string;
+  value: number;
+  total?: number;
+  icon: typeof Crown;
+  tone: "cta" | "muted" | "success";
+  active: boolean;
+  onClick: () => void;
+}) {
+  const toneClass = { cta: "bg-warning-soft text-warning-strong", muted: "bg-muted text-muted-foreground", success: "bg-success-soft text-success" }[tone];
   return (
-    <span className="flex items-center gap-1.5 text-sm font-semibold text-success-strong">
-      <Crown className="size-3.5" aria-hidden /> {count} paket
-    </span>
+    <button
+      type="button"
+      aria-pressed={active}
+      onClick={onClick}
+      className={cn("surface-card flex flex-col gap-3 p-5 text-left transition-colors hover:border-primary/40", active && "border-primary ring-2 ring-primary/20")}
+    >
+      <span className="flex items-start justify-between gap-3">
+        <span className="text-sm font-medium text-muted-foreground">{label}</span>
+        <span className={cn("flex size-9 items-center justify-center rounded-lg", toneClass)}>
+          <Icon className="size-[18px]" aria-hidden />
+        </span>
+      </span>
+      <span className="flex items-baseline gap-1.5">
+        <span className="text-3xl font-bold tracking-tight">{value}</span>
+        {total != null && total > 0 && <span className="text-sm text-muted-foreground">{Math.round((value / total) * 100)}% siswa</span>}
+      </span>
+      <span className="text-xs text-muted-foreground">{active ? "Filter aktif — klik untuk melepas" : "Klik untuk menyaring tabel"}</span>
+    </button>
+  );
+}
+
+const DAY_MS = 86_400_000;
+
+/** Status langganan + aksi beri/perpanjang/cabut Premium. */
+function AccessCell({ user }: { user: AdminUserRow }) {
+  if (user.role === "admin") return <span className="text-sm text-muted-foreground">Akses penuh (admin)</span>;
+  const p = user.premium;
+  const daysLeft = p.daysLeft;
+  const expiring = daysLeft != null && daysLeft <= EXPIRING_DAYS;
+  return (
+    <div className="flex flex-col gap-1.5">
+      <div className="flex flex-wrap items-center gap-1.5">
+        {p.active ? (
+          <Badge variant={expiring ? "warning" : "success"}>
+            <Crown aria-hidden /> Premium {p.scopes.join(", ")}
+          </Badge>
+        ) : p.lastEndedAt ? (
+          <Badge variant="muted">Kedaluwarsa</Badge>
+        ) : (
+          <Badge variant="muted">Gratis</Badge>
+        )}
+        {p.active && p.source && <span className="text-xs text-muted-foreground">{p.source === "purchase" ? "dibeli" : "diberi admin"}</span>}
+      </div>
+      <div className="text-xs text-muted-foreground">
+        {p.active
+          ? p.endsAt
+            ? `s.d. ${formatDate(p.endsAt)} · sisa ${daysLeft} hari`
+            : "Berlaku selamanya"
+          : p.lastEndedAt
+            ? `Berakhir ${formatDate(p.lastEndedAt)}`
+            : user.premiumCount > 0
+              ? `Akses ${user.premiumCount} paket tertentu`
+              : null}
+      </div>
+      <span className="flex flex-wrap gap-1.5">
+        <GrantPremium user={user} />
+        {p.active && <RevokePremium user={user} />}
+      </span>
+    </div>
+  );
+}
+
+const DURATION_PRESETS = [
+  { value: "30", label: "30 hari" },
+  { value: "90", label: "90 hari" },
+  { value: "180", label: "6 bulan" },
+  { value: "365", label: "1 tahun" },
+  { value: "forever", label: "Selamanya" },
+  { value: "custom", label: "Lainnya…" },
+];
+
+/** Beri / perpanjang Premium (masa aktif ditambahkan dari akhir masa aktif yang sama). */
+function GrantPremium({ user }: { user: AdminUserRow }) {
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [jenjang, setJenjang] = useState<string>(user.jenjang ?? "");
+  const [preset, setPreset] = useState("30");
+  const [custom, setCustom] = useState("14");
+  const [error, setError] = useState<string | null>(null);
+  const [pending, startTransition] = useTransition();
+  const extend = user.premium.active;
+  const days = preset === "forever" ? null : Number(preset === "custom" ? custom : preset);
+  const base = extend && user.premium.endsAt && (jenjang || "Semua") === user.premium.scopes[0] ? new Date(user.premium.endsAt) : new Date();
+  const preview = days == null ? "selamanya" : `s.d. ${formatDate(new Date(base.getTime() + days * DAY_MS).toISOString())}`;
+
+  return (
+    <AlertDialog
+      open={open}
+      onOpenChange={(o) => {
+        setOpen(o);
+        if (o) {
+          setJenjang(user.jenjang ?? "");
+          setPreset("30");
+          setError(null);
+        }
+      }}
+    >
+      <AlertDialogTrigger render={<Button size="xs" variant={extend ? "outline" : "default"} />}>
+        <Crown aria-hidden /> {extend ? "Perpanjang" : "Beri Premium"}
+      </AlertDialogTrigger>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>{extend ? "Perpanjang" : "Beri"} Premium — {user.name}</AlertDialogTitle>
+          <AlertDialogDescription>
+            Untuk kerja sama sekolah, hadiah, atau koreksi pembayaran. Pembayaran QRIS dikonfirmasi lewat menu Transaksi agar tercatat sebagai pendapatan.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col gap-1.5">
+            <Label htmlFor={`premium-jenjang-${user.id}`}>Jenjang</Label>
+            <select id={`premium-jenjang-${user.id}`} className="h-9 rounded-md border bg-card px-2.5 text-sm" value={jenjang} onChange={(e) => setJenjang(e.target.value)}>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA</option>
+              <option value="">Semua jenjang</option>
+            </select>
+          </div>
+          <fieldset className="flex flex-col gap-1.5">
+            <legend className="mb-1.5 text-sm font-medium">Durasi</legend>
+            <div className="grid grid-cols-3 gap-2">
+              {DURATION_PRESETS.map((d) => (
+                <button
+                  key={d.value}
+                  type="button"
+                  aria-pressed={preset === d.value}
+                  onClick={() => setPreset(d.value)}
+                  className={cn("rounded-md border px-2 py-1.5 text-sm font-medium", preset === d.value ? "border-primary bg-primary-soft text-primary" : "hover:bg-muted")}
+                >
+                  {d.label}
+                </button>
+              ))}
+            </div>
+            {preset === "custom" && (
+              <Input type="number" min={1} max={3650} value={custom} onChange={(e) => setCustom(e.target.value)} aria-label="Durasi (hari)" className="mt-1" />
+            )}
+          </fieldset>
+          <p className="rounded-lg bg-muted/50 p-3 text-sm">
+            Premium {jenjang || "semua jenjang"} berlaku <strong>{preview}</strong>
+            {extend && user.premium.endsAt && base.getTime() !== new Date(user.premium.endsAt).getTime() && " (cakupan jenjang berbeda, dihitung dari hari ini)"}.
+          </p>
+          {error && <p className="text-sm font-semibold text-destructive">{error}</p>}
+        </div>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Batal</AlertDialogCancel>
+          <AlertDialogAction
+            disabled={pending || (days != null && !(days >= 1))}
+            onClick={(e) => {
+              e.preventDefault();
+              startTransition(async () => {
+                const r = await grantUserPremiumAction({ userId: user.id, jenjang: jenjang || null, durationDays: days });
+                if (!r.ok) return setError(r.error);
+                setOpen(false);
+                router.refresh();
+              });
+            }}
+          >
+            {pending ? "Menyimpan…" : extend ? "Perpanjang" : "Beri Premium"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+  );
+}
+
+function RevokePremium({ user }: { user: AdminUserRow }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  return (
+    <Button
+      size="xs"
+      variant="ghost"
+      disabled={pending}
+      className="text-muted-foreground hover:text-destructive"
+      onClick={() =>
+        window.confirm(`Cabut semua Premium aktif milik ${user.name}? Akun kembali Gratis.`) &&
+        startTransition(async () => {
+          await revokeUserPremiumAction(user.id);
+          router.refresh();
+        })
+      }
+    >
+      Cabut
+    </Button>
   );
 }
 

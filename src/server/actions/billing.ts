@@ -10,7 +10,7 @@ import { SITE_URL } from "@/lib/site";
 import { getActiveSession, getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { JENJANG_CODES, orders, plans } from "@/server/db/schema";
-import { createOrder, grantManualMembership, revokeMembership, settleManualOrder, syncOrder } from "@/server/services/billing";
+import { createOrder, grantMembershipToUser, revokeUserPremium, settleManualOrder, syncOrder } from "@/server/services/billing";
 import { isDokuConfigured, testDokuConnection } from "@/server/services/doku";
 import { isMidtransConfigured, testMidtransConnection } from "@/server/services/midtrans";
 import { isXenditConfigured, testXenditConnection } from "@/server/services/xendit";
@@ -44,7 +44,7 @@ export async function syncOrderAction(orderCode: string): Promise<Result<{ statu
   if (!order || (session.user.role !== "admin" && order.userId !== Number(session.user.id))) return { ok: false, error: "Order tidak ditemukan." };
   const r = await syncOrder(orderCode);
   revalidatePath("/langganan");
-  revalidatePath("/admin/langganan");
+  revalidatePath("/admin/transaksi");
   return r;
 }
 
@@ -73,16 +73,26 @@ export async function savePlanAction(input: unknown): Promise<Result> {
   return { ok: true };
 }
 
-export async function grantMembershipAction(input: unknown): Promise<Result> {
+/** Admin: beri / perpanjang Premium untuk satu user (tabel Manajemen User). */
+export async function grantUserPremiumAction(input: unknown): Promise<Result<{ endsAt: string | null }>> {
   const session = await getAdminSession();
   if (!session) return NOT_ADMIN;
   const parsed = z
-    .object({ email: z.string().trim().min(3, "Isi email atau username siswa.").max(255), jenjang: z.enum(JENJANG_CODES).nullable(), durationDays: z.number().int().min(1).max(3650).nullable() })
+    .object({ userId: id, jenjang: z.enum(JENJANG_CODES).nullable(), durationDays: z.number().int().min(1, "Durasi minimal 1 hari").max(3650).nullable() })
     .safeParse(input);
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0].message };
-  const r = await grantManualMembership(Number(session.user.id), parsed.data.email, parsed.data.jenjang, parsed.data.durationDays);
-  revalidatePath("/admin/langganan");
-  return r;
+  const r = await grantMembershipToUser(Number(session.user.id), parsed.data.userId, parsed.data.jenjang, parsed.data.durationDays);
+  revalidatePath("/admin/users");
+  return r.ok ? { ok: true, endsAt: r.endsAt?.toISOString() ?? null } : r;
+}
+
+/** Admin: cabut semua Premium aktif user. */
+export async function revokeUserPremiumAction(userId: number): Promise<Result> {
+  if (!(await getAdminSession())) return NOT_ADMIN;
+  if (!id.safeParse(userId).success) return { ok: false, error: "Data tidak valid." };
+  await revokeUserPremium(userId);
+  revalidatePath("/admin/users");
+  return { ok: true };
 }
 
 /** Admin: konfirmasi lunas / batalkan order QRIS manual (setelah cek bukti WA & mutasi GoPay Merchant). */
@@ -92,17 +102,10 @@ export async function settleManualOrderAction(orderCode: string, status: "paid" 
   const parsed = z.object({ orderCode: z.string().min(1).max(50), status: z.enum(["paid", "cancelled"]) }).safeParse({ orderCode, status });
   if (!parsed.success) return { ok: false, error: "Data tidak valid." };
   const r = await settleManualOrder(Number(session.user.id), parsed.data.orderCode, parsed.data.status);
-  revalidatePath("/admin/langganan");
+  revalidatePath("/admin/transaksi");
+  revalidatePath("/admin/users");
   revalidatePath("/langganan");
   return r.ok ? { ok: true } : r;
-}
-
-export async function revokeMembershipAction(membershipId: number): Promise<Result> {
-  if (!(await getAdminSession())) return NOT_ADMIN;
-  if (!id.safeParse(membershipId).success) return { ok: false, error: "Data tidak valid." };
-  await revokeMembership(membershipId);
-  revalidatePath("/admin/langganan");
-  return { ok: true };
 }
 
 /** Admin: uji Client ID & Secret Key ke DOKU tanpa membuat transaksi. */

@@ -19,7 +19,7 @@ export default async function AdminUsersPage({ searchParams }: { searchParams: P
     <div className="flex flex-col gap-8">
       <PageHeader
         title="Manajemen User"
-        description="Kelola akun siswa & admin: tambah akun siswa, konfirmasi pendaftar baru, jenjang, dan akses. Akses premium diatur per paket di halaman Paket Tes."
+        description="Kelola akun siswa & admin: tambah akun, konfirmasi pendaftar baru, jenjang, serta akses Gratis/Premium (beri, perpanjang, atau cabut Premium langsung dari tabel)."
       />
       <CreateUserForm />
       <UsersTable data={data} filters={filters} currentUserId={Number(user.id)} requireApproval={requireApproval} />

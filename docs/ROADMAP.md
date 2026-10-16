@@ -48,6 +48,7 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-17:** QRIS manual otomatis dipakai bila belum ada gateway Live (tanpa env); petunjuk "Cara bayar" di /langganan. Filter siswa: kartu mata pelajaran (jumlah paket & tes selesai) + jenis paket Gratis/Premium dalam satu panel (`?akses=`). Deskripsi paket dibersihkan dari nama AI — **produksi: `npm run prod:db:clean-descriptions -- --apply`**.
 **2026-10-16 (8):** satu akun siswa hanya aktif di satu perangkat — login baru mengeluarkan perangkat lain (admin bebas); perangkat lama melihat pesan di /masuk.
 **2026-10-16 (7):** menu admin **Transaksi** baru (`/admin/transaksi`: tab Perlu verifikasi/Lunas/Kedaluwarsa, cari nominal kode unik, dialog Verifikasi + kabari siswa via WA, rekap pendapatan hari/bulan, badge sidebar; order menunggu > 3 hari otomatis kedaluwarsa). **Manajemen User** kini kolom Langganan dari membership (Premium aktif/segera berakhir/kedaluwarsa/Gratis, beri/perpanjang/cabut per baris). Halaman Langganan hanya paket & penyedia.
 **2026-10-16 (6):** pembayaran **QRIS manual + kode unik** (`PAYMENT_PROVIDER=manual`): siswa scan QRIS GoPay Merchant, transfer harga + kode unik, kirim bukti via WhatsApp admin; admin klik Konfirmasi lunas di /admin/langganan. Tanpa migrasi — set env lalu redeploy (WORKFLOW §8d).

@@ -12,6 +12,46 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-10-16 — Transaksi jadi menu sendiri; akses Premium dikelola di Manajemen User
+- `/admin/transaksi`: antrean verifikasi (default tab menunggu, terlama dulu), pencarian
+  nominal persis (`Rp27.023` → 27023) karena kode unik membuat nominal tiap order unik,
+  dialog verifikasi dengan centang "dana sudah masuk" sebelum konfirmasi lunas.
+- Order `pending` > 3 hari ditandai `expired` saat halaman Transaksi dibuka (lazy, tanpa
+  cron); konfirmasi/sinkron belakangan tetap bisa (expired → paid diizinkan).
+- Status Premium di Manajemen User = membership aktif (sebelumnya hitungan `entitlements`
+  per paket, model lama). Filter akses: premium / expiring (≤7 hari) / expired / free.
+  Form beri Premium via email & daftar anggota di /admin/langganan dihapus.
+
+## 2026-10-16 — Pembayaran manual QRIS statis + kode unik + konfirmasi admin via WA
+Aktivasi QRIS di DOKU tertahan sejak 9 Okt; pemilik produk ingin segera launching.
+Penyedia baru `manual` (`PAYMENT_PROVIDER=manual`, prefix order `PTQ-`): nominal = harga +
+kode unik 1–999 yang tidak bentrok dengan order manual lain yang menunggu (≤3 hari);
+order menunggu untuk paket yang sama dipakai ulang. Kode unik & harga dasar disimpan di
+`orders.last_payload` → tanpa migrasi. Bukti dikirim via wa.me (pesan formal terisi
+otomatis); admin konfirmasi di /admin/langganan → `applyPaymentUpdate` yang sama dengan
+webhook (idempoten, perpanjang masa aktif).
+Alternatif ditolak: unggah bukti ke server (butuh storage & moderasi — WA lebih cepat untuk
+launching); kode unik 2 digit (hanya 99 slot, cepat habis saat ramai).
+
+## 2026-10-16 — Paket TKA SD Matematika & Bahasa Indonesia — Paket 2 (#56, #57, draf, ditulis Claude) + gambar SVG
+SD hanya punya 2 mata uji (kerangka TKA SD). Keduanya Premium, simulasi penuh 75 menit,
+30 soal baru `pending_review` — paket Premium pertama SD (Paket 1 gratis).
+- **#56 Matematika** (soal #1562–#1591, stimulus #224–#229, gambar /gambar/175–180):
+  pita pecahan, denah kebun berbentuk L (luas 84 m², keliling 40 m), dua jam analog
+  (06.45→07.20, 7 km → 12 km/jam), susunan 9 kubus (tampak depan 5, atas 6, kanan 4),
+  diagram batang buku, piktogram botol (ikon = 4, ada setengah ikon). 18 PG · 6 MCMA ·
+  6 Kategori, 4/4 subtopik, L1 20% · L3 30%.
+- **#57 Bahasa Indonesia** (soal #1592–#1621, stimulus #230–#235, gambar /gambar/181–184):
+  siklus air, poster lomba kebersihan (2–6 Nov 2026, pengumuman Senin 9 Nov), denah taman
+  kota (arah mata angin cocok dengan teks), pertumbuhan kacang hijau 4 panel; cerita pipit,
+  puisi pelangi. Bacaan ±150 kata, kalimat pendek (kerangka SD 150–200). 17 PG · 6 MCMA ·
+  7 Kategori, 10/10 subtopik.
+`scripts/import-package.ts` kini mendukung gambar: `images: { kunci: { title, svg } }` +
+`gambar` pada soal/stimulus → SVG buatan sendiri dirender ke PNG (sharp, density 192),
+pratinjau disimpan saat dry run untuk diperiksa visual, lalu diunggah lewat galeri biasa
+(WebP ≤1600 px; 10 gambar 12–82 KB). Semua gambar dicek visual sebelum commit (perbaikan:
+label tumpang tindih, jarum jam menutupi angka, jumlah biji tidak sesuai teks).
+
 ## 2026-10-16 — Stimulus tanpa scroll sendiri; gambar menyesuaikan bentuk & dikompres per layar
 Permintaan pemilik produk: panel stimulus tidak lagi dibatasi `max-h-[40/45dvh]` +
 scroll dalam — bacaan tampil utuh, halaman memanjang, pilihan jawaban di bawahnya

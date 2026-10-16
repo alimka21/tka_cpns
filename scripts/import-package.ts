@@ -9,12 +9,17 @@
 //   npx tsx --env-file=.env.prod scripts/import-package.ts <data.ts> --commit
 //
 // File data: `export default { title, description, jenjang, subjectCode,
-// durationMinutes, isPremium, createdBy, stimuli: [{ code, title, content }],
-// rows: RawImportRow[] }` — kolom `rows` = kolom template impor Excel; soal
-// grup ditulis berurutan (urutan baris = urutan di grup & di paket).
+// durationMinutes, isPremium, createdBy, stimuli: [{ code, title, content, gambar? }],
+// rows: (RawImportRow & { gambar? })[], images?: { [kunci]: { title, svg } } }` —
+// kolom `rows` = kolom template impor Excel; soal grup ditulis berurutan (urutan
+// baris = urutan di grup & di paket). `gambar` = kunci di `images`: SVG buatan
+// sendiri dirender ke PNG (sharp) lalu diunggah lewat galeri biasa (dikompres
+// WebP). Dry run menyimpan pratinjau PNG di folder `<data>.preview/`.
 
+import { mkdirSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
 import { resolve } from "node:path";
+import sharp from "sharp";
 import { and, eq, inArray } from "drizzle-orm";
 import { checkPackageRules, ruleErrors } from "@/lib/package-rules";
 import { validateImportRows, type RawImportRow } from "@/lib/validation/import";
@@ -23,6 +28,7 @@ import { db } from "@/server/db";
 import { categories, stimuli, subjects, testPackageQuestions, testPackages } from "@/server/db/schema";
 import { loadSubjectOutlines } from "@/server/queries/packages";
 import { checkAgainstFramework, linkStimuli } from "@/server/services/question-import";
+import { imagePath, saveQuestionImage } from "@/server/services/question-images";
 import { insertQuestion, subtopicIdsByCode } from "@/server/services/question-store";
 
 type PackageData = {
@@ -36,8 +42,10 @@ type PackageData = {
   isFullSimulation?: boolean;
   /** Id admin pembuat (questions.created_by, test_packages.created_by). */
   createdBy: number;
-  stimuli: { code: string; title: string; content: string; imageUrl?: string }[];
-  rows: RawImportRow[];
+  stimuli: { code: string; title: string; content: string; imageUrl?: string; gambar?: string }[];
+  rows: (RawImportRow & { gambar?: string })[];
+  /** Gambar baru: SVG buatan sendiri (sumber tepercaya), dirender ke PNG lalu masuk galeri. */
+  images?: Record<string, { title: string; svg: string }>;
 };
 
 function fail(title: string, lines: string[]): never {
@@ -51,6 +59,25 @@ async function main() {
   if (!file) fail("Pemakaian", ["npx tsx --env-file=.env scripts/import-package.ts <data.ts> [--commit]"]);
   const commit = flags.includes("--commit");
   const data = (await import(pathToFileURL(resolve(file)).href)).default as PackageData;
+
+  // 0. Gambar: semua kunci yang dirujuk harus ada; render SVG → PNG (+ pratinjau).
+  const images = data.images ?? {};
+  const usedKeys = [...data.stimuli.map((st) => st.gambar), ...data.rows.map((r) => r.gambar)].filter((k): k is string => Boolean(k));
+  const unknown = usedKeys.filter((k) => !images[k]);
+  if (unknown.length) fail("Gambar tidak dikenal", unknown);
+  const unused = Object.keys(images).filter((k) => !usedKeys.includes(k));
+  if (unused.length) fail("Gambar tidak dipakai soal/stimulus mana pun", unused);
+  const rendered = new Map<string, Buffer>();
+  const previewDir = `${resolve(file)}.preview`;
+  if (Object.keys(images).length) mkdirSync(previewDir, { recursive: true });
+  for (const [key, img] of Object.entries(images)) {
+    // density 192 → PNG 2× tajam; galeri lalu memperkecil ke ≤1600 px WebP.
+    const png = await sharp(Buffer.from(img.svg), { density: 192 }).png().toBuffer();
+    const meta = await sharp(png).metadata();
+    rendered.set(key, png);
+    writeFileSync(`${previewDir}/${key}.png`, png);
+    console.log(`  gambar ${key}: ${meta.width}×${meta.height} px, ${Math.round(png.length / 1024)} KB PNG — "${img.title}"`);
+  }
 
   // 1. Format baris + kerangka asesmen + tautan stimulus (sama dengan impor Excel).
   const checked = validateImportRows(data.rows.map((d, i) => ({ rowNumber: i + 1, data: d })));
@@ -84,7 +111,7 @@ async function main() {
       subjectCode: data.subjectCode,
       subtopicCode: r.subdomainCode,
       stimulusKey: r.stimulusCode,
-      hasImage: false,
+      hasImage: Boolean(data.rows[r.rowNumber - 1]?.gambar),
       difficulty: r.difficulty,
       cognitiveLevel: r.cognitiveLevel,
     })),
@@ -93,7 +120,7 @@ async function main() {
   const count = (k: string) => linked.valid.filter((r) => r.difficulty === k).length;
   const level = (k: string) => linked.valid.filter((r) => r.cognitiveLevel === k).length;
   console.log(`\n${data.title}`);
-  console.log(`  ${s.total} soal · PG ${s.pg} · MCMA ${s.mcma} · Kategori ${s.kategori} · berbasis stimulus ${s.stimulusBased} · ${linked.stimuli.length} stimulus`);
+  console.log(`  ${s.total} soal · PG ${s.pg} · MCMA ${s.mcma} · Kategori ${s.kategori} · berbasis stimulus ${s.stimulusBased} · ${linked.stimuli.length} stimulus · ${rendered.size} gambar baru`);
   console.log(`  mudah ${count("easy")} · sedang ${count("medium")} · sulit ${count("hard")}` + (level("L1") + level("L2") + level("L3") ? ` · L1 ${level("L1")} · L2 ${level("L2")} · L3 ${level("L3")}` : ""));
   for (const c of [...report.required, ...report.recommended]) console.log(`  ${c.ok ? "✓" : report.required.includes(c) ? "✗" : "!"} ${c.label} — ${c.detail}`);
   if (report.missingSubtopics.length) console.log(`  subtopik kosong: ${report.missingSubtopics.join(", ")}`);
@@ -112,14 +139,21 @@ async function main() {
     process.exit(0);
   }
 
-  // 4. Simpan semuanya dalam satu transaksi.
+  // 4. Unggah gambar ke galeri (dikompres WebP; gambar identik tidak disimpan dua kali),
+  //    lalu simpan soal/stimulus/paket dalam satu transaksi.
+  const imageUrls = new Map<string, string>();
+  for (const [key, png] of rendered) {
+    const saved = await saveQuestionImage({ name: `${images[key].title}.png`, type: "image/png", bytes: png }, data.createdBy);
+    imageUrls.set(key, imagePath(saved.id));
+  }
+  const stimulusImage = new Map(data.stimuli.map((st) => [st.code.toUpperCase(), st.gambar ? imageUrls.get(st.gambar) : st.imageUrl]));
   const result = await db.transaction(async (tx) => {
     const subtopicIds = await subtopicIdsByCode(tx, [...new Set(linked.valid.map((r) => r.subdomainCode))]);
     const stimulusIds = new Map<string, number>();
     for (const st of linked.stimuli) {
       const [{ id }] = await tx
         .insert(stimuli)
-        .values({ code: st.code, title: st.title, content: st.content, imageUrl: st.imageUrl, createdBy: data.createdBy })
+        .values({ code: st.code, title: st.title, content: st.content, imageUrl: stimulusImage.get(st.code) ?? null, createdBy: data.createdBy })
         .$returningId();
       stimulusIds.set(st.code, id);
     }
@@ -131,6 +165,7 @@ async function main() {
         type: row.type,
         subtopicId,
         questionText: row.questionText,
+        imageUrl: data.rows[row.rowNumber - 1]?.gambar ? imageUrls.get(data.rows[row.rowNumber - 1].gambar!) : undefined,
         difficulty: row.difficulty,
         cognitiveLevel: row.cognitiveLevel,
         explanationText: row.explanationText,
@@ -161,6 +196,7 @@ async function main() {
   });
   const q = result.questionIds;
   console.log(`\n✓ Paket #${result.packageId} (draf) · soal #${q[0]}–#${q[q.length - 1]} · stimulus #${result.stimulusIds.join(", #")}`);
+  if (imageUrls.size) console.log(`  gambar: ${[...imageUrls].map(([k, u]) => `${k} → ${u}`).join(", ")}`);
   process.exit(0);
 }
 

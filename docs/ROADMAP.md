@@ -48,6 +48,9 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-16 (7):** menu admin **Transaksi** baru (`/admin/transaksi`: tab Perlu verifikasi/Lunas/Kedaluwarsa, cari nominal kode unik, dialog Verifikasi + kabari siswa via WA, rekap pendapatan hari/bulan, badge sidebar; order menunggu > 3 hari otomatis kedaluwarsa). **Manajemen User** kini kolom Langganan dari membership (Premium aktif/segera berakhir/kedaluwarsa/Gratis, beri/perpanjang/cabut per baris). Halaman Langganan hanya paket & penyedia.
+**2026-10-16 (6):** pembayaran **QRIS manual + kode unik** (`PAYMENT_PROVIDER=manual`): siswa scan QRIS GoPay Merchant, transfer harga + kode unik, kirim bukti via WhatsApp admin; admin klik Konfirmasi lunas di /admin/langganan. Tanpa migrasi — set env lalu redeploy (WORKFLOW §8d).
+**2026-10-16 (5):** paket draf SD Matematika (#56) & SD Bahasa Indonesia (#57) — Paket 2, Premium, 30 soal + 6 dan 4 gambar baru; tinggal ditinjau & diterbitkan admin. Skrip impor paket kini bisa membuat gambar dari SVG.
 **2026-10-16 (4):** daftar meminta provinsi (dropdown), nama sekolah, No. HP wajib; akun Google melengkapinya di /pilih-jenjang. **Produksi: setelah deploy jalankan `npm run prod:migrate` (migrasi 0022).**
 **2026-10-16 (3):** paket draf #55 TKA SMP Bahasa Indonesia — Paket 2 (30 soal baru `pending_review`, Premium, simulasi penuh) di produksi; tinggal ditinjau & diterbitkan admin.
 **2026-10-16 (2):** Xendit Invoice jadi penyedia pembayaran utama (DOKU & Midtrans tetap sebagai cadangan). Siapkan key Test + Verification Token + URL webhook sesuai WORKFLOW §8c, lalu redeploy & uji; ganti ke key Live setelah akun Xendit diaktivasi.
@@ -397,6 +400,7 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
 - [ ] Midtrans Production: menunggu review bisnis disetujui → ganti Server Key
       Production + `MIDTRANS_IS_PRODUCTION=true`, uji QRIS asli (WORKFLOW §8a)
 - [ ] DOKU: QRIS belum aktif di akun DOKU (cadangan; tidak menghalangi)
+- [x] Pembayaran QRIS manual + kode unik + konfirmasi admin (2026-10-16) — dipakai sampai gateway aktif
 - [ ] Email/WA notifikasi pembayaran (opsional)
 - [x] Ganti kata sandi di Pengaturan/Profil (+ "Buat kata sandi" untuk akun Google-only) — 2026-10-02
 - [x] Admin: atur ulang kata sandi user (kata sandi sementara tampil sekali, hanya hash disimpan) — 2026-10-07

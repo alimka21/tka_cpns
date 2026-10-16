@@ -19,49 +19,37 @@ const chip = (active: boolean) =>
     active && "border-primary bg-primary text-primary-foreground hover:text-primary-foreground",
   );
 
-/** `premium` = membership aktif (atau admin) → boleh mengunduh naskah soal. */
-export function PackageGrid({ packages, premium }: { packages: StudentPackageRow[]; premium: boolean }) {
+/**
+ * `premium` = membership aktif (atau admin) → boleh mengunduh naskah soal.
+ * `access` = filter Gratis/Premium yang sudah diterapkan di server (panel SubjectFilter);
+ * `packages` sudah tersaring sesuai filter itu.
+ */
+export function PackageGrid({ packages, premium, access = "semua" }: { packages: StudentPackageRow[]; premium: boolean; access?: Access }) {
   const jenjangs = [ALL, ...new Set(packages.map((p) => p.categoryCode))];
   const [jenjang, setJenjang] = useState(ALL);
-  const [access, setAccess] = useState<Access>("semua");
-  const byJenjang = jenjang === ALL ? packages : packages.filter((p) => p.categoryCode === jenjang);
-  const counts = { semua: byJenjang.length, gratis: byJenjang.filter((p) => !p.isPremium).length, premium: byJenjang.filter((p) => p.isPremium).length };
-  const visible = access === "semua" ? byJenjang : byJenjang.filter((p) => (access === "premium") === p.isPremium);
-  const lockedCount = byJenjang.filter((p) => (p.isPremium && !p.unlocked) || p.freeQuotaUsedBy).length;
-  const quotaCount = byJenjang.filter((p) => p.freeQuotaUsedBy).length;
+  const visible = jenjang === ALL ? packages : packages.filter((p) => p.categoryCode === jenjang);
+  const lockedCount = visible.filter((p) => (p.isPremium && !p.unlocked) || p.freeQuotaUsedBy).length;
+  const quotaCount = visible.filter((p) => p.freeQuotaUsedBy).length;
 
   if (packages.length === 0) {
     return (
       <div className="surface-card px-6 py-12 text-center text-sm text-muted-foreground">
-        Belum ada paket tes yang diterbitkan. Cek lagi nanti ya.
+        {access === "semua" ? "Belum ada paket tes yang diterbitkan. Cek lagi nanti ya." : `Belum ada paket ${access === "premium" ? "Premium" : "Gratis"} untuk pilihan ini.`}
       </div>
     );
   }
 
   return (
     <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-3">
-        <div role="group" aria-label="Saring jenis paket" className="flex flex-wrap gap-2">
-          <button type="button" aria-pressed={access === "semua"} onClick={() => setAccess("semua")} className={chip(access === "semua")}>
-            Semua <span className="tabular-nums opacity-80">({counts.semua})</span>
-          </button>
-          <button type="button" aria-pressed={access === "gratis"} onClick={() => setAccess("gratis")} className={chip(access === "gratis")}>
-            <Gift className="size-4" aria-hidden /> Gratis <span className="tabular-nums opacity-80">({counts.gratis})</span>
-          </button>
-          <button type="button" aria-pressed={access === "premium"} onClick={() => setAccess("premium")} className={chip(access === "premium")}>
-            <Crown className="size-4" aria-hidden /> Premium <span className="tabular-nums opacity-80">({counts.premium})</span>
-          </button>
+      {jenjangs.length > 2 && (
+        <div role="group" aria-label="Filter jenjang" className="flex flex-wrap gap-2">
+          {jenjangs.map((j) => (
+            <button key={j} type="button" aria-pressed={jenjang === j} onClick={() => setJenjang(j)} className={chip(jenjang === j)}>
+              {j}
+            </button>
+          ))}
         </div>
-        {jenjangs.length > 2 && (
-          <div role="group" aria-label="Filter jenjang" className="flex flex-wrap gap-2">
-            {jenjangs.map((j) => (
-              <button key={j} type="button" aria-pressed={jenjang === j} onClick={() => setJenjang(j)} className={chip(jenjang === j)}>
-                {j}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+      )}
 
       {access !== "gratis" && lockedCount > 0 && (
         <div className="flex flex-col gap-3 rounded-xl border border-cta/40 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">

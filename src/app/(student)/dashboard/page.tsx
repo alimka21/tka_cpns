@@ -15,7 +15,7 @@ import { listPackagesForStudent } from "@/server/queries/packages";
 import { hasPremium } from "@/server/services/billing";
 import { getStudentProgress, type PrioritySubdomain } from "@/server/queries/progress";
 import { listSubjectOptions, selectedSubject } from "@/server/queries/subject-filter";
-import { SubjectFilter } from "@/components/student/subject-filter";
+import { SubjectFilter, type PackageAccess } from "@/components/student/subject-filter";
 
 export const metadata: Metadata = { title: "Dashboard" };
 export const dynamic = "force-dynamic";
@@ -27,13 +27,17 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
 
   const jenjang = user.role === "admin" ? null : (user.jenjang ?? null);
   const [premium, subjectOptions] = await Promise.all([hasPremium({ id: userId, role: user.role }, jenjang), listSubjectOptions(userId, jenjang)]);
-  const subject = await selectedSubject((await searchParams).mapel, subjectOptions);
+  const params = await searchParams;
+  const subject = await selectedSubject(params.mapel, subjectOptions);
+  const access: PackageAccess = params.akses === "gratis" || params.akses === "premium" ? params.akses : "semua";
   const [allPackages, history, progress] = await Promise.all([
     listPackagesForStudent(userId, jenjang, premium),
     listStudentHistory(userId, 10, subject?.id ?? null),
     getStudentProgress(userId, subject?.id ?? null),
   ]);
-  const packages = subject ? allPackages.filter((p) => p.subjectId === subject.id) : allPackages;
+  const bySubject = subject ? allPackages.filter((p) => p.subjectId === subject.id) : allPackages;
+  const accessCounts = { semua: bySubject.length, gratis: bySubject.filter((p) => !p.isPremium).length, premium: bySubject.filter((p) => p.isPremium).length };
+  const packages = access === "semua" ? bySubject : bySubject.filter((p) => p.isPremium === (access === "premium"));
   const weakest = progress.priorities[0];
   const average = averageScore(history.map((h) => h.score));
 
@@ -46,9 +50,15 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             Lanjutkan latihanmu. Fokus ke subtopik terlemah dulu supaya skormu naik paling cepat.
           </p>
         </div>
-        <SubjectFilter options={subjectOptions} selected={subject?.code ?? null} basePath="/dashboard" showJenjang={jenjang == null} />
+        <SubjectFilter
+          options={subjectOptions}
+          selected={subject?.code ?? null}
+          basePath="/dashboard"
+          showJenjang={jenjang == null}
+          access={{ value: access, counts: accessCounts }}
+        />
         <div className="grid gap-4 sm:grid-cols-3">
-          <StatCard label="Paket tersedia" value={String(packages.length)} icon={Layers} hint="Paket tes yang sudah diterbitkan" />
+          <StatCard label="Paket tersedia" value={String(bySubject.length)} icon={Layers} hint="Paket tes yang sudah diterbitkan" />
           <StatCard label="Tes selesai" value={String(progress.testCount)} unit="sesi" icon={BookOpenCheck} tone="success" />
           <StatCard
             label="Rata-rata nilai"
@@ -82,10 +92,10 @@ export default async function DashboardPage({ searchParams }: PageProps<"/dashbo
             Paket gratis bisa langsung dikerjakan; paket premium terbuka dengan langganan Premium.
           </p>
         </div>
-        {subject && packages.length === 0 ? (
+        {subject && bySubject.length === 0 ? (
           <p className="surface-card px-6 py-10 text-center text-sm text-muted-foreground">Belum ada paket tes {subject.name} yang terbit.</p>
         ) : (
-          <PackageGrid packages={packages} premium={premium} />
+          <PackageGrid packages={packages} premium={premium} access={access} />
         )}
       </section>
 

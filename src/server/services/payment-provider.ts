@@ -1,5 +1,6 @@
-// Penyedia pembayaran aktif (Xendit Invoice, Midtrans Snap, atau DOKU Checkout) — SERVER-ONLY.
-// Env PAYMENT_PROVIDER = "xendit" | "midtrans" | "doku". Kosong → Xendit bila
+// Penyedia pembayaran aktif (Xendit Invoice, Midtrans Snap, DOKU Checkout, atau manual) — SERVER-ONLY.
+// Env PAYMENT_PROVIDER = "xendit" | "midtrans" | "doku" | "manual". "manual" = QRIS statis
+// + kode unik + bukti via WhatsApp, dikonfirmasi admin (lib/manual-payment.ts). Kosong → Xendit bila
 // XENDIT_SECRET_KEY terisi, lalu Midtrans bila MIDTRANS_SERVER_KEY terisi,
 // selain itu DOKU. Order lama tetap disinkronkan ke penyedia yang membuatnya
 // (dibedakan dari prefix kode order).
@@ -12,15 +13,16 @@ import { isDokuConfigured, isDokuProduction } from "./doku";
 import { isMidtransConfigured, isMidtransProduction } from "./midtrans";
 import { isXenditConfigured, isXenditProduction } from "./xendit";
 
-export const PAYMENT_PROVIDERS = ["xendit", "midtrans", "doku"] as const;
+export const PAYMENT_PROVIDERS = ["xendit", "midtrans", "doku", "manual"] as const;
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
-export const PROVIDER_LABEL: Record<PaymentProvider, string> = { xendit: "Xendit", midtrans: "Midtrans", doku: "DOKU" };
+export const PROVIDER_LABEL: Record<PaymentProvider, string> = { xendit: "Xendit", midtrans: "Midtrans", doku: "DOKU", manual: "QRIS manual" };
 
 /** Prefix kode order per penyedia; order DOKU (termasuk yang lama) memakai "WTP-". */
 export const MIDTRANS_ORDER_PREFIX = "PTM-";
 export const XENDIT_ORDER_PREFIX = "PTX-";
-export const ORDER_PREFIX: Record<PaymentProvider, string> = { xendit: XENDIT_ORDER_PREFIX, midtrans: MIDTRANS_ORDER_PREFIX, doku: "WTP-" };
+export const MANUAL_ORDER_PREFIX = "PTQ-";
+export const ORDER_PREFIX: Record<PaymentProvider, string> = { xendit: XENDIT_ORDER_PREFIX, midtrans: MIDTRANS_ORDER_PREFIX, doku: "WTP-", manual: MANUAL_ORDER_PREFIX };
 
 export function activeProvider(): PaymentProvider {
   const v = process.env.PAYMENT_PROVIDER?.trim().toLowerCase();
@@ -31,14 +33,17 @@ export function activeProvider(): PaymentProvider {
 
 export function providerOfOrder(orderCode: string): PaymentProvider {
   if (orderCode.startsWith(XENDIT_ORDER_PREFIX)) return "xendit";
+  if (orderCode.startsWith(MANUAL_ORDER_PREFIX)) return "manual";
   return orderCode.startsWith(MIDTRANS_ORDER_PREFIX) ? "midtrans" : "doku";
 }
 
 export function isProviderConfigured(p: PaymentProvider) {
+  if (p === "manual") return true;
   return p === "xendit" ? isXenditConfigured() : p === "midtrans" ? isMidtransConfigured() : isDokuConfigured();
 }
 
 export function isProviderProduction(p: PaymentProvider) {
+  if (p === "manual") return true;
   return p === "xendit" ? isXenditProduction() : p === "midtrans" ? isMidtransProduction() : isDokuProduction();
 }
 

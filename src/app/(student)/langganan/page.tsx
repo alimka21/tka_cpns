@@ -41,7 +41,7 @@ export default async function LanggananPage() {
         <h1 className="mt-3 text-2xl font-bold tracking-tight sm:text-[1.75rem]">Premium {jenjang ?? ""}</h1>
         <p className="mx-auto mt-1 max-w-2xl text-muted-foreground">
           Akun gratis bisa mengerjakan paket tes gratis. Premium membuka semua paket tes & latihan berbasis kelemahanmu —
-          aktif otomatis begitu pembayaran berhasil.
+          {pay.provider === "manual" ? " aktif setelah pembayaranmu diverifikasi admin." : " aktif otomatis begitu pembayaran berhasil."}
         </p>
       </header>
 
@@ -127,7 +127,9 @@ export default async function LanggananPage() {
           </ul>
         )}
         <p className="flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
-          <Lock className="size-3.5" aria-hidden /> {pay.provider === "doku"
+          <Lock className="size-3.5" aria-hidden /> {pay.provider === "manual"
+            ? "Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Kirim bukti ke WhatsApp admin, Premium diaktifkan setelah diverifikasi."
+            : pay.provider === "doku"
             ? "Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Diproses aman oleh DOKU."
             : `Bayar dengan QRIS, transfer bank (Virtual Account), atau e-wallet. Diproses aman oleh ${pay.label}.`}
         </p>

@@ -152,6 +152,20 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
   untuk migrasi selanjutnya juga (generate SQL-nya, bersihkan penanda,
   paste ke phpMyAdmin).
 
+## 8d. Pembayaran QRIS manual + kode unik (Premium) — dipakai sejak 2026-10-16
+
+Sementara QRIS payment gateway (DOKU/Xendit) belum aktif. Tidak butuh migrasi.
+
+- hPanel → env `PAYMENT_PROVIDER=manual` → redeploy. (Opsional `NEXT_PUBLIC_ADMIN_WA`,
+  default `6285191537712`; karena `NEXT_PUBLIC_`, perubahan butuh build ulang.)
+- Siswa: `/langganan` → Bayar → `/langganan/bayar/[order]` (QRIS statis
+  `public/pembayaran/qris-pakar-tka.jpg`, nominal = harga + kode unik 1–999) →
+  "Saya sudah transfer" → WhatsApp admin dengan pesan formal (nama, provinsi, sekolah,
+  akun, kode order, nominal) + lampiran bukti.
+- Admin: cocokkan nominal persis di mutasi GoPay Merchant → `/admin/langganan` →
+  Transaksi terbaru → **Konfirmasi lunas** (Premium langsung aktif) / **Batalkan**.
+- Kembali ke gateway: ubah `PAYMENT_PROVIDER` (order manual lama tetap bisa dikonfirmasi).
+
 ## 8c. Pembayaran Xendit Invoice (Premium) — penyedia utama sejak 2026-10-16
 
 Env `PAYMENT_PROVIDER` kosong → Xendit dipakai begitu `XENDIT_SECRET_KEY`

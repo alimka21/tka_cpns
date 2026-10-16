@@ -2,10 +2,10 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { UserPlus, XCircle } from "lucide-react";
+import { CheckCircle2, UserPlus, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { grantMembershipAction, revokeMembershipAction } from "@/server/actions/billing";
+import { grantMembershipAction, revokeMembershipAction, settleManualOrderAction } from "@/server/actions/billing";
 
 const field = "h-9 w-full rounded-md border border-input bg-card px-2.5 text-sm";
 
@@ -80,5 +80,33 @@ export function RevokeMembershipButton({ id }: { id: number }) {
     >
       <XCircle aria-hidden /> Cabut
     </Button>
+  );
+}
+
+/** Order QRIS manual: admin cek bukti WA & mutasi GoPay Merchant, lalu konfirmasi lunas (Premium aktif) atau batalkan. */
+export function SettleManualOrderButtons({ orderCode, amount }: { orderCode: string; amount: string }) {
+  const { error, pending, run } = useAction();
+  return (
+    <span className="flex flex-col items-end gap-1">
+      <span className="flex gap-1.5">
+        <Button
+          size="xs"
+          disabled={pending}
+          onClick={() => window.confirm(`Pembayaran ${amount} untuk ${orderCode} sudah masuk? Premium akan langsung aktif.`) && run(() => settleManualOrderAction(orderCode, "paid"))}
+        >
+          <CheckCircle2 aria-hidden /> Konfirmasi lunas
+        </Button>
+        <Button
+          size="xs"
+          variant="ghost"
+          disabled={pending}
+          className="text-muted-foreground hover:text-destructive"
+          onClick={() => window.confirm(`Batalkan order ${orderCode}?`) && run(() => settleManualOrderAction(orderCode, "cancelled"))}
+        >
+          Batalkan
+        </Button>
+      </span>
+      {error && <span className="text-xs text-destructive">{error}</span>}
+    </span>
   );
 }

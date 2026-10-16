@@ -56,7 +56,13 @@ export default async function LanggananSelesaiPage({ searchParams }: PageProps<"
             {membership.endsAt ? `Premium berlaku sampai ${formatDate(membership.endsAt.toISOString())}.` : "Premium berlaku selamanya."}
           </p>
         )}
-        {order.status === "pending" && (
+        {order.status === "pending" && providerOfOrder(order.orderCode) === "manual" && (
+          <p className="mt-2 text-sm text-muted-foreground">
+            Transfer tepat {formatRupiah(order.amount)} lewat QRIS, lalu kirim bukti ke WhatsApp admin. Premium aktif setelah admin memverifikasi
+            pembayaranmu — halaman ini bisa dicek ulang.
+          </p>
+        )}
+        {order.status === "pending" && providerOfOrder(order.orderCode) !== "manual" && (
           <p className="mt-2 text-sm text-muted-foreground">
             Selesaikan pembayaran di halaman {PROVIDER_LABEL[providerOfOrder(order.orderCode)]} sesuai instruksinya. Premium aktif otomatis begitu pembayaran kami terima — halaman ini bisa
             dicek ulang.

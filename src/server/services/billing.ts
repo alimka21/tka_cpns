@@ -3,15 +3,16 @@
 // membership dari pembayaran.
 
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, gt, isNull, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, isNull, like, or, sql } from "drizzle-orm";
 import { PLACEHOLDER_EMAIL_DOMAIN, visibleEmail } from "@/lib/identity";
+import { pickUniqueCode } from "@/lib/manual-payment";
 import { db } from "@/server/db";
 import { memberships, orders, plans, users, type JenjangCode, type OrderStatus } from "@/server/db/schema";
 import { createCheckout, DokuError, getOrderStatus } from "./doku";
 import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
 import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
 import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
-import { ORDER_PREFIX, paymentAvailability, providerOfOrder } from "./payment-provider";
+import { MANUAL_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, providerOfOrder } from "./payment-provider";
 import { createInvoice, getInvoiceByExternalId, XenditError } from "./xendit";
 import { mapXenditStatus, type XenditInvoice } from "./xendit-core";
 
@@ -68,6 +69,8 @@ export async function createOrder(
   if (!pay.configured) return { ok: false, error: "Pembayaran belum tersedia. Hubungi admin." };
   if (!pay.canPay) return { ok: false, error: "Pembayaran online sedang dalam tahap uji coba dan segera dibuka. Hubungi admin untuk aktivasi Premium." };
 
+  if (pay.provider === "manual") return createManualOrder(user.id, plan, siteUrl);
+
   const orderCode = newOrderCode(user.id, ORDER_PREFIX[pay.provider]);
   const finishUrl = `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`;
   const [{ id }] = await db
@@ -113,6 +116,63 @@ export async function createOrder(
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, id));
     return { ok: false, error: isProviderError(e) ? (e as Error).message : "Gagal membuat transaksi." };
   }
+}
+
+/** Order manual menunggu bukti transfer selama ini; setelahnya kode unik bisa dipakai order lain. */
+const MANUAL_ORDER_TTL_MS = 3 * 86_400_000;
+
+export function manualPaymentPath(orderCode: string) {
+  return `/langganan/bayar/${encodeURIComponent(orderCode)}`;
+}
+
+/**
+ * Order QRIS manual: nominal = harga + kode unik (1–999) yang tidak bentrok dengan
+ * order manual lain yang masih menunggu. Order menunggu untuk paket yang sama dipakai ulang
+ * agar siswa tidak mendapat kode berbeda tiap klik.
+ */
+async function createManualOrder(userId: number, plan: PlanRow, siteUrl: string): Promise<Result<{ redirectUrl: string; orderCode: string }>> {
+  const since = new Date(Date.now() - MANUAL_ORDER_TTL_MS);
+  const pendingManual = await db
+    .select({ orderCode: orders.orderCode, userId: orders.userId, planId: orders.planId, amount: orders.amount })
+    .from(orders)
+    .where(and(eq(orders.status, "pending"), like(orders.orderCode, `${MANUAL_ORDER_PREFIX}%`), gt(orders.createdAt, since)));
+  const reuse = pendingManual.find((o) => o.userId === userId && o.planId === plan.id && o.amount > plan.price && o.amount <= plan.price + 999);
+  if (reuse) return { ok: true, orderCode: reuse.orderCode, redirectUrl: manualPaymentPath(reuse.orderCode) };
+
+  const code = pickUniqueCode(plan.price, pendingManual.map((o) => o.amount));
+  if (code == null) return { ok: false, error: "Antrean pembayaran sedang penuh. Coba lagi beberapa saat atau hubungi admin." };
+  const orderCode = newOrderCode(userId, MANUAL_ORDER_PREFIX);
+  const redirectUrl = manualPaymentPath(orderCode);
+  await db.insert(orders).values({
+    orderCode,
+    userId,
+    planId: plan.id,
+    planName: plan.name,
+    jenjang: plan.jenjang,
+    durationDays: plan.durationDays,
+    amount: plan.price + code,
+    paymentType: "qris_manual",
+    redirectUrl: `${siteUrl.replace(/\/$/, "")}${redirectUrl}`,
+    lastPayload: { uniqueCode: code, basePrice: plan.price },
+  });
+  return { ok: true, orderCode, redirectUrl };
+}
+
+/** Admin mengonfirmasi (lunas) atau membatalkan order QRIS manual setelah mengecek mutasi. */
+export async function settleManualOrder(adminId: number, orderCode: string, status: "paid" | "cancelled"): Promise<Result<{ status: OrderStatus }>> {
+  if (providerOfOrder(orderCode) !== "manual") return { ok: false, error: "Bukan order QRIS manual." };
+  const [order] = await db.select().from(orders).where(eq(orders.orderCode, orderCode));
+  if (!order) return { ok: false, error: "Order tidak ditemukan." };
+  if (order.status === "paid" && status === "cancelled") return { ok: false, error: "Order sudah lunas; cabut Premium lewat daftar anggota bila perlu." };
+  return applyPaymentUpdate({
+    orderCode,
+    amount: order.amount,
+    status,
+    channel: "qris_manual",
+    transactionId: null,
+    paidAt: status === "paid" ? new Date() : null,
+    raw: { ...(order.lastPayload as object | null), [status === "paid" ? "confirmedBy" : "cancelledBy"]: adminId, at: new Date().toISOString() },
+  });
 }
 
 /** Status pembayaran dalam bentuk netral (dari Xendit, Midtrans, maupun DOKU). */
@@ -215,7 +275,9 @@ export async function syncOrder(orderCode: string): Promise<Result<{ status: Ord
   try {
     const provider = providerOfOrder(orderCode);
     const result =
-      provider === "xendit"
+      provider === "manual"
+        ? null // dikonfirmasi admin, tidak ada API penyedia
+        : provider === "xendit"
         ? await getInvoiceByExternalId(orderCode).then((p) => (p ? applyXenditStatus(p) : null))
         : provider === "midtrans"
           ? await getTransactionStatus(orderCode).then((p) => (p ? applyMidtransStatus(p) : null))

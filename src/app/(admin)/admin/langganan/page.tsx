@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { CircleAlert, CircleCheck, Clock, CreditCard, Crown, Receipt, Wallet, type LucideIcon } from "lucide-react";
-import { GrantMembershipForm, RevokeMembershipButton } from "@/components/billing/admin-billing";
+import { GrantMembershipForm, RevokeMembershipButton, SettleManualOrderButtons } from "@/components/billing/admin-billing";
 import { NewPlanPanel, PlanCard, type PlanCardData } from "@/components/billing/plan-manager";
 import { SyncOrderButton } from "@/components/billing/sync-order-button";
 import { PageHeader } from "@/components/layout/page-header";
@@ -12,7 +12,8 @@ import { listActiveMembershipsAdmin, listOrdersAdmin, listPlans, planSalesStats 
 import { DokuConnectionTest } from "@/components/billing/doku-connection-test";
 import { DOKU_NOTIFICATION_PATH, dokuPublicInfo, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
 import { isMidtransConfigured, MIDTRANS_NOTIFICATION_PATH, midtransPublicInfo } from "@/server/services/midtrans";
-import { activeProvider, PROVIDER_LABEL } from "@/server/services/payment-provider";
+import { formatWaNumber } from "@/lib/manual-payment";
+import { activeProvider, PROVIDER_LABEL, providerOfOrder } from "@/server/services/payment-provider";
 import { isXenditConfigured, XENDIT_NOTIFICATION_PATH, xenditPublicInfo } from "@/server/services/xendit";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
@@ -75,10 +76,24 @@ export default async function AdminLanggananPage() {
       <p className="-mb-4 text-sm">
         Penyedia pembayaran aktif: <strong>{PROVIDER_LABEL[provider]}</strong>{" "}
         <span className="text-muted-foreground">
-          (env PAYMENT_PROVIDER = xendit / midtrans / doku; kosong → Xendit bila XENDIT_SECRET_KEY terisi, lalu Midtrans). Mode uji
+          (env PAYMENT_PROVIDER = manual / xendit / midtrans / doku; kosong → Xendit bila XENDIT_SECRET_KEY terisi, lalu Midtrans). Mode uji
           (Test/Sandbox): hanya admin & email di PAYMENT_TEST_EMAILS yang bisa membayar.
         </span>
       </p>
+
+      {provider === "manual" && (
+        <section className="surface-card flex flex-col gap-2 border-success/40 p-5 text-sm">
+          <p className="flex flex-wrap items-center gap-2 font-semibold">
+            <CircleCheck className="size-4 text-success-strong" aria-hidden /> QRIS manual (GoPay Merchant) + kode unik
+            <Badge variant="success">Dipakai</Badge>
+          </p>
+          <p className="text-muted-foreground">
+            Siswa transfer harga paket + kode unik 1–999, lalu mengirim bukti ke WhatsApp admin ({formatWaNumber()}). Cocokkan nominal persis di
+            mutasi GoPay Merchant dengan transaksi &ldquo;Menunggu&rdquo; di bawah, lalu tekan <strong>Konfirmasi lunas</strong> — Premium langsung
+            aktif. Order menunggu lebih dari 3 hari tidak lagi mengunci kode unik.
+          </p>
+        </section>
+      )}
 
       <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "xendit" ? "opacity-80" : xdConfigured ? "border-success/40" : "border-warning/50"}`}>
         <p className="flex flex-wrap items-center gap-2 font-semibold">
@@ -276,7 +291,12 @@ export default async function AdminLanggananPage() {
                   </span>
                   <span className="font-semibold tabular-nums">{formatRupiah(o.amount)}</span>
                   <Badge variant={meta.variant}>{meta.label}</Badge>
-                  {o.status === "pending" && configured && <SyncOrderButton orderCode={o.orderCode} label="Cek" />}
+                  {o.status === "pending" &&
+                    (providerOfOrder(o.orderCode) === "manual" ? (
+                      <SettleManualOrderButtons orderCode={o.orderCode} amount={formatRupiah(o.amount)} />
+                    ) : (
+                      configured && <SyncOrderButton orderCode={o.orderCode} label="Cek" />
+                    ))}
                 </li>
               );
             })}

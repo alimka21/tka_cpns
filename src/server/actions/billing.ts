@@ -10,7 +10,7 @@ import { SITE_URL } from "@/lib/site";
 import { getActiveSession, getAdminSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { JENJANG_CODES, orders, plans } from "@/server/db/schema";
-import { createOrder, grantManualMembership, revokeMembership, syncOrder } from "@/server/services/billing";
+import { createOrder, grantManualMembership, revokeMembership, settleManualOrder, syncOrder } from "@/server/services/billing";
 import { isDokuConfigured, testDokuConnection } from "@/server/services/doku";
 import { isMidtransConfigured, testMidtransConnection } from "@/server/services/midtrans";
 import { isXenditConfigured, testXenditConnection } from "@/server/services/xendit";
@@ -83,6 +83,18 @@ export async function grantMembershipAction(input: unknown): Promise<Result> {
   const r = await grantManualMembership(Number(session.user.id), parsed.data.email, parsed.data.jenjang, parsed.data.durationDays);
   revalidatePath("/admin/langganan");
   return r;
+}
+
+/** Admin: konfirmasi lunas / batalkan order QRIS manual (setelah cek bukti WA & mutasi GoPay Merchant). */
+export async function settleManualOrderAction(orderCode: string, status: "paid" | "cancelled"): Promise<Result> {
+  const session = await getAdminSession();
+  if (!session) return NOT_ADMIN;
+  const parsed = z.object({ orderCode: z.string().min(1).max(50), status: z.enum(["paid", "cancelled"]) }).safeParse({ orderCode, status });
+  if (!parsed.success) return { ok: false, error: "Data tidak valid." };
+  const r = await settleManualOrder(Number(session.user.id), parsed.data.orderCode, parsed.data.status);
+  revalidatePath("/admin/langganan");
+  revalidatePath("/langganan");
+  return r.ok ? { ok: true } : r;
 }
 
 export async function revokeMembershipAction(membershipId: number): Promise<Result> {

@@ -295,7 +295,7 @@ export async function createAutoPackage(
       .insert(testPackages)
       .values({
         title: p.title,
-        description: "Disusun otomatis dari bank soal + tambahan AI — tinjau soal berstatus menunggu tinjauan sebelum terbit.",
+        description: null,
         categoryId: p.categoryId,
         subjectId: p.subjectId,
         durationMinutes: ctx.rule!.durationMinutes,

@@ -1,8 +1,7 @@
 // Penyedia pembayaran aktif (Xendit Invoice, Midtrans Snap, DOKU Checkout, atau manual) — SERVER-ONLY.
 // Env PAYMENT_PROVIDER = "xendit" | "midtrans" | "doku" | "manual". "manual" = QRIS statis
-// + kode unik + bukti via WhatsApp, dikonfirmasi admin (lib/manual-payment.ts). Kosong → Xendit bila
-// XENDIT_SECRET_KEY terisi, lalu Midtrans bila MIDTRANS_SERVER_KEY terisi,
-// selain itu DOKU. Order lama tetap disinkronkan ke penyedia yang membuatnya
+// + kode unik + bukti via WhatsApp, dikonfirmasi admin (lib/manual-payment.ts). Kosong →
+// gateway pertama yang terkonfigurasi DAN mode Live (Xendit → Midtrans → DOKU), selain itu manual. Order lama tetap disinkronkan ke penyedia yang membuatnya
 // (dibedakan dari prefix kode order).
 //
 // Mode uji (Sandbox): pembayaran bukan uang sungguhan, jadi hanya admin dan
@@ -27,8 +26,10 @@ export const ORDER_PREFIX: Record<PaymentProvider, string> = { xendit: XENDIT_OR
 export function activeProvider(): PaymentProvider {
   const v = process.env.PAYMENT_PROVIDER?.trim().toLowerCase();
   if ((PAYMENT_PROVIDERS as readonly string[]).includes(v ?? "")) return v as PaymentProvider;
-  if (isXenditConfigured()) return "xendit";
-  return isMidtransConfigured() ? "midtrans" : "doku";
+  // Tanpa env: gateway pertama yang sudah LIVE; kalau belum ada, QRIS manual
+  // (siswa tetap bisa membeli Premium selama gateway masih mode uji/belum aktif).
+  const live = (["xendit", "midtrans", "doku"] as const).find((p) => isProviderConfigured(p) && isProviderProduction(p));
+  return live ?? "manual";
 }
 
 export function providerOfOrder(orderCode: string): PaymentProvider {

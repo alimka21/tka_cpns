@@ -119,7 +119,7 @@ export function UpgradeModal({
               <ShieldCheck className="size-3.5 text-success-strong" aria-hidden /> Bayar QRIS
             </span>
             <span className="flex items-center gap-1">
-              <Check className="size-3.5 text-success-strong" aria-hidden /> Aktif otomatis
+              <Check className="size-3.5 text-success-strong" aria-hidden /> Aktif begitu terverifikasi
             </span>
             <span className="flex items-center gap-1">
               <Check className="size-3.5 text-success-strong" aria-hidden /> Tanpa perpanjangan otomatis

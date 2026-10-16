@@ -20,6 +20,13 @@ const BENEFITS = [
   { icon: TrendingUp, text: "Diagnosa & progres kemampuan yang terus diperbarui" },
 ];
 
+const MANUAL_STEPS = [
+  ["Pilih paket", "Tekan “Bayar sekarang” pada paket Premium di bawah."],
+  ["Scan QRIS", "Bayar lewat GoPay, OVO, DANA, ShopeePay, atau m-banking."],
+  ["Transfer tepat", "Bayar persis sesuai nominal + kode unik yang tertera (jangan dibulatkan)."],
+  ["Kirim bukti", "Tekan “Saya sudah transfer” → kirim bukti ke WhatsApp admin. Premium aktif setelah diverifikasi."],
+] as const;
+
 export default async function LanggananPage() {
   const { user } = await requireUser("/langganan");
   const userId = Number(user.id);
@@ -79,6 +86,25 @@ export default async function LanggananPage() {
           <Button size="sm" nativeButton={false} render={<a href={pendingOrder.redirectUrl!} />}>
             Lanjutkan pembayaran
           </Button>
+        </section>
+      )}
+
+      {pay.provider === "manual" && pay.canPay && plans.length > 0 && (
+        <section aria-labelledby="cara-bayar" className="surface-card p-5">
+          <h2 id="cara-bayar" className="font-bold">
+            Cara bayar Premium
+          </h2>
+          <ol className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            {MANUAL_STEPS.map(([title, text], i) => (
+              <li key={title} className="flex gap-3 rounded-lg bg-muted/50 p-3 text-sm">
+                <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-cta text-xs font-bold text-white">{i + 1}</span>
+                <span>
+                  <span className="block font-semibold">{title}</span>
+                  <span className="text-xs text-muted-foreground">{text}</span>
+                </span>
+              </li>
+            ))}
+          </ol>
         </section>
       )}
 

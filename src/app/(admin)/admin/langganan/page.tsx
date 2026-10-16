@@ -76,7 +76,7 @@ export default async function AdminLanggananPage() {
       <p className="-mb-4 text-sm">
         Penyedia pembayaran aktif: <strong>{PROVIDER_LABEL[provider]}</strong>{" "}
         <span className="text-muted-foreground">
-          (env PAYMENT_PROVIDER = manual / xendit / midtrans / doku; kosong → Xendit bila XENDIT_SECRET_KEY terisi, lalu Midtrans). Mode uji
+          (env PAYMENT_PROVIDER = manual / xendit / midtrans / doku; kosong → gateway pertama yang sudah Live, selain itu QRIS manual). Mode uji
           (Test/Sandbox): hanya admin & email di PAYMENT_TEST_EMAILS yang bisa membayar.
         </span>
       </p>

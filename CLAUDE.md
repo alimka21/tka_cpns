@@ -62,6 +62,9 @@ buat baru mengikuti gaya file lain, ringkas dan dalam poin-poin.
   dikirim ke client selama ujian berlangsung.
 - Timer ujian dihitung dari `started_at`/`ends_at` di server, bukan dari
   jam client.
+- Deskripsi paket tes (`test_packages.description`) **tampil ke siswa** — tulis untuk siswa
+  (isi paket: jumlah soal, tema, stimulus). Jangan sebut Claude/Gemini/AI atau catatan
+  internal ("tinjau sebelum terbit"). Cek: `npm run db:clean-descriptions`.
 - Setiap tabel baru → tulis migrasinya dengan Drizzle Kit, jangan ubah
   skema manual di dashboard Hostinger.
 - Commit kecil dan sering, pesan commit dalam bahasa Indonesia singkat,

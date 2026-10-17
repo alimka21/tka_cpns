@@ -12,6 +12,9 @@ const PERKS = [
   { icon: Crown, text: "Semua paket tes Premium + pembahasan lengkap" },
 ];
 
+/** Tombol merah mencolok "Unduh PDF" (sama untuk akun Premium & gratis). */
+const DOWNLOAD_CLASS = "shrink-0 bg-destructive font-semibold text-white shadow-xs hover:bg-destructive/90 focus-visible:ring-destructive/30";
+
 /**
  * Tombol unduh naskah soal paket. Premium → buka lembar cetak (/unduh/[id])
  * di tab baru; akun gratis → popup ajakan Premium (tidak ada yang terunduh).
@@ -22,22 +25,20 @@ export function DownloadPackageButton({ packageId, premium }: { packageId: numbe
   if (premium) {
     return (
       <Button
-        variant="outline"
-        size="icon"
-        aria-label="Unduh soal (PDF)"
-        title="Unduh soal (PDF)"
+        className={DOWNLOAD_CLASS}
+        title="Unduh naskah soal paket ini (PDF)"
         nativeButton={false}
         render={<a href={`/unduh/${packageId}?otomatis=1`} target="_blank" rel="noopener" />}
       >
-        <Download aria-hidden />
+        <Download aria-hidden /> Unduh PDF
       </Button>
     );
   }
 
   return (
     <>
-      <Button variant="outline" size="icon" aria-label="Unduh soal (PDF) — khusus Premium" title="Unduh soal (PDF)" onClick={() => setOpen(true)}>
-        <Download aria-hidden />
+      <Button className={DOWNLOAD_CLASS} title="Unduh naskah soal (PDF) — khusus Premium" onClick={() => setOpen(true)}>
+        <Download aria-hidden /> Unduh PDF
       </Button>
       <AlertDialog open={open} onOpenChange={setOpen}>
         <AlertDialogContent className="max-h-[calc(100dvh-2rem)] w-[calc(100%-2rem)] gap-0 overflow-y-auto p-0 data-[size=default]:max-w-md data-[size=default]:sm:max-w-md">
@@ -78,7 +79,7 @@ export function DownloadPackageButton({ packageId, premium }: { packageId: numbe
               </Button>
             </div>
             <p className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
-              <ShieldCheck className="size-3.5 text-success-strong" aria-hidden /> Bayar QRIS · aktif otomatis
+              <ShieldCheck className="size-3.5 text-success-strong" aria-hidden /> Bayar QRIS · aktif begitu terverifikasi
             </p>
           </div>
         </AlertDialogContent>

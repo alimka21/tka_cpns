@@ -24,14 +24,11 @@ import { SubtopicRadar } from "@/components/analytics/subtopic-radar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AchievementBadge } from "@/components/analytics/achievement-badge";
-import { formatDateTime, formatRupiah, masteryTone } from "@/lib/format";
+import { formatDateTime, masteryTone } from "@/lib/format";
 import { formatScore, scoreDiff, SIMULATION_NOTE } from "@/lib/score-display";
 import { SCALE_LABEL, SCALE_RANGE } from "@/lib/score-scale";
 import { PremiumLock } from "@/components/billing/premium-lock";
-import { UpgradeModal } from "@/components/billing/upgrade-modal";
 import { canSeeFullResults } from "@/server/services/access";
-import { listPlans } from "@/server/services/billing";
-import { discountPercent, promotedPlan } from "@/lib/plans";
 import { requireUser } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { attempts } from "@/server/db/schema";
@@ -101,9 +98,6 @@ export default async function HasilPage({
     r.packageId,
   );
   const weakCount = r.subtopics.filter((s) => s.percentage < 75).length;
-  const cheapest = full
-    ? null
-    : promotedPlan(await listPlans({ activeOnly: true, jenjang: r.jenjang }));
 
   const sp = await searchParams;
   const tab: TabKey = TABS.some((t) => t.key === sp.tab)
@@ -216,17 +210,6 @@ export default async function HasilPage({
           stimuli={review.stimuli}
           filter={filter}
           number={Number.isInteger(no) ? no : null}
-        />
-      )}
-      {!full && (
-        <UpgradeModal
-          storageKey={`upsell-hasil-${r.attemptId}`}
-          correct={r.correct}
-          total={r.correct + r.wrong + r.blank}
-          wrong={r.wrong}
-          weakCount={weakCount}
-          priceText={cheapest ? `mulai ${formatRupiah(cheapest.price)}` : null}
-          promo={cheapest && discountPercent(cheapest) != null ? { normal: formatRupiah(cheapest.normalPrice!), percent: discountPercent(cheapest)! } : null}
         />
       )}
     </div>

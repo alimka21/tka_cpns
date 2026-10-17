@@ -6,6 +6,14 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-10-17 — Halaman materi /tka/* dirender per kunjungan (bukan prerender + ISR)
+Produksi (Hostinger) membalas 404 dari cache prerender (`x-nextjs-cache: HIT`) untuk semua
+/tka/{sd,smp,sma}[/mapel], padahal build lokal + `next start` 200 (juga setelah revalidasi).
+Satu-satunya rute dengan `generateStaticParams` + `dynamicParams = false` + `revalidate`;
+rute force-dynamic (landing) normal. Diganti `dynamic = "force-dynamic"` + validasi slug →
+`notFound()`. Biaya: 2 query hitung per kunjungan. Jangan pakai pola SSG/ISR itu lagi sebelum
+diuji di produksi.
+
 ## YYYY-MM-DD — Judul singkat
 Keputusan: ...
 Alasan: ...

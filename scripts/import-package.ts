@@ -5,7 +5,7 @@
 // hanya laporan (dry run). Paket disimpan `draft`, soal `pending_review`,
 // stimulus `draft` — admin meninjau lalu menerbitkan dari panel.
 //
-//   npx tsx --env-file=.env scripts/import-package.ts <data.ts>            # cek, DB lokal
+//   npx tsx --env-file=.env scripts/import-package.ts <data.ts> [--created-by=<id admin lokal>]  # cek, DB lokal
 //   npx tsx --env-file=.env.prod scripts/import-package.ts <data.ts> --commit
 //
 // File data: `export default { title, description, jenjang, subjectCode,
@@ -15,6 +15,8 @@
 // baris = urutan di grup & di paket). `gambar` = kunci di `images`: SVG buatan
 // sendiri dirender ke PNG (sharp) lalu diunggah lewat galeri biasa (dikompres
 // WebP). Dry run menyimpan pratinjau PNG di folder `<data>.preview/`.
+// Baris `bankOnly: true` = soal masuk bank soal saja (tidak ikut paket & aturan paket).
+// `createdByEmail` (admin) bisa dipakai alih-alih `createdBy` — id admin lokal ≠ produksi.
 
 import { mkdirSync, writeFileSync } from "node:fs";
 import { pathToFileURL } from "node:url";
@@ -25,7 +27,7 @@ import { checkPackageRules, ruleErrors } from "@/lib/package-rules";
 import { validateImportRows, type RawImportRow } from "@/lib/validation/import";
 import { questionInput } from "@/lib/validation/question";
 import { db } from "@/server/db";
-import { categories, stimuli, subjects, testPackageQuestions, testPackages } from "@/server/db/schema";
+import { categories, stimuli, subjects, testPackageQuestions, testPackages, users } from "@/server/db/schema";
 import { loadSubjectOutlines } from "@/server/queries/packages";
 import { checkAgainstFramework, linkStimuli } from "@/server/services/question-import";
 import { imagePath, saveQuestionImage } from "@/server/services/question-images";
@@ -41,9 +43,11 @@ type PackageData = {
   /** Simulasi penuh → durasi wajib sama dengan regulasi (default false). */
   isFullSimulation?: boolean;
   /** Id admin pembuat (questions.created_by, test_packages.created_by). */
-  createdBy: number;
+  createdBy?: number;
+  /** Alternatif `createdBy`: email akun admin (dicari di database tujuan). */
+  createdByEmail?: string;
   stimuli: { code: string; title: string; content: string; imageUrl?: string; gambar?: string }[];
-  rows: (RawImportRow & { gambar?: string })[];
+  rows: (RawImportRow & { gambar?: string; bankOnly?: boolean })[];
   /** Gambar baru: SVG buatan sendiri (sumber tepercaya), dirender ke PNG lalu masuk galeri. */
   images?: Record<string, { title: string; svg: string }>;
 };
@@ -59,6 +63,20 @@ async function main() {
   if (!file) fail("Pemakaian", ["npx tsx --env-file=.env scripts/import-package.ts <data.ts> [--commit]"]);
   const commit = flags.includes("--commit");
   const data = (await import(pathToFileURL(resolve(file)).href)).default as PackageData;
+  // `--created-by=<id>` menimpa pembuat (mis. uji di DB lokal yang akun adminnya berbeda).
+  const createdByFlag = flags.find((f) => f.startsWith("--created-by="));
+  if (createdByFlag) {
+    data.createdBy = Number(createdByFlag.split("=")[1]);
+    data.createdByEmail = undefined;
+  }
+  if (data.createdByEmail) {
+    const [admin] = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.email, data.createdByEmail.toLowerCase()));
+    if (!admin || admin.role !== "admin") fail("Pembuat", [`${data.createdByEmail} bukan akun admin di database ini`]);
+    data.createdBy = admin.id;
+  }
+  if (!data.createdBy) fail("Pembuat", ["Isi createdBy atau createdByEmail"]);
+  const createdBy: number = data.createdBy;
+  const inPackage = (rowNumber: number) => !data.rows[rowNumber - 1]?.bankOnly;
 
   // 0. Gambar: semua kunci yang dirujuk harus ada; render SVG → PNG (+ pratinjau).
   const images = data.images ?? {};
@@ -106,7 +124,7 @@ async function main() {
     durationMinutes: data.durationMinutes,
     isFullSimulation: data.isFullSimulation ?? false,
     outline,
-    questions: linked.valid.map((r) => ({
+    questions: linked.valid.filter((r) => inPackage(r.rowNumber)).map((r) => ({
       type: r.type,
       subjectCode: data.subjectCode,
       subtopicCode: r.subdomainCode,
@@ -117,13 +135,16 @@ async function main() {
     })),
   });
   const s = report.stats;
-  const count = (k: string) => linked.valid.filter((r) => r.difficulty === k).length;
-  const level = (k: string) => linked.valid.filter((r) => r.cognitiveLevel === k).length;
+  const packaged = linked.valid.filter((r) => inPackage(r.rowNumber));
+  const count = (k: string) => packaged.filter((r) => r.difficulty === k).length;
+  const level = (k: string) => packaged.filter((r) => r.cognitiveLevel === k).length;
   console.log(`\n${data.title}`);
   console.log(`  ${s.total} soal · PG ${s.pg} · MCMA ${s.mcma} · Kategori ${s.kategori} · berbasis stimulus ${s.stimulusBased} · ${linked.stimuli.length} stimulus · ${rendered.size} gambar baru`);
   console.log(`  mudah ${count("easy")} · sedang ${count("medium")} · sulit ${count("hard")}` + (level("L1") + level("L2") + level("L3") ? ` · L1 ${level("L1")} · L2 ${level("L2")} · L3 ${level("L3")}` : ""));
   for (const c of [...report.required, ...report.recommended]) console.log(`  ${c.ok ? "✓" : report.required.includes(c) ? "✗" : "!"} ${c.label} — ${c.detail}`);
   if (report.missingSubtopics.length) console.log(`  subtopik kosong: ${report.missingSubtopics.join(", ")}`);
+  const bankOnly = linked.valid.length - packaged.length;
+  if (bankOnly) console.log(`  + ${bankOnly} soal khusus bank soal (tidak masuk paket)`);
   const blocking = ruleErrors(report);
   if (blocking.length) fail("Aturan wajib belum terpenuhi", blocking);
 
@@ -143,7 +164,7 @@ async function main() {
   //    lalu simpan soal/stimulus/paket dalam satu transaksi.
   const imageUrls = new Map<string, string>();
   for (const [key, png] of rendered) {
-    const saved = await saveQuestionImage({ name: `${images[key].title}.png`, type: "image/png", bytes: png }, data.createdBy);
+    const saved = await saveQuestionImage({ name: `${images[key].title}.png`, type: "image/png", bytes: png }, createdBy);
     imageUrls.set(key, imagePath(saved.id));
   }
   const stimulusImage = new Map(data.stimuli.map((st) => [st.code.toUpperCase(), st.gambar ? imageUrls.get(st.gambar) : st.imageUrl]));
@@ -153,11 +174,12 @@ async function main() {
     for (const st of linked.stimuli) {
       const [{ id }] = await tx
         .insert(stimuli)
-        .values({ code: st.code, title: st.title, content: st.content, imageUrl: stimulusImage.get(st.code) ?? null, createdBy: data.createdBy })
+        .values({ code: st.code, title: st.title, content: st.content, imageUrl: stimulusImage.get(st.code) ?? null, createdBy })
         .$returningId();
       stimulusIds.set(st.code, id);
     }
     const questionIds: number[] = [];
+    const bankIds: number[] = [];
     for (const row of linked.valid) {
       const subtopicId = subtopicIds.get(row.subdomainCode);
       if (!subtopicId) throw new Error(`Subdomain ${row.subdomainCode} belum ada di database`);
@@ -175,7 +197,8 @@ async function main() {
         status: "pending_review",
         options: row.options,
       });
-      questionIds.push(await insertQuestion(tx, question, { generatedBy: "manual", userId: data.createdBy }));
+      const qid = await insertQuestion(tx, question, { generatedBy: "manual", userId: createdBy });
+      (inPackage(row.rowNumber) ? questionIds : bankIds).push(qid);
     }
     const [{ id: packageId }] = await tx
       .insert(testPackages)
@@ -188,14 +211,15 @@ async function main() {
         isPremium: data.isPremium,
         isFullSimulation: data.isFullSimulation ?? false,
         status: "draft",
-        createdBy: data.createdBy,
+        createdBy,
       })
       .$returningId();
     await tx.insert(testPackageQuestions).values(questionIds.map((questionId, i) => ({ testPackageId: packageId, questionId, order: i + 1 })));
-    return { packageId, questionIds, stimulusIds: [...stimulusIds.values()] };
+    return { packageId, questionIds, bankIds, stimulusIds: [...stimulusIds.values()] };
   });
   const q = result.questionIds;
   console.log(`\n✓ Paket #${result.packageId} (draf) · soal #${q[0]}–#${q[q.length - 1]} · stimulus #${result.stimulusIds.join(", #")}`);
+  if (result.bankIds.length) console.log(`  soal khusus bank: #${result.bankIds.join(", #")}`);
   if (imageUrls.size) console.log(`  gambar: ${[...imageUrls].map(([k, u]) => `${k} → ${u}`).join(", ")}`);
   process.exit(0);
 }

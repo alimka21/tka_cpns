@@ -11,13 +11,10 @@ import { SITE_NAME } from "@/lib/site";
 import { FRAMEWORKS, type Framework, type Subject } from "@/server/asesmen";
 import { subjectStatsByCode } from "@/server/queries/seo";
 
-// Kisi-kisi per mapel dari file kerangka (asesmen/*.json) + angka dari DB, diperbarui tiap jam.
-export const revalidate = 3600;
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return Object.entries(JENJANG_SLUGS).flatMap(([jenjang, code]) => FRAMEWORKS[code].subjects.map((s) => ({ jenjang, mapel: subjectSlug(s) })));
-}
+// Kisi-kisi per mapel dari file kerangka (asesmen/*.json) + angka dari DB.
+// Dirender per kunjungan (seperti landing): prerender + ISR (`dynamicParams = false`)
+// membuat rute ini 404 di hosting produksi (DECISIONS 2026-10-17). Slug tak dikenal → notFound().
+export const dynamic = "force-dynamic";
 
 function resolve(params: { jenjang: string; mapel: string }): { fw: Framework; subject: Subject } | null {
   const code = JENJANG_SLUGS[params.jenjang as JenjangSlug];

@@ -12,13 +12,10 @@ import { SITE_NAME } from "@/lib/site";
 import { FRAMEWORKS, type Framework } from "@/server/asesmen";
 import { subjectStatsByCode } from "@/server/queries/seo";
 
-// Konten dari file kerangka (asesmen/*.json) + angka paket/soal dari DB, diperbarui tiap jam.
-export const revalidate = 3600;
-export const dynamicParams = false;
-
-export function generateStaticParams() {
-  return Object.keys(JENJANG_SLUGS).map((jenjang) => ({ jenjang }));
-}
+// Konten dari file kerangka (asesmen/*.json) + angka paket/soal dari DB.
+// Dirender per kunjungan (seperti landing): prerender + ISR (`dynamicParams = false`)
+// membuat rute ini 404 di hosting produksi (DECISIONS 2026-10-17). Slug tak dikenal → notFound().
+export const dynamic = "force-dynamic";
 
 function frameworkOf(slug: string): Framework | null {
   const code = JENJANG_SLUGS[slug as JenjangSlug];

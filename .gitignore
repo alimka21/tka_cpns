@@ -40,3 +40,6 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Pratinjau gambar dari scripts/import-package.ts (dry run)
+scripts/paket-data/*.preview/

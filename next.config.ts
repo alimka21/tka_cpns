@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   agentRules: false,
   poweredByHeader: false,
   experimental: {
+    // Server build Hostinger melaporkan puluhan CPU tetapi membatasi jumlah thread →
+    // "Collecting page data" gagal (os error 11, EAGAIN). Batasi worker build.
+    cpus: 1,
+    workerThreads: false,
     // Upload lewat server action: import Excel (maks. 5 MB, IMPORT_MAX_BYTES) &
     // gambar soal satu per satu (maks. 10 MB sebelum dikompres, MAX_UPLOAD_BYTES).
     serverActions: { bodySizeLimit: "11mb" },

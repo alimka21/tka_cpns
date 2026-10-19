@@ -8,7 +8,7 @@ import { visibleEmail } from "@/lib/identity";
 import { pickUniqueCode } from "@/lib/manual-payment";
 import { db } from "@/server/db";
 import { memberships, orders, plans, users, type JenjangCode, type OrderStatus } from "@/server/db/schema";
-import { createCheckout, DokuError, getOrderStatus } from "./doku";
+import { createCheckout, DOKU_NOTIFICATION_PATH, DokuError, getOrderStatus } from "./doku";
 import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
 import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
 import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
@@ -117,6 +117,7 @@ export async function createOrder(
               customer: { id: String(user.id), name: user.name, email: visibleEmail(user.email) ?? undefined },
               callbackUrl: finishUrl,
               channels: method.channels,
+              notificationUrl: `${siteUrl.replace(/\/$/, "")}${DOKU_NOTIFICATION_PATH}`,
             })
           ).url;
     await db.update(orders).set({ redirectUrl: url, paymentType: method.id }).where(eq(orders.id, id));

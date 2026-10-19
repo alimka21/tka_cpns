@@ -223,7 +223,7 @@ export default async function AdminLanggananPage() {
         )}
         {configured && <DokuConnectionTest />}
         <p className="text-muted-foreground">
-          Notification URL (pasang di DOKU dashboard → Settings → Notifications → HTTP Notifications, untuk setiap metode aktif):{" "}
+          Notification URL (dikirim otomatis di setiap transaksi; isi juga di dashboard DOKU bila ada kolomnya):{" "}
           <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{site}{DOKU_NOTIFICATION_PATH}</code>
         </p>
       </section>

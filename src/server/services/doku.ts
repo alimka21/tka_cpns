@@ -120,6 +120,8 @@ function errorText(json: Record<string, unknown>, status: number) {
 /** Buat halaman bayar DOKU Checkout; siswa diarahkan ke `url`. `channels` kosong = semua channel aktif. */
 export async function createCheckout(input: {
   channels?: string[];
+  /** URL webhook untuk transaksi ini (override_notification_url) — tidak bergantung setelan dashboard DOKU. */
+  notificationUrl?: string;
   invoiceNumber: string;
   amount: number;
   itemName: string;
@@ -140,6 +142,7 @@ export async function createCheckout(input: {
     },
     payment: { payment_due_date: input.dueMinutes ?? 60, ...(methods.length > 0 && { payment_method_types: methods }) },
     customer: { id: input.customer.id, name: input.customer.name.slice(0, 255), ...(input.customer.email && { email: input.customer.email }) },
+    ...(input.notificationUrl && { additional_info: { override_notification_url: input.notificationUrl } }),
   });
   const payment = (json.response as { payment?: { url?: unknown; token_id?: unknown } } | undefined)?.payment;
   if (!res.ok || typeof payment?.url !== "string") {

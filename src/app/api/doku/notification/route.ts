@@ -1,5 +1,5 @@
 // Webhook HTTP Notification DOKU. Pasang di DOKU Back Office:
-//   Settings → Payment Settings → Notification URL → https://<domain>/api/doku/notification
+//   Settings → Notifications → HTTP Notifications (per metode) → https://<domain>/api/doku/notification
 // Alur: verifikasi signature (Request-Target = path ini, Digest dari body mentah)
 // → ambil ulang status dari Check Status API (sumber kebenaran, kebal payload
 // palsu) → terapkan ke order (idempoten). DOKU hanya butuh HTTP 2xx.

@@ -225,7 +225,7 @@ bila `MIDTRANS_SERVER_KEY` terisi). DOKU (§8) tetap ada sebagai alternatif.
    Hapus env lama `MIDTRANS_*` bila ada. Redeploy, lalu `npm run prod:migrate`
    (migrasi 0017 menghapus kolom `orders.snap_token`) — jalankan SETELAH kode
    baru ter-deploy.
-3. Back Office → Settings → Payment Settings → **Notification URL**:
+3. Back Office → Settings → Notifications → **HTTP Notifications** (dulu: Payment Settings → Notification URL):
    `https://<domain>/api/doku/notification` (halaman kembali dikirim otomatis
    per transaksi lewat `callback_url`). Pastikan metode **QRIS** aktif di akun.
    Kolom **URL Halaman Sukses** (bila diminta): `https://<domain>/langganan/selesai`
@@ -259,8 +259,8 @@ otomatis lewat webhook. Tidak perlu migrasi.
    **sudah aktif** di Back Office, mis. `QRIS,VIRTUAL_ACCOUNT_BCA,VIRTUAL_ACCOUNT_BRI,VIRTUAL_ACCOUNT_BNI,VIRTUAL_ACCOUNT_BANK_MANDIRI`
    (channel nonaktif → DOKU menolak transaksi). Cadangan QRIS manual:
    `PAYMENT_MANUAL_FALLBACK=true` (opsional). Redeploy setelah mengubah env.
-4. **Notification URL** (Back Office Production → Settings → Payment Settings):
-   `https://pakartka.com/api/doku/notification`. Tanpa ini Premium baru aktif saat siswa
+4. **Notification URL** (dashboard.doku.com → Settings → Notifications → **HTTP Notifications**;
+   isi untuk setiap metode yang aktif, minimal QRIS): `https://pakartka.com/api/doku/notification`. Tanpa ini Premium baru aktif saat siswa
    membuka halaman selesai.
 5. **Cek dari admin.** Admin → Langganan & Pembayaran → kartu DOKU harus
    "terhubung — mode PRODUKSI" + "Dipakai", lalu **Tes koneksi** → "Kredensial valid ✓".

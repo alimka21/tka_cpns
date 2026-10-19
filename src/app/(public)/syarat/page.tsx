@@ -78,7 +78,7 @@ const sections: LegalSection[] = [
     body: (
       <>
         <ul>
-          <li>Pembayaran diproses oleh penyedia jasa pembayaran resmi (Xendit, Midtrans, atau DOKU) melalui metode yang tersedia (mis. QRIS, transfer bank, atau e-wallet). Biaya dari bank atau dompet digital, bila ada, menjadi tanggungan pembayar.</li>
+          <li>Pembayaran diproses oleh penyedia jasa pembayaran resmi DOKU melalui metode yang tersedia (QRIS sebagai metode utama, serta transfer bank/Virtual Account atau e-wallet bila tersedia). Biaya dari bank atau dompet digital, bila ada, menjadi tanggungan pembayar.</li>
           <li>Premium aktif otomatis setelah pembayaran dikonfirmasi. Status transaksi dapat dilihat di halaman Premium.</li>
           <li>Karena berupa produk digital yang langsung dapat dipakai, pembayaran yang berhasil <strong>tidak dapat dibatalkan atau dikembalikan</strong>, kecuali:
             <ul>
@@ -154,7 +154,7 @@ export default function SyaratPage() {
   return (
     <LegalPage
       title="Syarat & Ketentuan"
-      effectiveDate="7 Oktober 2026"
+      effectiveDate="19 Oktober 2026"
       other={{ href: "/privasi", label: "Kebijakan Privasi" }}
       intro={
         <p>

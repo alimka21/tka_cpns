@@ -10,10 +10,8 @@ import { SITE_URL } from "@/lib/site";
 import { listPlans, planSalesStats } from "@/server/services/billing";
 import { DokuConnectionTest } from "@/components/billing/doku-connection-test";
 import { DOKU_NOTIFICATION_PATH, dokuPublicInfo, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
-import { isMidtransConfigured, MIDTRANS_NOTIFICATION_PATH, midtransPublicInfo } from "@/server/services/midtrans";
 import { formatWaNumber } from "@/lib/manual-payment";
 import { activeProvider, isManualFallbackEnabled, paymentMethodOptions, PROVIDER_LABEL } from "@/server/services/payment-provider";
-import { isXenditConfigured, XENDIT_NOTIFICATION_PATH, xenditPublicInfo } from "@/server/services/xendit";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
 export const dynamic = "force-dynamic";
@@ -26,10 +24,6 @@ export default async function AdminLanggananPage() {
   const production = isDokuProduction();
   const info = dokuPublicInfo();
   const provider = activeProvider();
-  const mtConfigured = isMidtransConfigured();
-  const mt = midtransPublicInfo();
-  const xdConfigured = isXenditConfigured();
-  const xd = xenditPublicInfo();
   const site = SITE_URL.replace(/\/$/, "");
   const paidTotal = [...sales.values()].reduce((n, s) => n + s.revenue, 0);
   const pendingTotal = [...sales.values()].reduce((n, s) => n + s.pending, 0);
@@ -76,10 +70,16 @@ export default async function AdminLanggananPage() {
       <p className="-mb-4 text-sm">
         Penyedia pembayaran aktif: <strong>{PROVIDER_LABEL[provider]}</strong>{" "}
         <span className="text-muted-foreground">
-          (env PAYMENT_PROVIDER = manual / xendit / midtrans / doku; kosong → gateway pertama yang sudah Live, selain itu QRIS manual). Mode uji
-          (Test/Sandbox): hanya admin & email di PAYMENT_TEST_EMAILS yang bisa membayar.
+          (env PAYMENT_PROVIDER = doku / manual; kosong → DOKU bila mode Produksi, selain itu QRIS manual). Mode Sandbox: hanya admin & email di
+          PAYMENT_TEST_EMAILS yang bisa membayar.
         </span>
       </p>
+      {provider !== "doku" && provider !== "manual" && (
+        <p className="rounded-lg border border-warning/50 bg-warning-soft px-4 py-3 text-sm text-warning-strong">
+          Pembayaran saat ini memakai {PROVIDER_LABEL[provider]}. Untuk memakai DOKU, isi env <strong>PAYMENT_PROVIDER=doku</strong> di hPanel lalu
+          redeploy.
+        </p>
+      )}
 
       {provider === "manual" && (
         <section className="surface-card flex flex-col gap-2 border-success/40 p-5 text-sm">
@@ -97,90 +97,6 @@ export default async function AdminLanggananPage() {
           </p>
         </section>
       )}
-
-      <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "xendit" ? "opacity-80" : xdConfigured ? "border-success/40" : "border-warning/50"}`}>
-        <p className="flex flex-wrap items-center gap-2 font-semibold">
-          {xdConfigured ? <CircleCheck className="size-4 text-success-strong" aria-hidden /> : <CircleAlert className="size-4 text-warning-strong" aria-hidden />}
-          Xendit {xdConfigured ? `terhubung — mode ${xd.production ? "LIVE" : "Test (uji coba)"}` : "belum dikonfigurasi"}
-          {provider === "xendit" && <Badge variant="success">Dipakai</Badge>}
-        </p>
-        {!xdConfigured && (
-          <p className="text-muted-foreground">
-            Isi env XENDIT_SECRET_KEY (Dashboard Xendit → Settings → API Keys, izin Write untuk Invoices) dan XENDIT_CALLBACK_TOKEN (Settings →
-            Webhooks → Verification Token) di hPanel, lalu redeploy.
-          </p>
-        )}
-        {xdConfigured && (
-          <dl className="grid gap-x-4 gap-y-1 text-muted-foreground sm:grid-cols-[auto_1fr]">
-            <dt>Secret Key</dt>
-            <dd>terisi (key {xd.keyKind})</dd>
-            <dt>Verification Token</dt>
-            <dd>
-              {xd.callbackTokenSet ? (
-                "terisi"
-              ) : (
-                <span className="font-semibold text-destructive">belum diisi — webhook akan ditolak, status hanya diperbarui saat siswa membuka halaman selesai</span>
-              )}
-            </dd>
-            <dt>Metode bayar</dt>
-            <dd>
-              {xd.paymentMethods.length ? xd.paymentMethods.join(", ") : "Semua metode yang aktif di akun Xendit"}{" "}
-              <span className="text-xs">(env XENDIT_PAYMENT_METHODS, opsional)</span>
-            </dd>
-          </dl>
-        )}
-        {xdConfigured && <DokuConnectionTest provider="xendit" />}
-        <p className="text-muted-foreground">
-          URL webhook (Dashboard Xendit → Settings → Webhooks → Invoices &ldquo;Invoices paid&rdquo;, di mode Test & Live):{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">
-            {site}
-            {XENDIT_NOTIFICATION_PATH}
-          </code>
-        </p>
-      </section>
-
-      <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "midtrans" ? "opacity-80" : mtConfigured ? "border-success/40" : "border-warning/50"}`}>
-        <p className="flex flex-wrap items-center gap-2 font-semibold">
-          {mtConfigured ? <CircleCheck className="size-4 text-success-strong" aria-hidden /> : <CircleAlert className="size-4 text-warning-strong" aria-hidden />}
-          Midtrans {mtConfigured ? `terhubung — mode ${mt.production ? "PRODUKSI" : "Sandbox (uji coba)"}` : "belum dikonfigurasi"}
-          {provider === "midtrans" && <Badge variant="success">Dipakai</Badge>}
-        </p>
-        {!mtConfigured && (
-          <p className="text-muted-foreground">
-            Isi env MIDTRANS_SERVER_KEY (Dashboard Midtrans → Pengaturan → Akses Key) dan MIDTRANS_IS_PRODUCTION di hPanel, lalu redeploy.
-          </p>
-        )}
-        {mtConfigured && (
-          <dl className="grid gap-x-4 gap-y-1 text-muted-foreground sm:grid-cols-[auto_1fr]">
-            <dt>Alamat API</dt>
-            <dd>
-              <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{mt.apiBase}</code>
-            </dd>
-            <dt>Server Key</dt>
-            <dd>
-              terisi ({mt.keyLength} karakter, key {mt.keyKind})
-              {mt.keyMismatch && (
-                <span className="ml-1 font-semibold text-destructive">
-                  — tidak cocok dengan MIDTRANS_IS_PRODUCTION={mt.production ? "true" : "false"}
-                </span>
-              )}
-            </dd>
-            <dt>Metode bayar</dt>
-            <dd>
-              {mt.enabledPayments.length ? mt.enabledPayments.join(", ") : "Semua metode yang aktif di akun Midtrans"}{" "}
-              <span className="text-xs">(env MIDTRANS_ENABLED_PAYMENTS, opsional)</span>
-            </dd>
-          </dl>
-        )}
-        {mtConfigured && <DokuConnectionTest provider="midtrans" />}
-        <p className="text-muted-foreground">
-          URL notifikasi pembayaran (Dashboard Midtrans → Pengaturan → Pembayaran → URL notifikasi, di Sandbox & Production):{" "}
-          <code className="rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">
-            {site}
-            {MIDTRANS_NOTIFICATION_PATH}
-          </code>
-        </p>
-      </section>
 
       <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "doku" ? "opacity-80" : configured ? "border-success/40" : "border-warning/50"}`}>
         <p className="flex flex-wrap items-center gap-2 font-semibold">

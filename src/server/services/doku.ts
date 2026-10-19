@@ -44,11 +44,12 @@ export function isDokuProduction() {
 }
 
 /**
- * Metode bayar di halaman DOKU Checkout. Env DOKU_PAYMENT_METHODS: daftar kode
- * dipisah koma (default "QRIS"); "ALL" = semua channel yang aktif di akun DOKU.
+ * Channel DOKU yang ditawarkan ke siswa. Env DOKU_PAYMENT_METHODS: daftar kode dipisah
+ * koma (mis. "QRIS,VIRTUAL_ACCOUNT_BCA,VIRTUAL_ACCOUNT_BRI"); kosong/"ALL" = QRIS + semua
+ * channel yang aktif di akun DOKU (lihat paymentMethodOptions).
  */
 export function dokuPaymentMethods(): string[] {
-  const raw = env("DOKU_PAYMENT_METHODS") ?? "QRIS";
+  const raw = env("DOKU_PAYMENT_METHODS") ?? "ALL";
   if (raw.toUpperCase() === "ALL") return [];
   return raw
     .split(",")
@@ -116,8 +117,9 @@ function errorText(json: Record<string, unknown>, status: number) {
   return Array.isArray(msg) ? msg.join("; ") : typeof msg === "string" ? msg : `HTTP ${status}`;
 }
 
-/** Buat halaman bayar DOKU Checkout (QRIS); siswa diarahkan ke `url`. */
+/** Buat halaman bayar DOKU Checkout; siswa diarahkan ke `url`. `channels` kosong = semua channel aktif. */
 export async function createCheckout(input: {
+  channels?: string[];
   invoiceNumber: string;
   amount: number;
   itemName: string;
@@ -125,7 +127,7 @@ export async function createCheckout(input: {
   callbackUrl: string;
   dueMinutes?: number;
 }): Promise<{ url: string; tokenId: string | null }> {
-  const methods = dokuPaymentMethods();
+  const methods = input.channels ?? dokuPaymentMethods();
   const { res, json } = await call("/checkout/v1/payment", "POST", {
     order: {
       amount: input.amount,

@@ -12,7 +12,7 @@ import { DokuConnectionTest } from "@/components/billing/doku-connection-test";
 import { DOKU_NOTIFICATION_PATH, dokuPublicInfo, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
 import { isMidtransConfigured, MIDTRANS_NOTIFICATION_PATH, midtransPublicInfo } from "@/server/services/midtrans";
 import { formatWaNumber } from "@/lib/manual-payment";
-import { activeProvider, PROVIDER_LABEL } from "@/server/services/payment-provider";
+import { activeProvider, isManualFallbackEnabled, paymentMethodOptions, PROVIDER_LABEL } from "@/server/services/payment-provider";
 import { isXenditConfigured, XENDIT_NOTIFICATION_PATH, xenditPublicInfo } from "@/server/services/xendit";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
@@ -208,6 +208,18 @@ export default async function AdminLanggananPage() {
               <span className="text-xs">(env DOKU_PAYMENT_METHODS; harus aktif di DOKU Back Office)</span>
             </dd>
           </dl>
+        )}
+        {configured && (
+          <p className="text-muted-foreground">
+            Pilihan cara bayar untuk siswa:{" "}
+            <strong className="text-foreground">
+              {paymentMethodOptions("doku")
+                .map((m) => `${m.label}${m.primary ? " (utama)" : ""}`)
+                .join(" · ")}
+            </strong>
+            . Atur lewat env DOKU_PAYMENT_METHODS (kosong = QRIS + semua channel aktif di DOKU); QRIS manual sebagai cadangan: PAYMENT_MANUAL_FALLBACK=true
+            ({isManualFallbackEnabled() ? "aktif" : "nonaktif"}).
+          </p>
         )}
         {configured && <DokuConnectionTest />}
         <p className="text-muted-foreground">

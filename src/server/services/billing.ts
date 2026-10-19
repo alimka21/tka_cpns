@@ -12,7 +12,7 @@ import { createCheckout, DokuError, getOrderStatus } from "./doku";
 import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
 import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
 import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
-import { MANUAL_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, providerOfOrder } from "./payment-provider";
+import { MANUAL_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, paymentMethodOptions, providerOfOrder } from "./payment-provider";
 import { createInvoice, getInvoiceByExternalId, XenditError } from "./xendit";
 import { mapXenditStatus, type XenditInvoice } from "./xendit-core";
 
@@ -55,11 +55,16 @@ function newOrderCode(userId: number, prefix: string) {
   return `${prefix}${userId}-${Date.now().toString(36).toUpperCase()}-${randomBytes(3).toString("hex").toUpperCase()}`;
 }
 
-/** Buat order + halaman bayar penyedia aktif (Xendit Invoice / Midtrans Snap / DOKU Checkout); kembalikan URL-nya. */
+/**
+ * Buat order + halaman bayar sesuai cara bayar pilihan siswa (`methodId` dari
+ * paymentMethodOptions; kosong = metode utama). Gateway (Xendit/Midtrans/DOKU) → URL halaman
+ * bayar penyedia; "manual" → halaman QRIS manual kita.
+ */
 export async function createOrder(
   user: { id: number; name: string; email: string; role?: string | null; jenjang: string | null },
   planId: number,
   siteUrl: string,
+  methodId?: string,
 ): Promise<Result<{ redirectUrl: string; orderCode: string }>> {
   const [plan] = await db.select().from(plans).where(eq(plans.id, planId));
   if (!plan || !plan.isActive) return { ok: false, error: "Paket langganan tidak tersedia." };
@@ -69,7 +74,10 @@ export async function createOrder(
   if (!pay.configured) return { ok: false, error: "Pembayaran belum tersedia. Hubungi admin." };
   if (!pay.canPay) return { ok: false, error: "Pembayaran online sedang dalam tahap uji coba dan segera dibuka. Hubungi admin untuk aktivasi Premium." };
 
-  if (pay.provider === "manual") return createManualOrder(user.id, plan, siteUrl);
+  const options = paymentMethodOptions(pay.provider);
+  const method = methodId ? options.find((o) => o.id === methodId) : (options.find((o) => o.primary) ?? options[0]);
+  if (!method) return { ok: false, error: "Metode pembayaran tidak tersedia. Pilih metode lain." };
+  if (method.id === "manual") return createManualOrder(user.id, plan, siteUrl);
 
   const orderCode = newOrderCode(user.id, ORDER_PREFIX[pay.provider]);
   const finishUrl = `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`;
@@ -108,9 +116,10 @@ export async function createOrder(
               itemName: plan.name,
               customer: { id: String(user.id), name: user.name, email: visibleEmail(user.email) ?? undefined },
               callbackUrl: finishUrl,
+              channels: method.channels,
             })
           ).url;
-    await db.update(orders).set({ redirectUrl: url }).where(eq(orders.id, id));
+    await db.update(orders).set({ redirectUrl: url, paymentType: method.id }).where(eq(orders.id, id));
     return { ok: true, redirectUrl: url, orderCode };
   } catch (e) {
     await db.update(orders).set({ status: "failed" }).where(eq(orders.id, id));

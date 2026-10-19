@@ -8,7 +8,7 @@ import { formatDate, formatDateTime, formatRupiah, ORDER_STATUS_META } from "@/l
 import { discountPercent } from "@/lib/plans";
 import { requireUser } from "@/server/auth/session";
 import { getActiveMembership, listPlans, listUserOrders } from "@/server/services/billing";
-import { paymentAvailability } from "@/server/services/payment-provider";
+import { paymentAvailability, paymentMethodOptions } from "@/server/services/payment-provider";
 
 export const metadata: Metadata = { title: "Langganan Premium" };
 export const dynamic = "force-dynamic";
@@ -27,6 +27,14 @@ const MANUAL_STEPS = [
   ["Kirim bukti", "Tekan “Saya sudah transfer” → kirim bukti ke WhatsApp admin. Premium aktif setelah diverifikasi."],
 ] as const;
 
+const GATEWAY_STEPS = (gateway: string) =>
+  [
+    ["Pilih paket", "Tekan “Bayar sekarang” pada paket Premium di bawah."],
+    ["Pilih cara bayar", "QRIS paling cepat; bisa juga Virtual Account bank atau e-wallet."],
+    ["Bayar di halaman resmi", `Selesaikan pembayaran di halaman ${gateway} sesuai petunjuknya.`],
+    ["Premium aktif", "Otomatis aktif begitu pembayaran berhasil — tanpa kirim bukti."],
+  ] as const;
+
 export default async function LanggananPage() {
   const { user } = await requireUser("/langganan");
   const userId = Number(user.id);
@@ -37,6 +45,9 @@ export default async function LanggananPage() {
     listUserOrders(userId),
   ]);
   const pay = paymentAvailability(user);
+  const methods = paymentMethodOptions(pay.provider).map(({ id, label, hint, primary }) => ({ id, label, hint, primary }));
+  const gatewayLabel = pay.provider === "manual" ? null : pay.label;
+  const steps = gatewayLabel ? GATEWAY_STEPS(gatewayLabel) : MANUAL_STEPS;
   const pendingOrder = orders.find((o) => o.status === "pending" && o.redirectUrl);
 
   return (
@@ -89,13 +100,13 @@ export default async function LanggananPage() {
         </section>
       )}
 
-      {pay.provider === "manual" && pay.canPay && plans.length > 0 && (
+      {pay.canPay && plans.length > 0 && (
         <section aria-labelledby="cara-bayar" className="surface-card p-5">
           <h2 id="cara-bayar" className="font-bold">
             Cara bayar Premium
           </h2>
           <ol className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-            {MANUAL_STEPS.map(([title, text], i) => (
+            {steps.map(([title, text], i) => (
               <li key={title} className="flex gap-3 rounded-lg bg-muted/50 p-3 text-sm">
                 <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-cta text-xs font-bold text-white">{i + 1}</span>
                 <span>
@@ -146,7 +157,14 @@ export default async function LanggananPage() {
                   <span className="ml-1 text-sm text-muted-foreground">/ {p.durationDays ? `${p.durationDays} hari` : "selamanya"}</span>
                 </div>
                 <div className="mt-auto">
-                  <BuyPlanButton planId={p.id} label={membership ? "Perpanjang" : "Bayar sekarang"} />
+                  <BuyPlanButton
+                    planId={p.id}
+                    planName={p.name}
+                    priceText={formatRupiah(p.price)}
+                    methods={methods}
+                    gatewayLabel={gatewayLabel}
+                    label={membership ? "Perpanjang" : "Bayar sekarang"}
+                  />
                 </div>
               </li>
             ))}
@@ -156,7 +174,7 @@ export default async function LanggananPage() {
           <Lock className="size-3.5" aria-hidden /> {pay.provider === "manual"
             ? "Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Kirim bukti ke WhatsApp admin, Premium diaktifkan setelah diverifikasi."
             : pay.provider === "doku"
-            ? "Bayar dengan QRIS — bisa dari GoPay, OVO, DANA, ShopeePay, atau m-banking. Diproses aman oleh DOKU."
+            ? "Bayar dengan QRIS (utama), Virtual Account bank, atau e-wallet. Diproses aman oleh DOKU — payment gateway resmi berizin Bank Indonesia."
             : `Bayar dengan QRIS, transfer bank (Virtual Account), atau e-wallet. Diproses aman oleh ${pay.label}.`}
         </p>
       </section>

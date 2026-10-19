@@ -8,7 +8,7 @@
 // email di PAYMENT_TEST_EMAILS (dipisah koma) yang bisa membuat order — siswa
 // lain tidak bisa mendapat Premium lewat simulator.
 
-import { isDokuConfigured, isDokuProduction } from "./doku";
+import { dokuPaymentMethods, isDokuConfigured, isDokuProduction } from "./doku";
 import { isMidtransConfigured, isMidtransProduction } from "./midtrans";
 import { isXenditConfigured, isXenditProduction } from "./xendit";
 
@@ -64,4 +64,65 @@ export function paymentAvailability(user: { email: string; role?: string | null 
   const production = isProviderProduction(provider);
   const tester = user.role === "admin" || testEmails().has(user.email.trim().toLowerCase());
   return { provider, label: PROVIDER_LABEL[provider], configured, production, canPay: configured && (production || tester), testMode: configured && !production };
+}
+
+/** Pilihan cara bayar yang ditampilkan ke siswa saat membeli Premium. */
+export type PaymentMethodOption = {
+  id: string;
+  label: string;
+  hint: string;
+  /** Metode utama (ditampilkan paling atas & disorot). */
+  primary?: boolean;
+  /** Kode channel DOKU yang dibuka di halaman DOKU Checkout; [] = semua channel aktif di akun DOKU. */
+  channels?: string[];
+};
+
+const DOKU_GROUPS: { prefix: string; id: string; label: string; hint: string }[] = [
+  { prefix: "VIRTUAL_ACCOUNT_", id: "doku-va", label: "Transfer bank (Virtual Account)", hint: "BCA, Mandiri, BRI, BNI, dan bank lain — bayar lewat m-banking/ATM." },
+  { prefix: "EMONEY_", id: "doku-ewallet", label: "E-wallet", hint: "Bayar langsung dari aplikasi dompet digital." },
+  { prefix: "ONLINE_TO_OFFLINE_", id: "doku-retail", label: "Gerai retail", hint: "Bayar tunai di Alfamart/Indomaret." },
+  { prefix: "CREDIT_CARD", id: "doku-card", label: "Kartu kredit/debit", hint: "Visa, Mastercard, JCB." },
+];
+
+/** QRIS manual (transfer + bukti WhatsApp) sebagai cadangan di samping gateway: env PAYMENT_MANUAL_FALLBACK=true. */
+export function isManualFallbackEnabled() {
+  return process.env.PAYMENT_MANUAL_FALLBACK?.trim().toLowerCase() === "true";
+}
+
+const MANUAL_OPTION: PaymentMethodOption = {
+  id: "manual",
+  label: "QRIS manual (konfirmasi admin)",
+  hint: "Scan QRIS, transfer tepat sesuai nominal + kode unik, lalu kirim bukti ke WhatsApp admin. Premium aktif setelah diverifikasi.",
+};
+
+/**
+ * Cara bayar untuk penyedia aktif. DOKU: QRIS selalu jadi metode utama; metode lain
+ * dikelompokkan dari env DOKU_PAYMENT_METHODS (kosong/"ALL" → satu opsi "metode lain" yang
+ * membuka semua channel aktif di akun DOKU).
+ */
+export function paymentMethodOptions(provider: PaymentProvider = activeProvider()): PaymentMethodOption[] {
+  if (provider === "manual") return [{ ...MANUAL_OPTION, label: "QRIS", primary: true }];
+  const options: PaymentMethodOption[] = [];
+  if (provider === "doku") {
+    const listed = dokuPaymentMethods();
+    const all = listed.length === 0;
+    if (all || listed.includes("QRIS")) {
+      options.push({ id: "doku-qris", label: "QRIS", hint: "Scan dari GoPay, OVO, DANA, ShopeePay, LinkAja, atau m-banking. Paling cepat, Premium aktif otomatis.", primary: true, channels: ["QRIS"] });
+    }
+    if (all) {
+      options.push({ id: "doku-other", label: "Metode lain", hint: "Virtual Account bank, e-wallet, dan metode lain yang tersedia di halaman pembayaran DOKU.", channels: [] });
+    } else {
+      for (const g of DOKU_GROUPS) {
+        const channels = listed.filter((c) => c.startsWith(g.prefix));
+        if (channels.length) options.push({ id: g.id, label: g.label, hint: g.hint, channels });
+      }
+      const rest = listed.filter((c) => c !== "QRIS" && !DOKU_GROUPS.some((g) => c.startsWith(g.prefix)));
+      if (rest.length) options.push({ id: "doku-other", label: "Metode lain", hint: "Metode lain yang tersedia di halaman pembayaran DOKU.", channels: rest });
+    }
+    if (options.length && !options.some((o) => o.primary)) options[0].primary = true;
+  } else {
+    options.push({ id: provider, label: `Bayar online (${PROVIDER_LABEL[provider]})`, hint: "QRIS, transfer bank (Virtual Account), atau e-wallet.", primary: true });
+  }
+  if (isManualFallbackEnabled()) options.push(MANUAL_OPTION);
+  return options;
 }

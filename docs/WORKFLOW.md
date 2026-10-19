@@ -242,6 +242,41 @@ bila `MIDTRANS_SERVER_KEY` terisi). DOKU (§8) tetap ada sebagai alternatif.
 6. Go-live: ganti ke Client ID & Secret Key **Production**,
    `DOKU_IS_PRODUCTION=true`, ulangi langkah 3 di Back Office Production.
 
+### 8.1 Go-live DOKU Production — QRIS utama + metode lain (2026-10-19)
+
+Siswa menekan "Bayar sekarang" → dialog **Pilih cara pembayaran**: QRIS (utama,
+disarankan) + metode lain → diarahkan ke halaman DOKU Checkout → Premium aktif
+otomatis lewat webhook. Tidak perlu migrasi.
+
+1. **Kunci Production.** DOKU Back Office **Production** (https://dashboard.doku.com)
+   → Integration → API Keys → salin Client ID (`BRN-…`) & Secret Key. Isi langsung di
+   hPanel (jangan lewat chat/email/screenshot): `DOKU_CLIENT_ID`, `DOKU_SECRET_KEY`,
+   `DOKU_IS_PRODUCTION=true`. Kunci Sandbox tidak berlaku di Production (dan sebaliknya).
+2. **Penyedia aktif.** `PAYMENT_PROVIDER=doku` (atau hapus env itu; DOKU terpilih otomatis
+   bila Live). Pastikan `PAYMENT_PROVIDER` **bukan** `manual`. `SITE_URL=https://pakartka.com`.
+3. **Metode bayar.** `DOKU_PAYMENT_METHODS` kosong = QRIS + "Metode lain" (semua channel
+   yang aktif di akun DOKU). Untuk daftar terpisah per jenis, isi kode channel yang
+   **sudah aktif** di Back Office, mis. `QRIS,VIRTUAL_ACCOUNT_BCA,VIRTUAL_ACCOUNT_BRI,VIRTUAL_ACCOUNT_BNI,VIRTUAL_ACCOUNT_BANK_MANDIRI`
+   (channel nonaktif → DOKU menolak transaksi). Cadangan QRIS manual:
+   `PAYMENT_MANUAL_FALLBACK=true` (opsional). Redeploy setelah mengubah env.
+4. **Notification URL** (Back Office Production → Settings → Payment Settings):
+   `https://pakartka.com/api/doku/notification`. Tanpa ini Premium baru aktif saat siswa
+   membuka halaman selesai.
+5. **Cek dari admin.** Admin → Langganan & Pembayaran → kartu DOKU harus
+   "terhubung — mode PRODUKSI" + "Dipakai", lalu **Tes koneksi** → "Kredensial valid ✓".
+   Baris "Pilihan cara bayar untuk siswa" menampilkan QRIS (utama) + metode lain.
+6. **Transaksi uji nyata** (paket termurah, akun siswa uji): bayar QRIS → kembali ke
+   `/langganan/selesai` → "Pembayaran berhasil — Premium aktif" → Admin → **Transaksi**
+   menampilkan order `WTP-…` **Lunas**. Cocokkan dengan Back Office DOKU → Transactions
+   (invoice & nominal sama). Ulangi sekali dengan Virtual Account bila diaktifkan.
+7. **Pengamanan yang sudah ada di kode** (jangan dilonggarkan): Secret Key hanya di
+   server (env, tidak pernah ke browser); setiap request ke DOKU ditandatangani HMAC;
+   webhook ditolak bila signature salah (401); status selalu dicek ulang ke Check Status
+   API DOKU (notifikasi palsu tidak bisa mengaktifkan Premium); nominal harus sama dengan
+   order; satu order hanya mengaktifkan satu membership (idempoten).
+8. **Rutin:** rekonsiliasi mingguan Admin → Transaksi (Lunas) vs laporan settlement DOKU;
+   ganti Secret Key di Back Office bila pernah terlihat orang lain, lalu perbarui env.
+
 ## 8b. Halaman legal (/privasi, /syarat)
 
 Kebijakan Privasi & Syarat & Ketentuan sudah tersedia (tautan di footer & form

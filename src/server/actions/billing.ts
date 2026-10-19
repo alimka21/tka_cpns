@@ -27,12 +27,13 @@ async function siteUrl() {
   return host ? `${h.get("x-forwarded-proto") ?? "https"}://${host}` : SITE_URL;
 }
 
-export async function createOrderAction(planId: number): Promise<Result<{ redirectUrl: string }>> {
+export async function createOrderAction(planId: number, methodId?: string): Promise<Result<{ redirectUrl: string }>> {
   const session = await getActiveSession();
   if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
   if (!id.safeParse(planId).success) return { ok: false, error: "Paket tidak valid." };
+  if (methodId !== undefined && !z.string().regex(/^[a-z-]{2,30}$/).safeParse(methodId).success) return { ok: false, error: "Metode pembayaran tidak valid." };
   const u = session.user;
-  const result = await createOrder({ id: Number(u.id), name: u.name, email: u.email, role: u.role, jenjang: u.jenjang ?? null }, planId, await siteUrl());
+  const result = await createOrder({ id: Number(u.id), name: u.name, email: u.email, role: u.role, jenjang: u.jenjang ?? null }, planId, await siteUrl(), methodId);
   return result.ok ? { ok: true, redirectUrl: result.redirectUrl } : result;
 }
 

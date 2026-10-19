@@ -1,5 +1,6 @@
-// Webhook HTTP Notification DOKU. URL ini dikirim di setiap transaksi Checkout
-// (additional_info.override_notification_url), jadi tidak bergantung setelan dashboard DOKU.
+// Webhook HTTP Notification DOKU. Wajib dipasang di DOKU dashboard: Settings → Payment
+// Settings → QR Payment (& metode lain) → CONFIGURE → Notification URL. Kode juga mengirim
+// additional_info.override_notification_url (hanya berlaku bila URL dashboard sudah terpasang).
 // Alur: verifikasi signature (Request-Target = path ini, Digest dari body mentah)
 // → ambil ulang status dari Check Status API (sumber kebenaran, kebal payload
 // palsu) → terapkan ke order (idempoten). DOKU hanya butuh HTTP 2xx.

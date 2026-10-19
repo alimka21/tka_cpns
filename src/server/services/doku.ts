@@ -120,7 +120,7 @@ function errorText(json: Record<string, unknown>, status: number) {
 /** Buat halaman bayar DOKU Checkout; siswa diarahkan ke `url`. `channels` kosong = semua channel aktif. */
 export async function createCheckout(input: {
   channels?: string[];
-  /** URL webhook untuk transaksi ini (override_notification_url) — tidak bergantung setelan dashboard DOKU. */
+  /** URL webhook transaksi ini (override_notification_url); DOKU mewajibkan Notification URL berpath sama di Back Office. */
   notificationUrl?: string;
   invoiceNumber: string;
   amount: number;

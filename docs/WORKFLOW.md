@@ -259,13 +259,13 @@ otomatis lewat webhook. Tidak perlu migrasi.
    **sudah aktif** di Back Office, mis. `QRIS,VIRTUAL_ACCOUNT_BCA,VIRTUAL_ACCOUNT_BRI,VIRTUAL_ACCOUNT_BNI,VIRTUAL_ACCOUNT_BANK_MANDIRI`
    (channel nonaktif → DOKU menolak transaksi). Cadangan QRIS manual:
    `PAYMENT_MANUAL_FALLBACK=true` (opsional). Redeploy setelah mengubah env.
-4. **Notification URL** — dikirim otomatis di setiap transaksi
-   (`additional_info.override_notification_url` = `SITE_URL` + `/api/doku/notification`), jadi
-   tidak wajib diisi di dashboard. Bila dashboard menyediakan kolomnya (Settings → Payment
-   Settings → QR Payment), isi dengan `https://pakartka.com/api/doku/notification`.
-   Settings → Notifications → HTTP Notifications hanya berisi log pengiriman & email
-   pemberitahuan bila notifikasi gagal. Tanpa ini Premium baru aktif saat siswa
-   membuka halaman selesai.
+4. **Notification URL (WAJIB di dashboard).** dashboard.doku.com → Settings → Payment
+   Settings → **QR Payment** (dan setiap metode lain yang aktif: Virtual Account, e-Wallet,
+   Cards → Payment Configuration, dst.) → tombol **CONFIGURE** → Notification URL =
+   `https://pakartka.com/api/doku/notification`. Kode juga mengirim
+   `additional_info.override_notification_url` di setiap transaksi, tetapi menurut DOKU
+   override hanya berlaku bila Notification URL dengan path yang sama sudah terpasang di
+   Back Office. Settings → Notifications → HTTP Notifications hanya log pengiriman.
 5. **Cek dari admin.** Admin → Langganan & Pembayaran → kartu DOKU harus
    "terhubung — mode PRODUKSI" + "Dipakai", lalu **Tes koneksi** → "Kredensial valid ✓".
    Baris "Pilihan cara bayar untuk siswa" menampilkan QRIS (utama) + metode lain.

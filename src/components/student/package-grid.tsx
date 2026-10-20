@@ -2,10 +2,11 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Clock, Crown, FileQuestion, Gift, Lock, Play } from "lucide-react";
+import { Clock, Crown, FileQuestion, Gift, Lock } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { DownloadPackageButton } from "@/components/student/download-package-button";
+import { StartTestButton } from "@/components/student/start-test-button";
 import type { StudentPackageRow } from "@/server/queries/packages";
 import { formatScore } from "@/lib/score-display";
 import { cn } from "@/lib/utils";
@@ -137,9 +138,7 @@ function PackageCard({ pkg, premium }: { pkg: StudentPackageRow; premium: boolea
             <Crown aria-hidden /> Buka dengan Premium
           </Button>
         ) : (
-          <Button nativeButton={false} className="flex-1" render={<Link href={`/tes/${pkg.id}`} />}>
-            <Play aria-hidden /> Mulai Tes
-          </Button>
+          <StartTestButton href={`/tes/${pkg.id}`} title={pkg.title} questionCount={pkg.questionCount} durationMinutes={pkg.durationMinutes} className="flex-1" />
         )}
         <DownloadPackageButton packageId={pkg.id} premium={premium} />
       </div>

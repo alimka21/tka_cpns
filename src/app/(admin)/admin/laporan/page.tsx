@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Flag, Pencil } from "lucide-react";
+import { AiFixPanel } from "@/components/admin/ai-fix-panel";
 import { ResolveReportButton } from "@/components/admin/resolve-report-button";
 import { ReviewCard } from "@/components/hasil/review-card";
 import { PageHeader } from "@/components/layout/page-header";
@@ -19,7 +20,7 @@ export default async function AdminLaporanPage() {
     <div className="flex flex-col gap-6">
       <PageHeader
         title="Laporan Soal"
-        description="Soal yang dilaporkan siswa (kunci salah, ambigu, di luar materi, dst.). Perbaiki soal bank lewat Edit, lalu tandai selesai. Soal “Latihan AI” adalah soal privat siswa — cukup dicatat & ditandai selesai."
+        description="Soal yang dilaporkan siswa (kunci salah, ambigu, di luar materi, dst.). Perbaiki soal bank lewat Edit atau Perbaiki dengan AI (berdasarkan laporan siswa + catatanmu), lalu tandai selesai. Soal “Latihan AI” adalah soal privat siswa — cukup dicatat & ditandai selesai."
       />
       {groups.length === 0 ? (
         <p className="surface-card px-6 py-12 text-center text-sm text-muted-foreground">Tidak ada laporan terbuka. 🎉</p>
@@ -56,6 +57,7 @@ export default async function AdminLaporanPage() {
                   </li>
                 ))}
               </ul>
+              {"questionId" in g.target && g.review && <AiFixPanel questionId={g.target.questionId} />}
               {g.review ? (
                 <ReviewCard item={g.review} keyOnly />
               ) : (

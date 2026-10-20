@@ -25,6 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AchievementBadge } from "@/components/analytics/achievement-badge";
 import { formatDateTime, masteryTone } from "@/lib/format";
+import { StartTestButton } from "@/components/student/start-test-button";
 import { formatScore, scoreDiff, SIMULATION_NOTE } from "@/lib/score-display";
 import { SCALE_LABEL, SCALE_RANGE } from "@/lib/score-scale";
 import { PremiumLock } from "@/components/billing/premium-lock";
@@ -155,13 +156,16 @@ export default async function HasilPage({
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Button
+          <StartTestButton
+            href={`/tes/${r.packageId}?ulang=1`}
+            title={r.packageTitle}
+            questionCount={r.correct + r.wrong + r.blank}
+            durationMinutes={r.durationMinutes}
+            label="Kerjakan lagi"
+            icon={RotateCcw}
             variant="outline"
-            nativeButton={false}
-            render={<Link href={`/tes/${r.packageId}?ulang=1`} />}
-          >
-            <RotateCcw aria-hidden /> Kerjakan lagi
-          </Button>
+            retake
+          />
         </div>
       </header>
 

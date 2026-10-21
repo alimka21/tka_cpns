@@ -65,6 +65,10 @@ buat baru mengikuti gaya file lain, ringkas dan dalam poin-poin.
 - Deskripsi paket tes (`test_packages.description`) **tampil ke siswa** — tulis untuk siswa
   (isi paket: jumlah soal, tema, stimulus). Jangan sebut Claude/Gemini/AI atau catatan
   internal ("tinjau sebelum terbit"). Cek: `npm run db:clean-descriptions`.
+- Jangan kirim fungsi/komponen (mis. ikon lucide `icon={X}`, callback) sebagai prop dari
+  Server Component ke Client Component — `npm run build` lolos tetapi halaman 500 saat
+  dibuka. Kirim string/flag, pilih ikonnya di dalam komponen client. Setelah menambah
+  komponen client di halaman server, buka halamannya (dev server) untuk memastikan 200.
 - Setiap tabel baru → tulis migrasinya dengan Drizzle Kit, jangan ubah
   skema manual di dashboard Hostinger.
 - Commit kecil dan sering, pesan commit dalam bahasa Indonesia singkat,

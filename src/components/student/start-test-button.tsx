@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Clock, FileQuestion, LoaderCircle, Play, type LucideIcon } from "lucide-react";
+import { Clock, FileQuestion, LoaderCircle, Play, RotateCcw } from "lucide-react";
 import {
   AlertDialog,
   AlertDialogCancel,
@@ -24,7 +24,6 @@ export function StartTestButton({
   questionCount,
   durationMinutes,
   label = "Mulai Tes",
-  icon: Icon = Play,
   variant,
   className,
   retake = false,
@@ -34,12 +33,13 @@ export function StartTestButton({
   questionCount: number;
   durationMinutes: number;
   label?: string;
-  icon?: LucideIcon;
   variant?: "default" | "outline";
   className?: string;
-  /** Mengerjakan ulang paket yang sudah pernah dikerjakan. */
+  /** Mengerjakan ulang paket yang sudah pernah dikerjakan (ikon putar ulang). */
   retake?: boolean;
 }) {
+  // Ikon dipilih di sini, bukan lewat prop: komponen server tidak boleh mengirim fungsi (komponen ikon) ke komponen client.
+  const Icon = retake ? RotateCcw : Play;
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [going, setGoing] = useState(false);

@@ -14,7 +14,6 @@ import {
   LayoutDashboard,
   ListChecks,
   Minus,
-  RotateCcw,
   Timer,
   TriangleAlert,
   X,
@@ -162,7 +161,6 @@ export default async function HasilPage({
             questionCount={r.correct + r.wrong + r.blank}
             durationMinutes={r.durationMinutes}
             label="Kerjakan lagi"
-            icon={RotateCcw}
             variant="outline"
             retake
           />

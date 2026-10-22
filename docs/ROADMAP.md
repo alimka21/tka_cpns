@@ -1,8 +1,24 @@
-# Roadmap — Web Tes Premium
+# Roadmap — Pakar TKA (dulu Web Tes Premium)
 
 ## Status saat ini
 
 **Scope: TKA sekolah saja (SD/SMP/SMA), CPNS dihapus 2026-09-24.**
+
+**Ringkasan per 2026-10-22 (baca ini dulu):**
+- Pembayaran: **DOKU Checkout Production aktif** — QRIS utama + metode lain, Premium aktif
+  otomatis via webhook; uji transaksi nyata berhasil 2026-10-19. Xendit/Midtrans tidak dipakai
+  (kode backend dibiarkan untuk order lama). QRIS manual = cadangan opsional
+  (`PAYMENT_MANUAL_FALLBACK=true`).
+- **Menunggu tindakan pemilik produk:**
+  1. Deploy kode terbaru (termasuk fix 500 halaman hasil, `24066a3`).
+  2. Impor 5 paket draf ke produksi (data di `scripts/paket-data/`): SMP Matematika &
+     B. Indonesia Paket 3, SMA Matematika/B. Indonesia/B. Inggris Paket 7 —
+     `npx tsx --env-file=.env.prod scripts/import-package.ts <file> --commit`.
+  3. `npm run prod:db:clean-descriptions -- --apply` (deskripsi paket tanpa nama AI).
+  4. Tinjau & terbitkan paket draf di Admin → Paket Tes (#43, #44, #52–#57 bila belum).
+- **Belum diuji dengan layanan asli:** Generate AI / Latihan AI / Perbaiki dengan AI dengan key
+  Gemini asli; batch AI di Buat Paket Otomatis; email backup via SMTP asli; uji beban alur
+  ujian ke produksi (WORKFLOW §11b, perlu izin).
 
 **Fase 1 + 1.5 selesai 2026-09-29:** alur inti produk sekarang nyata
 end-to-end — admin bisa import/tambah soal → terbitkan → susun paket tes
@@ -48,6 +64,16 @@ grup multi-subtopik; Generate AI soal grup bisa lintas subtopik.
 **2026-10-01 (4):** aturan paket TKA ditegakkan (docs/ATURAN_PAKET.md):
 paket punya mapel, jumlah soal/durasi/rasio PG dicek, terbit diblokir bila
 belum sesuai. Pasangan kategori Ya/Tidak. Migrasi 0015 sudah dijalankan.
+**2026-10-21:** fix 500 di semua halaman hasil tes (`/hasil/...`) — ikon tombol "Kerjakan lagi" dikirim sebagai fungsi dari Server Component ke Client Component (build lolos, render gagal). Aturan pencegahan ditambahkan di CLAUDE.md.
+**2026-10-20 (2):** pop-up konfirmasi sebelum mulai tes ("Mulai Tes" & "Kerjakan lagi"): judul, jumlah soal, durasi, Lanjutkan/Batal.
+**2026-10-20:** Laporan Soal → **Perbaiki dengan AI** (soal bank): catatan admin + laporan siswa → Gemini (key admin) memberi analisis & usulan sebelum/sesudah yang bisa disunting → Terapkan (lewat updateQuestionAction; kunci soal yang sudah dijawab tetap terkunci) + opsi tutup laporan.
+**2026-10-19 (5):** paket draf SMA Matematika, B. Indonesia, B. Inggris — Paket 7 (80 soal baru, 9 gambar SVG baru; semua aturan & saran OK) di `scripts/paket-data/sma-*-p7.ts`, **belum diimpor ke produksi**.
+**2026-10-19 (4):** fokus DOKU — kartu Xendit & Midtrans dihapus dari admin, DOKU didahulukan saat `PAYMENT_PROVIDER` kosong, FAQ landing & halaman Privasi/Syarat menyebut DOKU (berlaku 19 Oktober 2026).
+**2026-10-19 (3):** build Hostinger gagal "os error 11" (63 worker) → `next.config.ts` `experimental.cpus: 1`, `workerThreads: false`.
+**2026-10-19 (2):** Notification URL DOKU wajib di dashboard (Settings → Payment Settings → QR Payment & metode lain → CONFIGURE) + `additional_info.override_notification_url` di setiap transaksi (WORKFLOW §8.1).
+**2026-10-19:** beli Premium → dialog **pilih cara bayar**: QRIS DOKU (utama) + metode lain (VA/e-wallet sesuai channel aktif atau `DOKU_PAYMENT_METHODS`); QRIS manual cadangan opsional. Panduan go-live & pengamanan DOKU di WORKFLOW §8.1.
+**2026-10-18:** konfirmasi sebelum keluar (admin & siswa); tombol "Unduh PDF" merah berlabel di kartu paket; popup ajakan Premium setelah tes dihapus; halaman materi `/tka/*` dirender per kunjungan (sebelumnya 404 di produksi, DECISIONS 2026-10-17).
+**2026-10-17 (2):** paket draf SMP Matematika & B. Indonesia — Paket 3 (30 soal paket + 10 soal khusus bank masing-masing, 15 gambar SVG) di `scripts/paket-data/smp-*-p3.ts`, **belum diimpor ke produksi**. Skrip impor mendukung `bankOnly`, `createdByEmail`, `--created-by`.
 **2026-10-17:** QRIS manual otomatis dipakai bila belum ada gateway Live (tanpa env); petunjuk "Cara bayar" di /langganan. Filter siswa: kartu mata pelajaran (jumlah paket & tes selesai) + jenis paket Gratis/Premium dalam satu panel (`?akses=`). Deskripsi paket dibersihkan dari nama AI — **produksi: `npm run prod:db:clean-descriptions -- --apply`**.
 **2026-10-16 (8):** satu akun siswa hanya aktif di satu perangkat — login baru mengeluarkan perangkat lain (admin bebas); perangkat lama melihat pesan di /masuk.
 **2026-10-16 (7):** menu admin **Transaksi** baru (`/admin/transaksi`: tab Perlu verifikasi/Lunas/Kedaluwarsa, cari nominal kode unik, dialog Verifikasi + kabari siswa via WA, rekap pendapatan hari/bulan, badge sidebar; order menunggu > 3 hari otomatis kedaluwarsa). **Manajemen User** kini kolom Langganan dari membership (Premium aktif/segera berakhir/kedaluwarsa/Gratis, beri/perpanjang/cabut per baris). Halaman Langganan hanya paket & penyedia.
@@ -399,11 +425,15 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
       premium jenjangnya + Latihan Kelemahan
 - [x] Midtrans Snap dipasang lagi berdampingan DOKU (`PAYMENT_PROVIDER`) — 2026-10-13;
       uji Sandbox asli oleh admin berhasil (QRIS via simulator → Premium aktif)
-- [ ] Midtrans Production: menunggu review bisnis disetujui → ganti Server Key
-      Production + `MIDTRANS_IS_PRODUCTION=true`, uji QRIS asli (WORKFLOW §8a)
-- [ ] DOKU: QRIS belum aktif di akun DOKU (cadangan; tidak menghalangi)
+- [x] ~~Midtrans Production~~ — tidak dilanjutkan; DOKU dipakai (2026-10-19)
+- [x] DOKU Production aktif: QRIS utama + metode lain, webhook + override notification URL,
+      uji transaksi nyata berhasil (2026-10-19, WORKFLOW §8.1)
+- [x] Pilih cara bayar saat membeli Premium (QRIS utama) — 2026-10-19
+- [x] Menu admin Transaksi (verifikasi, rekap pendapatan) & kelola Premium per user — 2026-10-16
 - [x] Pembayaran QRIS manual + kode unik + konfirmasi admin (2026-10-16) — dipakai sampai gateway aktif
-- [ ] Email/WA notifikasi pembayaran (opsional)
+- [ ] Email/WA notifikasi pembayaran otomatis ke siswa (opsional; kini hanya tombol
+      "Kabari via WhatsApp" manual di Transaksi untuk QRIS manual)
+- [ ] Rekonsiliasi pembayaran DOKU vs Transaksi (otomatis/laporan) — saat ini manual (WORKFLOW §8.1 langkah 8)
 - [x] Ganti kata sandi di Pengaturan/Profil (+ "Buat kata sandi" untuk akun Google-only) — 2026-10-02
 - [x] Admin: atur ulang kata sandi user (kata sandi sementara tampil sekali, hanya hash disimpan) — 2026-10-07
 - [x] Lupa kata sandi (link reset via email, 1 jam, sekali pakai) — 2026-10-07; aktif setelah env SMTP diisi di hPanel (WORKFLOW §10)
@@ -415,7 +445,10 @@ Keputusan: bank dulu → AI menambal; soal AI latihan langsung dipakai
 - [x] Review index database & query lambat — migrasi 0016 (12 index) + cache
       detail paket + autosave 1 query lebih sedikit (DECISIONS 2026-10-03)
 - [x] Manajemen User: filter, tab status, statistik & paginasi (50/hal) di server via query string (2026-10-06)
-- [ ] Rencana migrasi ke VPS Hostinger kalau trafik naik
+- [x] Satu akun siswa = satu perangkat (anti pinjam akun) — 2026-10-16
+- [ ] Uji HTTP alur ujian ke produksi (WORKFLOW §11b, perlu izin pemilik produk)
+- [ ] Smoke test otomatis halaman utama setelah build (mencegah 500 seperti 2026-10-21)
+- [ ] Rencana migrasi ke VPS Hostinger kalau trafik naik (catatan: build Hostinger dibatasi thread, lihat 2026-10-19 (3))
 - [x] Backup otomatis database — 2026-10-14: `/api/cron/backup` (cron hPanel) + `/admin/backup` + `prod:db:backup`; aktif setelah env CRON_SECRET & cron dipasang (WORKFLOW §14). Email salinan belum diuji dengan SMTP asli
 
 ## Prinsip urutan kerja

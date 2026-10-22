@@ -6,6 +6,24 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-10-20 — "Perbaiki dengan AI" di Laporan Soal: usulan, bukan perubahan otomatis
+Gemini (key admin, sesuai aturan key per user) menerima soal + opsi + kunci + pembahasan +
+stimulus + semua laporan terbuka + catatan admin, lalu mengembalikan JSON (valid/tidak,
+analisis, usulan). Output divalidasi Zod + aturan bentuk soal (`questionInput`); jumlah opsi
+wajib sama. Soal yang sudah dijawab: usulan perubahan kunci dibuang & ditandai (konsisten
+dengan `editLockViolation`). Penyimpanan hanya lewat `updateQuestionAction` setelah admin
+meninjau/menyunting. Hanya soal bank — soal Latihan AI privat milik siswa. Batasan: AI tidak
+melihat gambar soal (hanya teks).
+
+## 2026-10-19 — DOKU sebagai satu-satunya gateway; pilih cara bayar dengan QRIS utama
+DOKU Production aktif (Midtrans/Xendit tidak dilanjutkan; kode backend tetap untuk order
+lama). Saat membeli, siswa memilih cara bayar: QRIS (utama, `payment_method_types: ["QRIS"]`)
+atau metode lain (`[]` = semua channel aktif di akun DOKU, atau dikelompokkan dari
+`DOKU_PAYMENT_METHODS`) — tanpa perlu tahu channel mana yang aktif. Notification URL dipasang
+per metode di dashboard (wajib) + `override_notification_url` per transaksi. Auto-pilih
+penyedia kini DOKU lebih dulu. Build dibatasi `experimental.cpus: 1` karena server build
+Hostinger melaporkan 63 CPU tetapi membatasi thread (os error 11).
+
 ## 2026-10-17 — Halaman materi /tka/* dirender per kunjungan (bukan prerender + ISR)
 Produksi (Hostinger) membalas 404 dari cache prerender (`x-nextjs-cache: HIT`) untuk semua
 /tka/{sd,smp,sma}[/mapel], padahal build lokal + `next start` 200 (juga setelah revalidasi).

@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ArrowRight, AtSign, CircleCheck, Eye, EyeOff, Info, Lock, Mail, Phone, School, TriangleAlert, User, type LucideIcon } from "lucide-react";
+import { ArrowRight, AtSign, CircleCheck, Eye, EyeOff, Gift, Info, Lock, Mail, Phone, School, TriangleAlert, User, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/brand/logo";
 import { JenjangPicker } from "@/components/profile/jenjang-picker";
 import { ProvinceSelect } from "@/components/profile/province-select";
@@ -24,6 +24,7 @@ const AUTH_ERRORS: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "Username/nomor HP/email atau kata sandi salah.",
   PHONE_SHARED: "Nomor HP ini dipakai beberapa akun. Masuk dengan username.",
   USERNAME_TAKEN: "Username sudah dipakai. Coba yang lain.",
+  INVALID_REFERRAL: "Kode referal tidak ditemukan. Periksa lagi atau kosongkan kolomnya.",
   INVALID_USERNAME: "Username tidak valid.",
   INVALID_PHONE: "Nomor HP tidak valid.",
   INVALID_PROVINCE: "Pilih provinsi asal.",
@@ -71,6 +72,7 @@ export function AuthForm({
   oauthError,
   success,
   info,
+  referralCode,
 }: {
   mode: Mode;
   next?: string;
@@ -78,6 +80,8 @@ export function AuthForm({
   oauthError?: string;
   /** Pesan hijau di atas form (mis. setelah kata sandi berhasil diatur ulang). */
   success?: string;
+  /** Kode referal dari link `?ref=` (form daftar terisi otomatis). */
+  referralCode?: string;
   /** Pesan kuning di atas form (mis. dikeluarkan karena login di perangkat lain). */
   info?: string;
 }) {
@@ -138,6 +142,8 @@ export function AuthForm({
           phone: signUp.data.phone,
           province: signUp.data.province,
           schoolName: signUp.data.schoolName,
+          // Kode teman → pemberi referal (divalidasi & disimpan di server/auth).
+          ...({ ref: signUp.data.ref } as object),
         })
       : await authClient.signIn.email({ email: (parsed.data as { identifier: string }).identifier, password });
     if (error) {
@@ -283,6 +289,20 @@ export function AuthForm({
                 className="pl-10"
                 aria-invalid={!!errors.phone}
                 aria-describedby={errors.phone ? "phone-error" : "phone-hint"}
+              />
+            </Field>
+            <Field id="ref" label="Kode referal (opsional)" icon={Gift} error={errors.ref} hint="Punya kode dari teman atau guru? Masukkan di sini.">
+              <Input
+                id="ref"
+                name="ref"
+                defaultValue={referralCode ?? ""}
+                autoComplete="off"
+                autoCapitalize="characters"
+                maxLength={12}
+                placeholder="Contoh: PKR7Q2X"
+                className="pl-10 uppercase"
+                aria-invalid={!!errors.ref}
+                aria-describedby={errors.ref ? "ref-error" : "ref-hint"}
               />
             </Field>
             <Field id="email" label="Email (opsional)" icon={Mail} error={errors.email} hint="Boleh dikosongkan bila belum punya email.">

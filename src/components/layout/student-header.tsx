@@ -14,6 +14,7 @@ const baseNav = [
   { href: "/progres", label: "Progres" },
   { href: "/riwayat", label: "Riwayat" },
   { href: "/langganan", label: "Premium" },
+  { href: "/referal", label: "Referal" },
   { href: "/pengaturan", label: "Pengaturan" },
 ];
 

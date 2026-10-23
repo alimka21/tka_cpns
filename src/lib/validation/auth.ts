@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { requiredPhoneSchema, usernameSchema } from "@/lib/identity";
 import { provinceSchema, schoolNameSchema } from "@/lib/provinces";
+import { referralCodeInput } from "@/lib/referral";
 
 // Dipakai form client & (nanti) handler Better Auth di server.
 
@@ -29,6 +30,8 @@ export const signUpInput = z
     schoolName: schoolNameSchema,
     // Opsional: siswa tanpa email tetap bisa daftar (masuk dengan username / No. HP).
     email: z.string().trim().toLowerCase().pipe(z.union([z.literal(""), z.email("Format email tidak valid.")])),
+    /** Kode referal teman (opsional). */
+    ref: referralCodeInput.optional().default(""),
     password: newPassword,
     confirmPassword: z.string(),
   })

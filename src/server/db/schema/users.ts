@@ -46,6 +46,10 @@ export const users = mysqlTable("users", {
    * (bila pengaturan `registration.requireApproval` aktif); rejected = ditolak.
    */
   status: mysqlEnum("status", USER_STATUSES).notNull().default("active"),
+  /** Kode referal milik user ini (lib/referral). NULL = akun lama, dibuat saat membuka halaman Referal. */
+  referralCode: varchar("referral_code", { length: 12 }).unique(),
+  /** User yang kodenya dipakai saat mendaftar (pemberi referal). */
+  referredByUserId: int("referred_by_user_id"),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 }, (t) => [
@@ -54,6 +58,7 @@ export const users = mysqlTable("users", {
   index("users_created_at_idx").on(t.createdAt),
   index("users_phone_idx").on(t.phone),
   index("users_province_idx").on(t.province),
+  index("users_referred_by_idx").on(t.referredByUserId),
 ]);
 
 export const sessions = mysqlTable(

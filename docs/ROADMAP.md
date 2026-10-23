@@ -10,7 +10,8 @@
   (kode backend dibiarkan untuk order lama). QRIS manual = cadangan opsional
   (`PAYMENT_MANUAL_FALLBACK=true`).
 - **Menunggu tindakan pemilik produk:**
-  1. Deploy kode terbaru (termasuk fix 500 halaman hasil, `24066a3`).
+  1. Deploy kode terbaru (termasuk fix 500 halaman hasil, `24066a3`) lalu **`npm run prod:migrate`
+     (migrasi 0023 — program referal; tanpa ini daftar/masuk error 500)**.
   2. Impor 5 paket draf ke produksi (data di `scripts/paket-data/`): SMP Matematika &
      B. Indonesia Paket 3, SMA Matematika/B. Indonesia/B. Inggris Paket 7 —
      `npx tsx --env-file=.env.prod scripts/import-package.ts <file> --commit`.
@@ -19,6 +20,11 @@
 - **Belum diuji dengan layanan asli:** Generate AI / Latihan AI / Perbaiki dengan AI dengan key
   Gemini asli; batch AI di Buat Paket Otomatis; email backup via SMTP asli; uji beban alur
   ujian ke produksi (WORKFLOW §11b, perlu izin).
+
+**2026-10-24:** program referal — kode unik per user, kolom kode di form daftar + `/daftar?ref=`,
+halaman siswa `/referal` (kode, link, bagikan WA, teman terdaftar, komisi, rekening), admin
+`/admin/referal` (pendaftar/pembeli/komisi per pemberi kode, catat transfer manual, atur persen).
+Komisi 20% per pembayaran lunas (DECISIONS 2026-10-24). Migrasi 0023.
 
 **Fase 1 + 1.5 selesai 2026-09-29:** alur inti produk sekarang nyata
 end-to-end — admin bisa import/tambah soal → terbitkan → susun paket tes

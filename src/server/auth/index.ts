@@ -12,7 +12,9 @@ import { accounts, sessions, users, verifications } from "@/server/db/schema";
 import { PLACEHOLDER_EMAIL_DOMAIN, isPlaceholderEmail, looksLikePhone, normalizePhone, requiredPhoneSchema, usernameSchema } from "@/lib/identity";
 import { provinceSchema, schoolNameSchema } from "@/lib/provinces";
 import { SITE_NAME } from "@/lib/site";
+import { normalizeReferralCode } from "@/lib/referral";
 import { getSetting } from "@/server/services/app-settings";
+import { findReferrerByCode, newUniqueReferralCode } from "@/server/services/referrals";
 import { isMailConfigured, resetPasswordEmail, sendMail } from "@/server/services/mailer";
 
 export const ROLES = ["student", "admin"] as const;
@@ -85,6 +87,9 @@ export const auth = betterAuth({
       // Data pendaftaran (wajib di form daftar email; akun Google melengkapinya di /pilih-jenjang).
       province: { type: "string", required: false, input: true },
       schoolName: { type: "string", required: false, input: true },
+      // Program referal — diatur sistem saja (databaseHooks), bukan dari input form.
+      referralCode: { type: "string", required: false, input: false },
+      referredByUserId: { type: "number", required: false, input: false },
     },
   },
   databaseHooks: {
@@ -104,9 +109,13 @@ export const auth = betterAuth({
     user: {
       create: {
         // Bila admin mewajibkan konfirmasi, pendaftar baru menunggu persetujuan.
-        before: async (user) => {
+        // Setiap akun baru langsung punya kode referal sendiri; kode teman (`ref`, form daftar)
+        // menjadi pemberi referal. Kode sudah divalidasi di hooks.before (normalizeSignUp).
+        before: async (user, ctx) => {
           const requireApproval = await getSetting("registration.requireApproval");
-          return { data: { ...user, status: requireApproval ? "pending" : "active" } };
+          const ref = (ctx?.body as Record<string, unknown> | undefined)?.ref;
+          const [referralCode, referredByUserId] = await Promise.all([newUniqueReferralCode(), findReferrerByCode(ref)]);
+          return { data: { ...user, status: requireApproval ? "pending" : "active", referralCode, referredByUserId } };
         },
       },
     },
@@ -163,10 +172,16 @@ async function normalizeSignUp(body: Record<string, unknown>) {
   const schoolName = schoolNameSchema.safeParse(typeof body.schoolName === "string" ? body.schoolName : "");
   if (!schoolName.success) throw new APIError("BAD_REQUEST", { message: schoolName.error.issues[0].message, code: "INVALID_SCHOOL" });
 
+  // Kode referal opsional; diisi tapi tidak dikenal → beri tahu (jangan diam-diam diabaikan).
+  const ref = normalizeReferralCode(body.ref);
+  if (ref && !(await findReferrerByCode(ref))) {
+    throw new APIError("BAD_REQUEST", { message: "Kode referal tidak ditemukan. Periksa lagi atau kosongkan.", code: "INVALID_REFERRAL" });
+  }
+
   const rawEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";
   if (isPlaceholderEmail(rawEmail)) throw new APIError("BAD_REQUEST", { message: "Format email tidak valid.", code: "INVALID_EMAIL" });
   const email = rawEmail || `u${randomBytes(8).toString("hex")}@${PLACEHOLDER_EMAIL_DOMAIN}`;
-  return { ...body, username: username.data, phone: phone.data, province: province.data, schoolName: schoolName.data, email };
+  return { ...body, ref, username: username.data, phone: phone.data, province: province.data, schoolName: schoolName.data, email };
 }
 
 /**

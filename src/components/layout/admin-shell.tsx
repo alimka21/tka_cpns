@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpenText, CreditCard, Receipt, DatabaseBackup, FileText, FileUp, Flag, FolderTree, ImageIcon, LayoutGrid, Library, type LucideIcon, Menu, Package, Settings, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
+import { BookOpenText, CreditCard, Gift, Receipt, DatabaseBackup, FileText, FileUp, Flag, FolderTree, ImageIcon, LayoutGrid, Library, type LucideIcon, Menu, Package, Settings, SlidersHorizontal, Sparkles, Users, X } from "lucide-react";
 import { SignOutButton } from "@/components/auth/sign-out-button";
 import { Logo } from "@/components/brand/logo";
 import { cn } from "@/lib/utils";
@@ -23,6 +23,7 @@ const navItems: NavItem[] = [
   { href: "/admin/paket-tes", label: "Paket Tes", icon: Package },
   { href: "/admin/laporan", label: "Laporan Soal", icon: Flag },
   { href: "/admin/transaksi", label: "Transaksi", icon: Receipt },
+  { href: "/admin/referal", label: "Referal & Komisi", icon: Gift },
   { href: "/admin/langganan", label: "Langganan & Pembayaran", icon: CreditCard },
   { href: "/admin/pengaturan", label: "Pengaturan Sistem", icon: SlidersHorizontal },
   { href: "/admin/backup", label: "Backup Database", icon: DatabaseBackup },

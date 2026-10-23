@@ -12,6 +12,7 @@ import { createCheckout, DOKU_NOTIFICATION_PATH, DokuError, getOrderStatus } fro
 import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
 import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
 import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
+import { recordCommissionForOrder, voidCommissionForOrder } from "./referrals";
 import { MANUAL_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, paymentMethodOptions, providerOfOrder } from "./payment-provider";
 import { createInvoice, getInvoiceByExternalId, XenditError } from "./xendit";
 import { mapXenditStatus, type XenditInvoice } from "./xendit-core";
@@ -272,9 +273,12 @@ async function applyPaymentUpdate(payload: PaymentUpdate): Promise<Result<{ stat
         const window = membershipWindow(new Date(), latest, order.durationDays);
         await tx.insert(memberships).values({ userId: order.userId, orderId: order.id, jenjang: order.jenjang, ...window, grantedBy: "purchase" });
       }
+      // Komisi referal untuk pemberi referal pembeli (idempoten per order).
+      await recordCommissionForOrder(tx, order);
     }
     if (status === "refunded") {
       await tx.update(memberships).set({ revokedAt: new Date() }).where(and(eq(memberships.orderId, order.id), isNull(memberships.revokedAt)));
+      await voidCommissionForOrder(tx, order.id);
     }
   });
   return { ok: true, status };

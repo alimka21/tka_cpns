@@ -6,6 +6,19 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-10-24 — Program referal: kode per user, komisi per pembayaran, transfer manual
+- Peran tidak berubah (user/premium/admin); setiap user punya kode acak 7 karakter
+  (`users.referral_code`, dibuat saat daftar / lazy untuk akun lama). Pendaftar mengisi
+  "Kode referal (opsional)" atau lewat `/daftar?ref=KODE` → `users.referred_by_user_id`.
+  Akun Google / lupa isi: boleh isi di `/referal` ≤7 hari & sebelum bayar pertama.
+- Komisi = `floor(nominal lunas × persen)`, satu baris per order (`referral_commissions.order_id`
+  unik → webhook idempoten), dicatat di `applyPaymentUpdate`; termasuk perpanjangan; refund →
+  `void` bila belum ditransfer. Persen di Pengaturan (`referral.commissionPercent`, default 20%),
+  disimpan per baris supaya perubahan tidak mengubah komisi lama.
+- Tidak ada payout otomatis: admin transfer manual lalu "Catat pembayaran" di `/admin/referal`
+  (semua pending → paid, salinan rekening tujuan disimpan di `referral_payouts`).
+- Nama teman di halaman siswa disamarkan ("Budi S."); admin melihat nama & kontak lengkap.
+
 ## 2026-10-20 — "Perbaiki dengan AI" di Laporan Soal: usulan, bukan perubahan otomatis
 Gemini (key admin, sesuai aturan key per user) menerima soal + opsi + kunci + pembahasan +
 stimulus + semua laporan terbuka + catatan admin, lalu mengembalikan JSON (valid/tidak,

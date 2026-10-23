@@ -25,6 +25,8 @@ const SETTINGS = {
   /** Rumus konversi skor mentah → nilai skala (lib/scoring-config). */
   "scoring.conversion": { schema: scoringConversionSchema, default: DEFAULT_SCORING_CONVERSION },
   "landing.testimonials": { schema: z.array(testimonialSchema).max(12), default: [] as Testimonial[] },
+  /** Komisi referal (%) dari setiap pembayaran lunas user yang direferensikan. */
+  "referral.commissionPercent": { schema: z.number().int().min(0).max(50), default: 20 },
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS;

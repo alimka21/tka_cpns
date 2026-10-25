@@ -89,4 +89,11 @@ describe("renderRichText", () => {
   it("angka negatif di awal baris bukan bullet", () => {
     expect(renderRichText("-5 adalah bilangan bulat")).toContain("<p>-5 adalah bilangan bulat</p>");
   });
+  it("teks Arab: paragraf Arab semua → rtl; campuran → potongan Arab diisolasi", () => {
+    const html = renderRichText("Bacalah teks berikut!\n\nفي مدرستنا مكتبة كبيرة.\n\n«أستطيع» = saya mampu.");
+    expect(html).toContain('<p dir="rtl">في مدرستنا مكتبة كبيرة.</p>');
+    expect(html).toContain("<p>Bacalah teks berikut!</p>");
+    expect(html).toContain('<p>«<bdi dir="rtl">أستطيع</bdi>» = saya mampu.</p>');
+    expect(renderMathToHtml("هل تذهب إلى المدرسة غدًا؟")).toBe('<bdi dir="rtl">هل تذهب إلى المدرسة غدًا؟</bdi>');
+  });
 });

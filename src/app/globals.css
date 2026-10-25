@@ -6,10 +6,25 @@
    kalau kelas .dark dipasang manual — tidak pernah otomatis ikut OS. */
 @custom-variant dark (&:is(.dark *));
 
+/* Huruf Arab (soal Bahasa Arab). Jakarta tidak punya glyph Arab → browser memakai font ini HANYA
+   untuk karakter Arab (unicode-range; diunduh hanya di halaman yang memuat teks Arab). Harus
+   PERTAMA di --font-sans: fallback Jakarta (Arial) juga punya glyph Arab → huruf kecil & terputus.
+   size-adjust: huruf Arab tampak jauh lebih kecil dari Latin pada ukuran font yang sama.
+   Noto Naskh Arabic (OFL), file variabel wght 400–700. */
+@font-face {
+  font-family: "Pakar Arabic";
+  src: url("/fonts/noto-naskh-arabic.woff2") format("woff2");
+  font-weight: 400 700;
+  font-style: normal;
+  font-display: swap;
+  size-adjust: 125%;
+  unicode-range: U+0600-06FF, U+0750-077F, U+0870-08FF, U+FB50-FDFF, U+FE70-FEFC;
+}
+
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Pakar Arabic", var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -126,6 +141,10 @@
 
 @layer components {
   /* Teks soal / stimulus / pembahasan dari renderRichText (src/lib/math-html.ts). */
+  /* Paragraf berbahasa Arab (dir="auto" → kanan-ke-kiri): beri ruang untuk harakat. */
+  .rich-text :is(p, li, td, th):dir(rtl) {
+    line-height: 2;
+  }
   .rich-text > * + * {
     margin-top: 0.75em;
   }

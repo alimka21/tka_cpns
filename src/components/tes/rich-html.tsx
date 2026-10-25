@@ -1,4 +1,5 @@
 import "katex/dist/katex.min.css";
+import { isRtlHtml } from "@/lib/text-direction";
 import { cn } from "@/lib/utils";
 
 /**
@@ -8,5 +9,6 @@ import { cn } from "@/lib/utils";
  */
 export function RichHtml({ html, className }: { html: string; className?: string }) {
   if (html.startsWith('<div class="rich-text">')) return <div className={className} dangerouslySetInnerHTML={{ __html: html }} />;
-  return <span className={cn("whitespace-pre-wrap", className)} dangerouslySetInnerHTML={{ __html: html }} />;
+  // Pilihan jawaban yang seluruhnya berbahasa Arab tampil kanan-ke-kiri (lib/text-direction.ts).
+  return <span dir={isRtlHtml(html) ? "rtl" : undefined} className={cn("whitespace-pre-wrap", className)} dangerouslySetInnerHTML={{ __html: html }} />;
 }

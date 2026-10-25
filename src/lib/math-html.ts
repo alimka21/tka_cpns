@@ -6,8 +6,11 @@
 // - `renderRichText`: blok (teks soal, stimulus, pembahasan) — paragraf (baris
 //   kosong), list bernomor (`1.` / `1)`), bullet (`-` / `•` / `*`), tabel
 //   (`| a | b |` + baris `|---|`), dan **tebal**. Semua teks tetap di-escape.
+// - Teks Arab (lib/text-direction.ts): paragraf/sel/butir yang hurufnya Arab semua → `dir="rtl"`;
+//   di teks campuran, potongan Arab dibungkus <bdi dir="rtl">.
 
 import katex from "katex";
+import { isolateArabicRuns, isRtlText } from "./text-direction";
 
 // $$...$$ (blok) atau $...$ (inline).
 const MATH_PATTERN = /(\$\$[\s\S]+?\$\$|\$[^$\n]+?\$)/g;
@@ -39,7 +42,7 @@ function inlineMarks(escaped: string) {
 export function renderMathToHtml(text: string) {
   return text
     .split(MATH_PATTERN)
-    .map((part, i) => (i % 2 === 0 ? inlineMarks(escapeHtml(part)) : renderMath(part)))
+    .map((part, i) => (i % 2 === 0 ? isolateArabicRuns(inlineMarks(escapeHtml(part))) : renderMath(part)))
     .join("");
 }
 
@@ -74,6 +77,9 @@ export function renderRichText(text: string) {
     return `\u0000${math.length - 1}\u0000`;
   });
   const inline = (s: string) => inlineMarks(escapeHtml(s)).replace(/\u0000(\d+)\u0000/g, (_, i) => renderMath(math[Number(i)]));
+  // Arab semua → kanan-ke-kiri; campuran → kiri-ke-kanan dengan potongan Arab diisolasi.
+  const dirAttr = (raw: string) => (isRtlText(raw) ? ' dir="rtl"' : "");
+  const cellHtml = (raw: string) => (isRtlText(raw) ? inline(raw) : isolateArabicRuns(inline(raw)));
 
   const out: string[] = [];
   for (const block of src.trim().split(/\n[ \t]*\n+/)) {
@@ -90,16 +96,17 @@ export function renderRichText(text: string) {
         const [head, , ...body] = run.lines;
         const rows = body.filter((r) => !TABLE_SEP.test(r));
         out.push(
-          `<div class="rich-table"><table><thead><tr>${cells(head).map((c) => `<th>${inline(c)}</th>`).join("")}</tr></thead>` +
-            `<tbody>${rows.map((r) => `<tr>${cells(r).map((c) => `<td>${inline(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`,
+          `<div class="rich-table"><table><thead><tr>${cells(head).map((c) => `<th${dirAttr(c)}>${cellHtml(c)}</th>`).join("")}</tr></thead>` +
+            `<tbody>${rows.map((r) => `<tr>${cells(r).map((c) => `<td${dirAttr(c)}>${cellHtml(c)}</td>`).join("")}</tr>`).join("")}</tbody></table></div>`,
         );
       } else if (run.kind === "ol") {
         const start = Number(OL_ITEM.exec(run.lines[0])![1]);
-        out.push(`<ol${start !== 1 ? ` start="${start}"` : ""}>${run.lines.map((l) => `<li>${inline(OL_ITEM.exec(l)![2])}</li>`).join("")}</ol>`);
+        out.push(`<ol${start !== 1 ? ` start="${start}"` : ""}>${run.lines.map((l) => `<li${dirAttr(OL_ITEM.exec(l)![2])}>${cellHtml(OL_ITEM.exec(l)![2])}</li>`).join("")}</ol>`);
       } else if (run.kind === "ul") {
-        out.push(`<ul>${run.lines.map((l) => `<li>${inline(UL_ITEM.exec(l)![1])}</li>`).join("")}</ul>`);
+        out.push(`<ul>${run.lines.map((l) => `<li${dirAttr(UL_ITEM.exec(l)![1])}>${cellHtml(UL_ITEM.exec(l)![1])}</li>`).join("")}</ul>`);
       } else {
-        out.push(`<p>${run.lines.map(inline).join("<br>")}</p>`);
+        const raw = run.lines.join("\n");
+        out.push(`<p${dirAttr(raw)}>${run.lines.map(cellHtml).join("<br>")}</p>`);
       }
     }
   }

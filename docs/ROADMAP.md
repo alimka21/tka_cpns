@@ -21,6 +21,10 @@
   Gemini asli; batch AI di Buat Paket Otomatis; email backup via SMTP asli; uji beban alur
   ujian ke produksi (WORKFLOW §11b, perlu izin).
 
+**2026-10-26:** autosave ujian tahan gangguan (cadangan lokal), pakai-ulang checkout DOKU, fix halaman
+Kelola paket (soal > 500 terbaru), dukungan teks Arab (RTL + font). Paket baru siap impor:
+`sma-barb-p1.ts` (Bahasa Arab SMA Paket 1 — bank soal belum punya soal Arab sama sekali).
+
 **2026-10-25:** Next.js 16.3.8 → 16.4.3 (celah RCE `use cache`, RCE optimasi gambar SVG, DoS Server
 Actions) & zod 4.6.7 — **perlu deploy**. CDN Hostinger **dinonaktifkan** karena perlindungan edge
 memblokir semua pengunjung + webhook DOKU (DECISIONS 2026-10-25); cek order DOKU yang tertahan.

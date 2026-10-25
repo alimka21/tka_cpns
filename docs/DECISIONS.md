@@ -19,6 +19,16 @@ Format:
   (semua pending → paid, salinan rekening tujuan disimpan di `referral_payouts`).
 - Nama teman di halaman siswa disamarkan ("Budi S."); admin melihat nama & kontak lengkap.
 
+## 2026-10-26 — Dukungan teks Arab (soal Bahasa Arab)
+- `lib/text-direction.ts`: paragraf/sel/pilihan jawaban yang hurufnya Arab SEMUA → `dir="rtl"`;
+  teks campuran (soal/pembahasan Indonesia yang mengutip Arab) tetap LTR dan tiap potongan Arab
+  dibungkus `<bdi dir="rtl">` (kata **tebal** di dalam kalimat Arab ikut satu potongan).
+  `dir="auto"` ditolak: pembahasan yang diawali kutipan Arab ikut terbalik.
+- Font Arab self-host `public/fonts/noto-naskh-arabic.woff2` (OFL) via @font-face "Pakar Arabic"
+  dengan `unicode-range` Arab + `size-adjust: 125%`, diletakkan PERTAMA di `--font-sans` — fallback
+  Jakarta (Arial) juga punya glyph Arab sehingga huruf tampil kecil & sambungannya terputus.
+- Gambar SVG berteks Arab: `direction="rtl"` (tanda baca & angka di sisi yang benar).
+
 ## 2026-10-26 — Autosave ujian: cadangan lokal + alasan gagal yang jelas
 - Keluhan siswa "Gagal menyimpan — periksa koneksi" (25 Okt ±22.58 WIB) terjadi saat CDN Hostinger
   memblokir semua request (403). Autosave lama mengulang tanpa batas dengan pesan yang sama.

@@ -1,7 +1,7 @@
 // Query baca Bank Soal & Stimulus (admin). Tidak memuat kunci jawaban,
 // kecuali `getQuestionForEdit` (halaman Edit Soal, admin saja).
 
-import { and, asc, count, desc, eq, inArray, isNotNull, like, ne, notInArray, sql, type SQL } from "drizzle-orm";
+import { and, asc, count, desc, eq, inArray, isNotNull, like, ne, notInArray, or, sql, type SQL } from "drizzle-orm";
 import type { BankFilters } from "@/lib/bank-filters";
 import { db } from "@/server/db";
 import { categories, questionExplanations, questionOptions, questions, stimuli, subjects, subtopics, testPackageQuestions, topics } from "@/server/db/schema";
@@ -9,10 +9,14 @@ import type { QuestionEditData, QuestionListRow, StimulusListItem } from "@/lib/
 import { renderMathToHtml } from "@/lib/math-html";
 import { questionUsage } from "@/server/services/question-store";
 
-/** Batas sementara sebelum ada paginasi server. */
-const LIST_LIMIT = 500;
+/** Batas pengaman jumlah baris (bank soal terbit masih di bawah ini). */
+const LIST_LIMIT = 5000;
 
-export async function listQuestions(): Promise<QuestionListRow[]> {
+/**
+ * Soal untuk form paket: semua soal terbit + soal milik paket (`includeIds`, boleh draf).
+ * Jangan dibatasi "N terbaru" — paket berisi soal lama akan tampil kosong / form crash.
+ */
+export async function listQuestions(includeIds: number[] = []): Promise<QuestionListRow[]> {
   const rows = await db
     .select({
       id: questions.id,
@@ -39,6 +43,7 @@ export async function listQuestions(): Promise<QuestionListRow[]> {
     .innerJoin(subjects, eq(subjects.id, topics.subjectId))
     .innerJoin(categories, eq(categories.id, subjects.categoryId))
     .leftJoin(stimuli, eq(stimuli.id, questions.stimulusId))
+    .where(includeIds.length ? or(eq(questions.status, "published"), inArray(questions.id, includeIds)) : eq(questions.status, "published"))
     .orderBy(desc(questions.createdAt), desc(questions.id))
     .limit(LIST_LIMIT);
   return rows.map((r) => ({ ...r, html: renderMathToHtml(r.text), hasImage: Boolean(Number(r.hasImage)), createdAt: r.createdAt.toISOString() }));

@@ -16,10 +16,11 @@ export default async function AdminPaketEditPage({ params }: PageProps<"/admin/p
   const id = Number(idParam);
   if (!Number.isInteger(id) || id <= 0) notFound();
 
-  const [pkg, categories, subjects, allQuestions] = await Promise.all([getPackageDetail(id), listCategories(), listSubjects(), listQuestions()]);
+  const [pkg, categories, subjects] = await Promise.all([getPackageDetail(id), listCategories(), listSubjects()]);
   if (!pkg) notFound();
 
-  const bank = allQuestions.filter((q) => q.status === "published" || pkg.questions.some((pq) => pq.id === q.id));
+  // Soal terbit + soal milik paket ini (termasuk draf & soal lama).
+  const bank = await listQuestions(pkg.questions.map((q) => q.id));
   const entitledUsers = pkg.isPremium ? await listEntitledUsers(id) : [];
 
   return (

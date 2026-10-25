@@ -60,7 +60,14 @@ function blocksFromSelected(selectedIds: number[], byId: Map<number, QuestionLis
     const key = groupKey(q);
     if (seen.has(key)) continue;
     seen.add(key);
-    blocks.push({ key, stimulusCode: q.stimulusCode, ids: selectedIds.filter((sid) => groupKey(byId.get(sid)!) === key) });
+    blocks.push({
+      key,
+      stimulusCode: q.stimulusCode,
+      ids: selectedIds.filter((sid) => {
+        const row = byId.get(sid);
+        return row ? groupKey(row) === key : false;
+      }),
+    });
   }
   return blocks;
 }

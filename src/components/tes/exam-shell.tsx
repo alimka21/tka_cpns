@@ -31,7 +31,13 @@ import { QuestionView } from "./question-view";
 import { StimulusPanel } from "./stimulus-panel";
 
 const AUTOSAVE_DEBOUNCE_MS = 400;
-const AUTOSAVE_RETRY_MS = 3000;
+/** Jeda coba ulang setelah gagal ke-1, ke-2, … (sementara: jaringan, server sibuk, versi baru). */
+const AUTOSAVE_RETRY_MS = [3000, 6000, 12000, 20000, 30000];
+/** Setelah sekian kali gagal berturut-turut, tampilkan opsi muat ulang (jawaban ada di cadangan lokal). */
+const RELOAD_HINT_AFTER = 3;
+
+/** Simpan gagal permanen → berhenti mencoba & tampilkan jalan keluarnya. */
+type SaveHalt = "session" | "closed" | null;
 
 type SaveStatus = "idle" | "saving" | "saved" | "error";
 
@@ -60,7 +66,31 @@ type Props = {
   doneWithoutResult?: { title: string; message: string; actions: { href: string; label: string }[] };
   /** Kirim semua jawaban saat mengumpulkan (mode demo tanpa autosave ke DB). */
   sendAnswersOnSubmit?: boolean;
+  /**
+   * Kunci localStorage untuk cadangan jawaban yang belum terkirim (per attempt). Dipulihkan &
+   * dikirim ulang saat halaman dibuka lagi (muat ulang, login ulang, koneksi putus).
+   */
+  backupKey?: string;
 };
+
+type Backup = Record<string, ExamAnswerState>;
+function readBackup(key: string | undefined): Backup {
+  if (!key) return {};
+  try {
+    return JSON.parse(localStorage.getItem(key) ?? "{}") as Backup;
+  } catch {
+    return {};
+  }
+}
+function writeBackup(key: string | undefined, backup: Backup) {
+  if (!key) return;
+  try {
+    if (Object.keys(backup).length) localStorage.setItem(key, JSON.stringify(backup));
+    else localStorage.removeItem(key);
+  } catch {
+    // Penyimpanan diblokir (mode privat) — autosave server tetap berjalan.
+  }
+}
 
 export function ExamShell({
   title,
@@ -73,6 +103,7 @@ export function ExamShell({
   submitAttempt,
   doneWithoutResult,
   sendAnswersOnSubmit = false,
+  backupKey,
 }: Props) {
   const router = useRouter();
   const [answers, setAnswers] = useState(initialAnswers);
@@ -83,6 +114,8 @@ export function ExamShell({
   }, [answers]);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [saveStatus, setSaveStatus] = useState<SaveStatus>("idle");
+  const [saveHalt, setSaveHalt] = useState<SaveHalt>(null);
+  const [failureCount, setFailureCount] = useState(0);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [phase, setPhase] = useState<"active" | "submitting" | "done">("active");
   const [submitError, setSubmitError] = useState<string | null>(null);
@@ -95,6 +128,8 @@ export function ExamShell({
   const timers = useRef(new Map<number, ReturnType<typeof setTimeout>>());
   const inFlight = useRef(new Set<Promise<unknown>>());
   const submitStarted = useRef(false);
+  const failures = useRef(0);
+  const halted = useRef<SaveHalt>(null);
 
   const sendAnswerRef = useRef<(questionId: number) => Promise<void>>(async () => {});
 
@@ -112,26 +147,48 @@ export function ExamShell({
   const sendAnswer = useCallback(
     async (questionId: number) => {
       const state = pending.current.get(questionId);
-      if (!state) return;
+      if (!state || halted.current) return;
       pending.current.delete(questionId);
       setSaveStatus("saving");
-      const request = saveAnswer({ questionId, ...state }).catch(() => ({ ok: false }));
+      // Error lempar (jaringan putus, 403/5xx, action tidak dikenal setelah deploy) = sementara.
+      const request: Promise<Awaited<ReturnType<SaveAnswerFn>>> = saveAnswer({ questionId, ...state }).catch(() => ({ ok: false }));
       inFlight.current.add(request);
       const result = await request;
       inFlight.current.delete(request);
       if (!result.ok) {
-        // Kembalikan ke antrean & coba lagi otomatis, kecuali user sudah
-        // mengubah jawaban lagi (perubahan baru itu yang akan terkirim).
-        if (!pending.current.has(questionId)) {
-          pending.current.set(questionId, state);
-          scheduleSend(questionId, AUTOSAVE_RETRY_MS);
+        if (result.code === "invalid") {
+          // Tidak akan pernah berhasil — buang agar tidak mengulang selamanya.
+          const backup = readBackup(backupKey);
+          delete backup[questionId];
+          writeBackup(backupKey, backup);
+          if (pending.current.size === 0 && inFlight.current.size === 0) setSaveStatus("idle");
+          return;
         }
+        // Kembalikan ke antrean, kecuali user sudah mengubah jawaban lagi (perubahan baru itu yang terkirim).
+        const requeue = !pending.current.has(questionId);
+        if (requeue) pending.current.set(questionId, state);
         setSaveStatus("error");
-      } else if (pending.current.size === 0 && inFlight.current.size === 0) {
-        setSaveStatus("saved");
+        if (result.code === "session" || result.code === "closed") {
+          halted.current = result.code;
+          setSaveHalt(result.code);
+          return;
+        }
+        failures.current += 1;
+        setFailureCount(failures.current);
+        if (requeue) scheduleSend(questionId, AUTOSAVE_RETRY_MS[Math.min(failures.current, AUTOSAVE_RETRY_MS.length) - 1]);
+        return;
       }
+      failures.current = 0;
+      setFailureCount(0);
+      // Hapus dari cadangan lokal hanya bila yang tersimpan = versi terbaru jawaban ini.
+      const backup = readBackup(backupKey);
+      if (backup[questionId] && JSON.stringify(backup[questionId]) === JSON.stringify(state)) {
+        delete backup[questionId];
+        writeBackup(backupKey, backup);
+      }
+      if (pending.current.size === 0 && inFlight.current.size === 0) setSaveStatus("saved");
     },
-    [saveAnswer, scheduleSend],
+    [saveAnswer, scheduleSend, backupKey],
   );
 
   useEffect(() => {
@@ -141,10 +198,38 @@ export function ExamShell({
   const queueSave = useCallback(
     (questionId: number, state: ExamAnswerState) => {
       pending.current.set(questionId, state);
+      writeBackup(backupKey, { ...readBackup(backupKey), [questionId]: state });
       scheduleSend(questionId, AUTOSAVE_DEBOUNCE_MS);
     },
-    [scheduleSend],
+    [scheduleSend, backupKey],
   );
+
+  // Pulihkan jawaban yang belum sempat terkirim (halaman dimuat ulang / login ulang / koneksi putus).
+  // Idempoten (antrean per soal) — aman bila efek berjalan dua kali.
+  useEffect(() => {
+    const ids = new Set(questions.map((q) => q.id));
+    const entries = Object.entries(readBackup(backupKey))
+      .map(([id, state]) => [Number(id), state] as const)
+      .filter(([id]) => ids.has(id));
+    if (entries.length === 0) return;
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- sekali saat mount, sumbernya localStorage
+    setAnswers((prev) => ({ ...prev, ...Object.fromEntries(entries) }));
+    for (const [id, state] of entries) queueSave(id, state);
+  }, [backupKey, questions, queueSave]);
+
+  // Koneksi kembali / tab dibuka lagi → kirim antrean sekarang, tanpa menunggu jadwal coba ulang.
+  useEffect(() => {
+    const retryNow = () => {
+      if (halted.current || document.visibilityState === "hidden") return;
+      for (const id of pending.current.keys()) scheduleSend(id, 0);
+    };
+    window.addEventListener("online", retryNow);
+    document.addEventListener("visibilitychange", retryNow);
+    return () => {
+      window.removeEventListener("online", retryNow);
+      document.removeEventListener("visibilitychange", retryNow);
+    };
+  }, [scheduleSend]);
 
   const flushSaves = useCallback(async () => {
     timers.current.forEach(clearTimeout);
@@ -202,11 +287,12 @@ export function ExamShell({
       return;
     }
     setPhase("done");
+    writeBackup(backupKey, {});
     if (result.redirectTo) {
       setResultHref(result.redirectTo);
       router.push(result.redirectTo);
     }
-  }, [flushSaves, submitAttempt, router, sendAnswersOnSubmit]);
+  }, [flushSaves, submitAttempt, router, sendAnswersOnSubmit, backupKey]);
 
   const question = questions[currentIndex];
   const answer = answers[question.id];
@@ -244,7 +330,7 @@ export function ExamShell({
             <h1 className="truncate text-sm font-bold sm:text-base">{title}</h1>
             <p className="text-xs text-muted-foreground">
               {answeredCount}/{questions.length} dijawab
-              <SaveIndicator status={saveStatus} />
+              <SaveIndicator status={saveStatus} halted={saveHalt !== null} />
             </p>
           </div>
           <ExamTimer endsAt={endsAt} serverNow={serverNow} onExpire={() => void submit()} />
@@ -258,6 +344,7 @@ export function ExamShell({
       <div className="mx-auto grid w-full max-w-[96rem] flex-1 gap-6 px-4 py-6 pb-28 sm:px-6 lg:grid-cols-[minmax(0,1fr)_20rem] lg:px-8 lg:pb-8">
         {/* Soal grup: panel bacaan di atas, soal & pilihan jawaban di bawah. */}
         <div className="flex min-w-0 flex-col gap-4">
+          {phase === "active" && <SaveProblem halt={saveHalt} failures={failureCount} backupEnabled={!!backupKey} />}
           {submitError && (
             <p role="alert" className="rounded-lg border border-destructive/40 bg-destructive-soft px-4 py-3 text-sm text-destructive">
               {submitError} Coba kumpulkan lagi.
@@ -441,17 +528,59 @@ export function ExamShell({
   );
 }
 
-function SaveIndicator({ status }: { status: SaveStatus }) {
+function SaveIndicator({ status, halted }: { status: SaveStatus; halted: boolean }) {
   if (status === "idle") return null;
   const text = {
     saving: "Menyimpan…",
     saved: "Tersimpan",
-    error: "Gagal menyimpan — periksa koneksi, akan dicoba lagi",
+    error: halted ? "Belum tersimpan" : "Belum tersimpan — mencoba lagi…",
   }[status];
   return (
     <span aria-live="polite" className={cn("ml-2", status === "error" && "text-destructive")}>
       · {text}
     </span>
+  );
+}
+
+/** Penjelasan + jalan keluar saat autosave gagal permanen atau berulang kali. */
+function SaveProblem({ halt, failures, backupEnabled }: { halt: SaveHalt; failures: number; backupEnabled: boolean }) {
+  const safe = backupEnabled ? " Jawaban yang belum terkirim aman tersimpan di perangkat ini." : "";
+  if (halt === "session") {
+    const next = typeof window === "undefined" ? "/dashboard" : window.location.pathname;
+    return (
+      <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive-soft px-4 py-3 text-sm text-destructive sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          <strong>Sesi login berakhir</strong>, kemungkinan akun ini baru saja masuk di perangkat lain.{safe} Masuk lagi untuk melanjutkan tes — waktu tetap berjalan.
+        </p>
+        <Button size="sm" nativeButton={false} render={<a href={`/masuk?next=${encodeURIComponent(next)}`} />}>
+          Masuk lagi
+        </Button>
+      </div>
+    );
+  }
+  if (halt === "closed") {
+    return (
+      <div role="alert" className="flex flex-col gap-3 rounded-lg border border-destructive/40 bg-destructive-soft px-4 py-3 text-sm text-destructive sm:flex-row sm:items-center sm:justify-between">
+        <p>
+          <strong>Tes ini sudah berakhir</strong> (waktu habis atau sudah dikumpulkan). Jawaban yang sempat tersimpan sudah dinilai.
+        </p>
+        <Button size="sm" nativeButton={false} render={<Link href="/riwayat" />}>
+          Lihat riwayat
+        </Button>
+      </div>
+    );
+  }
+  if (failures < RELOAD_HINT_AFTER) return null;
+  return (
+    <div role="status" className="flex flex-col gap-3 rounded-lg border border-warning/50 bg-warning-soft px-4 py-3 text-sm text-warning-strong sm:flex-row sm:items-center sm:justify-between">
+      <p>
+        <strong>Jawaban belum terkirim ke server.</strong>
+        {safe} Akan dikirim otomatis begitu koneksi pulih. Bila tetap gagal, muat ulang halaman.
+      </p>
+      <Button size="sm" variant="outline" onClick={() => window.location.reload()}>
+        Muat ulang
+      </Button>
+    </div>
   );
 }
 

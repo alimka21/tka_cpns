@@ -6,6 +6,7 @@
 // attempt — jangan percaya `attemptId` dari client begitu saja.
 
 import { and, eq } from "drizzle-orm";
+import type { SaveFailureCode } from "@/lib/exam";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { saveAnswerInput, submitAttemptInput } from "@/lib/validation/attempt";
 import { getActiveSession } from "@/server/auth/session";
@@ -24,11 +25,11 @@ async function loadOwnedAttempt(attemptId: number) {
 export async function saveAnswerAction(
   attemptId: number,
   input: { questionId: number; response: AnswerResponse | null; isFlagged: boolean },
-): Promise<{ ok: boolean; error?: string }> {
+): Promise<{ ok: boolean; error?: string; code?: SaveFailureCode }> {
   const session = await getActiveSession();
-  if (!session) return { ok: false, error: "Sesi berakhir. Silakan masuk lagi." };
+  if (!session) return { ok: false, code: "session", error: "Sesi berakhir. Silakan masuk lagi." };
   const parsed = saveAnswerInput.safeParse({ attemptId, ...input });
-  if (!parsed.success) return { ok: false, error: "Data jawaban tidak valid." };
+  if (!parsed.success) return { ok: false, code: "invalid", error: "Data jawaban tidak valid." };
 
   // Jalur terpadat saat tryout: kepemilikan attempt + "soal ada di paket ini"
   // dicek dalam SATU query (load test 2026-10-03, docs/WORKFLOW.md §11).
@@ -40,15 +41,15 @@ export async function saveAnswerAction(
       and(eq(testPackageQuestions.testPackageId, attempts.testPackageId), eq(testPackageQuestions.questionId, parsed.data.questionId)),
     )
     .where(eq(attempts.id, attemptId));
-  if (!row || row.attempt.userId !== Number(session.user.id)) return { ok: false, error: "Percobaan tidak ditemukan." };
+  if (!row || row.attempt.userId !== Number(session.user.id)) return { ok: false, code: "closed", error: "Percobaan tidak ditemukan." };
   const { attempt } = row;
 
-  if (attempt.status !== "in_progress") return { ok: false, error: "Percobaan ini sudah selesai." };
+  if (attempt.status !== "in_progress") return { ok: false, code: "closed", error: "Percobaan ini sudah selesai." };
   if (attempt.endsAt.getTime() <= Date.now()) {
     await finalizeAttempt(attemptId, "expired");
-    return { ok: false, error: "Waktu sudah habis." };
+    return { ok: false, code: "closed", error: "Waktu sudah habis." };
   }
-  if (row.packageQuestionId == null) return { ok: false, error: "Soal tidak ada di paket ini." };
+  if (row.packageQuestionId == null) return { ok: false, code: "invalid", error: "Soal tidak ada di paket ini." };
 
   await db
     .insert(attemptAnswers)

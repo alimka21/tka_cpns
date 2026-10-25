@@ -19,6 +19,16 @@ Format:
   (semua pending → paid, salinan rekening tujuan disimpan di `referral_payouts`).
 - Nama teman di halaman siswa disamarkan ("Budi S."); admin melihat nama & kontak lengkap.
 
+## 2026-10-26 — Autosave ujian: cadangan lokal + alasan gagal yang jelas
+- Keluhan siswa "Gagal menyimpan — periksa koneksi" (25 Okt ±22.58 WIB) terjadi saat CDN Hostinger
+  memblokir semua request (403). Autosave lama mengulang tanpa batas dengan pesan yang sama.
+- Kini: jawaban yang belum terkirim dicadangkan di localStorage per attempt
+  (`pakartka:jawaban:<attemptId>`), dipulihkan & dikirim ulang saat halaman dibuka lagi; coba ulang
+  bertahap (3→30 dtk) + langsung saat online/tab aktif; setelah 3 gagal muncul tombol "Muat ulang".
+  Server mengembalikan `code` (session/closed/invalid) → client berhenti mencoba & menampilkan
+  jalan keluar (masuk lagi / lihat riwayat). Error lempar (jaringan, 403, versi baru setelah
+  deploy) dianggap sementara.
+
 ## 2026-10-25 — Checkout gateway dipakai ulang saat siswa menekan "Bayar" lagi
 - Sebelumnya setiap klik "Bayar" membuat transaksi DOKU baru → puluhan transaksi PENDING di
   dashboard DOKU (checkout dibuka lalu tidak dibayar). Kini order pending milik user dengan paket,

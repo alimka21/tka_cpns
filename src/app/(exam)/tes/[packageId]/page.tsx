@@ -73,6 +73,7 @@ export default async function TesPackagePage({ params, searchParams }: PageProps
       serverNow={new Date().toISOString()}
       saveAnswer={saveAnswerAction.bind(null, started.attemptId)}
       submitAttempt={submitAttemptAction.bind(null, started.attemptId)}
+      backupKey={`pakartka:jawaban:${started.attemptId}`}
     />
   );
 }

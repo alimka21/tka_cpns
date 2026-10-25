@@ -48,11 +48,18 @@ export function answerStatus(question: ExamQuestion, response: AnswerResponse | 
   }
 }
 
+/**
+ * Alasan gagal simpan yang TIDAK akan berhasil bila dicoba ulang (client berhenti mencoba):
+ * `session` = sesi login berakhir (mis. akun masuk di perangkat lain), `closed` = percobaan sudah
+ * selesai / waktu habis, `invalid` = data soal tidak valid. Tanpa `code` = gangguan sementara.
+ */
+export type SaveFailureCode = "session" | "closed" | "invalid";
+
 export type SaveAnswerFn = (input: {
   questionId: number;
   response: AnswerResponse | null;
   isFlagged: boolean;
-}) => Promise<{ ok: boolean; error?: string }>;
+}) => Promise<{ ok: boolean; error?: string; code?: SaveFailureCode }>;
 
 /**
  * `answers` hanya dikirim bila ExamShell diberi `sendAnswersOnSubmit` (demo

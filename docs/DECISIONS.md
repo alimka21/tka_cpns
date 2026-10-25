@@ -19,6 +19,16 @@ Format:
   (semua pending → paid, salinan rekening tujuan disimpan di `referral_payouts`).
 - Nama teman di halaman siswa disamarkan ("Budi S."); admin melihat nama & kontak lengkap.
 
+## 2026-10-25 — CDN Hostinger dinonaktifkan (perlindungan edge memblokir webhook DOKU)
+- Gejala: semua request (browser, Googlebot, POST `/api/doku/notification`) dibalas 403 halaman
+  "Checking your browser" dari `server: hcdn`, meski Level Keamanan CDN "Rendah". Penyebab: WAF
+  kebijakan default deny + perlindungan edge otomatis (kemungkinan dipasang Hostinger saat Next.js
+  16.3.8 rentan). Default WAF sudah diubah ke allow, tetapi edge tetap memblokir → CDN dimatikan
+  (hPanel → Performa → CDN). Setelah itu semua 200 dan webhook sampai ke aplikasi.
+- Jangan aktifkan CDN lagi sebelum ada pengecualian path untuk `/api/doku/notification`. Setelah
+  mengaktifkan: tes `curl -X POST https://pakartka.com/api/doku/notification` harus 401 (bukan
+  403), lalu cek Googlebot & satu transaksi DOKU.
+
 ## 2026-10-20 — "Perbaiki dengan AI" di Laporan Soal: usulan, bukan perubahan otomatis
 Gemini (key admin, sesuai aturan key per user) menerima soal + opsi + kunci + pembahasan +
 stimulus + semua laporan terbuka + catatan admin, lalu mengembalikan JSON (valid/tidak,

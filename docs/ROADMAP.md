@@ -21,6 +21,11 @@
   Gemini asli; batch AI di Buat Paket Otomatis; email backup via SMTP asli; uji beban alur
   ujian ke produksi (WORKFLOW §11b, perlu izin).
 
+**2026-10-25:** Next.js 16.3.8 → 16.4.3 (celah RCE `use cache`, RCE optimasi gambar SVG, DoS Server
+Actions) & zod 4.6.7 — **perlu deploy**. CDN Hostinger **dinonaktifkan** karena perlindungan edge
+memblokir semua pengunjung + webhook DOKU (DECISIONS 2026-10-25); cek order DOKU yang tertahan.
+Paket 8 Matematika SMA (tema kebakaran hutan) siap impor: `scripts/paket-data/sma-mtk-p8.ts`.
+
 **2026-10-24:** program referal — kode unik per user, kolom kode di form daftar + `/daftar?ref=`,
 halaman siswa `/referal` (kode, link, bagikan WA, teman terdaftar, komisi, rekening), admin
 `/admin/referal` (pendaftar/pembeli/komisi per pemberi kode, catat transfer manual, atur persen).

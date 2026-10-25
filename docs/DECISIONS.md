@@ -19,6 +19,14 @@ Format:
   (semua pending → paid, salinan rekening tujuan disimpan di `referral_payouts`).
 - Nama teman di halaman siswa disamarkan ("Budi S."); admin melihat nama & kontak lengkap.
 
+## 2026-10-26 — Kunci server action tetap + muat ulang otomatis saat error
+- Log Hostinger: "Failed to find Server Action … older or newer deployment" setelah deploy. Next
+  memakai kunci enkripsi sebagai salt ID action; Hostinger build dari folder bersih → kunci & semua
+  ID baru tiap deploy. Solusi: env `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` tetap (WORKFLOW §3a);
+  terbukti dua build bersih dengan kunci sama → ID identik.
+- `app/error.tsx` + `app/global-error.tsx` (ErrorScreen): muat ulang otomatis sekali per halaman per
+  menit, lalu pesan Indonesia + kode digest. Menggantikan "This page couldn't load".
+
 ## 2026-10-26 — Dukungan teks Arab (soal Bahasa Arab)
 - `lib/text-direction.ts`: paragraf/sel/pilihan jawaban yang hurufnya Arab SEMUA → `dir="rtl"`;
   teks campuran (soal/pembahasan Indonesia yang mengutip Arab) tetap LTR dan tiap potongan Arab

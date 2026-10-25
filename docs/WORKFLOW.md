@@ -45,6 +45,15 @@ dipakai user asli (supaya tidak ada bug yang langsung tayang).
    biasanya `npm start` setelah build).
 6. Setiap `git push` ke `main` akan auto-deploy.
 
+### 3a. Kunci server action tetap (WAJIB di Hostinger)
+- Variabel environment `NEXT_SERVER_ACTIONS_ENCRYPTION_KEY` = string base64 32 byte
+  (`openssl rand -base64 32`), **sama untuk selamanya**, tersedia saat build & runtime.
+- Alasan: Next.js membuat ID server action dari kunci ini; tanpa env, kunci dibuat baru di setiap
+  build bersih Hostinger → semua ID berubah tiap deploy → siswa yang sedang membuka halaman kena
+  "Failed to find Server Action" / "This page couldn't load" (log 2026-10-26). Jangan diganti
+  kecuali bocor (mengganti = semua tab terbuka error sekali lagi).
+- Pengaman tambahan: `app/error.tsx` & `app/global-error.tsx` memuat ulang halaman otomatis sekali.
+
 ## 4. Development harian dengan Claude Code
 
 - Mulai sesi: cukup ketik task-nya, Claude Code akan baca `CLAUDE.md` lalu

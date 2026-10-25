@@ -19,6 +19,12 @@ Format:
   (semua pending → paid, salinan rekening tujuan disimpan di `referral_payouts`).
 - Nama teman di halaman siswa disamarkan ("Budi S."); admin melihat nama & kontak lengkap.
 
+## 2026-10-25 — Checkout gateway dipakai ulang saat siswa menekan "Bayar" lagi
+- Sebelumnya setiap klik "Bayar" membuat transaksi DOKU baru → puluhan transaksi PENDING di
+  dashboard DOKU (checkout dibuka lalu tidak dibayar). Kini order pending milik user dengan paket,
+  nominal & metode sama, umur < 45 menit (checkout berlaku 60 menit) dipakai ulang
+  (`pickReusableCheckout`, billing.createOrder). Ganti metode → checkout baru.
+
 ## 2026-10-25 — CDN Hostinger dinonaktifkan (perlindungan edge memblokir webhook DOKU)
 - Gejala: semua request (browser, Googlebot, POST `/api/doku/notification`) dibalas 403 halaman
   "Checking your browser" dari `server: hcdn`, meski Level Keamanan CDN "Rendah". Penyebab: WAF

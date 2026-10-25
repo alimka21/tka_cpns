@@ -126,3 +126,35 @@ export function paymentMethodOptions(provider: PaymentProvider = activeProvider(
   if (isManualFallbackEnabled()) options.push(MANUAL_OPTION);
   return options;
 }
+
+/** Masa berlaku checkout gateway (DOKU `payment_due_date`), menit. */
+export const CHECKOUT_DUE_MINUTES = 60;
+/** Checkout lama dipakai ulang hanya bila masih tersisa ≥ 15 menit untuk membayar. */
+export const CHECKOUT_REUSE_MS = (CHECKOUT_DUE_MINUTES - 15) * 60_000;
+
+type ReusableOrder = { orderCode: string; planId: number; amount: number; status: string; paymentType: string | null; redirectUrl: string | null; createdAt: Date };
+
+/**
+ * Siswa menekan "Bayar" lagi (paket, nominal & metode sama, checkout belum mendekati kedaluwarsa)
+ * → arahkan ke checkout yang sama alih-alih membuat transaksi gateway baru.
+ */
+export function pickReusableCheckout<T extends ReusableOrder>(
+  candidates: T[],
+  want: { planId: number; amount: number; methodId: string; prefix: string },
+  now = new Date(),
+): T | null {
+  return (
+    candidates
+      .filter(
+        (o) =>
+          o.status === "pending" &&
+          o.orderCode.startsWith(want.prefix) &&
+          o.planId === want.planId &&
+          o.amount === want.amount &&
+          o.paymentType === want.methodId &&
+          !!o.redirectUrl &&
+          now.getTime() - o.createdAt.getTime() < CHECKOUT_REUSE_MS,
+      )
+      .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())[0] ?? null
+  );
+}

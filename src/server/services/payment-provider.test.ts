@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it } from "vitest";
-import { paymentMethodOptions } from "./payment-provider";
+import { paymentMethodOptions, pickReusableCheckout } from "./payment-provider";
 
 const ENV = ["DOKU_PAYMENT_METHODS", "PAYMENT_MANUAL_FALLBACK"] as const;
 afterEach(() => ENV.forEach((k) => delete process.env[k]));
@@ -33,5 +33,27 @@ describe("paymentMethodOptions (DOKU)", () => {
 
   it("penyedia manual: satu opsi QRIS", () => {
     expect(paymentMethodOptions("manual")).toMatchObject([{ id: "manual", primary: true }]);
+  });
+});
+
+describe("pickReusableCheckout", () => {
+  const now = new Date("2026-10-25T10:00:00Z");
+  const base = { orderCode: "WTP-1-a", planId: 3, amount: 27_000, status: "pending", paymentType: "doku-qris", redirectUrl: "https://checkout/x", createdAt: new Date(now.getTime() - 10 * 60_000) };
+  const want = { planId: 3, amount: 27_000, methodId: "doku-qris", prefix: "WTP-" };
+
+  it("memakai checkout pending yang sama (terbaru dulu)", () => {
+    const newer = { ...base, orderCode: "WTP-1-b", createdAt: new Date(now.getTime() - 2 * 60_000) };
+    expect(pickReusableCheckout([base, newer], want, now)?.orderCode).toBe("WTP-1-b");
+  });
+  it("tidak memakai checkout yang hampir kedaluwarsa", () => {
+    expect(pickReusableCheckout([{ ...base, createdAt: new Date(now.getTime() - 50 * 60_000) }], want, now)).toBeNull();
+  });
+  it("metode, paket, nominal, status, atau penyedia berbeda → buat baru", () => {
+    expect(pickReusableCheckout([{ ...base, paymentType: "doku-other" }], want, now)).toBeNull();
+    expect(pickReusableCheckout([{ ...base, planId: 4 }], want, now)).toBeNull();
+    expect(pickReusableCheckout([{ ...base, amount: 30_000 }], want, now)).toBeNull();
+    expect(pickReusableCheckout([{ ...base, status: "paid" }], want, now)).toBeNull();
+    expect(pickReusableCheckout([{ ...base, orderCode: "PTQ-1-a" }], want, now)).toBeNull();
+    expect(pickReusableCheckout([{ ...base, redirectUrl: null }], want, now)).toBeNull();
   });
 });

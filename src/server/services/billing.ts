@@ -13,7 +13,7 @@ import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } fro
 import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
 import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
 import { recordCommissionForOrder, voidCommissionForOrder } from "./referrals";
-import { MANUAL_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, paymentMethodOptions, providerOfOrder } from "./payment-provider";
+import { CHECKOUT_DUE_MINUTES, CHECKOUT_REUSE_MS, MANUAL_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, paymentMethodOptions, pickReusableCheckout, providerOfOrder } from "./payment-provider";
 import { createInvoice, getInvoiceByExternalId, XenditError } from "./xendit";
 import { mapXenditStatus, type XenditInvoice } from "./xendit-core";
 
@@ -80,6 +80,14 @@ export async function createOrder(
   if (!method) return { ok: false, error: "Metode pembayaran tidak tersedia. Pilih metode lain." };
   if (method.id === "manual") return createManualOrder(user.id, plan, siteUrl);
 
+  // Klik "Bayar" berulang → pakai checkout yang masih berlaku (tidak menumpuk transaksi pending di gateway).
+  const recent = await db
+    .select()
+    .from(orders)
+    .where(and(eq(orders.userId, user.id), eq(orders.status, "pending"), gt(orders.createdAt, new Date(Date.now() - CHECKOUT_REUSE_MS))));
+  const reuse = pickReusableCheckout(recent, { planId: plan.id, amount: plan.price, methodId: method.id, prefix: ORDER_PREFIX[pay.provider] });
+  if (reuse?.redirectUrl) return { ok: true, redirectUrl: reuse.redirectUrl, orderCode: reuse.orderCode };
+
   const orderCode = newOrderCode(user.id, ORDER_PREFIX[pay.provider]);
   const finishUrl = `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`;
   const [{ id }] = await db
@@ -118,6 +126,7 @@ export async function createOrder(
               customer: { id: String(user.id), name: user.name, email: visibleEmail(user.email) ?? undefined },
               callbackUrl: finishUrl,
               channels: method.channels,
+              dueMinutes: CHECKOUT_DUE_MINUTES,
               notificationUrl: `${siteUrl.replace(/\/$/, "")}${DOKU_NOTIFICATION_PATH}`,
             })
           ).url;

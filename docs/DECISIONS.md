@@ -6,6 +6,18 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-10-31 — Paket TKA SD & SMP Matematika — Paket 4 (data siap impor, ditulis Claude)
+Permintaan: 2–4 gambar baru per paket, pembahasan lebih rinci yang menilai **setiap pilihan**
+(kenapa benar/salah; pengecoh dirancang dari miskonsepsi nyata). Format pembahasan: langkah
+penyelesaian → "Cek setiap pilihan:" satu butir per opsi; Kategori: satu butir per pernyataan.
+Belum diimpor (dry run lokal OK, semua aturan & saran lolos, gambar dicek visual).
+- **`sd-mtk-p4.ts`** (5 opsi, gaya Paket 1): stimulus resep bolu (pecahan), dinding gudang
+  (gambar: persegi panjang + segitiga, pintu), diagram batang tiket; gambar jaring-jaring kubus
+  (5 rangkaian, 3 valid). 18 PG · 6 MCMA · 6 Kategori; L1 6 · L2 16 · L3 8.
+- **`smp-mtk-p4.ts`** (4 opsi PG, gaya SMP Paket 3): gambar garis sejajar + transversal, segitiga
+  pada koordinat (refleksi/translasi/rotasi), diagram garis penjualan. 10/10 subtopik × 3 soal;
+  18 PG · 6 MCMA · 6 Kategori; L1 7 · L2 14 · L3 9. Lokal sudah punya SMP Mat Paket 1–3 → Paket 4.
+
 ## 2026-10-31 — Paket TKA SD Matematika & Bahasa Indonesia — Paket 3 (data siap impor, ditulis Claude)
 Acuan: kerangka `asesmen/tka-sd.json` + pola Paket 1 (#43, #44): komposisi bentuk, gaya
 pembahasan (pengecoh dijelaskan), 5 opsi untuk PG/MCMA. Tema tidak mengulang Paket 1/2 & bank.

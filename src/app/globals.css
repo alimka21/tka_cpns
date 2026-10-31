@@ -24,7 +24,11 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: "Pakar Arabic", var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
+  /* Cadangan di dalam var(): bila kelas variabel next/font di <html> tidak cocok dengan CSS hasil
+     build (terjadi di build Hostinger 2026-10-31: HTML __variable_64a611, CSS __variable_f884cf),
+     --font-jakarta tidak terdefinisi → seluruh font-family tidak valid → browser memakai serif
+     bawaan (Times). Nama "Plus Jakarta Sans" dari @font-face next/font tidak di-hash. */
+  --font-sans: "Pakar Arabic", var(--font-jakarta, "Plus Jakarta Sans", "Plus Jakarta Sans Fallback"), ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);

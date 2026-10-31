@@ -6,6 +6,16 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-10-31 — Font situs jadi serif: kelas next/font HTML ≠ CSS di build Hostinger
+Gejala: setelah deploy 2026-10-31 13:15 seluruh pakartka.com tampil Times. Penyebab: HTML memakai
+kelas `__variable_64a611`, CSS build yang sama mendefinisikan `--font-jakarta` di
+`.__variable_f884cf` → variabel tak terdefinisi → `font-family` tidak valid → serif bawaan browser.
+Build lokal konsisten (keduanya 64a611); beda hash muncul di build server (dugaan: kompilasi
+server & client Hostinger tidak deterministik untuk next/font). Perbaikan: `var(--font-jakarta,
+"Plus Jakarta Sans", "Plus Jakarta Sans Fallback")` di `--font-sans` — nama @font-face tidak
+di-hash, jadi font tetap benar walau kelas tidak cocok. Cek setelah deploy: kelas `__variable_*`
+di `<html>` harus ada di CSS `/_next/static/css/*.css`.
+
 ## 2026-10-31 — Paket TKA SD & SMP Matematika — Paket 4 (data siap impor, ditulis Claude)
 Permintaan: 2–4 gambar baru per paket, pembahasan lebih rinci yang menilai **setiap pilihan**
 (kenapa benar/salah; pengecoh dirancang dari miskonsepsi nyata). Format pembahasan: langkah

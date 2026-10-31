@@ -6,6 +6,16 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-10-31 — Paket TKA SD Matematika & Bahasa Indonesia — Paket 3 (data siap impor, ditulis Claude)
+Acuan: kerangka `asesmen/tka-sd.json` + pola Paket 1 (#43, #44): komposisi bentuk, gaya
+pembahasan (pengecoh dijelaskan), 5 opsi untuk PG/MCMA. Tema tidak mengulang Paket 1/2 & bank.
+Belum diimpor ke database mana pun (lokal: dry run OK, semua aturan & saran lolos).
+- **`sd-mtk-p3.ts`**: 3 stimulus (koperasi sekolah, darmawisata, bank sampah) + 17 soal tunggal,
+  tanpa gambar. 18 PG · 6 MCMA · 6 Kategori; D1 11 · D2-S1 6 · D2-S2 7 · D3 6; L1 7 · L2 14 · L3 9.
+- **`sd-bind-p3.ts`**: 6 bacaan × 5 soal (angklung, celengan ayam, hutan bakau, puisi nelayan,
+  cuci tangan, fabel anak bebek). Bacaan 151–154 kata (puisi 51), kalimat ≤ 10 kata.
+  18 PG · 6 MCMA · 6 Kategori; 10/10 subtopik (D2-S1 4, D2-S2 2, lainnya 3); mudah 6 · sulit 8.
+
 ## 2026-10-24 — Program referal: kode per user, komisi per pembayaran, transfer manual
 - Peran tidak berubah (user/premium/admin); setiap user punya kode acak 7 karakter
   (`users.referral_code`, dibuat saat daftar / lazy untuk akun lama). Pendaftar mengisi

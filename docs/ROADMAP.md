@@ -12,14 +12,17 @@
 - **Menunggu tindakan pemilik produk:**
   1. Deploy kode terbaru (termasuk fix 500 halaman hasil, `24066a3`) lalu **`npm run prod:migrate`
      (migrasi 0023 — program referal; tanpa ini daftar/masuk error 500)**.
-  2. Impor 5 paket draf ke produksi (data di `scripts/paket-data/`): SMP Matematika &
-     B. Indonesia Paket 3, SMA Matematika/B. Indonesia/B. Inggris Paket 7 —
+  2. Impor paket draf ke produksi (data di `scripts/paket-data/`): SD Matematika &
+     B. Indonesia Paket 3, SMP Matematika & B. Indonesia Paket 3, SMA Matematika/B. Indonesia/B. Inggris Paket 7 —
      `npx tsx --env-file=.env.prod scripts/import-package.ts <file> --commit`.
   3. `npm run prod:db:clean-descriptions -- --apply` (deskripsi paket tanpa nama AI).
   4. Tinjau & terbitkan paket draf di Admin → Paket Tes (#43, #44, #52–#57 bila belum).
 - **Belum diuji dengan layanan asli:** Generate AI / Latihan AI / Perbaiki dengan AI dengan key
   Gemini asli; batch AI di Buat Paket Otomatis; email backup via SMTP asli; uji beban alur
   ujian ke produksi (WORKFLOW §11b, perlu izin).
+
+**2026-10-31:** paket SD Matematika & B. Indonesia — Paket 3 (30 soal baru masing-masing, tanpa gambar,
+semua aturan & saran lolos) di `scripts/paket-data/sd-*-p3.ts`, **belum diimpor ke produksi**.
 
 **2026-10-26:** autosave ujian tahan gangguan (cadangan lokal), pakai-ulang checkout DOKU, fix halaman
 Kelola paket (soal > 500 terbaru), dukungan teks Arab (RTL + font). Paket baru siap impor:

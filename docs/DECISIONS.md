@@ -6,6 +6,17 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-11-02 — Paket TKA SD Matematika Paket 5 & B. Indonesia Paket 4 (data siap impor, ditulis Claude)
+SD hanya 2 mata uji. Pola sama dengan SD/SMP Mat Paket 4: pembahasan menilai setiap pilihan,
+pengecoh dari miskonsepsi nyata, tema tidak mengulang paket SD sebelumnya & bank. Belum diimpor
+(dry run lokal OK, semua aturan & saran lolos, gambar dicek visual).
+- **`sd-mtk-p5.ts`** — 3 gambar: arsiran kue lapis (pecahan senilai/penjumlahan), jajargenjang &
+  segitiga pada kertas berpetak (luas), dua gelas ukur (membaca skala, konversi). Stimulus tabel
+  cara pergi ke sekolah. 18 PG · 6 MCMA · 6 Kategori; L1 7 · L2 15 · L3 8.
+- **`sd-bind-p4.ts`** — 2 gambar: poster bazar tukar buku (16–18 Nov 2026, Senin–Rabu) &
+  infografis Isi Piringku. Bacaan gunung api, cerita lomba lari, puisi guru, fabel landak
+  (151–154 kata, puisi 58). 18 PG · 6 MCMA · 6 Kategori; 10/10 subtopik × 3; mudah 6 · sulit 8.
+
 ## 2026-11-01 — Laporan soal: 14 soal diperbaiki di produksi, bug "Pilih level kognitif"
 - Bug: "Terapkan perbaikan" (Laporan Soal) ditolak "Pilih level kognitif" untuk soal lama tanpa
   level di mapel yang memakai level (mis. PPKn #575). `updateQuestionAction` kini membolehkan

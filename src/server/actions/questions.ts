@@ -37,8 +37,15 @@ function isDuplicate(error: unknown) {
 
 type ValidatedQuestion = { ok: true; q: QuestionInput } | { ok: false; errors: string[] };
 
-/** Validasi payload form soal + kecocokan subdomain & level kognitif dengan kerangka asesmen. */
-async function validateQuestionPayload(subdomainCode: string, question: unknown, status: QuestionStatus): Promise<ValidatedQuestion> {
+/** Validasi payload form soal + kecocokan subdomain & level kognitif dengan kerangka asesmen.
+ *  `allowMissingLevel`: soal lama yang memang belum punya level (sebelum level diwajibkan) boleh
+ *  disimpan tanpa level — mis. "Terapkan perbaikan" dari Laporan Soal yang hanya mengubah teks. */
+async function validateQuestionPayload(
+  subdomainCode: string,
+  question: unknown,
+  status: QuestionStatus,
+  allowMissingLevel = false,
+): Promise<ValidatedQuestion> {
   const code = frameworkCode.safeParse(subdomainCode);
   const ref = code.success ? findSubdomain(code.data) : undefined;
   if (!code.success || !ref) return { ok: false, errors: ["Pilih subdomain dari kerangka asesmen."] };
@@ -53,7 +60,7 @@ async function validateQuestionPayload(subdomainCode: string, question: unknown,
   const q = parsed.data;
 
   const levels = ref.subject.cognitiveLevels.map((l) => l.code);
-  if (levels.length > 0 && !q.cognitiveLevel) return { ok: false, errors: [`Pilih level kognitif ${levels.join("/")}.`] };
+  if (levels.length > 0 && !q.cognitiveLevel && !allowMissingLevel) return { ok: false, errors: [`Pilih level kognitif ${levels.join("/")}.`] };
   if (q.cognitiveLevel && !levels.includes(q.cognitiveLevel)) {
     return { ok: false, errors: [levels.length ? `Level kognitif ${ref.subject.name} hanya ${levels.join("/")}.` : `${ref.subject.name} tidak memakai level kognitif.`] };
   }
@@ -108,7 +115,7 @@ export async function updateQuestionAction(input: {
   const current = await getQuestionForEdit(id.data);
   if (!current) return { ok: false, errors: ["Soal tidak ditemukan (mungkin sudah dihapus)."] };
 
-  const validated = await validateQuestionPayload(input.subdomainCode, input.question, current.status);
+  const validated = await validateQuestionPayload(input.subdomainCode, input.question, current.status, current.cognitiveLevel == null);
   if (!validated.ok) return validated;
   const q = validated.q;
 

@@ -6,6 +6,17 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-11-01 — Laporan soal: 14 soal diperbaiki di produksi, bug "Pilih level kognitif"
+- Bug: "Terapkan perbaikan" (Laporan Soal) ditolak "Pilih level kognitif" untuk soal lama tanpa
+  level di mapel yang memakai level (mis. PPKn #575). `updateQuestionAction` kini membolehkan
+  level kosong bila soal tersimpan memang belum punya level (`57aff9f`).
+- Kunci ke-14 soal benar; keluhan "jawaban benar tapi disalahkan" dicek dari jawaban tersimpan:
+  pelapor menandai semua pernyataan Kategori "Benar" atau memilih sebagian kunci MCMA. Perbaikan
+  hanya teks: #286 (ukuran gambar tidak lengkap → ukuran ditulis di soal), #155 (`\t` dari
+  `\times` jadi TAB — satu-satunya di DB), #551 (Mr CH₄, hapus label "[Soal tambahan]"),
+  #1250/#1300 (kalimat soal), pembahasan semua soal kini menilai setiap pilihan + aturan skor
+  MCMA/Kategori. Laporan ditutup. #120: 49% siswa memilih E (kunci D, soal TKA 2025) — dipantau.
+
 ## 2026-10-31 — Font situs jadi serif: kelas next/font HTML ≠ CSS di build Hostinger
 Gejala: setelah deploy 2026-10-31 13:15 seluruh pakartka.com tampil Times. Penyebab: HTML memakai
 kelas `__variable_64a611`, CSS build yang sama mendefinisikan `--font-jakarta` di

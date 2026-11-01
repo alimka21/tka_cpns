@@ -1,6 +1,6 @@
 import { createHash, createHmac } from "node:crypto";
 import { describe, expect, it } from "vitest";
-import { dokuDigest, dokuSignature, dokuTimestamp, mapDokuStatus, membershipWindow, nextOrderStatus, parseDokuStatus, verifyDokuNotification } from "./doku-core";
+import { dokuDigest, dokuInvoiceOf, dokuSignature, dokuTimestamp, mapDokuStatus, membershipWindow, nextOrderStatus, parseDokuStatus, verifyDokuNotification } from "./doku-core";
 
 const creds = { clientId: "BRN-0001-UJI", secretKey: "SK-rahasia-uji" };
 
@@ -60,6 +60,13 @@ describe("status", () => {
     expect(mapDokuStatus("FAILED")).toBe("failed");
     expect(mapDokuStatus("REFUNDED")).toBe("refunded");
     expect(mapDokuStatus(undefined)).toBe("pending");
+  });
+
+  it("dokuInvoiceOf membaca invoice walau body tidak lengkap", () => {
+    expect(dokuInvoiceOf({ order: { invoice_number: "WTP-1" } })).toBe("WTP-1");
+    expect(dokuInvoiceOf({ transaction: { invoice_number: " WTP-2 " } })).toBe("WTP-2");
+    expect(dokuInvoiceOf({ order: {} })).toBeNull();
+    expect(dokuInvoiceOf(null)).toBeNull();
   });
 
   it("parseDokuStatus membaca body Check Status / notifikasi", () => {

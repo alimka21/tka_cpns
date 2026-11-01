@@ -66,6 +66,16 @@ export function mapDokuStatus(status: string | undefined): OrderStatus {
 export type DokuStatus = { invoiceNumber: string; amount: number; status: string; channel: string | null; date: string | null; raw: unknown };
 
 /** Ambil field penting dari body Check Status / notifikasi DOKU. `null` bila bentuknya tidak dikenal. */
+/**
+ * Nomor invoice dari notifikasi DOKU, walau bentuk body tidak lengkap (mis. notifikasi kanal
+ * tanpa `order.amount`). Cukup untuk menarik status asli lewat Check Status API.
+ */
+export function dokuInvoiceOf(body: unknown): string | null {
+  const b = body as { order?: { invoice_number?: unknown }; transaction?: { invoice_number?: unknown }; invoice_number?: unknown } | null;
+  const invoice = b?.order?.invoice_number ?? b?.transaction?.invoice_number ?? b?.invoice_number;
+  return typeof invoice === "string" && invoice.trim() ? invoice.trim() : null;
+}
+
 export function parseDokuStatus(body: unknown): DokuStatus | null {
   const b = body as {
     order?: { invoice_number?: unknown; amount?: unknown };

@@ -16,6 +16,7 @@
 // sendiri dirender ke PNG (sharp) lalu diunggah lewat galeri biasa (dikompres
 // WebP). Dry run menyimpan pratinjau PNG di folder `<data>.preview/`.
 // Baris `bankOnly: true` = soal masuk bank soal saja (tidak ikut paket & aturan paket).
+// Bila semua baris `bankOnly`, tidak ada paket yang dibuat (cukup tambah soal ke bank soal).
 // `createdByEmail` (admin) bisa dipakai alih-alih `createdBy` — id admin lokal ≠ produksi.
 
 import { mkdirSync, writeFileSync } from "node:fs";
@@ -77,6 +78,7 @@ async function main() {
   if (!data.createdBy) fail("Pembuat", ["Isi createdBy atau createdByEmail"]);
   const createdBy: number = data.createdBy;
   const inPackage = (rowNumber: number) => !data.rows[rowNumber - 1]?.bankOnly;
+  const makePackage = data.rows.some((r) => !r.bankOnly);
 
   // 0. Gambar: semua kunci yang dirujuk harus ada; render SVG → PNG (+ pratinjau).
   const images = data.images ?? {};
@@ -141,19 +143,19 @@ async function main() {
   console.log(`\n${data.title}`);
   console.log(`  ${s.total} soal · PG ${s.pg} · MCMA ${s.mcma} · Kategori ${s.kategori} · berbasis stimulus ${s.stimulusBased} · ${linked.stimuli.length} stimulus · ${rendered.size} gambar baru`);
   console.log(`  mudah ${count("easy")} · sedang ${count("medium")} · sulit ${count("hard")}` + (level("L1") + level("L2") + level("L3") ? ` · L1 ${level("L1")} · L2 ${level("L2")} · L3 ${level("L3")}` : ""));
-  for (const c of [...report.required, ...report.recommended]) console.log(`  ${c.ok ? "✓" : report.required.includes(c) ? "✗" : "!"} ${c.label} — ${c.detail}`);
-  if (report.missingSubtopics.length) console.log(`  subtopik kosong: ${report.missingSubtopics.join(", ")}`);
+  if (makePackage) for (const c of [...report.required, ...report.recommended]) console.log(`  ${c.ok ? "✓" : report.required.includes(c) ? "✗" : "!"} ${c.label} — ${c.detail}`);
+  if (makePackage && report.missingSubtopics.length) console.log(`  subtopik kosong: ${report.missingSubtopics.join(", ")}`);
   const bankOnly = linked.valid.length - packaged.length;
   if (bankOnly) console.log(`  + ${bankOnly} soal khusus bank soal (tidak masuk paket)`);
   const blocking = ruleErrors(report);
-  if (blocking.length) fail("Aturan wajib belum terpenuhi", blocking);
+  if (makePackage && blocking.length) fail("Aturan wajib belum terpenuhi", blocking);
 
   // 3. Tidak menimpa data yang sudah ada.
   const codes = linked.stimuli.map((st) => st.code);
   const takenCodes = codes.length ? await db.select({ code: stimuli.code }).from(stimuli).where(inArray(stimuli.code, codes)) : [];
   if (takenCodes.length) fail("Kode stimulus sudah dipakai", takenCodes.map((t) => t.code));
   const [sameTitle] = await db.select({ id: testPackages.id }).from(testPackages).where(eq(testPackages.title, data.title));
-  if (sameTitle) fail("Judul paket sudah ada", [`#${sameTitle.id} ${data.title}`]);
+  if (makePackage && sameTitle) fail("Judul paket sudah ada", [`#${sameTitle.id} ${data.title}`]);
 
   if (!commit) {
     console.log("\nDry run OK — jalankan ulang dengan --commit untuk menyimpan.");
@@ -200,6 +202,7 @@ async function main() {
       const qid = await insertQuestion(tx, question, { generatedBy: "manual", userId: createdBy });
       (inPackage(row.rowNumber) ? questionIds : bankIds).push(qid);
     }
+    if (!makePackage) return { packageId: null, questionIds, bankIds, stimulusIds: [...stimulusIds.values()] };
     const [{ id: packageId }] = await tx
       .insert(testPackages)
       .values({
@@ -218,7 +221,8 @@ async function main() {
     return { packageId, questionIds, bankIds, stimulusIds: [...stimulusIds.values()] };
   });
   const q = result.questionIds;
-  console.log(`\n✓ Paket #${result.packageId} (draf) · soal #${q[0]}–#${q[q.length - 1]} · stimulus #${result.stimulusIds.join(", #")}`);
+  if (result.packageId) console.log(`\n✓ Paket #${result.packageId} (draf) · soal #${q[0]}–#${q[q.length - 1]} · stimulus #${result.stimulusIds.join(", #")}`);
+  else console.log("\n✓ Tanpa paket (semua soal khusus bank soal)");
   if (result.bankIds.length) console.log(`  soal khusus bank: #${result.bankIds.join(", #")}`);
   if (imageUrls.size) console.log(`  gambar: ${[...imageUrls].map(([k, u]) => `${k} → ${u}`).join(", ")}`);
   process.exit(0);

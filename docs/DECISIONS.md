@@ -6,6 +6,12 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-11-02 — Impor soal lepas ke bank soal tanpa paket (`import-package.ts`)
+Bila semua baris data `bankOnly: true`, skrip tidak membuat paket dan tidak menjalankan aturan paket —
+cukup menambah soal (+ gambar SVG) ke bank soal berstatus `pending_review`. Dipakai untuk 3 soal SD
+Matematika bergambar (`scripts/paket-data/sd-mtk-lepas-1.ts`: penggaris, simetri lipat, diagram batang),
+sudah diimpor ke produksi: soal #1861–#1863, gambar #203–#205.
+
 ## 2026-11-02 — Paket TKA SD Matematika Paket 5 & B. Indonesia Paket 4 (data siap impor, ditulis Claude)
 SD hanya 2 mata uji. Pola sama dengan SD/SMP Mat Paket 4: pembahasan menilai setiap pilihan,
 pengecoh dari miskonsepsi nyata, tema tidak mengulang paket SD sebelumnya & bank. Belum diimpor

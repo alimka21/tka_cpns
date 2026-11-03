@@ -176,6 +176,13 @@
       "when": 1793684411907,
       "tag": "0024_atribusi_utm",
       "breakpoints": true
+    },
+    {
+      "idx": 25,
+      "version": "5",
+      "when": 1793684894099,
+      "tag": "0025_lead_magnet",
+      "breakpoints": true
     }
   ]
 }

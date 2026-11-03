@@ -1,12 +1,8 @@
-import { customType, index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { mediumBlob } from "./blob";
 import { users } from "./users";
 
 // Grup: AI & media soal (docs/AI_GENERATION.md, DECISIONS 2026-09-30).
-
-/** Biner hingga 16 MB (MariaDB/MySQL MEDIUMBLOB); driver mengembalikan Buffer. */
-const mediumBlob = customType<{ data: Buffer; driverData: Buffer }>({
-  dataType: () => "mediumblob",
-});
 
 /**
  * Galeri gambar soal. Disimpan di DB (bukan disk) supaya aman dari redeploy

@@ -9,3 +9,4 @@ export * from "./settings";
 export * from "./billing";
 export * from "./referrals";
 export * from "./attribution";
+export * from "./lead-magnets";

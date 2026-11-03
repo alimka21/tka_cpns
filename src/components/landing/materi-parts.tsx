@@ -1,6 +1,7 @@
 // Potongan UI halaman materi TKA publik (/tka/...).
 
 import Link from "next/link";
+import { UtmLink } from "@/components/landing/utm-link";
 import { ArrowRight, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -57,7 +58,7 @@ export function MateriCta({ title, text }: { title: string; text: string }) {
       <h2 className="max-w-2xl text-2xl font-extrabold tracking-tight sm:text-3xl">{title}</h2>
       <p className="max-w-xl text-white/80">{text}</p>
       <div className="flex flex-col gap-3 sm:flex-row">
-        <Button size="lg" variant="cta" nativeButton={false} render={<Link href="/daftar" />}>
+        <Button size="lg" variant="cta" nativeButton={false} render={<UtmLink href="/daftar" />}>
           Daftar Gratis <ArrowRight aria-hidden />
         </Button>
         <Button

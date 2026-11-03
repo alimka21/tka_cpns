@@ -169,6 +169,13 @@
       "when": 1792771933880,
       "tag": "0023_referal",
       "breakpoints": true
+    },
+    {
+      "idx": 24,
+      "version": "5",
+      "when": 1793684411907,
+      "tag": "0024_atribusi_utm",
+      "breakpoints": true
     }
   ]
 }

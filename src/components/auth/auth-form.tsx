@@ -4,7 +4,9 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { ArrowRight, AtSign, CircleCheck, Eye, EyeOff, Gift, Info, Lock, Mail, Phone, School, TriangleAlert, User, type LucideIcon } from "lucide-react";
+import { InAppBrowserNotice } from "@/components/auth/in-app-browser-notice";
 import { Logo } from "@/components/brand/logo";
+import { UtmLink } from "@/components/landing/utm-link";
 import { JenjangPicker } from "@/components/profile/jenjang-picker";
 import { ProvinceSelect } from "@/components/profile/province-select";
 import { Button } from "@/components/ui/button";
@@ -175,6 +177,8 @@ export function AuthForm({
           <p className="mt-1 text-sm text-muted-foreground">{c.subtitle}</p>
         </div>
       </div>
+
+      <InAppBrowserNotice googleEnabled={googleEnabled} />
 
       {googleEnabled && (
         <>
@@ -394,12 +398,12 @@ export function AuthForm({
       )}
       <p className="mt-6 text-center text-sm text-muted-foreground">
         {c.switchText}{" "}
-        <Link
+        <UtmLink
           href={next ? `${c.switchHref}?next=${encodeURIComponent(next)}` : c.switchHref}
           className="font-semibold text-primary hover:underline"
         >
           {c.switchLabel}
-        </Link>
+        </UtmLink>
       </p>
     </div>
   );

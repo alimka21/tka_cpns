@@ -21,6 +21,11 @@
   Gemini asli; batch AI di Buat Paket Otomatis; email backup via SMTP asli; uji beban alur
   ujian ke produksi (WORKFLOW §11b, perlu izin).
 
+**2026-11-03 (branch `feat/utm-attribution`, belum di-merge):** Fase 1 atribusi UTM — `src/proxy.ts` → cookie `pk_attr`
+(first/last, 30 hari), tabel `user_attribution` (migrasi 0024, **belum dijalankan**), link CTA publik & /daftar↔/masuk
+membawa utm_*, petunjuk browser in-app Instagram/Facebook di form auth, kalimat cookie atribusi di /privasi.
+Fase 2 (lead magnet /materi), 3 (/admin/atribusi), 4 (API agen) menyusul.
+
 **2026-11-02:** paket SD Matematika Paket 5 (3 gambar), SD B. Indonesia Paket 4 & 5 (2 gambar masing-masing) — 30 soal
 baru masing-masing, pembahasan per pilihan — di `scripts/paket-data/sd-{mtk-p5,bind-p4,bind-p5}.ts`, **belum diimpor**.
 

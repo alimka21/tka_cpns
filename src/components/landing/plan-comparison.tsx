@@ -5,7 +5,7 @@
 // keraguan. Sengaja tanpa hitung mundur palsu, kelangkaan buatan, atau testimoni
 // karangan.
 
-import Link from "next/link";
+import { UtmLink } from "@/components/landing/utm-link";
 import {
   ArrowRight,
   BookOpenCheck,
@@ -184,7 +184,7 @@ export function PlanComparison({
               size="lg"
               variant="outline"
               nativeButton={false}
-              render={<Link href="/daftar" />}
+              render={<UtmLink href="/daftar" />}
             >
               Daftar Gratis
             </Button>
@@ -249,7 +249,7 @@ export function PlanComparison({
                 size="lg"
                 variant="cta"
                 nativeButton={false}
-                render={<Link href="/daftar?next=%2Flangganan" />}
+                render={<UtmLink href="/daftar?next=%2Flangganan" />}
               >
                 Mulai Premium <ArrowRight aria-hidden />
               </Button>
@@ -357,7 +357,7 @@ export function PlanComparison({
               size="lg"
               variant="cta"
               nativeButton={false}
-              render={<Link href="/daftar" />}
+              render={<UtmLink href="/daftar" />}
             >
               Coba Gratis Sekarang <ArrowRight aria-hidden />
             </Button>
@@ -365,7 +365,7 @@ export function PlanComparison({
               size="lg"
               variant="outline"
               nativeButton={false}
-              render={<Link href="/daftar?next=%2Flangganan" />}
+              render={<UtmLink href="/daftar?next=%2Flangganan" />}
             >
               <Crown className="text-cta" aria-hidden /> Langsung Premium
             </Button>

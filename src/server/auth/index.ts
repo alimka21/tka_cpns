@@ -13,7 +13,9 @@ import { PLACEHOLDER_EMAIL_DOMAIN, isPlaceholderEmail, looksLikePhone, normalize
 import { provinceSchema, schoolNameSchema } from "@/lib/provinces";
 import { SITE_NAME } from "@/lib/site";
 import { normalizeReferralCode } from "@/lib/referral";
+import { ATTRIBUTION_COOKIE } from "@/lib/attribution";
 import { getSetting } from "@/server/services/app-settings";
+import { saveSignupAttribution } from "@/server/services/attribution";
 import { findReferrerByCode, newUniqueReferralCode } from "@/server/services/referrals";
 import { isMailConfigured, resetPasswordEmail, sendMail } from "@/server/services/mailer";
 
@@ -116,6 +118,10 @@ export const auth = betterAuth({
           const ref = (ctx?.body as Record<string, unknown> | undefined)?.ref;
           const [referralCode, referredByUserId] = await Promise.all([newUniqueReferralCode(), findReferrerByCode(ref)]);
           return { data: { ...user, status: requireApproval ? "pending" : "active", referralCode, referredByUserId } };
+        },
+        // Asal kampanye (cookie UTM dari src/proxy.ts) — email maupun Google. Tidak melempar error.
+        after: async (user, ctx) => {
+          await saveSignupAttribution(Number(user.id), () => ctx?.getCookie?.(ATTRIBUTION_COOKIE));
         },
       },
     },

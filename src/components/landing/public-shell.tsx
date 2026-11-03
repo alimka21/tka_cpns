@@ -1,6 +1,7 @@
 // Header & footer halaman publik (landing + halaman materi TKA).
 
 import Link from "next/link";
+import { UtmLink } from "@/components/landing/utm-link";
 import { BrandLockup, Logo } from "@/components/brand/logo";
 import { Button } from "@/components/ui/button";
 import { jenjangPath, subjectPath } from "@/lib/seo";
@@ -32,10 +33,10 @@ export function PublicHeader({ onLanding = false }: { onLanding?: boolean }) {
           ))}
         </nav>
         <div className="flex items-center gap-2">
-          <Button variant="ghost" className="hidden sm:inline-flex" nativeButton={false} render={<Link href="/masuk" />}>
+          <Button variant="ghost" className="hidden sm:inline-flex" nativeButton={false} render={<UtmLink href="/masuk" />}>
             Masuk
           </Button>
-          <Button variant="cta" nativeButton={false} render={<Link href="/daftar" />}>
+          <Button variant="cta" nativeButton={false} render={<UtmLink href="/daftar" />}>
             Daftar Gratis
           </Button>
         </div>

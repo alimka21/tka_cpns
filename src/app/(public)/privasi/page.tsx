@@ -143,7 +143,9 @@ const sections: LegalSection[] = [
     body: (
       <p>
         Kami memakai cookie yang diperlukan agar kamu tetap masuk (cookie sesi) dan agar layanan berfungsi dengan aman. Kami tidak
-        memakai cookie iklan atau pelacak pihak ketiga. Bila cookie dimatikan di peramban, kamu tidak dapat masuk ke akun.
+        memakai cookie iklan atau pelacak pihak ketiga. Bila cookie dimatikan di peramban, kamu tidak dapat masuk ke akun. Bila kamu
+        datang dari tautan kampanye kami (mis. dari Instagram), cookie atribusi menyimpan nama kampanye dan halaman pertama yang dibuka
+        selama 30 hari, lalu dicatat bersama akunmu saat mendaftar — tanpa data pribadi — agar kami tahu konten mana yang bermanfaat.
       </p>
     ),
   },
@@ -176,7 +178,7 @@ export default function PrivasiPage() {
   return (
     <LegalPage
       title="Kebijakan Privasi"
-      effectiveDate="19 Oktober 2026"
+      effectiveDate="3 November 2026"
       other={{ href: "/syarat", label: "Syarat & Ketentuan" }}
       intro={
         <p>

@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { PlanComparison } from "@/components/landing/plan-comparison";
 import { PublicFooter, PublicHeader } from "@/components/landing/public-shell";
+import { UtmLink } from "@/components/landing/utm-link";
 import { faqLd, JsonLd } from "@/components/seo/json-ld";
 import { Button } from "@/components/ui/button";
 import { jenjangPath } from "@/lib/seo";
@@ -178,7 +179,7 @@ export default async function LandingPage() {
                 akhir.
               </p>
               <div className="flex w-full flex-col gap-3 sm:w-auto sm:flex-row">
-                <Button size="lg" variant="cta" nativeButton={false} render={<Link href="/daftar" />}>
+                <Button size="lg" variant="cta" nativeButton={false} render={<UtmLink href="/daftar" />}>
                   Mulai Gratis Sekarang <ArrowRight aria-hidden />
                 </Button>
                 <Button size="lg" variant="outline" nativeButton={false} render={<Link href="/tes/demo" />}>
@@ -188,9 +189,9 @@ export default async function LandingPage() {
               <p className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
                 <CircleCheck className="size-4 text-success" aria-hidden /> Gratis, tanpa kartu kredit
                 <span aria-hidden>·</span>
-                <Link href="/masuk" className="font-semibold text-primary hover:underline">
+                <UtmLink href="/masuk" className="font-semibold text-primary hover:underline">
                   Sudah punya akun? Masuk
-                </Link>
+                </UtmLink>
               </p>
             </div>
             <HeroPreview />
@@ -392,7 +393,7 @@ export default async function LandingPage() {
               Siap tahu subtopik mana yang perlu kamu kuasai?
             </h2>
             <p className="max-w-xl text-white/80">Daftar dalam hitungan detik, lalu kerjakan paket pertamamu hari ini.</p>
-            <Button size="lg" variant="cta" nativeButton={false} render={<Link href="/daftar" />}>
+            <Button size="lg" variant="cta" nativeButton={false} render={<UtmLink href="/daftar" />}>
               Daftar Akun Gratis <ArrowRight aria-hidden />
             </Button>
           </div>

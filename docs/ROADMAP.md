@@ -27,7 +27,8 @@ membawa utm_*, petunjuk browser in-app Instagram/Facebook di form auth, kalimat 
 Migrasi 0024 sudah di DB lokal. Fase 2 lead magnet — `/materi/[slug]` (+ `/unduh` cek sesi & catat unduhan,
 `/pratinjau` cache publik), file di DB (MEDIUMBLOB ≤10 MB) + LRU memori `id:updated_at`, admin `/admin/materi`
 (migrasi 0025 sudah di DB lokal). Fase 3 laporan `/admin/atribusi` (per kampanye first/last + per materi,
-tanpa migrasi). Fase 4 (API agen) menunggu persetujuan. **Produksi: belum** — perlu `prod:migrate` (0024, 0025).
+tanpa migrasi). Fase 4 API agen `GET /api/agent/attribution` (Bearer `AGENT_API_TOKEN`, agregat saja, rate limit).
+**Produksi: belum** — langkah deploy di WORKFLOW §15 (backup → cek server DB → `prod:migrate` 0024+0025 → env → merge).
 
 **2026-11-02:** paket SD Matematika Paket 5 (3 gambar), SD B. Indonesia Paket 4 & 5 (2 gambar masing-masing) — 30 soal
 baru masing-masing, pembahasan per pilihan — di `scripts/paket-data/sd-{mtk-p5,bind-p4,bind-p5}.ts`, **belum diimpor**.

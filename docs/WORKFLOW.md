@@ -474,3 +474,27 @@ menampilkan status, tombol "Buat backup sekarang", dan unduhan.
 - Lokal/uji: `npm run db:restore -- <file.sql.gz> [--db=<nama_db_baru>]`
   (hanya host lokal). Uji pulih 2026-10-14: checksum 28 tabel identik.
 
+
+## 15. Atribusi UTM, materi (lead magnet) & API agen — deploy (2026-11-03)
+
+Branch `feat/utm-attribution`. Migrasi 0024 (`user_attribution`) & 0025 (`lead_magnets`,
+`lead_magnet_downloads`) hanya MENAMBAH tabel → aman dijalankan sebelum kode baru tayang
+(kode lama tidak memakainya). Urutan:
+
+1. Backup: `npm run prod:db:backup`.
+2. Cek server DB (phpMyAdmin → SQL): `SELECT @@explicit_defaults_for_timestamp, @@max_allowed_packet;`
+   - `explicit_defaults_for_timestamp` harus 1 (kolom `*_seen_at` nullable). Bila 0 → jangan
+     migrasi dulu; ubah kolom jadi `timestamp NULL` di 0024.
+   - `max_allowed_packet` ≥ 16777216 (file materi sampai 10 MB).
+3. `npm run prod:migrate` → cek `npm run prod:db:check`.
+4. hPanel → env: `AGENT_API_TOKEN=<openssl rand -hex 32>` (opsional; kosong = API mati 503).
+5. Merge `feat/utm-attribution` → `main`, push (auto-deploy). Tunggu build selesai.
+6. Uji: Admin → **Materi (Lead Magnet)** → buat `tips-gelombang-2` → buka
+   `https://pakartka.com/materi/tips-gelombang-2?utm_source=instagram&utm_medium=dm&utm_campaign=gel2&utm_content=file`
+   di jendela samaran → daftar akun uji → kembali ke materi & unduh → Admin → **Atribusi Kampanye**:
+   akun muncul di `gel2`. Hapus akun uji sesudahnya.
+7. API agen: `curl -H "Authorization: Bearer <AGENT_API_TOKEN>" "https://pakartka.com/api/agent/attribution?from=2026-11-01&to=2026-11-30"`.
+   Batas 30 permintaan/menit per IP; token salah 10×/15 menit per IP → 429.
+
+Link kampanye: `https://pakartka.com/materi/<slug>?utm_source=instagram&utm_medium=dm&utm_campaign=<kata-kunci>&utm_content=file`
+(nilai huruf kecil, angka, `-`, `_`, maks 64 karakter; selain itu diabaikan).

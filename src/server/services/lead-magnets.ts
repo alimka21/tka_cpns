@@ -13,9 +13,20 @@ import { compressImage } from "@/server/services/question-images";
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
 const META_TTL_MS = 15_000;
-/** Total isi file + gambar pratinjau di memori (beberapa materi populer muat sekaligus). */
-const fileCache = new ByteLru<Buffer>(96 * 1024 * 1024, 11 * 1024 * 1024);
-const metaCache = new Map<string, { at: number; meta: LeadMagnetMeta | null }>();
+
+// Route handler (/materi/.../unduh) dan server action admin dibundel terpisah oleh Next →
+// variabel modul biasa TIDAK dibagi, sehingga invalidasi dari admin tidak sampai ke route.
+// Simpan di globalThis supaya satu proses Node memakai satu cache.
+const shared = globalThis as typeof globalThis & {
+  __leadMagnetCache?: { files: ByteLru<Buffer>; meta: Map<string, { at: number; meta: LeadMagnetMeta | null }> };
+};
+shared.__leadMagnetCache ??= {
+  /** Total isi file + gambar pratinjau di memori (beberapa materi populer muat sekaligus). */
+  files: new ByteLru<Buffer>(96 * 1024 * 1024, 11 * 1024 * 1024),
+  meta: new Map(),
+};
+const fileCache = shared.__leadMagnetCache.files;
+const metaCache = shared.__leadMagnetCache.meta;
 
 export type LeadMagnetMeta = {
   id: number;
@@ -92,7 +103,9 @@ export const previewImagePath = (meta: Pick<LeadMagnetMeta, "slug" | "updatedAt"
 /** Catat satu unduhan. Gagal mencatat tidak boleh menggagalkan unduhan. */
 export async function recordLeadMagnetDownload(leadMagnetId: number, userId: number | null) {
   try {
-    await db.insert(leadMagnetDownloads).values({ leadMagnetId, userId });
+    // Waktu dari JS (UTC), sama seperti users.created_at dari Better Auth — DEFAULT now()
+    // mengikuti zona waktu server DB, sehingga perbandingan "akun baru ≤ 24 jam" bisa bergeser.
+    await db.insert(leadMagnetDownloads).values({ leadMagnetId, userId, createdAt: new Date() });
   } catch (e) {
     console.error("[lead-magnet] gagal mencatat unduhan", leadMagnetId, e instanceof Error ? e.message : e);
   }

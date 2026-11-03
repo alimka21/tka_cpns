@@ -30,6 +30,8 @@ export async function saveSignupAttribution(userId: number, readCookie: () => st
         lastTerm: last.term,
         lastLandingPath: last.path,
         lastSeenAt: last.at,
+        // Waktu dari JS (UTC) seperti users.created_at — bukan DEFAULT now() zona waktu server DB.
+        createdAt: new Date(),
       })
       // Satu baris per user — panggilan ganda tidak mengubah yang sudah tercatat.
       .onDuplicateKeyUpdate({ set: { userId } });

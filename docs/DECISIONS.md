@@ -1368,3 +1368,18 @@ akun Gemini.
 Alternatif yang ditolak: Nuxt/SvelteKit (fungsional serupa, dipilih
 Next.js karena ekosistem & referensi lebih luas untuk kolaborasi ke
 depan).
+
+## 2026-11-03 — Atribusi UTM, lead magnet /materi, laporan /admin/atribusi
+Keputusan: utm_* ditangkap `src/proxy.ts` → cookie httpOnly `pk_attr` (first tidak ditimpa,
+last diperbarui, 30 hari), disalin ke `user_attribution` di hook `user.create.after` (gagal →
+diabaikan, daftar tetap jalan). Tanpa IP/perangkat (pengguna anak). Link internal membawa
+utm_* (`UtmLink`) karena cookie hilang bila pengguna pindah dari browser Instagram.
+Lead magnet disimpan di DB (MEDIUMBLOB ≤10 MB) seperti gambar soal; isi file di LRU memori
+(kunci `id:updated_at`) + metadata TTL 15 detik. Cache disimpan di `globalThis` karena route
+handler & server action dibundel terpisah oleh Next (variabel modul tidak dibagi → invalidasi
+admin tidak sampai). `created_at` unduhan & atribusi ditulis dari JS (UTC), bukan DEFAULT now()
+yang mengikuti zona waktu server DB — supaya sebanding dengan `users.created_at` (Better Auth).
+Laporan: kohort = siswa yang daftar di rentang (WIB); Premium = order `paid` kapan pun; default
+first-touch; unduhan admin tidak dihitung.
+Alternatif ditolak: file di disk/public (hilang saat redeploy, tidak bisa cek sesi); pelacak
+pihak ketiga (data anak, kebijakan privasi).

@@ -32,6 +32,17 @@ export const saveAnswerInput = z.object({
   isFlagged: z.boolean().default(false),
 });
 
-export const submitAttemptInput = z.object({ attemptId: id });
+/**
+ * Submit membawa jawaban yang BELUM terkonfirmasi tersimpan oleh autosave
+ * (gagal kirim / masih antre saat tombol Selesai atau timer habis). Server
+ * meng-upsert-nya sebelum menilai, supaya jawaban terakhir tidak hilang.
+ */
+export const submitAttemptInput = z.object({
+  attemptId: id,
+  answers: z
+    .record(z.string().regex(/^\d{1,10}$/), answerResponse.nullable())
+    .refine((a) => Object.keys(a).length <= 200, "Terlalu banyak jawaban")
+    .optional(),
+});
 
 export type SaveAnswerInput = z.infer<typeof saveAnswerInput>;

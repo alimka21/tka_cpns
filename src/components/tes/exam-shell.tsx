@@ -272,9 +272,15 @@ export function ExamShell({
     setPhase("submitting");
     setSubmitError(null);
     await flushSaves();
+    // Demo: semua jawaban. Attempt asli: hanya yang belum terkonfirmasi autosave (gagal kirim /
+    // masih antre — mis. jawaban detik terakhir saat timer habis) supaya tidak dinilai kosong.
+    const unconfirmed = { ...readBackup(backupKey) };
+    pending.current.forEach((state, id) => (unconfirmed[id] = state));
     const snapshot = sendAnswersOnSubmit
       ? Object.fromEntries(Object.entries(answersRef.current).map(([id, a]) => [id, a.response]))
-      : undefined;
+      : Object.keys(unconfirmed).length > 0
+        ? Object.fromEntries(Object.entries(unconfirmed).map(([id, a]) => [id, a.response]))
+        : undefined;
     const result = await submitAttempt(snapshot).catch(() => ({
       ok: false,
       error: "Koneksi terputus.",

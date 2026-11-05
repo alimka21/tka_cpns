@@ -62,8 +62,8 @@ export type SaveAnswerFn = (input: {
 }) => Promise<{ ok: boolean; error?: string; code?: SaveFailureCode }>;
 
 /**
- * `answers` hanya dikirim bila ExamShell diberi `sendAnswersOnSubmit` (demo
- * tanpa DB). Attempt asli mengabaikannya — jawaban sudah tersimpan via autosave.
+ * `answers`: demo (`sendAnswersOnSubmit`) = semua jawaban. Attempt asli = hanya
+ * jawaban yang belum terkonfirmasi autosave; server meng-upsert-nya sebelum menilai.
  */
 export type SubmitAttemptFn = (
   answers?: Record<number, AnswerResponse | null>,

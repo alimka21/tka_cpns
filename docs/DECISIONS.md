@@ -6,6 +6,19 @@ Claude Code berikutnya tahu "kenapa" tanpa baca ulang riwayat percakapan.
 
 Format:
 ```
+## 2026-11-05 — Jawaban detik terakhir tidak hilang saat submit
+Masalah: siswa menjawab benar tetapi hasil menilai kosong/salah. Penyebab: (1) autosave yang gagal
+sementara saat tombol Selesai/timer habis di-requeue dengan jeda, tetapi submit tetap jalan tanpa
+menunggu → jawaban tidak ada di `attempt_answers`; (2) jawaban yang dipilih tepat sebelum timer habis
+tiba setelah `ends_at` → ditolak "Waktu sudah habis" & attempt di-finalize tanpa jawaban itu.
+Keputusan: submit membawa jawaban yang belum terkonfirmasi (cadangan localStorage + antrean) dan
+server meng-upsert-nya sebelum menilai; toleransi `SUBMIT_GRACE_MS` 30 detik setelah `ends_at` untuk
+autosave, submit, dan resume (setelah muat ulang, client langsung submit cadangannya). Finalize
+bersyarat `status = in_progress` supaya dua finalize bersamaan tidak menulis ganda. Cache detail
+paket dipindah ke `globalThis` (pola sama dengan lead magnet) agar invalidasi admin sampai.
+Alternatif ditolak: kirim SEMUA jawaban saat submit (bisa menimpa jawaban dari tab/perangkat lain
+dengan state lama); menunggu retry tanpa batas sebelum submit (siswa terjebak bila koneksi buruk).
+
 ## 2026-11-03 — Atribusi UTM, lead magnet /materi, laporan /admin/atribusi
 Keputusan: utm_* ditangkap `src/proxy.ts` → cookie httpOnly `pk_attr` (first tidak ditimpa,
 last diperbarui, 30 hari), disalin ke `user_attribution` di hook `user.create.after` (gagal →

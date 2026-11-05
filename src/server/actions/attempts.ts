@@ -12,7 +12,7 @@ import { saveAnswerInput, submitAttemptInput } from "@/lib/validation/attempt";
 import { getActiveSession } from "@/server/auth/session";
 import { db } from "@/server/db";
 import { attemptAnswers, attempts, testPackageQuestions } from "@/server/db/schema";
-import { finalizeAttempt } from "@/server/services/attempts";
+import { acceptsAnswers, finalizeAttempt, saveSubmittedAnswers } from "@/server/services/attempts";
 
 async function loadOwnedAttempt(attemptId: number) {
   const session = await getActiveSession();
@@ -45,7 +45,7 @@ export async function saveAnswerAction(
   const { attempt } = row;
 
   if (attempt.status !== "in_progress") return { ok: false, code: "closed", error: "Percobaan ini sudah selesai." };
-  if (attempt.endsAt.getTime() <= Date.now()) {
+  if (!acceptsAnswers(attempt.endsAt)) {
     await finalizeAttempt(attemptId, "expired");
     return { ok: false, code: "closed", error: "Waktu sudah habis." };
   }
@@ -64,13 +64,22 @@ export async function saveAnswerAction(
   return { ok: true };
 }
 
-export async function submitAttemptAction(attemptId: number): Promise<{ ok: boolean; error?: string; redirectTo?: string }> {
+export async function submitAttemptAction(
+  attemptId: number,
+  answers?: Record<number, AnswerResponse | null>,
+): Promise<{ ok: boolean; error?: string; redirectTo?: string }> {
   const owned = await loadOwnedAttempt(attemptId);
   if ("error" in owned) return { ok: false, error: owned.error };
   const { attempt } = owned;
 
-  if (!submitAttemptInput.safeParse({ attemptId }).success) return { ok: false, error: "Percobaan tidak valid." };
-  if (attempt.status === "in_progress") await finalizeAttempt(attemptId, "submitted");
+  const parsed = submitAttemptInput.safeParse({ attemptId, answers });
+  if (!parsed.success) return { ok: false, error: "Percobaan tidak valid." };
+  if (attempt.status === "in_progress") {
+    const inTime = acceptsAnswers(attempt.endsAt);
+    // Jawaban yang belum sempat ter-autosave ikut dinilai — hanya bila masih dalam waktu + toleransi.
+    if (inTime && parsed.data.answers) await saveSubmittedAnswers(attemptId, attempt.testPackageId, parsed.data.answers);
+    await finalizeAttempt(attemptId, inTime ? "submitted" : "expired");
+  }
 
   // Sengaja TANPA revalidatePath: action ini dipanggil dari /tes/[id], dan revalidate
   // membuat Next me-render ulang halaman itu di respons action → startOrResumeAttempt

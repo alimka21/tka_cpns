@@ -2,7 +2,7 @@
 // Dipanggil dari Server Component halaman ujian & dari server actions
 // (src/server/actions/attempts.ts) — bukan action itu sendiri.
 
-import { and, desc, eq } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import type { AnswerResponse } from "@/lib/validation/attempt";
 import { db } from "@/server/db";
 import { attemptAnswers, attemptSubtopicScores, attempts } from "@/server/db/schema";
@@ -22,6 +22,37 @@ function toScorable(pkg: PackageDetail): ScorableQuestion[] {
     categoryLabels: q.categoryLabels,
     pointsOverride: q.pointsOverride,
   }));
+}
+
+/**
+ * Toleransi setelah `ends_at`: jawaban yang dipilih di detik terakhir masih
+ * dalam perjalanan (debounce autosave + latensi jaringan, atau submit otomatis
+ * saat timer habis) tetap diterima. Tanpa ini jawaban terakhir ditolak "Waktu
+ * sudah habis" lalu dinilai kosong/salah (DECISIONS 2026-11-05).
+ */
+export const SUBMIT_GRACE_MS = 30_000;
+
+/** Attempt masih boleh menerima jawaban (waktu + toleransi). */
+export function acceptsAnswers(endsAt: Date, now = Date.now()) {
+  return endsAt.getTime() + SUBMIT_GRACE_MS > now;
+}
+
+/**
+ * Upsert jawaban yang dibawa submit (yang belum terkonfirmasi autosave).
+ * Soal di luar paket diabaikan; kepemilikan opsi tetap dicek saat skor.
+ */
+export async function saveSubmittedAnswers(attemptId: number, testPackageId: number, answers: Record<string, AnswerResponse | null>) {
+  const pkg = await getPackageDetailCached(testPackageId);
+  if (!pkg) return;
+  const allowed = new Set(pkg.questions.map((q) => q.id));
+  const rows = Object.entries(answers)
+    .map(([id, response]) => ({ attemptId, questionId: Number(id), response }))
+    .filter((r) => allowed.has(r.questionId));
+  if (rows.length === 0) return;
+  await db
+    .insert(attemptAnswers)
+    .values(rows)
+    .onDuplicateKeyUpdate({ set: { response: sql.raw("values(`response`)") } });
 }
 
 /**
@@ -48,10 +79,12 @@ export async function finalizeAttempt(attemptId: number, status: "submitted" | "
   const scaled = (await scaledScorer())(pkg.categoryCode, result.totalScore, result.maxScore);
 
   await db.transaction(async (tx) => {
-    await tx
+    // Bersyarat status: dua finalize bersamaan (submit + timer/resume) → hanya satu yang menulis.
+    const [header] = await tx
       .update(attempts)
       .set({ status, submittedAt: new Date(), totalScore: result.totalScore, maxScore: result.maxScore, ...scaled })
-      .where(eq(attempts.id, attemptId));
+      .where(and(eq(attempts.id, attemptId), eq(attempts.status, "in_progress")));
+    if (header.affectedRows === 0) return;
     await tx.delete(attemptSubtopicScores).where(eq(attemptSubtopicScores.attemptId, attemptId));
     if (subtopicSummaries.length > 0) {
       await tx.insert(attemptSubtopicScores).values(
@@ -119,7 +152,8 @@ export async function startOrResumeAttempt(
     .where(and(eq(attempts.userId, userId), eq(attempts.testPackageId, testPackageId), eq(attempts.status, "in_progress")));
 
   if (existing) {
-    if (existing.endsAt.getTime() > Date.now()) return { ok: true, attemptId: existing.id };
+    // Masih dalam toleransi → lanjutkan: client langsung submit + kirim cadangan jawaban lokalnya.
+    if (acceptsAnswers(existing.endsAt)) return { ok: true, attemptId: existing.id };
     await finalizeAttempt(existing.id, "expired");
   } else if (!restart) {
     // Halaman ujian dirender lagi tepat setelah submit (refresh, tombol Back, atau

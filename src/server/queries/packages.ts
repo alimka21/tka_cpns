@@ -192,7 +192,11 @@ export async function getPackageDetail(testPackageId: number): Promise<PackageDe
 // mutasi paket/soal/stimulus (invalidatePackageCache). Objek dibagi antar
 // request: pemanggil TIDAK boleh mengubahnya. Admin selalu pakai getPackageDetail.
 const PACKAGE_CACHE_TTL_MS = 30_000;
-const packageCache = new Map<number, { at: number; value: PackageDetail }>();
+// Di globalThis: server action admin & halaman ujian bisa dibundel terpisah oleh Next — variabel
+// modul tidak dibagi, sehingga invalidatePackageCache() tidak mengosongkan cache jalur ujian
+// (kunci jawaban yang baru dikoreksi admin bisa tidak terpakai saat menilai).
+const shared = globalThis as typeof globalThis & { __packageDetailCache?: Map<number, { at: number; value: PackageDetail }> };
+const packageCache = (shared.__packageDetailCache ??= new Map());
 
 export async function getPackageDetailCached(testPackageId: number): Promise<PackageDetail | undefined> {
   const hit = packageCache.get(testPackageId);

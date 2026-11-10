@@ -76,19 +76,19 @@ function imgSepeda() {
 
 const stimuli = [
   {
-    code: "SMP-MTK-P4-SEJAJAR",
+    code: "SMP-MTK-P4B-SEJAJAR",
     title: "Garis Sejajar dan Garis Transversal",
     content: "Pada gambar berikut, garis $l$ sejajar dengan garis $m$. Kedua garis itu dipotong oleh garis $t$.",
     gambar: "garis-sejajar",
   },
   {
-    code: "SMP-MTK-P4-KOORDINAT",
+    code: "SMP-MTK-P4B-KOORDINAT",
     title: "Segitiga ABC pada Bidang Koordinat",
     content: "Segitiga ABC digambar pada bidang koordinat Kartesius berikut. Koordinat titik-titiknya adalah A(1, 2), B(4, 2), dan C(1, 5).",
     gambar: "segitiga-koordinat",
   },
   {
-    code: "SMP-MTK-P4-SEPEDA",
+    code: "SMP-MTK-P4B-SEPEDA",
     title: "Penjualan Sepeda Listrik",
     content: "Diagram garis berikut menunjukkan banyak sepeda listrik yang terjual di Toko Maju setiap bulan dari Januari sampai Juni.",
     gambar: "diagram-sepeda",
@@ -480,7 +480,7 @@ Cek setiap pilihan:
   // ---- Objek Geometri (stimulus garis sejajar) ----
   {
     // 16
-    kode_stimulus: "SMP-MTK-P4-SEJAJAR",
+    kode_stimulus: "SMP-MTK-P4B-SEJAJAR",
     kode_subdomain: "SMP-MTK-D3-S1",
     bentuk_soal: "pg",
     pertanyaan: r`Nilai $x$ adalah ....`,
@@ -505,7 +505,7 @@ Cek setiap pilihan:
   },
   {
     // 17
-    kode_stimulus: "SMP-MTK-P4-SEJAJAR",
+    kode_stimulus: "SMP-MTK-P4B-SEJAJAR",
     kode_subdomain: "SMP-MTK-D3-S1",
     bentuk_soal: "pgk_kategori",
     kategori: "Benar/Salah",
@@ -553,7 +553,7 @@ Cek setiap pilihan:
   // ---- Transformasi Geometri (stimulus koordinat) ----
   {
     // 19
-    kode_stimulus: "SMP-MTK-P4-KOORDINAT",
+    kode_stimulus: "SMP-MTK-P4B-KOORDINAT",
     kode_subdomain: "SMP-MTK-D3-S2",
     bentuk_soal: "pg",
     pertanyaan: "Bayangan titik C oleh pencerminan terhadap sumbu-$x$ adalah ....",
@@ -576,7 +576,7 @@ Cek setiap pilihan:
   },
   {
     // 20
-    kode_stimulus: "SMP-MTK-P4-KOORDINAT",
+    kode_stimulus: "SMP-MTK-P4B-KOORDINAT",
     kode_subdomain: "SMP-MTK-D3-S2",
     bentuk_soal: "pgk_mcma",
     pertanyaan: `Segitiga ABC ditranslasikan 5 satuan ke kiri dan 3 satuan ke bawah.${MCMA}`,
@@ -599,7 +599,7 @@ Cek setiap pilihan:
   },
   {
     // 21
-    kode_stimulus: "SMP-MTK-P4-KOORDINAT",
+    kode_stimulus: "SMP-MTK-P4B-KOORDINAT",
     kode_subdomain: "SMP-MTK-D3-S2",
     bentuk_soal: "pg",
     pertanyaan: "Titik B dirotasi 90° berlawanan arah jarum jam dengan pusat O(0, 0), kemudian hasilnya dicerminkan terhadap sumbu-$y$. Koordinat bayangan akhir titik B adalah ....",
@@ -692,7 +692,7 @@ Cek setiap pilihan:
   // ---- Data (stimulus diagram garis) ----
   {
     // 25
-    kode_stimulus: "SMP-MTK-P4-SEPEDA",
+    kode_stimulus: "SMP-MTK-P4B-SEPEDA",
     kode_subdomain: "SMP-MTK-D4-S1",
     bentuk_soal: "pg",
     pertanyaan: "Kenaikan penjualan terbesar dari satu bulan ke bulan berikutnya terjadi pada ....",
@@ -720,7 +720,7 @@ Cek setiap pilihan:
   },
   {
     // 26
-    kode_stimulus: "SMP-MTK-P4-SEPEDA",
+    kode_stimulus: "SMP-MTK-P4B-SEPEDA",
     kode_subdomain: "SMP-MTK-D4-S1",
     bentuk_soal: "pgk_kategori",
     kategori: "Benar/Salah",
@@ -741,7 +741,7 @@ Cek setiap pilihan:
   },
   {
     // 27
-    kode_stimulus: "SMP-MTK-P4-SEPEDA",
+    kode_stimulus: "SMP-MTK-P4B-SEPEDA",
     kode_subdomain: "SMP-MTK-D4-S1",
     bentuk_soal: "pg",
     pertanyaan: "Pemilik toko menginginkan rata-rata penjualan dari Januari sampai Juli menjadi 18 unit per bulan. Banyak sepeda yang harus terjual pada bulan Juli adalah ....",

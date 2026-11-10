@@ -13,7 +13,7 @@
   1. Deploy kode terbaru (termasuk fix 500 halaman hasil, `24066a3`) lalu **`npm run prod:migrate`
      (migrasi 0023 — program referal; tanpa ini daftar/masuk error 500)**.
   2. Impor paket draf ke produksi (data di `scripts/paket-data/`): SD Matematika &
-     B. Indonesia Paket 3, SD & SMP Matematika Paket 4, SD Matematika Paket 5 & B. Indonesia Paket 4–5, SMP Matematika & B. Indonesia Paket 3, SMP B. Indonesia Paket 4 & Matematika Paket 5, SMA Matematika/B. Indonesia/B. Inggris Paket 7 —
+     B. Indonesia Paket 3, SD & SMP Matematika Paket 4, SD Matematika Paket 5 & B. Indonesia Paket 4–5, SMP Matematika & B. Indonesia Paket 3, SMA Matematika/B. Indonesia/B. Inggris Paket 7 —
      `npx tsx --env-file=.env.prod scripts/import-package.ts <file> --commit`.
   3. `npm run prod:db:clean-descriptions -- --apply` (deskripsi paket tanpa nama AI).
   4. Tinjau & terbitkan paket draf di Admin → Paket Tes (#43, #44, #52–#57 bila belum).
@@ -33,7 +33,7 @@ tanpa migrasi). Fase 4 API agen `GET /api/agent/attribution` (Bearer `AGENT_API_
 **2026-11-10:** paket SMP B. Indonesia Paket 4 (6 stimulus × 5 soal, 3 gambar: infografis hemat air, diagram bank
 sampah, poster festival literasi) & SMP Matematika Paket 5 (4 gambar: grafik biaya kirim, segitiga KLM, denah taman,
 diagram lingkaran) — 30 soal baru masing-masing, semua aturan & saran lolos, pembahasan per pilihan — di
-`scripts/paket-data/smp-{bind-p4,mtk-p5}.ts`. Sudah diimpor ke DB **lokal** (draf #62, #63), **belum ke produksi**.
+`scripts/paket-data/smp-{bind-p4,mtk-p5}.ts`. Sudah diimpor ke produksi (2026-11-10, draf) — tinggal ditinjau & diterbitkan.
 
 **2026-11-02:** paket SD Matematika Paket 5 (3 gambar), SD B. Indonesia Paket 4 & 5 (2 gambar masing-masing) — 30 soal
 baru masing-masing, pembahasan per pilihan — di `scripts/paket-data/sd-{mtk-p5,bind-p4,bind-p5}.ts`, **belum diimpor**.

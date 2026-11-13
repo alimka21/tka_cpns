@@ -27,6 +27,10 @@ const SETTINGS = {
   "landing.testimonials": { schema: z.array(testimonialSchema).max(12), default: [] as Testimonial[] },
   /** Komisi referal (%) dari setiap pembayaran lunas user yang direferensikan. */
   "referral.commissionPercent": { schema: z.number().int().min(0).max(50), default: 20 },
+  /** Komisi guru afiliasi (%) dari pembelian Premium PERTAMA siswa yang memakai kodenya. */
+  "affiliate.commissionPercent": { schema: z.number().int().min(0).max(60), default: 30 },
+  /** Diskon (%) untuk pembelian Premium pertama siswa yang mendaftar dengan kode guru. */
+  "affiliate.buyerDiscountPercent": { schema: z.number().int().min(0).max(50), default: 5 },
 } as const;
 
 export type SettingKey = keyof typeof SETTINGS;

@@ -173,6 +173,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-11-13 — Afiliasi guru menggantikan referal siswa → siswa
+- Admin menambah guru lewat email di `/admin/afiliasi` (tabel `affiliates`): email sudah punya akun →
+  `active`; belum → `invited`, aktif otomatis di hook `user.create.after` saat daftar (email/Google).
+- Guru aktif: kode khusus (pakai `users.referral_code`), Premium gratis semua jenjang
+  (`memberships.granted_by = 'affiliate'`, dicabut saat dinonaktifkan), halaman `/afiliasi` (link, QR, WA).
+- Siswa dengan kode guru: diskon `affiliate.buyerDiscountPercent` (5%) hanya di pembelian pertama
+  (`affiliatePromoFor` → `createOrder`). Komisi `affiliate.commissionPercent` (30%, bisa per guru) dari nominal
+  dibayar setelah diskon (QRIS manual: tanpa kode unik), **sekali per siswa** — perpanjangan tidak berkomisi.
+- Komisi ditahan 7 hari (`referral_commissions.available_at`), transfer manual minimal Rp50.000.
+- Referal siswa → siswa dimatikan: hanya kode afiliasi aktif yang diterima saat daftar; komisi lama yang
+  tercatat tetap bisa ditransfer di `/admin/referal` (Referal Siswa lama). Nama siswa disamarkan untuk guru.
+
 ## 2026-10-16 — Satu akun siswa = satu perangkat (login terakhir menang)
 Mencegah akun Premium dipinjamkan. `databaseHooks.session.create.after` (Better Auth)
 menghapus sesi lain milik user saat login baru (email & Google); admin dikecualikan.

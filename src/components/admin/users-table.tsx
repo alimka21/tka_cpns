@@ -476,7 +476,7 @@ function AccessCell({ user }: { user: AdminUserRow }) {
         ) : (
           <Badge variant="muted">Gratis</Badge>
         )}
-        {p.active && p.source && <span className="text-xs text-muted-foreground">{p.source === "purchase" ? "dibeli" : "diberi admin"}</span>}
+        {p.active && p.source && <span className="text-xs text-muted-foreground">{p.source === "purchase" ? "dibeli" : p.source === "affiliate" ? "guru afiliasi" : "diberi admin"}</span>}
       </div>
       <div className="text-xs text-muted-foreground">
         {p.active

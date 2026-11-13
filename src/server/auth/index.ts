@@ -16,6 +16,7 @@ import { normalizeReferralCode } from "@/lib/referral";
 import { ATTRIBUTION_COOKIE } from "@/lib/attribution";
 import { getSetting } from "@/server/services/app-settings";
 import { saveSignupAttribution } from "@/server/services/attribution";
+import { activateInvitedAffiliate } from "@/server/services/affiliates";
 import { findReferrerByCode, newUniqueReferralCode } from "@/server/services/referrals";
 import { isMailConfigured, resetPasswordEmail, sendMail } from "@/server/services/mailer";
 
@@ -120,8 +121,10 @@ export const auth = betterAuth({
           return { data: { ...user, status: requireApproval ? "pending" : "active", referralCode, referredByUserId } };
         },
         // Asal kampanye (cookie UTM dari src/proxy.ts) — email maupun Google. Tidak melempar error.
+        // Email yang diundang admin sebagai guru afiliasi → afiliasi aktif + Premium gratis.
         after: async (user, ctx) => {
           await saveSignupAttribution(Number(user.id), () => ctx?.getCookie?.(ATTRIBUTION_COOKIE));
+          await activateInvitedAffiliate(Number(user.id), user.email);
         },
       },
     },
@@ -178,10 +181,10 @@ async function normalizeSignUp(body: Record<string, unknown>) {
   const schoolName = schoolNameSchema.safeParse(typeof body.schoolName === "string" ? body.schoolName : "");
   if (!schoolName.success) throw new APIError("BAD_REQUEST", { message: schoolName.error.issues[0].message, code: "INVALID_SCHOOL" });
 
-  // Kode referal opsional; diisi tapi tidak dikenal → beri tahu (jangan diam-diam diabaikan).
+  // Kode guru (afiliasi aktif) opsional; diisi tapi tidak dikenal → beri tahu (jangan diam-diam diabaikan).
   const ref = normalizeReferralCode(body.ref);
   if (ref && !(await findReferrerByCode(ref))) {
-    throw new APIError("BAD_REQUEST", { message: "Kode referal tidak ditemukan. Periksa lagi atau kosongkan.", code: "INVALID_REFERRAL" });
+    throw new APIError("BAD_REQUEST", { message: "Kode guru tidak ditemukan. Periksa lagi atau kosongkan.", code: "INVALID_REFERRAL" });
   }
 
   const rawEmail = typeof body.email === "string" ? body.email.trim().toLowerCase() : "";

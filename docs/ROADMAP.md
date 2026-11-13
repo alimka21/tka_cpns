@@ -5,6 +5,8 @@
 **Scope: TKA sekolah saja (SD/SMP/SMA), CPNS dihapus 2026-09-24.**
 
 **Ringkasan per 2026-10-22 (baca ini dulu):**
+- **2026-11-13: Afiliasi Guru** (branch `feat/afiliasi-guru`) — `/admin/afiliasi`, `/afiliasi`, diskon 5% & komisi
+  30% pembelian pertama, referal siswa dimatikan (DECISIONS). Deploy: **wajib `npm run prod:migrate` (0026)**.
 - Pembayaran: **DOKU Checkout Production aktif** — QRIS utama + metode lain, Premium aktif
   otomatis via webhook; uji transaksi nyata berhasil 2026-10-19. Xendit/Midtrans tidak dipakai
   (kode backend dibiarkan untuk order lama). QRIS manual = cadangan opsional

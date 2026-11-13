@@ -12,6 +12,8 @@ import { createCheckout, DOKU_NOTIFICATION_PATH, DokuError, getOrderStatus } fro
 import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
 import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
 import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
+import { discountedPrice } from "@/lib/affiliate";
+import { affiliatePromoFor } from "./affiliates";
 import { recordCommissionForOrder, voidCommissionForOrder } from "./referrals";
 import { CHECKOUT_DUE_MINUTES, CHECKOUT_REUSE_MS, MANUAL_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, paymentMethodOptions, pickReusableCheckout, providerOfOrder } from "./payment-provider";
 import { createInvoice, getInvoiceByExternalId, XenditError } from "./xendit";
@@ -78,21 +80,24 @@ export async function createOrder(
   const options = paymentMethodOptions(pay.provider);
   const method = methodId ? options.find((o) => o.id === methodId) : (options.find((o) => o.primary) ?? options[0]);
   if (!method) return { ok: false, error: "Metode pembayaran tidak tersedia. Pilih metode lain." };
-  if (method.id === "manual") return createManualOrder(user.id, plan, siteUrl);
+  // Siswa dengan kode guru afiliasi: diskon di pembelian pertama (nominal ini juga dasar komisi guru).
+  const promo = await affiliatePromoFor(user.id);
+  const price = promo ? discountedPrice(plan.price, promo.percent) : plan.price;
+  if (method.id === "manual") return createManualOrder(user.id, plan, price, siteUrl);
 
   // Klik "Bayar" berulang → pakai checkout yang masih berlaku (tidak menumpuk transaksi pending di gateway).
   const recent = await db
     .select()
     .from(orders)
     .where(and(eq(orders.userId, user.id), eq(orders.status, "pending"), gt(orders.createdAt, new Date(Date.now() - CHECKOUT_REUSE_MS))));
-  const reuse = pickReusableCheckout(recent, { planId: plan.id, amount: plan.price, methodId: method.id, prefix: ORDER_PREFIX[pay.provider] });
+  const reuse = pickReusableCheckout(recent, { planId: plan.id, amount: price, methodId: method.id, prefix: ORDER_PREFIX[pay.provider] });
   if (reuse?.redirectUrl) return { ok: true, redirectUrl: reuse.redirectUrl, orderCode: reuse.orderCode };
 
   const orderCode = newOrderCode(user.id, ORDER_PREFIX[pay.provider]);
   const finishUrl = `${siteUrl.replace(/\/$/, "")}/langganan/selesai?order_id=${encodeURIComponent(orderCode)}`;
   const [{ id }] = await db
     .insert(orders)
-    .values({ orderCode, userId: user.id, planId: plan.id, planName: plan.name, jenjang: plan.jenjang, durationDays: plan.durationDays, amount: plan.price })
+    .values({ orderCode, userId: user.id, planId: plan.id, planName: plan.name, jenjang: plan.jenjang, durationDays: plan.durationDays, amount: price })
     .$returningId();
   try {
     const customer = { name: user.name, email: visibleEmail(user.email) ?? undefined };
@@ -101,7 +106,7 @@ export async function createOrder(
         ? (
             await createInvoice({
               orderCode,
-              amount: plan.price,
+              amount: price,
               itemName: plan.name,
               customer,
               successUrl: finishUrl,
@@ -112,7 +117,7 @@ export async function createOrder(
         ? (
             await createSnapTransaction({
               orderCode,
-              amount: plan.price,
+              amount: price,
               itemName: plan.name,
               customer,
               finishUrl,
@@ -121,7 +126,7 @@ export async function createOrder(
         : (
             await createCheckout({
               invoiceNumber: orderCode,
-              amount: plan.price,
+              amount: price,
               itemName: plan.name,
               customer: { id: String(user.id), name: user.name, email: visibleEmail(user.email) ?? undefined },
               callbackUrl: finishUrl,
@@ -150,16 +155,16 @@ export function manualPaymentPath(orderCode: string) {
  * order manual lain yang masih menunggu. Order menunggu untuk paket yang sama dipakai ulang
  * agar siswa tidak mendapat kode berbeda tiap klik.
  */
-async function createManualOrder(userId: number, plan: PlanRow, siteUrl: string): Promise<Result<{ redirectUrl: string; orderCode: string }>> {
+async function createManualOrder(userId: number, plan: PlanRow, price: number, siteUrl: string): Promise<Result<{ redirectUrl: string; orderCode: string }>> {
   const since = new Date(Date.now() - MANUAL_ORDER_TTL_MS);
   const pendingManual = await db
     .select({ orderCode: orders.orderCode, userId: orders.userId, planId: orders.planId, amount: orders.amount })
     .from(orders)
     .where(and(eq(orders.status, "pending"), like(orders.orderCode, `${MANUAL_ORDER_PREFIX}%`), gt(orders.createdAt, since)));
-  const reuse = pendingManual.find((o) => o.userId === userId && o.planId === plan.id && o.amount > plan.price && o.amount <= plan.price + 999);
+  const reuse = pendingManual.find((o) => o.userId === userId && o.planId === plan.id && o.amount > price && o.amount <= price + 999);
   if (reuse) return { ok: true, orderCode: reuse.orderCode, redirectUrl: manualPaymentPath(reuse.orderCode) };
 
-  const code = pickUniqueCode(plan.price, pendingManual.map((o) => o.amount));
+  const code = pickUniqueCode(price, pendingManual.map((o) => o.amount));
   if (code == null) return { ok: false, error: "Antrean pembayaran sedang penuh. Coba lagi beberapa saat atau hubungi admin." };
   const orderCode = newOrderCode(userId, MANUAL_ORDER_PREFIX);
   const redirectUrl = manualPaymentPath(orderCode);
@@ -170,10 +175,10 @@ async function createManualOrder(userId: number, plan: PlanRow, siteUrl: string)
     planName: plan.name,
     jenjang: plan.jenjang,
     durationDays: plan.durationDays,
-    amount: plan.price + code,
+    amount: price + code,
     paymentType: "qris_manual",
     redirectUrl: `${siteUrl.replace(/\/$/, "")}${redirectUrl}`,
-    lastPayload: { uniqueCode: code, basePrice: plan.price },
+    lastPayload: { uniqueCode: code, basePrice: price },
   });
   return { ok: true, orderCode, redirectUrl };
 }

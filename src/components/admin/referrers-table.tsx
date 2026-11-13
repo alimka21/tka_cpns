@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { formatDate, formatRupiah } from "@/lib/format";
-import { recordPayoutAction, setCommissionPercentAction } from "@/server/actions/referrals";
+import { recordPayoutAction } from "@/server/actions/referrals";
 import type { AdminReferrerRow } from "@/server/services/referrals";
 
 export function ReferrersTable({ rows }: { rows: AdminReferrerRow[] }) {
@@ -226,37 +226,5 @@ function PayoutDialog({ row }: { row: AdminReferrerRow }) {
         </AlertDialogContent>
       </AlertDialog>
     </>
-  );
-}
-
-export function CommissionPercentForm({ percent }: { percent: number }) {
-  const router = useRouter();
-  const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
-  const [pending, startTransition] = useTransition();
-  return (
-    <form
-      className="flex flex-wrap items-end gap-3"
-      onSubmit={(e) => {
-        e.preventDefault();
-        const v = new FormData(e.currentTarget).get("percent");
-        startTransition(async () => {
-          const r = await setCommissionPercentAction(v);
-          setMsg(r.ok ? { ok: true, text: r.message ?? "Tersimpan." } : { ok: false, text: r.error });
-          if (r.ok) router.refresh();
-        });
-      }}
-    >
-      <div className="grid gap-1.5">
-        <Label htmlFor="percent">Persen komisi</Label>
-        <div className="flex items-center gap-2">
-          <Input id="percent" name="percent" type="number" min={0} max={50} defaultValue={percent} className="w-24" required />
-          <span className="text-sm text-muted-foreground">%</span>
-        </div>
-      </div>
-      <Button type="submit" size="sm" variant="outline" disabled={pending}>
-        {pending ? "Menyimpan…" : "Simpan"}
-      </Button>
-      {msg && <p className={`text-sm ${msg.ok ? "text-success-strong" : "text-destructive"}`}>{msg.text}</p>}
-    </form>
   );
 }

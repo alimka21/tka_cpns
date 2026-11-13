@@ -26,7 +26,7 @@ const AUTH_ERRORS: Record<string, string> = {
   INVALID_EMAIL_OR_PASSWORD: "Username/nomor HP/email atau kata sandi salah.",
   PHONE_SHARED: "Nomor HP ini dipakai beberapa akun. Masuk dengan username.",
   USERNAME_TAKEN: "Username sudah dipakai. Coba yang lain.",
-  INVALID_REFERRAL: "Kode referal tidak ditemukan. Periksa lagi atau kosongkan kolomnya.",
+  INVALID_REFERRAL: "Kode guru tidak ditemukan. Periksa lagi atau kosongkan kolomnya.",
   INVALID_USERNAME: "Username tidak valid.",
   INVALID_PHONE: "Nomor HP tidak valid.",
   INVALID_PROVINCE: "Pilih provinsi asal.",
@@ -295,7 +295,7 @@ export function AuthForm({
                 aria-describedby={errors.phone ? "phone-error" : "phone-hint"}
               />
             </Field>
-            <Field id="ref" label="Kode referal (opsional)" icon={Gift} error={errors.ref} hint="Punya kode dari teman atau guru? Masukkan di sini.">
+            <Field id="ref" label="Kode guru (opsional)" icon={Gift} error={errors.ref} hint="Dapat kode dari gurumu? Masukkan untuk diskon pembelian Premium pertama.">
               <Input
                 id="ref"
                 name="ref"
@@ -303,7 +303,7 @@ export function AuthForm({
                 autoComplete="off"
                 autoCapitalize="characters"
                 maxLength={12}
-                placeholder="Contoh: PKR7Q2X"
+                placeholder="Contoh: BUSITI"
                 className="pl-10 uppercase"
                 aria-invalid={!!errors.ref}
                 aria-describedby={errors.ref ? "ref-error" : "ref-hint"}

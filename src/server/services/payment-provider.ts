@@ -1,7 +1,7 @@
-// Penyedia pembayaran aktif (Xendit Invoice, Midtrans Snap, DOKU Checkout, atau manual) — SERVER-ONLY.
-// Env PAYMENT_PROVIDER = "xendit" | "midtrans" | "doku" | "manual". "manual" = QRIS statis
+// Penyedia pembayaran aktif (Mayar, Xendit Invoice, Midtrans Snap, DOKU Checkout, atau manual) — SERVER-ONLY.
+// Env PAYMENT_PROVIDER = "mayar" | "xendit" | "midtrans" | "doku" | "manual". "manual" = QRIS statis
 // + kode unik + bukti via WhatsApp, dikonfirmasi admin (lib/manual-payment.ts). Kosong →
-// gateway pertama yang terkonfigurasi DAN mode Live (DOKU → Xendit → Midtrans), selain itu manual. Order lama tetap disinkronkan ke penyedia yang membuatnya
+// gateway pertama yang terkonfigurasi DAN mode Live (Mayar → DOKU → Xendit → Midtrans), selain itu manual. Order lama tetap disinkronkan ke penyedia yang membuatnya
 // (dibedakan dari prefix kode order).
 //
 // Mode uji (Sandbox): pembayaran bukan uang sungguhan, jadi hanya admin dan
@@ -9,30 +9,33 @@
 // lain tidak bisa mendapat Premium lewat simulator.
 
 import { dokuPaymentMethods, isDokuConfigured, isDokuProduction } from "./doku";
+import { isMayarConfigured, isMayarProduction } from "./mayar";
 import { isMidtransConfigured, isMidtransProduction } from "./midtrans";
 import { isXenditConfigured, isXenditProduction } from "./xendit";
 
-export const PAYMENT_PROVIDERS = ["xendit", "midtrans", "doku", "manual"] as const;
+export const PAYMENT_PROVIDERS = ["mayar", "xendit", "midtrans", "doku", "manual"] as const;
 export type PaymentProvider = (typeof PAYMENT_PROVIDERS)[number];
 
-export const PROVIDER_LABEL: Record<PaymentProvider, string> = { xendit: "Xendit", midtrans: "Midtrans", doku: "DOKU", manual: "QRIS manual" };
+export const PROVIDER_LABEL: Record<PaymentProvider, string> = { mayar: "Mayar", xendit: "Xendit", midtrans: "Midtrans", doku: "DOKU", manual: "QRIS manual" };
 
 /** Prefix kode order per penyedia; order DOKU (termasuk yang lama) memakai "WTP-". */
 export const MIDTRANS_ORDER_PREFIX = "PTM-";
 export const XENDIT_ORDER_PREFIX = "PTX-";
 export const MANUAL_ORDER_PREFIX = "PTQ-";
-export const ORDER_PREFIX: Record<PaymentProvider, string> = { xendit: XENDIT_ORDER_PREFIX, midtrans: MIDTRANS_ORDER_PREFIX, doku: "WTP-", manual: MANUAL_ORDER_PREFIX };
+export const MAYAR_ORDER_PREFIX = "PTY-";
+export const ORDER_PREFIX: Record<PaymentProvider, string> = { mayar: MAYAR_ORDER_PREFIX, xendit: XENDIT_ORDER_PREFIX, midtrans: MIDTRANS_ORDER_PREFIX, doku: "WTP-", manual: MANUAL_ORDER_PREFIX };
 
 export function activeProvider(): PaymentProvider {
   const v = process.env.PAYMENT_PROVIDER?.trim().toLowerCase();
   if ((PAYMENT_PROVIDERS as readonly string[]).includes(v ?? "")) return v as PaymentProvider;
   // Tanpa env: gateway pertama yang sudah LIVE; kalau belum ada, QRIS manual
   // (siswa tetap bisa membeli Premium selama gateway masih mode uji/belum aktif).
-  const live = (["doku", "xendit", "midtrans"] as const).find((p) => isProviderConfigured(p) && isProviderProduction(p));
+  const live = (["mayar", "doku", "xendit", "midtrans"] as const).find((p) => isProviderConfigured(p) && isProviderProduction(p));
   return live ?? "manual";
 }
 
 export function providerOfOrder(orderCode: string): PaymentProvider {
+  if (orderCode.startsWith(MAYAR_ORDER_PREFIX)) return "mayar";
   if (orderCode.startsWith(XENDIT_ORDER_PREFIX)) return "xendit";
   if (orderCode.startsWith(MANUAL_ORDER_PREFIX)) return "manual";
   return orderCode.startsWith(MIDTRANS_ORDER_PREFIX) ? "midtrans" : "doku";
@@ -40,11 +43,13 @@ export function providerOfOrder(orderCode: string): PaymentProvider {
 
 export function isProviderConfigured(p: PaymentProvider) {
   if (p === "manual") return true;
+  if (p === "mayar") return isMayarConfigured();
   return p === "xendit" ? isXenditConfigured() : p === "midtrans" ? isMidtransConfigured() : isDokuConfigured();
 }
 
 export function isProviderProduction(p: PaymentProvider) {
   if (p === "manual") return true;
+  if (p === "mayar") return isMayarProduction();
   return p === "xendit" ? isXenditProduction() : p === "midtrans" ? isMidtransProduction() : isDokuProduction();
 }
 
@@ -73,6 +78,8 @@ export type PaymentMethodOption = {
   hint: string;
   /** Metode utama (ditampilkan paling atas & disorot). */
   primary?: boolean;
+  /** Mayar: nilai `paymentMethod` (mis. "qris"); kosong = siswa memilih di halaman Mayar. */
+  mayarMethod?: string;
   /** Kode channel DOKU yang dibuka di halaman DOKU Checkout; [] = semua channel aktif di akun DOKU. */
   channels?: string[];
 };
@@ -120,6 +127,9 @@ export function paymentMethodOptions(provider: PaymentProvider = activeProvider(
       if (rest.length) options.push({ id: "doku-other", label: "Metode lain", hint: "Metode lain yang tersedia di halaman pembayaran DOKU.", channels: rest });
     }
     if (options.length && !options.some((o) => o.primary)) options[0].primary = true;
+  } else if (provider === "mayar") {
+    options.push({ id: "mayar-qris", label: "QRIS", hint: "Scan dari GoPay, OVO, DANA, ShopeePay, LinkAja, atau m-banking. Paling cepat, Premium aktif otomatis.", primary: true, mayarMethod: "qris" });
+    options.push({ id: "mayar-other", label: "Metode lain", hint: "Virtual Account bank, e-wallet, dan metode lain yang tersedia di halaman pembayaran Mayar." });
   } else {
     options.push({ id: provider, label: `Bayar online (${PROVIDER_LABEL[provider]})`, hint: "QRIS, transfer bank (Virtual Account), atau e-wallet.", primary: true });
   }

@@ -161,6 +161,21 @@ Ada dua cara, pilih salah satu dan **konsisten pakai itu terus**:
   untuk migrasi selanjutnya juga (generate SQL-nya, bersihkan penanda,
   paste ke phpMyAdmin).
 
+## 8e. Pembayaran Mayar (Premium) — penyedia utama sejak 2026-11-13
+
+1. Sandbox dulu: daftar di https://web.mayar.io → Integration → API Keys → buat key **Read & Write**.
+2. Env hPanel: `PAYMENT_PROVIDER=mayar`, `MAYAR_API_KEY=<key>`, `MAYAR_SANDBOX=true`,
+   `MAYAR_WEBHOOK_TOKEN=<acak panjang, mis. hasil openssl rand -hex 24>`. Redeploy.
+3. /admin/langganan → kartu Mayar → **Tes koneksi Mayar**; salin **URL Webhook** (sudah berisi
+   `?token=`) ke dashboard Mayar → Integration → Webhook → Save → Test.
+4. Uji beli Premium sebagai admin (mode sandbox hanya admin & `PAYMENT_TEST_EMAILS`), bayar di
+   halaman Mayar sandbox → Premium aktif & order `PTY-…` lunas di /admin/transaksi. Cek juga tombol
+   cek status di /langganan/selesai.
+5. Produksi: buat key di https://web.mayar.id, ganti `MAYAR_API_KEY`, hapus `MAYAR_SANDBOX`, pasang
+   ulang URL Webhook di dashboard produksi. Pastikan QRIS aktif di akun Mayar. Mengganti domain
+   = buat API key baru (aturan Mayar).
+6. CDN Hostinger: kalau diaktifkan lagi, kecualikan `/api/mayar/notification` (lihat DECISIONS 2026-10-25).
+
 ## 8d. Pembayaran QRIS manual + kode unik (Premium) — dipakai sejak 2026-10-16
 
 Sementara QRIS payment gateway (DOKU/Xendit) belum aktif. Tidak butuh migrasi.

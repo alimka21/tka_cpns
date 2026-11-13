@@ -11,6 +11,7 @@ import { listPlans, planSalesStats } from "@/server/services/billing";
 import { DokuConnectionTest } from "@/components/billing/doku-connection-test";
 import { DOKU_NOTIFICATION_PATH, dokuPublicInfo, isDokuConfigured, isDokuProduction } from "@/server/services/doku";
 import { formatWaNumber } from "@/lib/manual-payment";
+import { isMayarConfigured, isMayarProduction, mayarPublicInfo, mayarWebhookUrl } from "@/server/services/mayar";
 import { activeProvider, isManualFallbackEnabled, paymentMethodOptions, PROVIDER_LABEL } from "@/server/services/payment-provider";
 
 export const metadata: Metadata = { title: "Langganan & Pembayaran" };
@@ -24,6 +25,9 @@ export default async function AdminLanggananPage() {
   const production = isDokuProduction();
   const info = dokuPublicInfo();
   const provider = activeProvider();
+  const mayarConfigured = isMayarConfigured();
+  const mayarProduction = isMayarProduction();
+  const mayarInfo = mayarPublicInfo();
   const site = SITE_URL.replace(/\/$/, "");
   const paidTotal = [...sales.values()].reduce((n, s) => n + s.revenue, 0);
   const pendingTotal = [...sales.values()].reduce((n, s) => n + s.pending, 0);
@@ -70,13 +74,13 @@ export default async function AdminLanggananPage() {
       <p className="-mb-4 text-sm">
         Penyedia pembayaran aktif: <strong>{PROVIDER_LABEL[provider]}</strong>{" "}
         <span className="text-muted-foreground">
-          (env PAYMENT_PROVIDER = doku / manual; kosong → DOKU bila mode Produksi, selain itu QRIS manual). Mode Sandbox: hanya admin & email di
+          (env PAYMENT_PROVIDER = mayar / doku / manual; kosong → Mayar lalu DOKU bila mode Produksi, selain itu QRIS manual). Mode Sandbox: hanya admin & email di
           PAYMENT_TEST_EMAILS yang bisa membayar.
         </span>
       </p>
-      {provider !== "doku" && provider !== "manual" && (
+      {provider !== "doku" && provider !== "mayar" && provider !== "manual" && (
         <p className="rounded-lg border border-warning/50 bg-warning-soft px-4 py-3 text-sm text-warning-strong">
-          Pembayaran saat ini memakai {PROVIDER_LABEL[provider]}. Untuk memakai DOKU, isi env <strong>PAYMENT_PROVIDER=doku</strong> di hPanel lalu
+          Pembayaran saat ini memakai {PROVIDER_LABEL[provider]}. Untuk memakai Mayar, isi env <strong>PAYMENT_PROVIDER=mayar</strong> di hPanel lalu
           redeploy.
         </p>
       )}
@@ -97,6 +101,39 @@ export default async function AdminLanggananPage() {
           </p>
         </section>
       )}
+
+      <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "mayar" ? "opacity-80" : mayarConfigured ? "border-success/40" : "border-warning/50"}`}>
+        <p className="flex flex-wrap items-center gap-2 font-semibold">
+          {mayarConfigured ? <CircleCheck className="size-4 text-success-strong" aria-hidden /> : <CircleAlert className="size-4 text-warning-strong" aria-hidden />}
+          Mayar {mayarConfigured ? `terhubung — mode ${mayarProduction ? "PRODUKSI" : "Sandbox (uji coba)"}` : "belum dikonfigurasi"}
+          {provider === "mayar" && <Badge variant="success">Dipakai</Badge>}
+        </p>
+        {!mayarConfigured && (
+          <p className="text-muted-foreground">Isi env MAYAR_API_KEY, MAYAR_WEBHOOK_TOKEN (dan MAYAR_SANDBOX=true untuk uji coba) di hPanel, lalu redeploy.</p>
+        )}
+        {mayarConfigured && (
+          <p className="text-muted-foreground">
+            Pilihan cara bayar untuk siswa:{" "}
+            <strong className="text-foreground">
+              {paymentMethodOptions("mayar")
+                .map((m) => `${m.label}${m.primary ? " (utama)" : ""}`)
+                .join(" · ")}
+            </strong>
+            . QRIS harus aktif di akun Mayar.
+          </p>
+        )}
+        {mayarConfigured && <DokuConnectionTest provider="mayar" />}
+        {mayarConfigured && (
+          <p className="text-muted-foreground">
+            URL Webhook (Mayar dashboard → Integration → Webhook; rahasiakan, berisi token):{" "}
+            {mayarInfo.webhookTokenSet ? (
+              <code className="break-all rounded bg-muted px-1.5 py-0.5 text-xs text-foreground">{mayarWebhookUrl(site)}</code>
+            ) : (
+              <strong className="text-destructive">isi MAYAR_WEBHOOK_TOKEN dulu</strong>
+            )}
+          </p>
+        )}
+      </section>
 
       <section className={`surface-card flex flex-col gap-2 p-5 text-sm ${provider !== "doku" ? "opacity-80" : configured ? "border-success/40" : "border-warning/50"}`}>
         <p className="flex flex-wrap items-center gap-2 font-semibold">

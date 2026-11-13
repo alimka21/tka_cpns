@@ -173,6 +173,18 @@ Alasan: ...
 Alternatif yang ditolak: ...
 ```
 
+## 2026-11-13 — Mayar sebagai penyedia pembayaran (menggantikan DOKU)
+- Alasan: kendala di DOKU; pemilik produk memilih Mayar. Penyedia `mayar` (prefix order `PTY-`)
+  ditambahkan sejajar penyedia lain; DOKU/Xendit/Midtrans tetap untuk order lama.
+- Pakai **Headless API V2** (`/hl/v2`) — V1 dihentikan Mayar 1 Okt 2026. Payment request
+  (`POST /payments/create`), `id` disimpan di `orders.transaction_id` karena Mayar tak punya external id;
+  kode order juga dikirim di `extraData` + `description`.
+- Webhook Mayar **tidak bertanda tangan** → URL webhook membawa `?token=MAYAR_WEBHOOK_TOKEN`, lalu status
+  selalu diambil ulang lewat `GET /payments/{id}` (payload webhook tidak dipercaya). Payload
+  `payment.received` tak terdokumentasi lengkap → order dicari dari semua id kandidat (productId, id,
+  transactionId) atau `extraData.orderCode`.
+- Cara bayar: QRIS (`paymentMethod: "qris"`, utama) + "Metode lain" (siswa memilih di halaman Mayar).
+
 ## 2026-10-16 — Satu akun siswa = satu perangkat (login terakhir menang)
 Mencegah akun Premium dipinjamkan. `databaseHooks.session.create.after` (Better Auth)
 menghapus sesi lain milik user saat login baru (email & Google); admin dikecualikan.

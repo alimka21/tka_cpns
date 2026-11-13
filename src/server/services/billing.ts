@@ -1,23 +1,25 @@
-// Langganan Premium & pembayaran (Xendit Invoice, Midtrans Snap, atau DOKU Checkout — lihat
+// Langganan Premium & pembayaran (Mayar, Xendit Invoice, Midtrans Snap, atau DOKU Checkout — lihat
 // payment-provider.ts). Satu-satunya tempat yang mengubah status order & membuat
 // membership dari pembayaran.
 
 import { randomBytes } from "node:crypto";
-import { and, asc, desc, eq, gt, isNull, like, lt, or, sql } from "drizzle-orm";
+import { and, asc, desc, eq, gt, inArray, isNull, like, lt, or, sql } from "drizzle-orm";
 import { visibleEmail } from "@/lib/identity";
 import { pickUniqueCode } from "@/lib/manual-payment";
 import { db } from "@/server/db";
 import { memberships, orders, plans, users, type JenjangCode, type OrderStatus } from "@/server/db/schema";
 import { createCheckout, DOKU_NOTIFICATION_PATH, DokuError, getOrderStatus } from "./doku";
 import { mapDokuStatus, membershipWindow, nextOrderStatus, type DokuStatus } from "./doku-core";
+import { createPaymentRequest, getPayment, MayarError } from "./mayar";
+import { mapMayarStatus, mayarPaidChannel, type MayarPayment } from "./mayar-core";
 import { createSnapTransaction, getTransactionStatus, MidtransError } from "./midtrans";
 import { mapMidtransStatus, type MidtransPayload } from "./midtrans-core";
 import { recordCommissionForOrder, voidCommissionForOrder } from "./referrals";
-import { CHECKOUT_DUE_MINUTES, CHECKOUT_REUSE_MS, MANUAL_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, paymentMethodOptions, pickReusableCheckout, providerOfOrder } from "./payment-provider";
+import { CHECKOUT_DUE_MINUTES, CHECKOUT_REUSE_MS, MANUAL_ORDER_PREFIX, MAYAR_ORDER_PREFIX, ORDER_PREFIX, paymentAvailability, paymentMethodOptions, pickReusableCheckout, providerOfOrder } from "./payment-provider";
 import { createInvoice, getInvoiceByExternalId, XenditError } from "./xendit";
 import { mapXenditStatus, type XenditInvoice } from "./xendit-core";
 
-const isProviderError = (e: unknown) => e instanceof DokuError || e instanceof MidtransError || e instanceof XenditError;
+const isProviderError = (e: unknown) => e instanceof DokuError || e instanceof MidtransError || e instanceof XenditError || e instanceof MayarError;
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
@@ -96,6 +98,20 @@ export async function createOrder(
     .$returningId();
   try {
     const customer = { name: user.name, email: visibleEmail(user.email) ?? undefined };
+    if (pay.provider === "mayar") {
+      const req = await createPaymentRequest({
+        orderCode,
+        amount: plan.price,
+        itemName: plan.name,
+        customer,
+        redirectUrl: finishUrl,
+        dueMinutes: CHECKOUT_DUE_MINUTES,
+        paymentMethod: method.mayarMethod,
+      });
+      // id payment request disimpan untuk webhook & cek status (Mayar tidak punya external id).
+      await db.update(orders).set({ redirectUrl: req.link, paymentType: method.id, transactionId: req.id }).where(eq(orders.id, id));
+      return { ok: true, redirectUrl: req.link, orderCode };
+    }
     const url =
       pay.provider === "xendit"
         ? (
@@ -247,6 +263,31 @@ export function applyXenditStatus(invoice: XenditInvoice) {
   });
 }
 
+/** Order Mayar dari id di payload webhook (id payment request tersimpan di transaction_id) atau kode order di extraData. */
+export async function findMayarOrder(ids: string[], orderCode: string | null) {
+  const conds = [ids.length ? inArray(orders.transactionId, ids) : undefined, orderCode ? eq(orders.orderCode, orderCode) : undefined].filter((c) => c != null);
+  if (!conds.length) return null;
+  const [order] = await db
+    .select({ orderCode: orders.orderCode, transactionId: orders.transactionId })
+    .from(orders)
+    .where(and(like(orders.orderCode, `${MAYAR_ORDER_PREFIX}%`), or(...conds)))
+    .limit(1);
+  return order ?? null;
+}
+
+/** Terapkan status payment request Mayar (webhook / cek status). */
+export function applyMayarPayment(orderCode: string, payment: MayarPayment) {
+  return applyPaymentUpdate({
+    orderCode,
+    amount: payment.amount,
+    status: mapMayarStatus(payment),
+    channel: mayarPaidChannel(payment),
+    transactionId: payment.id,
+    paidAt: null,
+    raw: payment,
+  });
+}
+
 /**
  * Terapkan status pembayaran ke order. Idempoten: membership hanya dibuat
  * sekali per order (unique order_id). Nominal harus sama.
@@ -300,6 +341,8 @@ export async function syncOrder(orderCode: string): Promise<Result<{ status: Ord
     const result =
       provider === "manual"
         ? null // dikonfirmasi admin, tidak ada API penyedia
+        : provider === "mayar"
+        ? await syncMayarOrder(orderCode)
         : provider === "xendit"
         ? await getInvoiceByExternalId(orderCode).then((p) => (p ? applyXenditStatus(p) : null))
         : provider === "midtrans"
@@ -311,6 +354,13 @@ export async function syncOrder(orderCode: string): Promise<Result<{ status: Ord
   } catch (e) {
     return { ok: false, error: isProviderError(e) ? (e as Error).message : "Gagal mengecek status." };
   }
+}
+
+async function syncMayarOrder(orderCode: string) {
+  const [order] = await db.select({ transactionId: orders.transactionId }).from(orders).where(eq(orders.orderCode, orderCode));
+  if (!order?.transactionId) return null;
+  const payment = await getPayment(order.transactionId);
+  return payment ? applyMayarPayment(orderCode, payment) : null;
 }
 
 export async function listUserOrders(userId: number, limit = 20) {

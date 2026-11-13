@@ -5,6 +5,9 @@
 **Scope: TKA sekolah saja (SD/SMP/SMA), CPNS dihapus 2026-09-24.**
 
 **Ringkasan per 2026-10-22 (baca ini dulu):**
+- **2026-11-13: Mayar dipasang** (`PAYMENT_PROVIDER=mayar`, Headless API V2) menggantikan DOKU
+  karena kendala DOKU. Menunggu pemilik produk: isi env Mayar (sandbox dulu), pasang URL webhook, uji
+  transaksi, lalu key produksi — WORKFLOW §8e. Kode DOKU tetap untuk order lama.
 - Pembayaran: **DOKU Checkout Production aktif** — QRIS utama + metode lain, Premium aktif
   otomatis via webhook; uji transaksi nyata berhasil 2026-10-19. Xendit/Midtrans tidak dipakai
   (kode backend dibiarkan untuk order lama). QRIS manual = cadangan opsional

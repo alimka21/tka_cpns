@@ -14,6 +14,7 @@ import { createOrder, grantMembershipToUser, revokeUserPremium, settleManualOrde
 import { isDokuConfigured, testDokuConnection } from "@/server/services/doku";
 import { isMidtransConfigured, testMidtransConnection } from "@/server/services/midtrans";
 import { isXenditConfigured, testXenditConnection } from "@/server/services/xendit";
+import { isMayarConfigured, testMayarConnection } from "@/server/services/mayar";
 
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 const NOT_ADMIN = { ok: false as const, error: "Sesi admin berakhir. Silakan masuk lagi." };
@@ -118,6 +119,18 @@ export async function testDokuConnectionAction(): Promise<Result<{ message: stri
     return r.ok ? { ok: true, message: r.message } : { ok: false, error: r.message };
   } catch (e) {
     return { ok: false, error: e instanceof Error ? e.message : "Gagal menghubungi DOKU." };
+  }
+}
+
+/** Admin: uji API key Mayar tanpa membuat transaksi. */
+export async function testMayarConnectionAction(): Promise<Result<{ message: string }>> {
+  if (!(await getAdminSession())) return NOT_ADMIN;
+  if (!isMayarConfigured()) return { ok: false, error: "MAYAR_API_KEY belum diisi di env." };
+  try {
+    const r = await testMayarConnection();
+    return r.ok ? { ok: true, message: r.message } : { ok: false, error: r.message };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "Gagal menghubungi Mayar." };
   }
 }
 

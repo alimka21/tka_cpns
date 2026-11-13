@@ -3,13 +3,13 @@
 import { useState, useTransition } from "react";
 import { CircleAlert, CircleCheck, LoaderCircle, PlugZap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { testDokuConnectionAction, testMidtransConnectionAction, testXenditConnectionAction } from "@/server/actions/billing";
+import { testDokuConnectionAction, testMayarConnectionAction, testMidtransConnectionAction, testXenditConnectionAction } from "@/server/actions/billing";
 
-const LABEL = { doku: "DOKU", midtrans: "Midtrans", xendit: "Xendit" } as const;
-const ACTION = { doku: testDokuConnectionAction, midtrans: testMidtransConnectionAction, xendit: testXenditConnectionAction } as const;
+const LABEL = { mayar: "Mayar", doku: "DOKU", midtrans: "Midtrans", xendit: "Xendit" } as const;
+const ACTION = { mayar: testMayarConnectionAction, doku: testDokuConnectionAction, midtrans: testMidtransConnectionAction, xendit: testXenditConnectionAction } as const;
 
 /** Tombol uji kredensial penyedia pembayaran (tanpa transaksi) + hasilnya. */
-export function DokuConnectionTest({ provider = "doku" }: { provider?: "doku" | "midtrans" | "xendit" }) {
+export function DokuConnectionTest({ provider = "doku" }: { provider?: "mayar" | "doku" | "midtrans" | "xendit" }) {
   const [pending, start] = useTransition();
   const [result, setResult] = useState<{ ok: boolean; text: string } | null>(null);
   return (

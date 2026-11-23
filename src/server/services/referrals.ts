@@ -1,22 +1,30 @@
 // Program referal (DECISIONS 2026-10-24). Komisi dicatat per order lunas (dipanggil dari
 // billing.applyPaymentUpdate di transaksi yang sama); transfer dilakukan admin di luar sistem
 // lalu dicatat di sini (referral_payouts).
+// Sejak 2026-11-13 (afiliasi guru): hanya kode guru afiliasi AKTIF yang berlaku; komisi hanya
+// untuk pembelian pertama siswa, ditahan 7 hari, pencairan minimal Rp50.000. Komisi referal
+// siswa lama yang sudah tercatat tetap bisa dibayar.
 
-import { and, count, desc, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, count, desc, eq, inArray, isNull, lte, ne, notInArray, or, sql } from "drizzle-orm";
+import { commissionAvailableAt, MIN_PAYOUT } from "@/lib/affiliate";
 import { PLACEHOLDER_EMAIL_DOMAIN } from "@/lib/identity";
-import { commissionAmount, generateReferralCode, LATE_REFERRAL_DAYS, maskName, normalizeReferralCode, type PayoutAccountInput } from "@/lib/referral";
+import { commissionAmount, generateReferralCode, LATE_REFERRAL_DAYS, normalizeReferralCode, type PayoutAccountInput } from "@/lib/referral";
 import { db } from "@/server/db";
-import { orders, referralAccounts, referralCommissions, referralPayouts, users } from "@/server/db/schema";
+import { affiliates, orders, referralAccounts, referralCommissions, referralPayouts, users } from "@/server/db/schema";
 import { getSetting } from "@/server/services/app-settings";
 
 type Executor = Pick<typeof db, "select" | "insert" | "update">;
 type Result<T = object> = ({ ok: true } & T) | { ok: false; error: string };
 
-/** Kode referal → id pemilik (null bila tidak ada). */
+/** Kode guru → id guru afiliasi AKTIF (null bila tidak ada / bukan afiliasi aktif). */
 export async function findReferrerByCode(raw: unknown): Promise<number | null> {
   const code = normalizeReferralCode(raw);
   if (!code) return null;
-  const [row] = await db.select({ id: users.id }).from(users).where(eq(users.referralCode, code));
+  const [row] = await db
+    .select({ id: users.id })
+    .from(users)
+    .innerJoin(affiliates, eq(affiliates.userId, users.id))
+    .where(and(eq(users.referralCode, code), eq(affiliates.status, "active")));
   return row?.id ?? null;
 }
 
@@ -51,16 +59,42 @@ export async function commissionPercent() {
   return getSetting("referral.commissionPercent");
 }
 
-/** Catat komisi untuk order yang baru lunas (idempoten: unik per order). */
-export async function recordCommissionForOrder(tx: Executor, order: { id: number; userId: number; amount: number }) {
+/**
+ * Catat komisi guru untuk order yang baru lunas — hanya bila pemberi kode adalah afiliasi aktif
+ * dan ini pembelian PERTAMA siswa (perpanjangan tidak berkomisi). Idempoten: unik per order.
+ */
+export async function recordCommissionForOrder(tx: Executor, order: { id: number; userId: number; amount: number; lastPayload?: unknown }) {
   const [buyer] = await tx.select({ referrer: users.referredByUserId }).from(users).where(eq(users.id, order.userId));
   if (!buyer?.referrer || buyer.referrer === order.userId) return;
   const [existing] = await tx.select({ id: referralCommissions.id }).from(referralCommissions).where(eq(referralCommissions.orderId, order.id));
   if (existing) return;
-  const percent = await commissionPercent();
-  const amount = commissionAmount(order.amount, percent);
+  const [affiliate] = await tx
+    .select({ percent: affiliates.commissionPercent })
+    .from(affiliates)
+    .where(and(eq(affiliates.userId, buyer.referrer), eq(affiliates.status, "active")));
+  if (!affiliate) return;
+  const [earlier] = await tx.select({ n: count() }).from(orders).where(and(eq(orders.userId, order.userId), eq(orders.status, "paid"), ne(orders.id, order.id)));
+  if (Number(earlier?.n ?? 0) > 0) return;
+  const [already] = await tx
+    .select({ n: count() })
+    .from(referralCommissions)
+    .where(and(eq(referralCommissions.referredUserId, order.userId), ne(referralCommissions.status, "void")));
+  if (Number(already?.n ?? 0) > 0) return;
+  const percent = affiliate.percent ?? (await getSetting("affiliate.commissionPercent"));
+  // QRIS manual: nominal = harga + kode unik; komisi dihitung dari harga (tanpa kode unik).
+  const basePrice = (order.lastPayload as { basePrice?: unknown } | null | undefined)?.basePrice;
+  const paid = typeof basePrice === "number" && basePrice > 0 && basePrice <= order.amount ? basePrice : order.amount;
+  const amount = commissionAmount(paid, percent);
   if (amount <= 0) return;
-  await tx.insert(referralCommissions).values({ referrerUserId: buyer.referrer, referredUserId: order.userId, orderId: order.id, orderAmount: order.amount, percent, amount });
+  await tx.insert(referralCommissions).values({
+    referrerUserId: buyer.referrer,
+    referredUserId: order.userId,
+    orderId: order.id,
+    orderAmount: paid,
+    percent,
+    amount,
+    availableAt: commissionAvailableAt(new Date()),
+  });
 }
 
 /** Order dikembalikan (refund) → komisi yang belum ditransfer dibatalkan. */
@@ -78,10 +112,10 @@ export async function canEnterReferralCode(userId: number) {
 }
 
 export async function setLateReferral(userId: number, raw: string): Promise<Result> {
-  if (!(await canEnterReferralCode(userId))) return { ok: false, error: "Kode referal hanya bisa diisi oleh akun baru yang belum pernah membayar." };
+  if (!(await canEnterReferralCode(userId))) return { ok: false, error: "Kode guru hanya bisa diisi oleh akun baru yang belum pernah membayar." };
   const referrer = await findReferrerByCode(raw);
-  if (!referrer) return { ok: false, error: "Kode referal tidak ditemukan." };
-  if (referrer === userId) return { ok: false, error: "Tidak bisa memakai kode referal sendiri." };
+  if (!referrer) return { ok: false, error: "Kode guru tidak ditemukan." };
+  if (referrer === userId) return { ok: false, error: "Tidak bisa memakai kode sendiri." };
   await db.update(users).set({ referredByUserId: referrer }).where(and(eq(users.id, userId), isNull(users.referredByUserId)));
   return { ok: true };
 }
@@ -94,44 +128,6 @@ export async function savePayoutAccount(userId: number, input: PayoutAccountInpu
 }
 
 const sumWhere = (status: "pending" | "paid") => sql<number>`coalesce(sum(case when ${referralCommissions.status} = ${status} then ${referralCommissions.amount} end), 0)`;
-
-/** Data halaman Referal milik user. */
-export async function getReferralDashboard(userId: number) {
-  const code = await ensureReferralCode(userId);
-  const [referred, commissions, payouts, [account], [me], canEnter, percent] = await Promise.all([
-    db
-      .select({ id: users.id, name: users.name, createdAt: users.createdAt })
-      .from(users)
-      .where(eq(users.referredByUserId, userId))
-      .orderBy(desc(users.createdAt))
-      .limit(200),
-    db
-      .select({ c: referralCommissions, name: users.name })
-      .from(referralCommissions)
-      .innerJoin(users, eq(users.id, referralCommissions.referredUserId))
-      .where(eq(referralCommissions.referrerUserId, userId))
-      .orderBy(desc(referralCommissions.createdAt))
-      .limit(200),
-    db.select().from(referralPayouts).where(eq(referralPayouts.referrerUserId, userId)).orderBy(desc(referralPayouts.createdAt)).limit(50),
-    db.select().from(referralAccounts).where(eq(referralAccounts.userId, userId)),
-    db.select({ referredBy: users.referredByUserId }).from(users).where(eq(users.id, userId)),
-    canEnterReferralCode(userId),
-    commissionPercent(),
-  ]);
-  const buyers = new Set(commissions.filter(({ c }) => c.status !== "void").map(({ c }) => c.referredUserId));
-  const total = (s: "pending" | "paid") => commissions.filter(({ c }) => c.status === s).reduce((n, { c }) => n + c.amount, 0);
-  return {
-    code,
-    percent,
-    canEnterCode: canEnter,
-    hasReferrer: Boolean(me?.referredBy),
-    stats: { referred: referred.length, buyers: buyers.size, pending: total("pending"), paid: total("paid") },
-    referred: referred.map((r) => ({ name: maskName(r.name), joinedAt: r.createdAt.toISOString(), bought: buyers.has(r.id) })),
-    commissions: commissions.map(({ c, name }) => ({ id: c.id, name: maskName(name), orderAmount: c.orderAmount, percent: c.percent, amount: c.amount, status: c.status, createdAt: c.createdAt.toISOString(), paidAt: c.paidAt?.toISOString() ?? null })),
-    payouts: payouts.map((p) => ({ id: p.id, amount: p.amount, note: p.note, createdAt: p.createdAt.toISOString() })),
-    account: account ? { bankName: account.bankName, accountNumber: account.accountNumber, accountName: account.accountName } : null,
-  };
-}
 
 const contact = sql<string>`CASE WHEN ${users.email} LIKE ${`%@${PLACEHOLDER_EMAIL_DOMAIN}`} THEN CONCAT('@', ${users.username}) ELSE ${users.email} END`;
 
@@ -150,12 +146,13 @@ export type AdminReferrerRow = {
   commissions: { name: string; orderAmount: number; amount: number; status: string; createdAt: string }[];
 };
 
-/** Admin: semua pemberi referal (punya ≥1 pendaftar), yang belum ditransfer terbesar dulu. */
+/** Admin: pemberi referal LAMA (siswa, bukan guru afiliasi) yang punya ≥1 pendaftar; belum ditransfer terbesar dulu. */
 export async function listReferrersAdmin() {
+  const teacherIds = (await db.select({ id: affiliates.userId }).from(affiliates)).map((a) => a.id).filter((v): v is number => v != null);
   const referredCounts = await db
     .select({ referrer: users.referredByUserId, n: count() })
     .from(users)
-    .where(sql`${users.referredByUserId} is not null`)
+    .where(and(sql`${users.referredByUserId} is not null`, teacherIds.length ? notInArray(users.referredByUserId, teacherIds) : undefined))
     .groupBy(users.referredByUserId);
   const ids = referredCounts.map((r) => r.referrer!).filter(Boolean);
   if (ids.length === 0) return { rows: [] as AdminReferrerRow[], totals: { referrers: 0, referred: 0, pending: 0, paid: 0 }, percent: await commissionPercent() };
@@ -207,15 +204,26 @@ export async function listReferrersAdmin() {
   };
 }
 
-/** Admin sudah mentransfer semua komisi pending milik `referrerId` → catat & tandai lunas. */
+/**
+ * Admin sudah mentransfer semua komisi SIAP CAIR (pending & masa tahan lewat) milik `referrerId`
+ * → catat & tandai lunas. Guru afiliasi: minimal Rp50.000 per transfer.
+ */
 export async function recordPayout(adminId: number, referrerId: number, note: string | null): Promise<Result<{ amount: number }>> {
   return db.transaction(async (tx) => {
     const pending = await tx
       .select({ id: referralCommissions.id, amount: referralCommissions.amount })
       .from(referralCommissions)
-      .where(and(eq(referralCommissions.referrerUserId, referrerId), eq(referralCommissions.status, "pending")));
+      .where(
+        and(
+          eq(referralCommissions.referrerUserId, referrerId),
+          eq(referralCommissions.status, "pending"),
+          or(isNull(referralCommissions.availableAt), lte(referralCommissions.availableAt, new Date())),
+        ),
+      );
     const amount = pending.reduce((n, c) => n + c.amount, 0);
-    if (amount <= 0) return { ok: false as const, error: "Tidak ada komisi yang belum dibayar." };
+    if (amount <= 0) return { ok: false as const, error: "Tidak ada komisi yang siap dicairkan." };
+    const [teacher] = await tx.select({ id: affiliates.id }).from(affiliates).where(eq(affiliates.userId, referrerId));
+    if (teacher && amount < MIN_PAYOUT) return { ok: false as const, error: `Komisi siap cair belum mencapai minimal Rp${MIN_PAYOUT.toLocaleString("id-ID")}.` };
     const [acc] = await tx.select().from(referralAccounts).where(eq(referralAccounts.userId, referrerId));
     const destination = acc ? `${acc.bankName} ${acc.accountNumber} a.n. ${acc.accountName}`.slice(0, 200) : null;
     const [{ id }] = await tx.insert(referralPayouts).values({ referrerUserId: referrerId, amount, destination, note, createdBy: adminId }).$returningId();

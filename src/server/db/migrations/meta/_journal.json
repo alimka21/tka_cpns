@@ -183,6 +183,13 @@
       "when": 1793684894099,
       "tag": "0025_lead_magnet",
       "breakpoints": true
+    },
+    {
+      "idx": 26,
+      "version": "5",
+      "when": 1794573400969,
+      "tag": "0026_afiliasi_guru",
+      "breakpoints": true
     }
   ]
 }

@@ -72,7 +72,7 @@ export const memberships = mysqlTable(
     startsAt: timestamp("starts_at").notNull().defaultNow(),
     /** NULL = selamanya. */
     endsAt: timestamp("ends_at"),
-    grantedBy: mysqlEnum("granted_by", ["purchase", "admin_manual"]).notNull(),
+    grantedBy: mysqlEnum("granted_by", ["purchase", "admin_manual", "affiliate"]).notNull(),
     grantedByUserId: int("granted_by_user_id").references(() => users.id, { onDelete: "set null" }),
     revokedAt: timestamp("revoked_at"),
     createdAt: timestamp("created_at").notNull().defaultNow(),

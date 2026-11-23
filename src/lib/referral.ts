@@ -26,7 +26,7 @@ export function normalizeReferralCode(raw: unknown): string {
 export const referralCodeInput = z
   .string()
   .transform(normalizeReferralCode)
-  .refine((c) => c === "" || (c.length >= 4 && c.length <= 12), "Kode referal tidak valid.");
+  .refine((c) => c === "" || (c.length >= 4 && c.length <= 12), "Kode guru tidak valid.");
 
 /** Komisi dibulatkan ke bawah (rupiah utuh). */
 export function commissionAmount(paidAmount: number, percent: number): number {

@@ -2,7 +2,7 @@
 
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Check, Copy, Landmark, MessageCircle, TicketPlus } from "lucide-react";
+import { Check, Copy, Download, Landmark, MessageCircle, TicketPlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -18,28 +18,23 @@ function useCopy() {
   return { copied, copy };
 }
 
-/** Kode + link referal dengan tombol salin & bagikan ke WhatsApp. */
-export function ReferralShare({ code, link, percent }: { code: string; link: string; percent: number }) {
+/** Kode + link daftar guru dengan tombol salin, bagikan ke WhatsApp, dan unduh QR. */
+export function AffiliateShare({ code, link, waText, qrPng }: { code: string; link: string; waText: string; qrPng: string }) {
   const { copied, copy } = useCopy();
-  const waText =
-    `Aku latihan TKA di Pakar TKA — ada ribuan soal SD/SMP/SMA plus analisis kelemahan per subtopik.\n\n` +
-    `Daftar gratis lewat link ini (kode referal: ${code}):\n${link}`;
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
+    <div className="grid gap-4 lg:grid-cols-[1fr_1fr_auto]">
       <div className="rounded-xl border bg-primary-soft/40 p-4">
-        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Kode referal kamu</p>
-        <div className="mt-2 flex items-center gap-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Kode guru Anda</p>
+        <div className="mt-2 flex flex-wrap items-center gap-3">
           <span className="font-mono text-2xl font-bold tracking-[0.2em] text-primary">{code}</span>
           <Button size="sm" variant="outline" onClick={() => copy("code", code)}>
             {copied === "code" ? <Check aria-hidden /> : <Copy aria-hidden />}
             {copied === "code" ? "Tersalin" : "Salin"}
           </Button>
         </div>
-        <p className="mt-2 text-xs text-muted-foreground">
-          Teman memasukkan kode ini saat daftar. Kamu mendapat komisi {percent}% dari setiap pembayaran Premium mereka.
-        </p>
+        <p className="mt-2 text-xs text-muted-foreground">Siswa memasukkan kode ini di kolom “Kode guru” saat daftar.</p>
       </div>
-      <div className="rounded-xl border p-4">
+      <div className="min-w-0 rounded-xl border p-4">
         <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Link daftar</p>
         <p className="mt-2 truncate rounded-md bg-muted px-3 py-2 font-mono text-sm" title={link}>
           {link}
@@ -49,6 +44,10 @@ export function ReferralShare({ code, link, percent }: { code: string; link: str
             {copied === "link" ? <Check aria-hidden /> : <Copy aria-hidden />}
             {copied === "link" ? "Tersalin" : "Salin link"}
           </Button>
+          <Button size="sm" variant="outline" onClick={() => copy("wa", waText)}>
+            {copied === "wa" ? <Check aria-hidden /> : <Copy aria-hidden />}
+            {copied === "wa" ? "Tersalin" : "Salin pesan"}
+          </Button>
           <Button
             size="sm"
             nativeButton={false}
@@ -57,6 +56,13 @@ export function ReferralShare({ code, link, percent }: { code: string; link: str
             <MessageCircle aria-hidden /> Bagikan ke WhatsApp
           </Button>
         </div>
+      </div>
+      <div className="flex flex-col items-center gap-2 rounded-xl border p-4">
+        {/* eslint-disable-next-line @next/next/no-img-element -- data URL QR dari server */}
+        <img src={qrPng} alt={`QR code link daftar dengan kode ${code}`} width={120} height={120} className="rounded bg-white p-1" />
+        <Button size="sm" variant="outline" nativeButton={false} render={<a href={qrPng} download={`qr-pakar-tka-${code}.png`} />}>
+          <Download aria-hidden /> Unduh QR
+        </Button>
       </div>
     </div>
   );
@@ -138,8 +144,8 @@ export function PayoutAccountForm({ account }: { account: Account }) {
   );
 }
 
-/** Untuk akun baru yang belum memasukkan kode teman saat daftar (mis. lewat Google). */
-export function LateReferralForm({ days }: { days: number }) {
+/** Untuk akun baru yang belum memasukkan kode guru saat daftar (mis. lewat Google). */
+export function LateReferralForm({ days, discount }: { days: number; discount: number }) {
   const router = useRouter();
   const [error, setError] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
@@ -159,9 +165,9 @@ export function LateReferralForm({ days }: { days: number }) {
     >
       <div className="grid flex-1 gap-1.5">
         <Label htmlFor="late-code" className="flex items-center gap-2">
-          <TicketPlus className="size-4 text-primary" aria-hidden /> Diajak teman? Masukkan kode referalnya
+          <TicketPlus className="size-4 text-primary" aria-hidden /> Dapat kode dari guru? Masukkan untuk diskon {discount}% pembelian pertama
         </Label>
-        <Input id="late-code" name="code" placeholder="Contoh: PKR7Q2X" className="uppercase" maxLength={12} required />
+        <Input id="late-code" name="code" placeholder="Contoh: BUSITI" className="uppercase" maxLength={12} required />
         <p className="text-xs text-muted-foreground">
           Hanya bisa diisi sekali, paling lambat {days} hari setelah daftar dan sebelum pembayaran pertama.
         </p>

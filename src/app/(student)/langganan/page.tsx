@@ -2,13 +2,19 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { BookOpenCheck, Check, Crown, Dumbbell, Lock, Sparkles, TrendingUp } from "lucide-react";
 import { BuyPlanButton } from "@/components/billing/buy-plan-button";
+import { LateReferralForm } from "@/components/student/referral-panels";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { formatDate, formatDateTime, formatRupiah, ORDER_STATUS_META } from "@/lib/format";
+import { discountedPrice } from "@/lib/affiliate";
 import { discountPercent } from "@/lib/plans";
+import { LATE_REFERRAL_DAYS } from "@/lib/referral";
 import { requireUser } from "@/server/auth/session";
 import { getActiveMembership, listPlans, listUserOrders } from "@/server/services/billing";
 import { paymentAvailability, paymentMethodOptions } from "@/server/services/payment-provider";
+import { affiliatePromoFor } from "@/server/services/affiliates";
+import { getSetting } from "@/server/services/app-settings";
+import { canEnterReferralCode } from "@/server/services/referrals";
 
 export const metadata: Metadata = { title: "Langganan Premium" };
 export const dynamic = "force-dynamic";
@@ -39,11 +45,16 @@ export default async function LanggananPage() {
   const { user } = await requireUser("/langganan");
   const userId = Number(user.id);
   const jenjang = user.role === "admin" ? null : (user.jenjang ?? null);
-  const [membership, plans, orders] = await Promise.all([
+  const [membership, plans, orders, promo, canEnterCode, discount] = await Promise.all([
     getActiveMembership(userId, jenjang),
     listPlans({ activeOnly: true, jenjang }),
     listUserOrders(userId),
+    affiliatePromoFor(userId),
+    canEnterReferralCode(userId),
+    getSetting("affiliate.buyerDiscountPercent"),
   ]);
+  /** Harga yang benar-benar dibayar (diskon kode guru di pembelian pertama). */
+  const priceOf = (price: number) => (promo ? discountedPrice(price, promo.percent) : price);
   const pay = paymentAvailability(user);
   const methods = paymentMethodOptions(pay.provider).map(({ id, label, hint, primary }) => ({ id, label, hint, primary }));
   const gatewayLabel = pay.provider === "manual" ? null : pay.label;
@@ -88,6 +99,14 @@ export default async function LanggananPage() {
           ))}
         </section>
       )}
+
+      {promo && (
+        <p className="rounded-xl border border-success/40 bg-success-soft px-4 py-3 text-sm text-success-strong">
+          Kamu mendaftar dengan kode guru <strong>{promo.teacherName}</strong> — dapat <strong>diskon {promo.percent}%</strong> untuk pembelian Premium
+          pertama. Harga di bawah sudah dipotong.
+        </p>
+      )}
+      {!promo && canEnterCode && user.role !== "admin" && <LateReferralForm days={LATE_REFERRAL_DAYS} discount={discount} />}
 
       {pendingOrder && (
         <section className="flex flex-col items-start gap-3 rounded-xl border border-warning/40 bg-warning-soft p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -147,20 +166,27 @@ export default async function LanggananPage() {
                   {p.description && <p className="mt-1 text-sm whitespace-pre-line text-muted-foreground">{p.description}</p>}
                 </div>
                 <div>
-                  {discountPercent(p) != null && (
+                  {promo ? (
                     <p className="mb-0.5 flex flex-wrap items-center gap-2 text-sm">
-                      <span className="text-muted-foreground line-through">{formatRupiah(p.normalPrice!)}</span>
-                      <Badge variant="danger">Hemat {discountPercent(p)}%</Badge>
+                      <span className="text-muted-foreground line-through">{formatRupiah(p.price)}</span>
+                      <Badge variant="success">Diskon guru {promo.percent}%</Badge>
                     </p>
+                  ) : (
+                    discountPercent(p) != null && (
+                      <p className="mb-0.5 flex flex-wrap items-center gap-2 text-sm">
+                        <span className="text-muted-foreground line-through">{formatRupiah(p.normalPrice!)}</span>
+                        <Badge variant="danger">Hemat {discountPercent(p)}%</Badge>
+                      </p>
+                    )
                   )}
-                  <span className="text-3xl font-extrabold tracking-tight">{formatRupiah(p.price)}</span>
+                  <span className="text-3xl font-extrabold tracking-tight">{formatRupiah(priceOf(p.price))}</span>
                   <span className="ml-1 text-sm text-muted-foreground">/ {p.durationDays ? `${p.durationDays} hari` : "selamanya"}</span>
                 </div>
                 <div className="mt-auto">
                   <BuyPlanButton
                     planId={p.id}
                     planName={p.name}
-                    priceText={formatRupiah(p.price)}
+                    priceText={formatRupiah(priceOf(p.price))}
                     methods={methods}
                     gatewayLabel={gatewayLabel}
                     label={membership ? "Perpanjang" : "Bayar sekarang"}

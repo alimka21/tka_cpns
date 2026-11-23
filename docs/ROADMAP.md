@@ -5,6 +5,8 @@
 **Scope: TKA sekolah saja (SD/SMP/SMA), CPNS dihapus 2026-09-24.**
 
 **Ringkasan per 2026-10-22 (baca ini dulu):**
+- **2026-11-13: Afiliasi Guru** (branch `feat/afiliasi-guru`) — `/admin/afiliasi`, `/afiliasi`, diskon 5% & komisi
+  30% pembelian pertama, referal siswa dimatikan (DECISIONS). Deploy: **wajib `npm run prod:migrate` (0026)**.
 - **2026-11-13: Mayar dipasang** (`PAYMENT_PROVIDER=mayar`, Headless API V2) menggantikan DOKU
   karena kendala DOKU. Menunggu pemilik produk: isi env Mayar (sandbox dulu), pasang URL webhook, uji
   transaksi, lalu key produksi — WORKFLOW §8e. Kode DOKU tetap untuk order lama.

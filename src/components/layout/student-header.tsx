@@ -14,15 +14,15 @@ const baseNav = [
   { href: "/progres", label: "Progres" },
   { href: "/riwayat", label: "Riwayat" },
   { href: "/langganan", label: "Premium" },
-  { href: "/referal", label: "Referal" },
   { href: "/pengaturan", label: "Pengaturan" },
 ];
 
-type Props = { name: string; subtitle: string; isAdmin?: boolean };
+type Props = { name: string; subtitle: string; isAdmin?: boolean; isAffiliate?: boolean };
 
-export function StudentHeader({ name, subtitle, isAdmin }: Props) {
+export function StudentHeader({ name, subtitle, isAdmin, isAffiliate }: Props) {
   const pathname = usePathname();
-  const navItems = isAdmin ? [...baseNav, { href: "/admin", label: "Panel Admin" }] : baseNav;
+  const withAffiliate = isAffiliate ? [...baseNav.slice(0, -1), { href: "/afiliasi", label: "Afiliasi" }, baseNav[baseNav.length - 1]] : baseNav;
+  const navItems = isAdmin ? [...withAffiliate, { href: "/admin", label: "Panel Admin" }] : withAffiliate;
   // Menu mobile terbuka untuk path tertentu saja — otomatis tertutup saat pindah halaman.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;

@@ -28,7 +28,7 @@ export type AdminUserRow = {
     daysLeft: number | null;
     /** Cakupan jenjang aktif, mis. ["SMP"] atau ["Semua"]. */
     scopes: string[];
-    source: "purchase" | "admin_manual" | null;
+    source: "purchase" | "admin_manual" | "affiliate" | null;
     /** Premium terakhir yang sudah berakhir (untuk status "Kedaluwarsa"). */
     lastEndedAt: string | null;
   };

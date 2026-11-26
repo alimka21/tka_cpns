@@ -50,6 +50,8 @@ export const users = mysqlTable("users", {
   referralCode: varchar("referral_code", { length: 12 }).unique(),
   /** User yang kodenya dipakai saat mendaftar (pemberi referal). */
   referredByUserId: int("referred_by_user_id"),
+  /** Mengaktifkan menu Guru (kelas & pantau siswa) sendiri; guru afiliasi aktif otomatis dianggap guru. */
+  isTeacher: boolean("is_teacher").notNull().default(false),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow().onUpdateNow(),
 }, (t) => [

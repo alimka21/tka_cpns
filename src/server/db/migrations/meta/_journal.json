@@ -190,6 +190,13 @@
       "when": 1794573400969,
       "tag": "0026_afiliasi_guru",
       "breakpoints": true
+    },
+    {
+      "idx": 27,
+      "version": "5",
+      "when": 1795678753628,
+      "tag": "0027_kelas_guru",
+      "breakpoints": true
     }
   ]
 }

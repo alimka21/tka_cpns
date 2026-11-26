@@ -10,3 +10,4 @@ export * from "./billing";
 export * from "./referrals";
 export * from "./attribution";
 export * from "./lead-magnets";
+export * from "./classes";

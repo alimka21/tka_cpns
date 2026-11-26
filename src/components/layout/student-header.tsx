@@ -17,12 +17,23 @@ const baseNav = [
   { href: "/pengaturan", label: "Pengaturan" },
 ];
 
-type Props = { name: string; subtitle: string; isAdmin?: boolean; isAffiliate?: boolean };
+type Props = { name: string; subtitle: string; isAdmin?: boolean; isAffiliate?: boolean; isTeacher?: boolean };
 
-export function StudentHeader({ name, subtitle, isAdmin, isAffiliate }: Props) {
+/** Siswa: menu Kelas (gabung kelas guru). Guru: menu Guru (+ Afiliasi bila guru afiliasi). */
+function buildNav({ isAdmin, isAffiliate, isTeacher }: Omit<Props, "name" | "subtitle">) {
+  const [dashboard, ...rest] = baseNav;
+  const settings = rest.pop()!;
+  const premium = rest.pop()!;
+  const items = [dashboard, ...(isTeacher ? [{ href: "/guru", label: "Guru" }] : []), ...rest, ...(isTeacher ? [] : [{ href: "/kelas", label: "Kelas" }])];
+  if (isAffiliate) items.push({ href: "/afiliasi", label: "Afiliasi" });
+  items.push(premium, settings);
+  if (isAdmin) items.push({ href: "/admin", label: "Panel Admin" });
+  return items;
+}
+
+export function StudentHeader({ name, subtitle, isAdmin, isAffiliate, isTeacher }: Props) {
   const pathname = usePathname();
-  const withAffiliate = isAffiliate ? [...baseNav.slice(0, -1), { href: "/afiliasi", label: "Afiliasi" }, baseNav[baseNav.length - 1]] : baseNav;
-  const navItems = isAdmin ? [...withAffiliate, { href: "/admin", label: "Panel Admin" }] : withAffiliate;
+  const navItems = buildNav({ isAdmin, isAffiliate, isTeacher });
   // Menu mobile terbuka untuk path tertentu saja — otomatis tertutup saat pindah halaman.
   const [openOn, setOpenOn] = useState<string | null>(null);
   const open = openOn === pathname;

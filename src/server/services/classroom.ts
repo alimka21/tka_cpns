@@ -21,6 +21,7 @@ import {
   topics,
   users,
 } from "@/server/db/schema";
+import { freeUsageBySubject } from "@/server/queries/free-usage";
 import { loadDiagnosisRecords } from "@/server/queries/practice";
 import { diagnose, type DiagnosisStatus } from "./diagnosis";
 import { affiliateOfUser } from "./affiliates";
@@ -34,13 +35,14 @@ export const MAX_MEMBERS_PER_CLASS = 200;
 
 // ——— Guru ———
 
-export type TeacherInfo = { isTeacher: boolean; selfServe: boolean; affiliateActive: boolean };
+/** `hasAffiliate` = punya baris afiliasi (status apa pun) — halaman Afiliasi tetap terbuka untuk riwayat komisi. */
+export type TeacherInfo = { isTeacher: boolean; selfServe: boolean; affiliateActive: boolean; hasAffiliate: boolean };
 
 export async function teacherInfo(userId: number): Promise<TeacherInfo> {
   const [[row], affiliate] = await Promise.all([db.select({ isTeacher: users.isTeacher }).from(users).where(eq(users.id, userId)), affiliateOfUser(userId)]);
   const affiliateActive = affiliate?.status === "active";
   const selfServe = Boolean(row?.isTeacher);
-  return { isTeacher: selfServe || affiliateActive, selfServe, affiliateActive };
+  return { isTeacher: selfServe || affiliateActive, selfServe, affiliateActive, hasAffiliate: affiliate != null };
 }
 
 export async function enableTeacher(userId: number) {
@@ -57,8 +59,8 @@ export async function listSelfServeTeachers() {
       phone: users.phone,
       school: users.schoolName,
       createdAt: users.createdAt,
-      classCount: sql<number>`(select count(*) from ${classes} where ${classes.teacherId} = ${users.id})`,
-      studentCount: sql<number>`(select count(*) from ${classMembers} inner join ${classes} on ${classes.id} = ${classMembers.classId} where ${classes.teacherId} = ${users.id})`,
+      classCount: sql<number>`(select count(*) from classes c where c.teacher_id = users.id)`,
+      studentCount: sql<number>`(select count(*) from class_members m inner join classes c on c.id = m.class_id where c.teacher_id = users.id)`,
     })
     .from(users)
     .where(and(eq(users.isTeacher, true), sql`not exists (select 1 from affiliates a where a.user_id = ${users.id})`))
@@ -88,8 +90,8 @@ export async function listTeacherClasses(teacherId: number): Promise<TeacherClas
       joinCode: classes.joinCode,
       archivedAt: classes.archivedAt,
       createdAt: classes.createdAt,
-      members: sql<number>`(select count(*) from ${classMembers} where ${classMembers.classId} = ${classes.id})`,
-      assignments: sql<number>`(select count(*) from ${classAssignments} where ${classAssignments.classId} = ${classes.id})`,
+      members: sql<number>`(select count(*) from class_members m where m.class_id = classes.id)`,
+      assignments: sql<number>`(select count(*) from class_assignments a where a.class_id = classes.id)`,
     })
     .from(classes)
     .where(eq(classes.teacherId, teacherId))
@@ -237,7 +239,7 @@ export async function packageChoicesFor(jenjang: Jenjang): Promise<PackageChoice
       subjectName: subjects.name,
       isPremium: testPackages.isPremium,
       durationMinutes: testPackages.durationMinutes,
-      questionCount: sql<number>`(select count(*) from test_package_questions q where q.test_package_id = ${testPackages.id})`,
+      questionCount: sql<number>`(select count(*) from test_package_questions q where q.test_package_id = test_packages.id)`,
     })
     .from(testPackages)
     .innerJoin(categories, eq(categories.id, testPackages.categoryId))
@@ -272,6 +274,7 @@ async function loadAssignments(classIds: number[]) {
       title: testPackages.title,
       isPremium: testPackages.isPremium,
       subjectName: subjects.name,
+      subjectId: testPackages.subjectId,
       jenjang: categories.code,
     })
     .from(classAssignments)
@@ -357,6 +360,17 @@ async function premiumUserIds(userIds: number[], jenjang: string): Promise<Set<n
   return new Set(rows.map((r) => r.userId));
 }
 
+/**
+ * Siswa tidak bisa membuka paket tugas ini: paket Premium & siswa bukan Premium, atau paket gratis
+ * tetapi kuota 1 paket gratis per mapel sudah dipakai di paket lain (services/access.ts).
+ */
+function isLocked(a: { testPackageId: number; isPremium: boolean; subjectId: number | null }, premium: boolean, freeUsage: Map<number, number> | null) {
+  if (premium) return false;
+  if (a.isPremium) return true;
+  const used = a.subjectId != null ? freeUsage?.get(a.subjectId) : undefined;
+  return used != null && used !== a.testPackageId;
+}
+
 // ——— Halaman kelas guru ———
 
 export type RosterRow = {
@@ -400,6 +414,9 @@ export async function getClassOverview(cls: { id: number; jenjang: Jenjang }) {
     loadAssignments([cls.id]),
   ]);
   const practiceBy = new Map(practice.map((p) => [p.userId, p]));
+  const freeUsage = new Map(
+    await Promise.all(ids.filter((uid) => !premium.has(uid)).map(async (uid) => [uid, await freeUsageBySubject(uid)] as const)),
+  );
 
   const roster: RosterRow[] = members.map((m) => {
     const mine = allAttempts.filter((a) => a.userId === m.userId);
@@ -432,7 +449,7 @@ export async function getClassOverview(cls: { id: number; jenjang: Jenjang }) {
         name: m.name,
         score: hit ? scoreOf(hit) : null,
         submittedAt: hit?.submittedAt?.toISOString() ?? null,
-        locked: a.isPremium && !premium.has(m.userId),
+        locked: !hit && isLocked(a, premium.has(m.userId), freeUsage.get(m.userId) ?? null),
       };
     });
     return { ...toBase(a, now), done: results.filter((r) => r.score).length, results };
@@ -516,7 +533,10 @@ export async function listStudentClasses(user: { id: number; jenjang: string | n
     .where(eq(classMembers.userId, user.id))
     .orderBy(desc(classMembers.joinedAt));
   const assignmentRows = await loadAssignments(rows.map((r) => r.id));
-  const attemptsRows = await submittedAttempts([user.id], [...new Set(assignmentRows.map((a) => a.testPackageId))]);
+  const [attemptsRows, freeUsage] = await Promise.all([
+    submittedAttempts([user.id], [...new Set(assignmentRows.map((a) => a.testPackageId))]),
+    premium ? Promise.resolve(null) : freeUsageBySubject(user.id),
+  ]);
   const now = new Date();
   return rows.map((c) => ({
     id: c.id,
@@ -532,7 +552,7 @@ export async function listStudentClasses(user: { id: number; jenjang: string | n
           ...toBase(a, now),
           score: hit ? scoreOf(hit) : null,
           submittedAt: hit?.submittedAt?.toISOString() ?? null,
-          locked: a.isPremium && !premium,
+          locked: !hit && isLocked(a, premium, freeUsage),
         };
       }),
   }));

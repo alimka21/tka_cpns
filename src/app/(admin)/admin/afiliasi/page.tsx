@@ -9,7 +9,9 @@ import { COMMISSION_HOLD_DAYS, MIN_PAYOUT } from "@/lib/affiliate";
 import { formatRupiah } from "@/lib/format";
 import { SITE_URL } from "@/lib/site";
 import { requireAdmin } from "@/server/auth/session";
+import { TeacherCandidates } from "@/components/admin/teacher-candidates";
 import { listAffiliatesAdmin } from "@/server/services/affiliates";
+import { listSelfServeTeachers } from "@/server/services/classroom";
 import { listReferrersAdmin } from "@/server/services/referrals";
 
 export const metadata: Metadata = { title: "Afiliasi Guru" };
@@ -17,7 +19,11 @@ export const dynamic = "force-dynamic";
 
 export default async function AdminAfiliasiPage() {
   await requireAdmin("/admin/afiliasi");
-  const [{ rows, totals, defaultPercent, discount }, legacy] = await Promise.all([listAffiliatesAdmin(), listReferrersAdmin()]);
+  const [{ rows, totals, defaultPercent, discount }, legacy, candidates] = await Promise.all([
+    listAffiliatesAdmin(),
+    listReferrersAdmin(),
+    listSelfServeTeachers(),
+  ]);
   const signupUrl = `${SITE_URL.replace(/\/$/, "")}/daftar`;
 
   return (
@@ -47,6 +53,17 @@ export default async function AdminAfiliasiPage() {
       </section>
 
       <AffiliatesTable rows={rows} defaultPercent={defaultPercent} signupUrl={signupUrl} />
+
+      <section className="surface-card flex flex-col gap-3 p-5">
+        <div>
+          <h2 className="font-bold">Guru terdaftar (belum afiliasi) · {candidates.length}</h2>
+          <p className="text-sm text-muted-foreground">
+            Pengguna yang mengaktifkan akun guru sendiri di menu Guru (fitur kelas saja, tanpa Premium & komisi). Hubungi lewat WhatsApp; bila bersedia,
+            jadikan guru afiliasi.
+          </p>
+        </div>
+        <TeacherCandidates rows={candidates} />
+      </section>
 
       <div className="flex flex-wrap items-center gap-3">
         <Button variant="outline" size="sm" nativeButton={false} render={<a href="/api/admin/afiliasi" download />}>

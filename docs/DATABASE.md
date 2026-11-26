@@ -280,6 +280,16 @@ skor tes resmi.
 **questions.source_question_id** (baru) — soal AI mode variasi: id soal
 asal (tanpa FK; soal asal boleh dihapus).
 
+## Grup: Kelas Guru — **implementasi selesai** (`schema/classes.ts`, migrasi 0027)
+
+- `users.is_teacher` (bool) — akun guru mandiri. Guru = `is_teacher` ATAU afiliasi aktif.
+- `classes`: `teacher_id` → users (cascade), `name`, `jenjang` (SD/SMP/SMA), `join_code` (6 char, unik),
+  `archived_at` (diisi = tidak terima anggota baru).
+- `class_members`: `class_id` + `user_id` unik; keluar/dikeluarkan = baris dihapus (guru langsung kehilangan akses data).
+- `class_assignments`: `class_id`, `test_package_id`, `note`, `starts_at`, `due_at` (opsional).
+  Selesai = attempt `submitted` paket itu dengan `started_at >= starts_at` dan `submitted_at <= due_at`
+  (dihitung saat dibaca, tidak disimpan).
+
 ## Enum penting
 
 - Aturan skor (satu-satunya, semua bentuk): benar penuh = +1 atau

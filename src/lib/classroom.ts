@@ -43,6 +43,12 @@ export type AssignmentInput = z.infer<typeof assignmentInput>;
 
 export type AssignmentPhase = "upcoming" | "open" | "closed";
 
+export const PHASE: Record<AssignmentPhase, { label: string; variant: "info" | "success" | "muted" }> = {
+  upcoming: { label: "Belum dibuka", variant: "info" },
+  open: { label: "Sedang berjalan", variant: "success" },
+  closed: { label: "Ditutup", variant: "muted" },
+};
+
 export function assignmentPhase(now: Date, startsAt: Date, dueAt: Date | null): AssignmentPhase {
   if (now < startsAt) return "upcoming";
   if (dueAt && now > dueAt) return "closed";

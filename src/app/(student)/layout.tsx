@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { StudentHeader } from "@/components/layout/student-header";
 import { requireUser } from "@/server/auth/session";
-import { affiliateOfUser } from "@/server/services/affiliates";
+import { teacherInfo } from "@/server/services/classroom";
 import { SITE_NAME } from "@/lib/site";
 
 // Halaman akun & admin tidak perlu diindeks mesin pencari.
@@ -10,11 +10,12 @@ export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 export default async function StudentLayout({ children }: { children: React.ReactNode }) {
   const { user } = await requireUser("/dashboard");
-  const affiliate = user.role === "admin" ? null : await affiliateOfUser(Number(user.id));
-  const subtitle = user.role === "admin" ? "Admin" : affiliate ? "Guru Afiliasi" : `Siswa · ${user.jenjang ?? "-"}`;
+  const teacher = user.role === "admin" ? null : await teacherInfo(Number(user.id));
+  const subtitle =
+    user.role === "admin" ? "Admin" : teacher?.affiliateActive ? "Guru Afiliasi" : teacher?.isTeacher ? "Guru" : `Siswa · ${user.jenjang ?? "-"}`;
   return (
     <div className="flex flex-1 flex-col">
-      <StudentHeader name={user.name} subtitle={subtitle} isAdmin={user.role === "admin"} isAffiliate={Boolean(affiliate)} />
+      <StudentHeader name={user.name} subtitle={subtitle} isAdmin={user.role === "admin"} isAffiliate={Boolean(teacher?.hasAffiliate)} isTeacher={Boolean(teacher?.isTeacher)} />
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-6 sm:px-6 lg:px-8 lg:py-10">{children}</main>
       <footer className="border-t bg-card">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-2 px-4 py-6 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">

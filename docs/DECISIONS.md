@@ -1406,3 +1406,20 @@ akun Gemini.
 Alternatif yang ditolak: Nuxt/SvelteKit (fungsional serupa, dipilih
 Next.js karena ekosistem & referensi lebih luas untuk kolaborasi ke
 depan).
+
+## 2026-11-26 — Kelas guru: kode kelas terpisah dari kode afiliasi
+- Dua jenis guru: **guru mandiri** (tombol "Aktifkan akun guru" di `/guru`, `users.is_teacher`) dapat fitur
+  kelas saja; **guru afiliasi** (ditambah admin) dapat kelas + Premium gratis + komisi. Admin melihat guru
+  mandiri di `/admin/afiliasi` → hubungi via WA → "Jadikan afiliasi" (pakai `addAffiliate` biasa).
+- Siswa terhubung ke guru **hanya** lewat kode/link kelas (`/gabung/KODE` atau menu Kelas). Kode afiliasi saat
+  daftar tidak memasukkan siswa ke kelas. Gabung lewat tombol (persetujuan siswa), bukan otomatis saat link dibuka.
+  Jenjang siswa harus sama dengan jenjang kelas. Siswa boleh ikut banyak kelas dan boleh keluar.
+- Selama anggota, guru melihat **seluruh** hasil tes & latihan siswa (bukan hanya tugas). Nama siswa tampil
+  jelas di halaman kelas (siswa yang memilih bergabung); di halaman afiliasi nama tetap disamarkan.
+- Ringkasan per siswa (skor, jumlah tes/latihan, aktivitas) gratis untuk semua guru. Peta subdomain per siswa
+  & "Kelemahan kelas" khusus guru Premium jenjang kelas (afiliasi otomatis Premium).
+- Tugas = paket tes tayang jenjang kelas + waktu mulai (+ batas opsional). Akses tidak ditembus: paket Premium
+  hanya siswa Premium, paket gratis tetap kena kuota 1 paket gratis per mapel → tugas tampil "terkunci".
+  Attempt sebelum waktu mulai tidak dihitung; paketnya sendiri tetap bisa dibuka dari katalog seperti biasa.
+- Alternatif ditolak: kode afiliasi = kode kelas (siswa yang hanya ingin diskon jadi terpantau tanpa persetujuan);
+  role baru `teacher` di enum (guru juga perlu bisa mengerjakan soal sebagai user biasa).

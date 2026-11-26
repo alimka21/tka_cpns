@@ -5,6 +5,10 @@
 **Scope: TKA sekolah saja (SD/SMP/SMA), CPNS dihapus 2026-09-24.**
 
 **Ringkasan per 2026-10-22 (baca ini dulu):**
+- **2026-11-26: Kelas Guru** (branch `feat/kelas-guru`) — `/guru` (aktifkan akun guru, buat kelas),
+  `/guru/kelas/[id]` (siswa, tugas paket tes, kelemahan kelas, pengaturan), `/guru/kelas/[id]/siswa/[userId]`,
+  `/kelas` (siswa gabung pakai kode), `/gabung/[kode]`, daftar "Guru terdaftar" di `/admin/afiliasi`
+  (DECISIONS 2026-11-26). Deploy: **wajib `npm run prod:migrate` (0027)**.
 - **2026-11-13: Afiliasi Guru** (branch `feat/afiliasi-guru`) — `/admin/afiliasi`, `/afiliasi`, diskon 5% & komisi
   30% pembelian pertama, referal siswa dimatikan (DECISIONS). Deploy: **wajib `npm run prod:migrate` (0026)**.
 - **2026-11-13: Mayar dipasang** (`PAYMENT_PROVIDER=mayar`, Headless API V2) menggantikan DOKU
